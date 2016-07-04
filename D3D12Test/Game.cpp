@@ -16,9 +16,16 @@ Game::Game()
     m_deviceResources->RegisterDeviceNotify(this);
 }
 
+Game::~Game()
+{
+    m_deviceResources->WaitForGpu();
+}
+
 // Initialize the Direct3D resources required to run.
 void Game::Initialize(HWND window, int width, int height)
 {
+    m_keyboard = std::make_unique<Keyboard>();
+
     m_deviceResources->SetWindow(window, width, height);
 
     m_deviceResources->CreateDeviceResources();
@@ -47,6 +54,13 @@ void Game::Update(DX::StepTimer const& timer)
 
     float elapsedTime = float(timer.GetElapsedSeconds());
     elapsedTime;
+
+    auto kb = m_keyboard->GetState();
+
+    if (kb.Escape)
+    {
+        PostQuitMessage(0);
+    }
 
     PIXEndEvent();
 }

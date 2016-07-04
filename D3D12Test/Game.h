@@ -15,6 +15,7 @@ class Game : public DX::IDeviceNotify
 public:
 
     Game();
+    ~Game();
 
     // Initialization and management
     void Initialize(HWND window, int width, int height);
@@ -39,6 +40,7 @@ public:
 
     // Properties
     void GetDefaultSize( int& width, int& height ) const;
+    const wchar_t* GetAppName() const { return L"D3D12Test (DirectX 12)"; }
 
 private:
 
@@ -52,6 +54,9 @@ private:
 
     // Rendering loop timer.
     DX::StepTimer                           m_timer;
+
+    // Input devices.
+    std::unique_ptr<DirectX::Keyboard>      m_keyboard;
 
     // DirectXTK Test Objects
     std::unique_ptr<DirectX::GraphicsMemory>                                m_graphicsMemory;
