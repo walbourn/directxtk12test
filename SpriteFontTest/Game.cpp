@@ -14,7 +14,8 @@ using namespace DirectX;
 
 using Microsoft::WRL::ComPtr;
 
-Game::Game()
+Game::Game() :
+    m_frame(0)
 {
     m_deviceResources = std::make_unique<DX::DeviceResources>();
     m_deviceResources->RegisterDeviceNotify(this);
@@ -51,6 +52,8 @@ void Game::Tick()
     });
 
     Render();
+
+    ++m_frame;
 }
 
 // Updates the world.
@@ -116,10 +119,106 @@ void Game::Render()
 
     m_spriteBatch->Begin(commandList);
 
+    float time = 60.f * static_cast<float>(m_timer.GetTotalSeconds());
+
+    m_comicFont->DrawString(m_spriteBatch.get(), L"Hello, world!", XMFLOAT2(0, 0));
+    m_italicFont->DrawString(m_spriteBatch.get(), L"This text is in italics.\nIs it well spaced?", XMFLOAT2(220, 0));
+    m_scriptFont->DrawString(m_spriteBatch.get(), L"Script font, yo...", XMFLOAT2(0, 50));
+
+    SpriteEffects flip = (SpriteEffects)((int)(time / 100) & 3);
+    m_multicoloredFont->DrawString(m_spriteBatch.get(), L"OMG it's full of stars!", XMFLOAT2(610, 130), Colors::White, XM_PIDIV2, XMFLOAT2(0, 0), 1, flip);
+
+    m_comicFont->DrawString(m_spriteBatch.get(), L"This is a larger block\nof text using a\nfont scaled to a\nsmaller size.\nSome c\x1234ha\x1543rac\x2453te\x1634r\x1563s are not in the font, but should show up as hyphens.", XMFLOAT2(10, 90), Colors::Black, 0, XMFLOAT2(0, 0), 0.5f);
+
+    wchar_t tmp[256] = {};
+    swprintf_s(tmp, L"%zu frames", m_frame);
+
+    m_nonproportionalFont->DrawString(m_spriteBatch.get(), tmp, XMFLOAT2(201, 130), Colors::Black);
+    m_nonproportionalFont->DrawString(m_spriteBatch.get(), tmp, XMFLOAT2(200, 131), Colors::Black);
+    m_nonproportionalFont->DrawString(m_spriteBatch.get(), tmp, XMFLOAT2(200, 130), Colors::Red);
+
+    float scale = sin(time / 100) + 1;
+    auto spinText = L"Spinning\nlike a cat";
+    auto size = m_comicFont->MeasureString(spinText);
+    m_comicFont->DrawString(m_spriteBatch.get(), spinText, XMVectorSet(150, 350, 0, 0), Colors::Blue, time / 60, size / 2, scale);
+
+    auto mirrorText = L"It's a\nmirror...";
+    auto mirrorSize = m_comicFont->MeasureString(mirrorText);
+    m_comicFont->DrawString(m_spriteBatch.get(), mirrorText, XMVectorSet(400, 400, 0, 0), Colors::Black, 0, mirrorSize * XMVectorSet(0, 1, 0, 0), 1, SpriteEffects_None);
+    m_comicFont->DrawString(m_spriteBatch.get(), mirrorText, XMVectorSet(400, 400, 0, 0), Colors::Gray, 0, mirrorSize * XMVectorSet(1, 1, 0, 0), 1, SpriteEffects_FlipHorizontally);
+    m_comicFont->DrawString(m_spriteBatch.get(), mirrorText, XMVectorSet(400, 400, 0, 0), Colors::Gray, 0, mirrorSize * XMVectorSet(0, 0, 0, 0), 1, SpriteEffects_FlipVertically);
+    m_comicFont->DrawString(m_spriteBatch.get(), mirrorText, XMVectorSet(400, 400, 0, 0), Colors::DarkGray, 0, mirrorSize * XMVectorSet(1, 0, 0, 0), 1, SpriteEffects_FlipBoth);
+
+    m_japaneseFont->DrawString(m_spriteBatch.get(), L"\x79C1\x306F\x65E5\x672C\x8A9E\x304C\x8A71\x305B\x306A\x3044\x306E\x3067\x3001\n\x79C1\x306F\x3053\x308C\x304C\x4F55\x3092\x610F\x5473\x3059\x308B\x306E\x304B\x308F\x304B\x308A\x307E\x305B\x3093", XMFLOAT2(10, 512));
+
+    {
+        char ascii[256] = {};
+        int i = 0;
+        for (size_t j = 32; j < 256; ++j)
+        {
+            if (j == L'\n' || j == L'\r' || j == L'\t')
+                continue;
+
+            if (j > 0 && (j % 128) == 0)
+            {
+                ascii[i++] = L'\n';
+                ascii[i++] = L'\n';
+            }
+
+            ascii[i++] = static_cast<char>(j + 1);
+        }
+
+        wchar_t unicode[256] = {};
+        if (!MultiByteToWideChar(437, MB_PRECOMPOSED, ascii, i, unicode, 256))
+            wcscpy_s(unicode, L"<ERROR!>\n");
+
+        m_consolasFont->DrawString(m_spriteBatch.get(), unicode, XMFLOAT2(10, 600), Colors::Cyan);
+    }
+
+    m_ctrlFont->DrawString(m_spriteBatch.get(), L" !\"\n#$%\n&'()\n*+,-", XMFLOAT2(650, 130), Colors::White, 0.f, XMFLOAT2(0.f, 0.f), 0.5f);
+
+    {
+        UINT w, h;
+
+        auto outputSize = m_deviceResources->GetOutputSize();
+
+        switch (m_spriteBatch->GetRotation())
+        {
+        case DXGI_MODE_ROTATION_ROTATE90:
+        case DXGI_MODE_ROTATION_ROTATE270:
+            w = outputSize.bottom;
+            h = outputSize.right;
+            break;
+
+        default:
+            w = outputSize.right;
+            h = outputSize.bottom;
+            break;
+        }
+
+        for (UINT x = 0; x < w; x += 100)
+        {
+            swprintf_s(tmp, L"%u\n", x);
+            m_nonproportionalFont->DrawString(m_spriteBatch.get(), tmp, XMFLOAT2(float(x), float(h - 100)), Colors::Yellow);
+        }
+
+        for (UINT y = 0; y < h; y += 100)
+        {
+            swprintf_s(tmp, L"%u\n", y);
+            m_nonproportionalFont->DrawString(m_spriteBatch.get(), tmp, XMFLOAT2(float(w - 100), float(y)), Colors::Red);
+        }
+    }
+
 #if 0
-    m_spriteBatch->Draw(m_resourceDescriptors->GetGpuHandle(Descriptors::Cat),
-        GetTextureSize(m_texture.Get()),
-        m_screenPos, nullptr, Colors::White, 0.f, m_origin);
+    m_spriteBatch->End();
+
+    m_spriteBatch->Begin(SpriteSortMode_Deferred, nullptr, nullptr, nullptr, scissorState.Get(), [&]()
+    {
+        CD3D11_RECT r(640, 20, 740, 38);
+        context->RSSetScissorRects(1, &r);
+    });
+
+    m_comicFont->DrawString(m_spriteBatch.get(), L"Clipping!", XMFLOAT2(640, 0), Colors::DarkGreen);
 #endif
 
     m_spriteBatch->End();
@@ -187,8 +286,8 @@ void Game::OnWindowSizeChanged(int width, int height)
 // Properties
 void Game::GetDefaultSize(int& width, int& height) const
 {
-    width = 800;
-    height = 600;
+    width = 1024;
+    height = 768;
 }
 #pragma endregion
 
@@ -283,11 +382,99 @@ void Game::UnitTests()
 {
     OutputDebugStringA("*********** UNIT TESTS BEGIN ***************\n");
 
+    bool success = true;
+
     // GetDefaultCharacterTest
     if (m_comicFont->GetDefaultCharacter() != 0)
     {
-        OutputDebugStringA("FAILED: GetDefaultCharacter failed\n");
+        OutputDebugStringA("FAILED: GetDefaultCharacter\n");
+        success = false;
     }
 
+    // ContainsCharacter tests
+    if (m_comicFont->ContainsCharacter(27)
+        || !m_comicFont->ContainsCharacter('-'))
+    {
+        OutputDebugStringA("FAILED: ContainsCharacter\n");
+        success = false;
+    }
+
+    // FindGlyph/GetSpriteSheet tests
+    {
+        auto g = m_comicFont->FindGlyph('-');
+        if (g->Character != '-' || g->XOffset != 6 || g->YOffset != 24)
+        {
+            OutputDebugStringA("FAILED: FindGlyph\n");
+            success = false;
+        }
+
+     
+        auto spriteSheet = m_comicFont->GetSpriteSheet();
+
+        if (!spriteSheet.ptr)
+        {
+            OutputDebugStringA("FAILED: GetSpriteSheet\n");
+            success = false;
+        }
+
+        auto spriteSheetSize = m_comicFont->GetSpriteSheetSize();
+        if (spriteSheetSize.x != 256
+            || spriteSheetSize.y != 172)
+        {
+            OutputDebugStringA("FAILED: GetSpriteSheetSize\n");
+            success = false;
+        }
+    }
+
+    // DefaultCharacter tests
+    m_comicFont->SetDefaultCharacter('-');
+    if (m_comicFont->GetDefaultCharacter() != '-')
+    {
+        OutputDebugStringA("FAILED: Get/SetDefaultCharacter\n");
+        success = false;
+    }
+
+    // Linespacing tests
+    float s = m_ctrlFont->GetLineSpacing();
+    if (s != 186.f)
+    {
+        OutputDebugStringA("FAILED: GetLineSpacing\n");
+        success = false;
+    }
+    m_ctrlFont->SetLineSpacing(256.f);
+    s = m_ctrlFont->GetLineSpacing();
+    if (s != 256.f)
+    {
+        OutputDebugStringA("FAILED: Get/SetLineSpacing failed\n");
+        success = false;
+    }
+    m_ctrlFont->SetLineSpacing(186.f);
+
+    // Measure tests
+    {
+        auto spinText = L"Spinning\nlike a cat";
+
+        auto drawSize = m_comicFont->MeasureString(spinText);
+
+        if (fabs(XMVectorGetX(drawSize) - 136.f) > EPSILON
+            || fabs(XMVectorGetY(drawSize) - 85.4713516f) > EPSILON)
+        {
+            OutputDebugStringA("FAILED: MeasureString\n");
+            success = false;
+        }
+
+        auto rect = m_comicFont->MeasureDrawBounds(spinText, XMFLOAT2(150, 350));
+
+        if (rect.top != 361
+            || rect.bottom != 428
+            || rect.left != 157
+            || rect.right != 286)
+        {
+            OutputDebugStringA("FAILED: MeasureDrawBounds\n");
+            success = false;
+        }
+    }
+
+    OutputDebugStringA(success ? "Passed\n" : "Failed\n");
     OutputDebugStringA("***********  UNIT TESTS END  ***************\n");
 }
