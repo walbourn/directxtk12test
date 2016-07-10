@@ -158,8 +158,8 @@ void Game::OnWindowSizeChanged(int width, int height)
 // Properties
 void Game::GetDefaultSize(int& width, int& height) const
 {
-    width = 800;
-    height = 600;
+    width = 1280;
+    height = 720;
 }
 #pragma endregion
 

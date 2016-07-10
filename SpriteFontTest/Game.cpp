@@ -131,7 +131,7 @@ void Game::Render()
     m_comicFont->DrawString(m_spriteBatch.get(), L"This is a larger block\nof text using a\nfont scaled to a\nsmaller size.\nSome c\x1234ha\x1543rac\x2453te\x1634r\x1563s are not in the font, but should show up as hyphens.", XMFLOAT2(10, 90), Colors::Black, 0, XMFLOAT2(0, 0), 0.5f);
 
     wchar_t tmp[256] = {};
-    swprintf_s(tmp, L"%zu frames", m_frame);
+    swprintf_s(tmp, L"%llu frames", m_frame);
 
     m_nonproportionalFont->DrawString(m_spriteBatch.get(), tmp, XMFLOAT2(201, 130), Colors::Black);
     m_nonproportionalFont->DrawString(m_spriteBatch.get(), tmp, XMFLOAT2(200, 131), Colors::Black);
@@ -286,8 +286,8 @@ void Game::OnWindowSizeChanged(int width, int height)
 // Properties
 void Game::GetDefaultSize(int& width, int& height) const
 {
-    width = 1024;
-    height = 768;
+    width = 1280;
+    height = 720;
 }
 #pragma endregion
 

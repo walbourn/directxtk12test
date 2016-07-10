@@ -2,11 +2,11 @@
 // Game.cpp
 //
 
-// Build for LH vs. RH coords
-//#define LH_COORDS
-
 #include "pch.h"
 #include "Game.h"
+
+// Build for LH vs. RH coords
+//#define LH_COORDS
 
 namespace
 {
@@ -425,7 +425,7 @@ void Game::CreateDeviceDependentResources()
             &CommonStates::CullCounterClockwise,
             &rtState);
 
-        m_effect = std::make_unique<BasicEffect>(device, EffectFlags::PerPixelLighting, pd);
+        m_effect = std::make_unique<BasicEffect>(device, EffectFlags::Lighting, pd);
         m_effect->EnableDefaultLighting();
     }
 
