@@ -23,6 +23,8 @@ namespace
     }
 };
 
+bool DX::DeviceResources::s_debugForceWarp = false;
+
 // Constructor for DeviceResources.
 DX::DeviceResources::DeviceResources(DXGI_FORMAT backBufferFormat, DXGI_FORMAT depthBufferFormat, UINT backBufferCount, D3D_FEATURE_LEVEL minFeatureLevel) :
     m_backBufferIndex(0),
@@ -513,30 +515,30 @@ void DX::DeviceResources::GetAdapter(IDXGIAdapter1** ppAdapter)
     *ppAdapter = nullptr;
 
     ComPtr<IDXGIAdapter1> adapter;
-    for (UINT adapterIndex = 0; DXGI_ERROR_NOT_FOUND != m_dxgiFactory->EnumAdapters1(adapterIndex, adapter.ReleaseAndGetAddressOf()); ++adapterIndex)
+    if (!s_debugForceWarp)
     {
-        DXGI_ADAPTER_DESC1 desc;
-        DX::ThrowIfFailed(adapter->GetDesc1(&desc));
-
-        if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+        for (UINT adapterIndex = 0; DXGI_ERROR_NOT_FOUND != m_dxgiFactory->EnumAdapters1(adapterIndex, adapter.ReleaseAndGetAddressOf()); ++adapterIndex)
         {
-            // Don't select the Basic Render Driver adapter.
-            continue;
-        }
+            DXGI_ADAPTER_DESC1 desc;
+            DX::ThrowIfFailed(adapter->GetDesc1(&desc));
 
-        // Check to see if the adapter supports Direct3D 12, but don't create the actual device yet.
-        if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), m_d3dMinFeatureLevel, _uuidof(ID3D12Device), nullptr)))
-        {
-#ifdef _DEBUG
-            wchar_t buff[256] = {};
-            swprintf_s(buff, L"Direct3D Adapter (%u): VID:%04X, PID:%04X - %ls\n", adapterIndex, desc.VendorId, desc.DeviceId, desc.Description);
-            OutputDebugStringW(buff);
-#endif
-            break;
+            if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+            {
+                // Don't select the Basic Render Driver adapter.
+                continue;
+            }
+
+            // Check to see if the adapter supports Direct3D 12, but don't create the actual device yet.
+            if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), m_d3dMinFeatureLevel, _uuidof(ID3D12Device), nullptr)))
+            {
+                wchar_t buff[256] = {};
+                swprintf_s(buff, L"Direct3D Adapter (%u): VID:%04X, PID:%04X - %ls\n", adapterIndex, desc.VendorId, desc.DeviceId, desc.Description);
+                OutputDebugStringW(buff);
+                break;
+            }
         }
     }
 
-#if !defined(NDEBUG)
     if (!adapter)
     {
         // Try WARP12 instead
@@ -547,7 +549,6 @@ void DX::DeviceResources::GetAdapter(IDXGIAdapter1** ppAdapter)
 
         OutputDebugStringA("Direct3D Adapter - WARP12\n");
     }
-#endif
 
     if (!adapter)
     {

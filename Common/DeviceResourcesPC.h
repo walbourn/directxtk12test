@@ -61,6 +61,11 @@ namespace DX
             return CD3DX12_CPU_DESCRIPTOR_HANDLE(m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
         }
 
+        static void DebugForceWarp(bool enable)
+        {
+            s_debugForceWarp = enable;
+        }
+
     private:
         void MoveToNextFrame();
         void GetAdapter(IDXGIAdapter1** ppAdapter);
@@ -106,5 +111,8 @@ namespace DX
 
         // The IDeviceNotify can be held directly as it owns the DeviceResources.
         IDeviceNotify*                                      m_deviceNotify;
+
+        // Debugging options
+        static bool s_debugForceWarp;
     };
 }

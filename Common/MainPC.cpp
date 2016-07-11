@@ -5,6 +5,8 @@
 #include "pch.h"
 #include "Game.h"
 
+#include <shellapi.h>
+
 using namespace DirectX;
 
 namespace
@@ -13,6 +15,7 @@ namespace
 };
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+void ParseCommandLine(_In_ LPWSTR lpCmdLine);
 
 // Entry point
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
@@ -26,6 +29,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     Microsoft::WRL::Wrappers::RoInitializeWrapper initialize(RO_INIT_MULTITHREADED);
     if (FAILED(initialize))
         return 1;
+
+    ParseCommandLine(lpCmdLine);
 
     g_game = std::make_unique<Game>();
 
@@ -247,4 +252,33 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
 
     return DefWindowProc(hWnd, message, wParam, lParam);
+}
+
+void ParseCommandLine(_In_ LPWSTR lpCmdLine)
+{
+    int argc = 0;
+    wchar_t** argv = CommandLineToArgvW(lpCmdLine, &argc);
+
+    for (int iArg = 0; iArg < argc; iArg++)
+    {
+        wchar_t* pArg = argv[iArg];
+
+        if (('-' == pArg[0]) || ('/' == pArg[0]))
+        {
+            pArg++;
+            wchar_t* pValue;
+
+            for (pValue = pArg; *pValue && (':' != *pValue); pValue++);
+
+            if (*pValue)
+                *pValue++ = 0;
+
+            if (!_wcsicmp(pArg, L"forcewarp"))
+            {
+                DX::DeviceResources::DebugForceWarp(true);
+            }
+        }
+    }
+
+    LocalFree(argv);
 }
