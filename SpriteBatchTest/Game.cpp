@@ -289,10 +289,10 @@ void Game::CreateDeviceDependentResources()
 
     {
         SpriteBatchPipelineStateDescription pd(
-            &rtState,
+            rtState,
             &CommonStates::NonPremultiplied);
 
-        m_spriteBatch = std::make_unique<SpriteBatch>(device, resourceUpload, &pd);
+        m_spriteBatch = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
     }
 
     DX::ThrowIfFailed(

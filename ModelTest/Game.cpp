@@ -326,9 +326,6 @@ void Game::CreateDeviceDependentResources()
     m_modelResources = std::make_unique<EffectTextureFactory>(device, resourceUpload, m_resourceDescriptors->Heap());
     m_fxFactory = std::make_unique<EffectFactory>(m_resourceDescriptors->Heap());
 
-    // BUGBUG: Caching should use PSO hash to avoid treating two different PSO objects as the same effect
-    m_fxFactory->SetSharing(false);
-
     // Create cup materials & effects
     int txtOffset = Descriptors::ModelStart;
     int txtAdd = m_cup->LoadTextures(*m_modelResources, txtOffset);
@@ -344,21 +341,22 @@ void Game::CreateDeviceDependentResources()
 
     {
         EffectPipelineStateDescription pd(
-            &VertexPositionNormalTexture::InputLayout,
-            &CommonStates::Opaque,
-            &CommonStates::DepthDefault,
-            &ncull,
-            &rtState);
+            nullptr,
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
+            ncull,
+            rtState);
 
         EffectPipelineStateDescription wireframe(
-            &VertexPositionNormalTexture::InputLayout,
-            &CommonStates::Opaque,
-            &CommonStates::DepthDefault,
-            &CommonStates::Wireframe,
-            &rtState);
+            nullptr,
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
+            CommonStates::Wireframe,
+            rtState);
 
         m_cupNormal = m_cup->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
 
+        m_fxFactory->SetSharing(false);
         m_cupCustom = m_cup->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
         {
             auto basic = dynamic_cast<BasicEffect*>(m_cupCustom[1].get());
@@ -367,6 +365,7 @@ void Game::CreateDeviceDependentResources()
                 basic->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::DefaultTex));
             }
         }
+        m_fxFactory->SetSharing(true);
 
         m_cupWireframe = m_cup->CreateEffects(*m_fxFactory, wireframe, wireframe, txtOffset);
 
@@ -384,10 +383,10 @@ void Game::CreateDeviceDependentResources()
     {
         EffectPipelineStateDescription pd(
             &VertexPositionNormalTexture::InputLayout,
-            &CommonStates::Opaque,
-            &CommonStates::DepthDefault,
-            &ncull,
-            &rtState);
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
+            ncull,
+            rtState);
 
         m_vboNormal = std::make_unique<BasicEffect>(device, EffectFlags::Lighting, pd);
         m_vboNormal->EnableDefaultLighting();
@@ -403,11 +402,11 @@ void Game::CreateDeviceDependentResources()
 
     {
         EffectPipelineStateDescription pd(
-            &VertexPositionNormalTexture::InputLayout,
-            &CommonStates::Opaque,
-            &CommonStates::DepthDefault,
-            &ncull,
-            &rtState);
+            nullptr,
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
+            ncull,
+            rtState);
 
         m_tinyNormal = m_tiny->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
     }
@@ -421,11 +420,11 @@ void Game::CreateDeviceDependentResources()
 
     {
         EffectPipelineStateDescription pd(
-            &VertexPositionNormalTexture::InputLayout,
-            &CommonStates::Opaque,
-            &CommonStates::DepthDefault,
-            &ncull,
-            &rtState);
+            nullptr,
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
+            ncull,
+            rtState);
 
         m_soldierNormal = m_solider->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
     }
@@ -439,11 +438,11 @@ void Game::CreateDeviceDependentResources()
 
     {
         EffectPipelineStateDescription pd(
-            &VertexPositionNormalTexture::InputLayout,
-            &CommonStates::Opaque,
-            &CommonStates::DepthDefault,
-            &ncull,
-            &rtState);
+            nullptr,
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
+            ncull,
+            rtState);
 
         m_dwarfNormal = m_dwarf->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
     }
@@ -457,11 +456,11 @@ void Game::CreateDeviceDependentResources()
 
     {
         EffectPipelineStateDescription pd(
-            &VertexPositionNormalTexture::InputLayout,
-            &CommonStates::Opaque,
-            &CommonStates::DepthDefault,
-            &ncull,
-            &rtState);
+            nullptr,
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
+            ncull,
+            rtState);
 
         m_lmapNormal = m_lmap->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
     }

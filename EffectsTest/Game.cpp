@@ -544,25 +544,25 @@ void Game::CreateDeviceDependentResources()
     {
         EffectPipelineStateDescription pdAlpha(
             &TestVertex::InputLayout,
-            &CommonStates::AlphaBlend,
-            &CommonStates::DepthDefault,
+            CommonStates::AlphaBlend,
+            CommonStates::DepthDefault,
 #ifdef LH_COORDS
-            &CommonStates::CullClockwise,
+            CommonStates::CullClockwise,
 #else
-            &CommonStates::CullCounterClockwise,
+            CommonStates::CullCounterClockwise,
 #endif
-            &rtState);
+            rtState);
 
         EffectPipelineStateDescription pdOpaque(
             &TestVertex::InputLayout,
-            &CommonStates::Opaque,
-            &CommonStates::DepthDefault,
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
 #ifdef LH_COORDS
-            &CommonStates::CullClockwise,
+            CommonStates::CullClockwise,
 #else
-            &CommonStates::CullCounterClockwise,
+            CommonStates::CullCounterClockwise,
 #endif
-            &rtState);
+            rtState);
 
         //--- BasicEFfect ------------------------------------------------------------------
         m_basicEffectUnlit = std::make_unique<BasicEffect>(device, EffectFlags::None, pdAlpha);

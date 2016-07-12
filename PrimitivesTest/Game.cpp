@@ -420,10 +420,10 @@ void Game::CreateDeviceDependentResources()
     {
         EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
-            &CommonStates::Opaque,
-            &CommonStates::DepthDefault,
-            &CommonStates::CullCounterClockwise,
-            &rtState);
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
+            CommonStates::CullCounterClockwise,
+            rtState);
 
         m_effect = std::make_unique<BasicEffect>(device, EffectFlags::Lighting, pd);
         m_effect->EnableDefaultLighting();
@@ -432,10 +432,10 @@ void Game::CreateDeviceDependentResources()
     {
         EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
-            &CommonStates::Opaque,
-            &CommonStates::DepthDefault,
-            &CommonStates::Wireframe,
-            &rtState);
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
+            CommonStates::Wireframe,
+            rtState);
 
         m_effectWireframe = std::make_unique<BasicEffect>(device, EffectFlags::PerPixelLighting, pd);
         m_effectWireframe->EnableDefaultLighting();
@@ -444,10 +444,10 @@ void Game::CreateDeviceDependentResources()
     {
         EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
-            &CommonStates::Opaque,
-            &CommonStates::DepthDefault,
-            &CommonStates::CullCounterClockwise,
-            &rtState);
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
+            CommonStates::CullCounterClockwise,
+            rtState);
 
         m_effectTexture = std::make_unique<BasicEffect>(device, EffectFlags::Texture | EffectFlags::PerPixelLighting, pd);
         m_effectTexture->EnableDefaultLighting();
@@ -457,10 +457,10 @@ void Game::CreateDeviceDependentResources()
     {
         EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
-            &CommonStates::AlphaBlend,
-            &CommonStates::DepthDefault,
-            &CommonStates::CullCounterClockwise,
-            &rtState);
+            CommonStates::AlphaBlend,
+            CommonStates::DepthDefault,
+            CommonStates::CullCounterClockwise,
+            rtState);
 
         m_effectAlpha = std::make_unique<BasicEffect>(device, EffectFlags::PerPixelLighting, pd);
         m_effectAlpha->EnableDefaultLighting();
@@ -469,10 +469,10 @@ void Game::CreateDeviceDependentResources()
     {
         EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
-            &CommonStates::AlphaBlend,
-            &CommonStates::DepthDefault,
-            &CommonStates::CullCounterClockwise,
-            &rtState);
+            CommonStates::AlphaBlend,
+            CommonStates::DepthDefault,
+            CommonStates::CullCounterClockwise,
+            rtState);
 
         m_effectPMAlphaTexture = std::make_unique<BasicEffect>(device, EffectFlags::Texture | EffectFlags::PerPixelLighting, pd);
         m_effectPMAlphaTexture->EnableDefaultLighting();
@@ -481,10 +481,10 @@ void Game::CreateDeviceDependentResources()
     {
         EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
-            &CommonStates::NonPremultiplied,
-            &CommonStates::DepthDefault,
-            &CommonStates::CullCounterClockwise,
-            &rtState);
+            CommonStates::NonPremultiplied,
+            CommonStates::DepthDefault,
+            CommonStates::CullCounterClockwise,
+            rtState);
 
         m_effectAlphaTexture = std::make_unique<BasicEffect>(device, EffectFlags::Texture | EffectFlags::PerPixelLighting, pd);
         m_effectAlphaTexture->EnableDefaultLighting();
@@ -493,10 +493,10 @@ void Game::CreateDeviceDependentResources()
     {
         EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
-            &CommonStates::Opaque,
-            &CommonStates::DepthDefault,
-            &CommonStates::CullCounterClockwise,
-            &rtState);
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
+            CommonStates::CullCounterClockwise,
+            rtState);
 
         m_effectLights = std::make_unique<BasicEffect>(device, EffectFlags::Texture | EffectFlags::PerPixelLighting, pd);
         m_effectLights->EnableDefaultLighting();
@@ -505,10 +505,10 @@ void Game::CreateDeviceDependentResources()
     {
         EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
-            &CommonStates::Opaque,
-            &CommonStates::DepthDefault,
-            &CommonStates::CullCounterClockwise,
-            &rtState);
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
+            CommonStates::CullCounterClockwise,
+            rtState);
 
         m_effectFog = std::make_unique<BasicEffect>(device, EffectFlags::Texture | EffectFlags::Fog | EffectFlags::PerPixelLighting, pd);
         m_effectFog->EnableDefaultLighting();

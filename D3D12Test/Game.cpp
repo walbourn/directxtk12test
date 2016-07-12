@@ -178,10 +178,10 @@ void Game::CreateDeviceDependentResources()
     {
         EffectPipelineStateDescription pd(
             &VertexPositionColor::InputLayout,
-            &CommonStates::Opaque,
-            &CommonStates::DepthDefault,
-            &CommonStates::CullNone,
-            &rtState);
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
+            CommonStates::CullNone,
+            rtState);
 
         m_effect = std::make_unique<BasicEffect>(device, EffectFlags::VertexColor, pd);
         m_effect->EnableDefaultLighting();

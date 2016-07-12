@@ -311,9 +311,9 @@ void Game::CreateDeviceDependentResources()
     RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), m_deviceResources->GetDepthBufferFormat());
 
     {
-        SpriteBatchPipelineStateDescription pd(&rtState);
+        SpriteBatchPipelineStateDescription pd(rtState);
 
-        m_spriteBatch = std::make_unique<SpriteBatch>(device, resourceUpload, &pd);
+        m_spriteBatch = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
     }
 
     m_comicFont = std::make_unique<SpriteFont>(device, resourceUpload, L"comic.spritefont",

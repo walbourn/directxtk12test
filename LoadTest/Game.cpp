@@ -223,10 +223,10 @@ void Game::CreateDeviceDependentResources()
     {
         EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
-            &CommonStates::Opaque,
-            &CommonStates::DepthDefault,
-            &CommonStates::CullCounterClockwise,
-            &rtState);
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
+            CommonStates::CullCounterClockwise,
+            rtState);
 
         m_effect = std::make_unique<BasicEffect>(device, EffectFlags::Texture, pd);
     }
