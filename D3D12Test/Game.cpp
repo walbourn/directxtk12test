@@ -33,6 +33,31 @@ void Game::Initialize(HWND window, int width, int height)
 
     m_deviceResources->CreateWindowSizeDependentResources();
     CreateWindowSizeDependentResources();
+
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+    // SimpleMath interop tests for Windows Runtime types
+    Rectangle test1(10, 20, 50, 100);
+
+    Windows::Foundation::Rect test2 = test1;
+    if (test1.x != long(test2.X)
+        && test1.y != long(test2.Y)
+        && test1.width != long(test2.Width)
+        && test1.height != long(test2.Height))
+    {
+        OutputDebugStringA("SimpleMath::Rectangle operator test A failed!");
+        throw ref new Platform::Exception(E_FAIL);
+    }
+
+    ABI::Windows::Foundation::Rect test3 = test1;
+    if (test1.x != long(test3.X)
+        && test1.y != long(test3.Y)
+        && test1.width != long(test3.Width)
+        && test1.height != long(test3.Height))
+    {
+        OutputDebugStringA("SimpleMath::Rectangle operator test B failed!");
+        throw ref new Platform::Exception(E_FAIL);
+    }
+#endif
 }
 
 #pragma region Frame Update
@@ -191,6 +216,9 @@ void Game::CreateDeviceDependentResources()
 // Allocate all memory resources that change on a window SizeChanged event.
 void Game::CreateWindowSizeDependentResources()
 {
+    SetDebugObjectName(m_deviceResources->GetRenderTarget(), L"BackBuffer");
+
+    SetDebugObjectName(m_deviceResources->GetDepthStencil(), L"DepthStencil");
 }
 
 void Game::OnDeviceLost()
