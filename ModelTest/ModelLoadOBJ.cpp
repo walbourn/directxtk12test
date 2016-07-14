@@ -140,6 +140,15 @@ std::unique_ptr<Model> CreateModelFromOBJ(_In_z_ const wchar_t* szFileName)
     BoundingSphere::CreateFromPoints(mesh->boundingSphere, obj->vertices.size(), &obj->vertices[0].position, sizeof(VertexPositionNormalTexture));
     BoundingBox::CreateFromPoints(mesh->boundingBox, obj->vertices.size(), &obj->vertices[0].position, sizeof(VertexPositionNormalTexture));
 
+    // Create vertex & index buffer
+    size_t vertSize = sizeof(VertexPositionNormalTexture) * obj->vertices.size();
+    SharedGraphicsResource vb = GraphicsMemory::Get().Allocate(vertSize);
+    memcpy(vb.Memory(), obj->vertices.data(), vertSize);
+
+    size_t indexSize = sizeof(uint16_t) * obj->indices.size();
+    SharedGraphicsResource ib = GraphicsMemory::Get().Allocate(indexSize);
+    memcpy(ib.Memory(), obj->indices.data(), indexSize);
+
     // Create a subset for each attribute/material
     std::vector<Model::ModelMaterialInfo> materials;
     
@@ -191,17 +200,8 @@ std::unique_ptr<Model> CreateModelFromOBJ(_In_z_ const wchar_t* szFileName)
             part->startIndex = static_cast<uint32_t>(sindex);
             part->vertexStride = static_cast<uint32_t>(sizeof(VertexPositionNormalTexture));
 
-            // BUGBUG: Can't share the IB/VB, so just make a full copy
-            size_t vertSize = sizeof(VertexPositionNormalTexture) * obj->vertices.size();
-            auto vb = GraphicsMemory::Get().Allocate(vertSize);
-            memcpy(vb.Memory(), obj->vertices.data(), vertSize);
-
-            size_t indexSize = sizeof(uint16_t) * obj->indices.size();
-            auto ib = GraphicsMemory::Get().Allocate(indexSize);
-            memcpy(ib.Memory(), obj->indices.data(), indexSize);
-
-            part->indexBuffer = std::move(ib);
-            part->vertexBuffer = std::move(vb);
+            part->indexBuffer = ib;
+            part->vertexBuffer = vb;
             part->materialIndex = matIndex;
             part->vbDecl = g_vbdecl;
 
