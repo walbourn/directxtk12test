@@ -182,6 +182,10 @@ std::unique_ptr<Model> CreateModelFromOBJ(_In_z_ const wchar_t* szFileName)
             }
 
             info.textureIndex = GetUniqueTextureIndex(mat.strTexture, textureDictionary);
+            if (info.textureIndex != -1)
+            {
+                info.samplerIndex = static_cast<int>(CommonStates::SamplerIndex::AnisotropicWrap);
+            }
 
             matIndex = static_cast<uint32_t>(materials.size());
             materials.push_back(info);

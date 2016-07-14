@@ -62,6 +62,7 @@ private:
 
     // DirectXTK Test Objects
     std::unique_ptr<DirectX::GraphicsMemory>        m_graphicsMemory;
+    std::unique_ptr<DirectX::CommonStates>          m_states;
     std::unique_ptr<DirectX::DescriptorHeap>        m_resourceDescriptors;
     std::unique_ptr<DirectX::BasicEffect>           m_effect;
     std::unique_ptr<DirectX::GeometricPrimitive>    m_cube;

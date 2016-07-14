@@ -87,8 +87,8 @@ void Game::Render()
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Render");
 
     // Set the descriptor heaps
-    ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap() };
-    commandList->SetDescriptorHeaps(1, heaps);
+    ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap(), m_states->Heap() };
+    commandList->SetDescriptorHeaps(_countof(heaps), heaps);
 
     float dist = 10.f;
 
@@ -97,42 +97,42 @@ void Game::Render()
     // Cube 1
     XMMATRIX world = XMMatrixRotationY(t) * XMMatrixTranslation(1.5f, -2.1f, (dist / 2.f) + dist * sin(t));
     m_effect->SetWorld(world);
-    m_effect->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Earth));
+    m_effect->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Earth), m_states->LinearClamp());
     m_effect->Apply(commandList);
     m_cube->Draw(commandList);
 
     // Cube 2
     world = XMMatrixRotationY(-t) * XMMatrixTranslation(1.5f, 0, (dist / 2.f) + dist * sin(t));
     m_effect->SetWorld(world);
-    m_effect->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Windows95_sRGB));
+    m_effect->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Windows95_sRGB), m_states->LinearClamp());
     m_effect->Apply(commandList);
     m_cube->Draw(commandList);
 
     // Cube 3
     world = XMMatrixRotationY(t) * XMMatrixTranslation(1.5f, 2.1f, (dist / 2.f) + dist * sin(t));
     m_effect->SetWorld(world);
-    m_effect->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Windows95));
+    m_effect->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Windows95), m_states->LinearClamp());
     m_effect->Apply(commandList);
     m_cube->Draw(commandList);
 
     // Cube 4
     world = XMMatrixRotationY(-t) * XMMatrixTranslation(-1.5f, -2.1f, (dist / 2.f) + dist * sin(t));
     m_effect->SetWorld(world);
-    m_effect->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Earth_sRGB));
+    m_effect->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Earth_sRGB), m_states->LinearClamp());
     m_effect->Apply(commandList);
     m_cube->Draw(commandList);
 
     // Cube 5
     world = XMMatrixRotationY(t) * XMMatrixTranslation(-1.5f, 0, (dist / 2.f) + dist * sin(t));
     m_effect->SetWorld(world);
-    m_effect->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::DirectXLogo_BC1));
+    m_effect->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::DirectXLogo_BC1), m_states->LinearClamp());
     m_effect->Apply(commandList);
     m_cube->Draw(commandList);
 
     // Cube 6
     world = XMMatrixRotationY(-t) * XMMatrixTranslation(-1.5f, 2.1f, (dist / 2.f) + dist * sin(t));
     m_effect->SetWorld(world);
-    m_effect->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::DirectXLogo));
+    m_effect->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::DirectXLogo), m_states->LinearClamp());
     m_effect->Apply(commandList);
     m_cube->Draw(commandList);
 
@@ -211,6 +211,8 @@ void Game::CreateDeviceDependentResources()
     auto device = m_deviceResources->GetD3DDevice();
 
     m_graphicsMemory = std::make_unique<GraphicsMemory>(device);
+
+    m_states = std::make_unique<CommonStates>(device);
 
 #ifdef LH_COORDS
     m_cube = GeometricPrimitive::CreateCube(2.f, false);
@@ -454,6 +456,7 @@ void Game::OnDeviceLost()
     m_cube.reset();
     m_effect.reset();
     m_resourceDescriptors.reset();
+    m_states.reset();
     m_graphicsMemory.reset();
 }
 

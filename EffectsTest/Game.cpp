@@ -171,8 +171,8 @@ void Game::Render()
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Render");
 
     // Set the descriptor heaps
-    ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap() };
-    commandList->SetDescriptorHeaps(1, heaps);
+    ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap(), m_states->Heap() };
+    commandList->SetDescriptorHeaps(_countof(heaps), heaps);
 
     // Time-based animation
     float time = static_cast<float>(m_timer.GetTotalSeconds());
@@ -528,6 +528,8 @@ void Game::CreateDeviceDependentResources()
 
     m_graphicsMemory = std::make_unique<GraphicsMemory>(device);
 
+    m_states = std::make_unique<CommonStates>(device);
+
     CreateTeapot();
 
     // Create test effects
@@ -678,32 +680,32 @@ void Game::CreateDeviceDependentResources()
     // Set textures.
     auto opaqueCat = m_resourceDescriptors->GetGpuHandle(Descriptors::OpaqueCat);
 
-    m_skinnedEffect->SetTexture(opaqueCat);
-    m_skinnedEffectNoSpecular->SetTexture(opaqueCat);
+    m_skinnedEffect->SetTexture(opaqueCat, m_states->LinearWrap());
+    m_skinnedEffectNoSpecular->SetTexture(opaqueCat, m_states->LinearWrap());
 
     auto cubemap = m_resourceDescriptors->GetGpuHandle(Descriptors::Cubemap);
 
-    m_envmap->SetTexture(opaqueCat);
-    m_envmap->SetEnvironmentMap(cubemap);
-    m_envmapFog->SetTexture(opaqueCat);
-    m_envmapFog->SetEnvironmentMap(cubemap);
-    m_envmapNoFresnel->SetTexture(opaqueCat);
-    m_envmapNoFresnel->SetEnvironmentMap(cubemap);
+    m_envmap->SetTexture(opaqueCat, m_states->LinearWrap());
+    m_envmap->SetEnvironmentMap(cubemap, m_states->AnisotropicWrap());
+    m_envmapFog->SetTexture(opaqueCat, m_states->LinearWrap());
+    m_envmapFog->SetEnvironmentMap(cubemap, m_states->AnisotropicWrap());
+    m_envmapNoFresnel->SetTexture(opaqueCat, m_states->LinearWrap());
+    m_envmapNoFresnel->SetEnvironmentMap(cubemap, m_states->AnisotropicWrap());
 
     auto overlay = m_resourceDescriptors->GetGpuHandle(Descriptors::Overlay);
 
-    m_dualTexture->SetTexture(opaqueCat);
-    m_dualTexture->SetTexture2(overlay);
-    m_dualTextureFog->SetTexture(opaqueCat);
-    m_dualTextureFog->SetTexture2(overlay);
+    m_dualTexture->SetTexture(opaqueCat, m_states->LinearWrap());
+    m_dualTexture->SetTexture2(overlay, m_states->LinearWrap());
+    m_dualTextureFog->SetTexture(opaqueCat, m_states->LinearWrap());
+    m_dualTextureFog->SetTexture2(overlay, m_states->LinearWrap());
 
     auto cat = m_resourceDescriptors->GetGpuHandle(Descriptors::Cat);
 
-    m_alphaTest->SetTexture(cat);
-    m_alphaTestFog->SetTexture(cat);
-    m_alphaTestLess->SetTexture(cat);
-    m_alphaTestEqual->SetTexture(cat);
-    m_alphaTestNotEqual->SetTexture(cat);
+    m_alphaTest->SetTexture(cat, m_states->LinearWrap());
+    m_alphaTestFog->SetTexture(cat, m_states->LinearWrap());
+    m_alphaTestLess->SetTexture(cat, m_states->LinearWrap());
+    m_alphaTestEqual->SetTexture(cat, m_states->LinearWrap());
+    m_alphaTestNotEqual->SetTexture(cat, m_states->LinearWrap());
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
@@ -800,6 +802,7 @@ void Game::OnDeviceLost()
     m_overlay.Reset();
 
     m_resourceDescriptors.reset();
+    m_states.reset();
     m_graphicsMemory.reset();
 }
 

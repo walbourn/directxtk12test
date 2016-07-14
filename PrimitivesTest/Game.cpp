@@ -119,8 +119,8 @@ void Game::Render()
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Render");
 
     // Set the descriptor heaps
-    ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap() };
-    commandList->SetDescriptorHeaps(1, heaps);
+    ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap(), m_states->Heap() };
+    commandList->SetDescriptorHeaps(_countof(heaps), heaps);
 
     // Draw shapes.
     m_effect->SetWorld(world * XMMatrixTranslation(col0, row0, 0));
@@ -184,7 +184,7 @@ void Game::Render()
     m_box->Draw(commandList);
 
     // Draw textured shapes.
-    m_effectTexture->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::RefTexture));
+    m_effectTexture->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::RefTexture), m_states->AnisotropicWrap());
     m_effectTexture->SetWorld(world * XMMatrixTranslation(col0, row1, 0));
     m_effectTexture->SetDiffuseColor(Colors::White);
     m_effectTexture->Apply(commandList);
@@ -307,14 +307,14 @@ void Game::Render()
     m_effectAlpha->Apply(commandList);
     m_cube->Draw(commandList);
 
-    m_effectPMAlphaTexture->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Cat));
+    m_effectPMAlphaTexture->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Cat), m_states->AnisotropicWrap());
     m_effectPMAlphaTexture->SetWorld(world * XMMatrixTranslation(col1, row3, 0));
     m_effectPMAlphaTexture->SetDiffuseColor(Colors::White * alphaFade);
     m_effectPMAlphaTexture->SetAlpha(alphaFade);
     m_effectPMAlphaTexture->Apply(commandList);
     m_cube->Draw(commandList);
 
-    m_effectAlphaTexture->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Cat));
+    m_effectAlphaTexture->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Cat), m_states->AnisotropicWrap());
     m_effectAlphaTexture->SetWorld(world * XMMatrixTranslation(col2, row3, 0));
     m_effectAlphaTexture->SetDiffuseColor(Colors::White * alphaFade);
     m_effectAlphaTexture->SetAlpha(alphaFade);
@@ -325,7 +325,7 @@ void Game::Render()
     XMVECTOR quat = XMQuaternionRotationRollPitchYaw(pitch, yaw, roll);
     XMVECTOR dir = XMVector3Rotate(g_XMOne, quat);
     m_effectLights->SetLightDirection(0, dir);
-    m_effectLights->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::DirectXLogo));
+    m_effectLights->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::DirectXLogo), m_states->AnisotropicWrap());
     m_effectLights->SetWorld(XMMatrixTranslation(col3, row3, 0));
     m_effectLights->Apply(commandList);
     m_cube->Draw(commandList);
@@ -334,7 +334,7 @@ void Game::Render()
     XMMATRIX fbworld = XMMatrixTranslation(0, 0, cos(time) * 2.f);
     m_effectFog->SetWorld(fbworld  * XMMatrixTranslation(col5, row3, 0));
     m_effectFog->SetLightDirection(0, dir);
-    m_effectFog->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::DirectXLogo));
+    m_effectFog->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::DirectXLogo), m_states->AnisotropicWrap());
     m_effectFog->Apply(commandList);
     m_cube->Draw(commandList);
 
@@ -413,6 +413,8 @@ void Game::CreateDeviceDependentResources()
     auto device = m_deviceResources->GetD3DDevice();
 
     m_graphicsMemory = std::make_unique<GraphicsMemory>(device);
+
+    m_states = std::make_unique<CommonStates>(device);
 
     // Create effects.
     RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), m_deviceResources->GetDepthBufferFormat());
@@ -654,6 +656,7 @@ void Game::OnDeviceLost()
     m_refTexture.Reset();
 
     m_resourceDescriptors.reset();
+    m_states.reset();
     m_graphicsMemory.reset();
 }
 

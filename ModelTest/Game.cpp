@@ -127,8 +127,8 @@ void Game::Render()
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Render");
 
     // Set the descriptor heaps
-    ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap() };
-    commandList->SetDescriptorHeaps(1, heaps);
+    ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap(), m_states->Heap() };
+    commandList->SetDescriptorHeaps(_countof(heaps), heaps);
 
     // Draw Wavefront OBJ models
     for (auto& it : m_cupNormal)
@@ -307,6 +307,8 @@ void Game::CreateDeviceDependentResources()
 
     m_graphicsMemory = std::make_unique<GraphicsMemory>(device);
 
+    m_states = std::make_unique<CommonStates>(device);
+
     RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), m_deviceResources->GetDepthBufferFormat());
 
     m_cup = CreateModelFromOBJ(L"cup._obj");
@@ -324,7 +326,7 @@ void Game::CreateDeviceDependentResources()
     resourceUpload.Begin();
 
     m_modelResources = std::make_unique<EffectTextureFactory>(device, resourceUpload, m_resourceDescriptors->Heap());
-    m_fxFactory = std::make_unique<EffectFactory>(m_resourceDescriptors->Heap());
+    m_fxFactory = std::make_unique<EffectFactory>(m_resourceDescriptors->Heap(), m_states->Heap());
 
     // Create cup materials & effects
     int txtOffset = Descriptors::ModelStart;
@@ -362,7 +364,7 @@ void Game::CreateDeviceDependentResources()
             auto basic = dynamic_cast<BasicEffect*>(m_cupCustom[1].get());
             if (basic)
             {
-                basic->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::DefaultTex));
+                basic->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::DefaultTex), m_states->AnisotropicWrap());
             }
         }
         m_fxFactory->SetSharing(true);
@@ -488,8 +490,8 @@ void Game::CreateDeviceDependentResources()
     uploadResourcesFinished.wait();
 
     // Set textures
-    m_vboEnvMap->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::DefaultTex));
-    m_vboEnvMap->SetEnvironmentMap(m_resourceDescriptors->GetGpuHandle(Descriptors::Cubemap));
+    m_vboEnvMap->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::DefaultTex), m_states->AnisotropicWrap());
+    m_vboEnvMap->SetEnvironmentMap(m_resourceDescriptors->GetGpuHandle(Descriptors::Cubemap), m_states->AnisotropicWrap());
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
@@ -560,6 +562,8 @@ void Game::OnDeviceLost()
 
     m_modelResources.reset();
     m_fxFactory.reset();
+    m_resourceDescriptors.reset();
+    m_states.reset();
     m_graphicsMemory.reset();
 }
 

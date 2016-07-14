@@ -62,6 +62,7 @@ private:
 
     // DirectXTK Test Objects
     std::unique_ptr<DirectX::GraphicsMemory>        m_graphicsMemory;
+    std::unique_ptr<DirectX::CommonStates>          m_states;
     std::unique_ptr<DirectX::DescriptorHeap>        m_resourceDescriptors;
 
     UINT					                        m_indexCount;
