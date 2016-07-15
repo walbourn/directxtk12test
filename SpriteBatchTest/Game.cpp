@@ -73,21 +73,37 @@ void Game::Update(DX::StepTimer const& timer)
     {
         m_spriteBatch->SetRotation(DXGI_MODE_ROTATION_ROTATE270);
         assert(m_spriteBatch->GetRotation() == DXGI_MODE_ROTATION_ROTATE270);
+
+        m_spriteBatch2->SetRotation(DXGI_MODE_ROTATION_ROTATE270);
+        m_spriteBatch3->SetRotation(DXGI_MODE_ROTATION_ROTATE270);
+        m_spriteBatch4->SetRotation(DXGI_MODE_ROTATION_ROTATE270);
     }
     else if (kb.Right)
     {
         m_spriteBatch->SetRotation(DXGI_MODE_ROTATION_ROTATE90);
         assert(m_spriteBatch->GetRotation() == DXGI_MODE_ROTATION_ROTATE90);
+
+        m_spriteBatch2->SetRotation(DXGI_MODE_ROTATION_ROTATE90);
+        m_spriteBatch3->SetRotation(DXGI_MODE_ROTATION_ROTATE90);
+        m_spriteBatch4->SetRotation(DXGI_MODE_ROTATION_ROTATE90);
     }
     else if (kb.Up)
     {
         m_spriteBatch->SetRotation(DXGI_MODE_ROTATION_IDENTITY);
         assert(m_spriteBatch->GetRotation() == DXGI_MODE_ROTATION_IDENTITY);
+
+        m_spriteBatch2->SetRotation(DXGI_MODE_ROTATION_IDENTITY);
+        m_spriteBatch3->SetRotation(DXGI_MODE_ROTATION_IDENTITY);
+        m_spriteBatch4->SetRotation(DXGI_MODE_ROTATION_IDENTITY);
     }
     else if (kb.Down)
     {
         m_spriteBatch->SetRotation(DXGI_MODE_ROTATION_ROTATE180);
         assert(m_spriteBatch->GetRotation() == DXGI_MODE_ROTATION_ROTATE180);
+
+        m_spriteBatch2->SetRotation(DXGI_MODE_ROTATION_ROTATE180);
+        m_spriteBatch3->SetRotation(DXGI_MODE_ROTATION_ROTATE180);
+        m_spriteBatch4->SetRotation(DXGI_MODE_ROTATION_ROTATE180);
     }
 
     PIXEndEvent();
@@ -112,27 +128,25 @@ void Game::Render()
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Render");
 
     // Set the descriptor heaps
-    ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap() };
+    ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap(), m_states->Heap() };
     commandList->SetDescriptorHeaps(1, heaps);
 
     m_spriteBatch->Begin(commandList);
 
     float time = 60.f * static_cast<float>(m_timer.GetTotalSeconds());
 
+    auto cat = m_resourceDescriptors->GetGpuHandle(Descriptors::Cat);
+    auto catSize = GetTextureSize(m_cat.Get());
+
     // Moving
-    m_spriteBatch->Draw(m_resourceDescriptors->GetGpuHandle(Descriptors::Cat), GetTextureSize(m_cat.Get()),
-        XMFLOAT2(900, 384.f + sinf(time / 60.f)*384.f), nullptr, Colors::White, 0.f, XMFLOAT2(128, 128), 1, SpriteEffects_None, 0);
+    m_spriteBatch->Draw(cat, catSize, XMFLOAT2(900, 384.f + sinf(time / 60.f)*384.f), nullptr, Colors::White, 0.f, XMFLOAT2(128, 128), 1, SpriteEffects_None, 0);
 
     // Spinning.
-    m_spriteBatch->Draw(m_resourceDescriptors->GetGpuHandle(Descriptors::Cat), GetTextureSize(m_cat.Get()), 
-        XMFLOAT2(200, 150), nullptr, Colors::White, time / 100, XMFLOAT2(128, 128), 1, SpriteEffects_None, 0);
+    m_spriteBatch->Draw(cat, catSize, XMFLOAT2(200, 150), nullptr, Colors::White, time / 100, XMFLOAT2(128, 128), 1, SpriteEffects_None, 0);
 
     // Zero size source region.
     RECT src = { 128, 128, 128, 140 };
     RECT dest = { 400, 150, 450, 200 };
-
-    auto cat = m_resourceDescriptors->GetGpuHandle(Descriptors::Cat);
-    auto catSize = GetTextureSize(m_cat.Get());
 
     m_spriteBatch->Draw(cat, catSize, dest, &src, Colors::White, time / 100, XMFLOAT2(0, 6), SpriteEffects_None, 0);
 
@@ -199,6 +213,23 @@ void Game::Render()
     m_spriteBatch->Draw(cat, catSize, rc3, &source, Colors::LightSeaGreen, time / 300, XMFLOAT2(128, 128), SpriteEffects_None, 0.5f);
 
     m_spriteBatch->End();
+
+    // Test alt samplers
+    commandList->SetDescriptorHeaps(_countof(heaps), heaps);
+
+    RECT tileRect = { long(catSize.x), long(catSize.y), long(catSize.x * 3), long(catSize.y * 3) };
+
+    m_spriteBatch2->Begin(commandList);
+    m_spriteBatch2->Draw(cat, catSize, XMFLOAT2(1100.f, 100.f), nullptr, Colors::White, time / 50, XMFLOAT2(128, 128));
+    m_spriteBatch2->End();
+
+    m_spriteBatch3->Begin(commandList);
+    m_spriteBatch3->Draw(cat, catSize, XMFLOAT2(1100.f, 350.f), &tileRect, Colors::White, time / 50, XMFLOAT2(256, 256));
+    m_spriteBatch3->End();
+
+    m_spriteBatch4->Begin(commandList);
+    m_spriteBatch4->Draw(cat, catSize, XMFLOAT2(1100.f, 600.f), &tileRect, Colors::White, time / 50, XMFLOAT2(256, 256));
+    m_spriteBatch4->End();
 
     PIXEndEvent(commandList);
 
@@ -276,6 +307,8 @@ void Game::CreateDeviceDependentResources()
 
     m_graphicsMemory = std::make_unique<GraphicsMemory>(device);
 
+    m_states = std::make_unique<CommonStates>(device);
+
     m_resourceDescriptors = std::make_unique<DescriptorHeap>(device,
         D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
         D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
@@ -293,6 +326,39 @@ void Game::CreateDeviceDependentResources()
             &CommonStates::NonPremultiplied);
 
         m_spriteBatch = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
+    }
+
+    {
+        auto sampler = m_states->PointClamp();
+
+        SpriteBatchPipelineStateDescription pd(
+            rtState,
+            &CommonStates::NonPremultiplied,
+            nullptr, nullptr, &sampler);
+
+        m_spriteBatch2 = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
+    }
+
+    {
+        auto sampler = m_states->AnisotropicClamp();
+
+        SpriteBatchPipelineStateDescription pd(
+            rtState,
+            &CommonStates::NonPremultiplied,
+            nullptr, nullptr, &sampler);
+
+        m_spriteBatch3 = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
+    }
+
+    {
+        auto sampler = m_states->AnisotropicWrap();
+
+        SpriteBatchPipelineStateDescription pd(
+            rtState,
+            &CommonStates::NonPremultiplied,
+            nullptr, nullptr, &sampler);
+
+        m_spriteBatch4 = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
     }
 
     DX::ThrowIfFailed(
@@ -327,6 +393,9 @@ void Game::CreateWindowSizeDependentResources()
 {
     auto viewport = m_deviceResources->GetScreenViewport();
     m_spriteBatch->SetViewport(viewport);
+    m_spriteBatch2->SetViewport(viewport);
+    m_spriteBatch3->SetViewport(viewport);
+    m_spriteBatch4->SetViewport(viewport);
 }
 
 void Game::OnDeviceLost()
@@ -336,7 +405,13 @@ void Game::OnDeviceLost()
     m_letterB.Reset();
     m_letterC.Reset();
     m_resourceDescriptors.reset();
+    
     m_spriteBatch.reset();
+    m_spriteBatch2.reset();
+    m_spriteBatch3.reset();
+    m_spriteBatch4.reset();
+
+    m_states.reset();
     m_graphicsMemory.reset();
 }
 
