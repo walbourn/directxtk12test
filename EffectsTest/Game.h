@@ -100,10 +100,20 @@ private:
     std::unique_ptr<DirectX::AlphaTestEffect>       m_alphaTestEqual;
     std::unique_ptr<DirectX::AlphaTestEffect>       m_alphaTestNotEqual;
 
+    std::unique_ptr<DirectX::NormalMapEffect>       m_normalMapEffect;
+    std::unique_ptr<DirectX::NormalMapEffect>       m_normalMapEffectFog;
+    std::unique_ptr<DirectX::NormalMapEffect>       m_normalMapEffectNoDiffuse;
+    std::unique_ptr<DirectX::NormalMapEffect>       m_normalMapEffectNormalsOnly;
+    std::unique_ptr<DirectX::NormalMapEffect>       m_normalMapEffectNoSpecular;
+
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_cat;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_opaqueCat;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_cubemap;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_overlay;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_defaultTex;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_brickDiffuse;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_brickNormal;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_brickSpecular;
 
     enum Descriptors
     {
@@ -111,6 +121,10 @@ private:
         OpaqueCat,
         Cubemap,
         Overlay,
+        DefaultTex,
+        BrickDiffuse,
+        BrickNormal,
+        BrickSpecular,
         Count
     };
 };

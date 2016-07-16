@@ -27,6 +27,8 @@ namespace
             XMStoreFloat2(&this->textureCoordinate2, textureCoordinate * 3);
             XMStoreUByte4(&this->blendIndices, XMVectorSet(0, 1, 2, 3));
 
+            XMStoreFloat3(&this->tangent, g_XMZero);
+
             float u = XMVectorGetX(textureCoordinate) - 0.5f;
             float v = XMVectorGetY(textureCoordinate) - 0.5f;
 
@@ -40,6 +42,7 @@ namespace
 
         XMFLOAT3 position;
         XMFLOAT3 normal;
+        XMFLOAT3 tangent;
         XMFLOAT2 textureCoordinate;
         XMFLOAT2 textureCoordinate2;
         XMUBYTE4 blendIndices;
@@ -48,7 +51,7 @@ namespace
         static const D3D12_INPUT_LAYOUT_DESC InputLayout;
 
     private:
-        static const int InputElementCount = 6;
+        static const int InputElementCount = 7;
         static const D3D12_INPUT_ELEMENT_DESC InputElements[InputElementCount];
     };
 
@@ -56,6 +59,7 @@ namespace
     {
         { "SV_Position",  0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
         { "NORMAL",       0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "TANGENT",      0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
         { "TEXCOORD",     0, DXGI_FORMAT_R32G32_FLOAT,       0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
         { "TEXCOORD",     1, DXGI_FORMAT_R32G32_FLOAT,       0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
         { "BLENDINDICES", 0, DXGI_FORMAT_R8G8B8A8_UINT,      0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -70,6 +74,138 @@ namespace
 
     using VertexCollection = std::vector<TestVertex>;
     using IndexCollection = std::vector<uint16_t>;
+
+
+    struct aligned_deleter { void operator()(void* p) { _aligned_free(p); } };
+
+
+    // Helper for computing tangents (see DirectXMesh <http://go.microsoft.com/fwlink/?LinkID=324981>)
+    void ComputeTangents(const IndexCollection& indices, VertexCollection& vertices)
+    {
+        static const float EPSILON = 0.0001f;
+        static const XMVECTORF32 s_flips = { 1.f, -1.f, -1.f, 1.f };
+
+        size_t nFaces = indices.size() / 3;
+        size_t nVerts = vertices.size();
+
+        std::unique_ptr<XMVECTOR[], aligned_deleter> temp(reinterpret_cast<XMVECTOR*>(_aligned_malloc(sizeof(XMVECTOR) * nVerts * 2, 16)));
+
+        memset(temp.get(), 0, sizeof(XMVECTOR) * nVerts * 2);
+
+        XMVECTOR* tangent1 = temp.get();
+        XMVECTOR* tangent2 = temp.get() + nVerts;
+
+        for (size_t face = 0; face < nFaces; ++face)
+        {
+            uint16_t i0 = indices[face * 3];
+            uint16_t i1 = indices[face * 3 + 1];
+            uint16_t i2 = indices[face * 3 + 2];
+
+            if (i0 >= nVerts
+                || i1 >= nVerts
+                || i2 >= nVerts)
+            {
+                throw std::exception("ComputeTangents");
+            }
+
+            XMVECTOR t0 = XMLoadFloat2(&vertices[i0].textureCoordinate);
+            XMVECTOR t1 = XMLoadFloat2(&vertices[i1].textureCoordinate);
+            XMVECTOR t2 = XMLoadFloat2(&vertices[i2].textureCoordinate);
+
+            XMVECTOR s = XMVectorMergeXY(t1 - t0, t2 - t0);
+
+            XMFLOAT4A tmp;
+            XMStoreFloat4A(&tmp, s);
+
+            float d = tmp.x * tmp.w - tmp.z * tmp.y;
+            d = (fabsf(d) <= EPSILON) ? 1.f : (1.f / d);
+            s *= d;
+            s = XMVectorMultiply(s, s_flips);
+
+            XMMATRIX m0;
+            m0.r[0] = XMVectorPermute<3, 2, 6, 7>(s, g_XMZero);
+            m0.r[1] = XMVectorPermute<1, 0, 4, 5>(s, g_XMZero);
+            m0.r[2] = m0.r[3] = g_XMZero;
+
+            XMVECTOR p0 = XMLoadFloat3(&vertices[i0].position);
+            XMVECTOR p1 = XMLoadFloat3(&vertices[i1].position);
+            XMVECTOR p2 = XMLoadFloat3(&vertices[i2].position);
+
+            XMMATRIX m1;
+            m1.r[0] = p1 - p0;
+            m1.r[1] = p2 - p0;
+            m1.r[2] = m1.r[3] = g_XMZero;
+
+            XMMATRIX uv = XMMatrixMultiply(m0, m1);
+
+            tangent1[i0] = XMVectorAdd(tangent1[i0], uv.r[0]);
+            tangent1[i1] = XMVectorAdd(tangent1[i1], uv.r[0]);
+            tangent1[i2] = XMVectorAdd(tangent1[i2], uv.r[0]);
+
+            tangent2[i0] = XMVectorAdd(tangent2[i0], uv.r[1]);
+            tangent2[i1] = XMVectorAdd(tangent2[i1], uv.r[1]);
+            tangent2[i2] = XMVectorAdd(tangent2[i2], uv.r[1]);
+        }
+
+        for (size_t j = 0; j < nVerts; ++j)
+        {
+            // Gram-Schmidt orthonormalization
+            XMVECTOR b0 = XMLoadFloat3(&vertices[j].normal);
+            b0 = XMVector3Normalize(b0);
+
+            XMVECTOR tan1 = tangent1[j];
+            XMVECTOR b1 = tan1 - XMVector3Dot(b0, tan1) * b0;
+            b1 = XMVector3Normalize(b1);
+
+            XMVECTOR tan2 = tangent2[j];
+            XMVECTOR b2 = tan2 - XMVector3Dot(b0, tan2) * b0 - XMVector3Dot(b1, tan2) * b1;
+            b2 = XMVector3Normalize(b2);
+
+            // handle degenerate vectors
+            float len1 = XMVectorGetX(XMVector3Length(b1));
+            float len2 = XMVectorGetY(XMVector3Length(b2));
+
+            if ((len1 <= EPSILON) || (len2 <= EPSILON))
+            {
+                if (len1 > 0.5f)
+                {
+                    // Reset bi-tangent from tangent and normal
+                    b2 = XMVector3Cross(b0, b1);
+                }
+                else if (len2 > 0.5f)
+                {
+                    // Reset tangent from bi-tangent and normal
+                    b1 = XMVector3Cross(b2, b0);
+                }
+                else
+                {
+                    // Reset both tangent and bi-tangent from normal
+                    XMVECTOR axis;
+
+                    float d0 = fabs(XMVectorGetX(XMVector3Dot(g_XMIdentityR0, b0)));
+                    float d1 = fabs(XMVectorGetX(XMVector3Dot(g_XMIdentityR1, b0)));
+                    float d2 = fabs(XMVectorGetX(XMVector3Dot(g_XMIdentityR2, b0)));
+                    if (d0 < d1)
+                    {
+                        axis = (d0 < d2) ? g_XMIdentityR0 : g_XMIdentityR2;
+                    }
+                    else if (d1 < d2)
+                    {
+                        axis = g_XMIdentityR1;
+                    }
+                    else
+                    {
+                        axis = g_XMIdentityR2;
+                    }
+
+                    b1 = XMVector3Cross(b0, axis);
+                    b2 = XMVector3Cross(b0, b1);
+                }
+            }
+
+            XMStoreFloat3(&vertices[j].tangent, b1);
+       }
+    }
 
     #include "../../Src/TeapotData.inc"
 
@@ -495,6 +631,32 @@ void Game::Render()
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
     }
 
+    //--- NormalMapEffect ------------------------------------------------------------------
+    m_normalMapEffect->SetAlpha(1.f);
+    m_normalMapEffect->SetWorld(world *  XMMatrixTranslation(5, 2.5f, 0));
+    m_normalMapEffect->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    // NormalMapEffect no spec
+    m_normalMapEffectNoSpecular->SetWorld(world *  XMMatrixTranslation(5, 1.5f, 0));
+    m_normalMapEffectNoSpecular->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    // NormalMap with fog.
+    m_normalMapEffectFog->SetWorld(world *  XMMatrixTranslation(5, 0.5f, 2 - alphaFade * 6));
+    m_normalMapEffectFog->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    // NormalMap with default diffuse
+    m_normalMapEffectNoDiffuse->SetWorld(world *  XMMatrixTranslation(5, -.5f, 0));
+    m_normalMapEffectNoDiffuse->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    // NormalMap with default diffuse no spec
+    m_normalMapEffectNormalsOnly->SetWorld(world *  XMMatrixTranslation(5, -1.5f, 0));
+    m_normalMapEffectNormalsOnly->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
     PIXEndEvent(commandList);
 
     // Show the new frame.
@@ -699,6 +861,32 @@ void Game::CreateDeviceDependentResources()
         m_alphaTestEqual = std::make_unique<AlphaTestEffect>(device, EffectFlags::None, pdOpaque, D3D12_COMPARISON_FUNC_EQUAL);
 
         m_alphaTestNotEqual = std::make_unique<AlphaTestEffect>(device, EffectFlags::None, pdOpaque, D3D12_COMPARISON_FUNC_NOT_EQUAL);
+
+        //--- NormalMapEffect --------------------------------------------------------------
+        m_normalMapEffect = std::make_unique<NormalMapEffect>(device, EffectFlags::None, pdOpaque);
+        m_normalMapEffect->EnableDefaultLighting();
+        m_normalMapEffect->SetDiffuseColor(Colors::White);
+
+        m_normalMapEffectFog = std::make_unique<NormalMapEffect>(device, EffectFlags::Fog, pdOpaque);
+        m_normalMapEffectFog->SetFogColor(Colors::Gray);
+        m_normalMapEffectFog->SetFogStart(fogstart);
+        m_normalMapEffectFog->SetFogEnd(fogend);
+        m_normalMapEffectFog->SetDiffuseColor(Colors::White);
+        m_normalMapEffectFog->EnableDefaultLighting();
+
+        m_normalMapEffectNoDiffuse = std::make_unique<NormalMapEffect>(device, EffectFlags::None, pdOpaque);
+        m_normalMapEffectNoDiffuse->SetDiffuseColor(Colors::White);
+        m_normalMapEffectNoDiffuse->EnableDefaultLighting();
+
+        m_normalMapEffectNormalsOnly = std::make_unique<NormalMapEffect>(device, EffectFlags::None, pdOpaque, false);
+        m_normalMapEffectNormalsOnly->SetDiffuseColor(Colors::White);
+        m_normalMapEffectNormalsOnly->EnableDefaultLighting();
+        m_normalMapEffectNormalsOnly->DisableSpecular();
+
+        m_normalMapEffectNoSpecular = std::make_unique<NormalMapEffect>(device, EffectFlags::None, pdOpaque, false);
+        m_normalMapEffectNoSpecular->SetDiffuseColor(Colors::White);
+        m_normalMapEffectNoSpecular->EnableDefaultLighting();
+        m_normalMapEffectNoSpecular->DisableSpecular();
     }
 
     // Load textures.
@@ -731,6 +919,26 @@ void Game::CreateDeviceDependentResources()
         CreateDDSTextureFromFile(device, resourceUpload, L"overlay.dds", m_overlay.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_overlay.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Overlay));
+
+    DX::ThrowIfFailed(
+        CreateDDSTextureFromFile(device, resourceUpload, L"default.dds", m_defaultTex.ReleaseAndGetAddressOf()));
+
+    CreateShaderResourceView(device, m_defaultTex.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::DefaultTex));
+
+    DX::ThrowIfFailed(
+        CreateDDSTextureFromFile(device, resourceUpload, L"spnza_bricks_a.DDS", m_brickDiffuse.ReleaseAndGetAddressOf()));
+
+    CreateShaderResourceView(device, m_brickDiffuse.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::BrickDiffuse));
+
+    DX::ThrowIfFailed(
+        CreateDDSTextureFromFile(device, resourceUpload, L"spnza_bricks_a_normal.DDS", m_brickNormal.ReleaseAndGetAddressOf()));
+
+    CreateShaderResourceView(device, m_brickNormal.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::BrickNormal));
+
+    DX::ThrowIfFailed(
+        CreateDDSTextureFromFile(device, resourceUpload, L"spnza_bricks_a_specular.DDS", m_brickSpecular.ReleaseAndGetAddressOf()));
+
+    CreateShaderResourceView(device, m_brickSpecular.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::BrickSpecular));
 
     auto uploadResourcesFinished = resourceUpload.End(m_deviceResources->GetCommandQueue());
 
@@ -777,6 +985,33 @@ void Game::CreateDeviceDependentResources()
     m_alphaTestLess->SetTexture(cat, m_states->LinearWrap());
     m_alphaTestEqual->SetTexture(cat, m_states->LinearWrap());
     m_alphaTestNotEqual->SetTexture(cat, m_states->LinearWrap());
+
+    {
+        auto albeto = m_resourceDescriptors->GetGpuHandle(Descriptors::BrickDiffuse);
+        auto normal = m_resourceDescriptors->GetGpuHandle(Descriptors::BrickNormal);
+        auto specular = m_resourceDescriptors->GetGpuHandle(Descriptors::BrickSpecular);
+        auto defaultTex = m_resourceDescriptors->GetGpuHandle(Descriptors::DefaultTex);
+
+        auto sampler = m_states->LinearWrap();
+
+        m_normalMapEffect->SetTexture(albeto, sampler);
+        m_normalMapEffect->SetNormalTexture(normal);
+        m_normalMapEffect->SetSpecularTexture(specular);
+
+        m_normalMapEffectFog->SetTexture(albeto, sampler);
+        m_normalMapEffectFog->SetNormalTexture(normal);
+        m_normalMapEffectFog->SetSpecularTexture(specular);
+
+        m_normalMapEffectNoDiffuse->SetTexture(defaultTex, sampler);
+        m_normalMapEffectNoDiffuse->SetNormalTexture(normal);
+        m_normalMapEffectNoDiffuse->SetSpecularTexture(specular);
+
+        m_normalMapEffectNormalsOnly->SetTexture(defaultTex, sampler);
+        m_normalMapEffectNormalsOnly->SetNormalTexture(normal);
+
+        m_normalMapEffectNoSpecular->SetTexture(albeto, sampler);
+        m_normalMapEffectNoSpecular->SetNormalTexture(normal);
+    }
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
@@ -823,6 +1058,12 @@ void Game::CreateWindowSizeDependentResources()
     m_alphaTestEqual->SetView(view);
     m_alphaTestNotEqual->SetView(view);
 
+    m_normalMapEffect->SetView(view);
+    m_normalMapEffectFog->SetView(view);
+    m_normalMapEffectNoDiffuse->SetView(view);
+    m_normalMapEffectNormalsOnly->SetView(view);
+    m_normalMapEffectNoSpecular->SetView(view);
+
     m_basicEffectUnlit->SetProjection(projection);
     m_basicEffectUnlitFog->SetProjection(projection);
     m_basicEffect->SetProjection(projection);
@@ -850,6 +1091,12 @@ void Game::CreateWindowSizeDependentResources()
     m_alphaTestLess->SetProjection(projection);
     m_alphaTestEqual->SetProjection(projection);
     m_alphaTestNotEqual->SetProjection(projection);
+
+    m_normalMapEffect->SetProjection(projection);
+    m_normalMapEffectFog->SetProjection(projection);
+    m_normalMapEffectNoDiffuse->SetProjection(projection);
+    m_normalMapEffectNormalsOnly->SetProjection(projection);
+    m_normalMapEffectNoSpecular->SetProjection(projection);
 }
 
 void Game::OnDeviceLost()
@@ -882,10 +1129,20 @@ void Game::OnDeviceLost()
     m_alphaTestEqual.reset();
     m_alphaTestNotEqual.reset();
 
+    m_normalMapEffect.reset();
+    m_normalMapEffectFog.reset();
+    m_normalMapEffectNoDiffuse.reset();
+    m_normalMapEffectNormalsOnly.reset();
+    m_normalMapEffectNoSpecular.reset();
+
     m_cat.Reset();
     m_opaqueCat.Reset();
     m_cubemap.Reset();
     m_overlay.Reset();
+    m_defaultTex.Reset();
+    m_brickDiffuse.Reset();
+    m_brickNormal.Reset();
+    m_brickSpecular.Reset();
 
     m_resourceDescriptors.reset();
     m_states.reset();
@@ -924,6 +1181,9 @@ void Game::CreateTeapot()
             TessellatePatch(vertices, indices, patch, g_XMNegateX * g_XMNegateZ, false);
         }
     }
+
+    // Compute tangents
+    ComputeTangents(indices, vertices);
 
     // Create the D3D buffers.
     if (vertices.size() >= USHRT_MAX)
