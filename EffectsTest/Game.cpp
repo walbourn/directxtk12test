@@ -358,7 +358,6 @@ void Game::Render()
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     //--- EnvironmentMapEffect -------------------------------------------------------------
-    m_envmap->SetAlpha(1.f);
     m_envmap->SetEnvironmentMapAmount(1.f);
     m_envmap->SetFresnelFactor(1.f);
     m_envmap->SetWorld(world * XMMatrixTranslation(2, 2.5f, 0));
@@ -370,30 +369,74 @@ void Game::Render()
     m_envmap->SetWorld(world * XMMatrixTranslation(2, 1.5f, 0));
     m_envmap->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
-
+    m_envmap->SetAlpha(1.f);
+ 
     // Environment map with fog.
     m_envmapFog->SetWorld(world * XMMatrixTranslation(2, 0.5f, 2 - alphaFade * 6));
     m_envmapFog->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     // Environment map, animating the fresnel factor.
-    m_envmap->SetAlpha(1.f);
     m_envmap->SetFresnelFactor(alphaFade * 3);
     m_envmap->SetWorld(world * XMMatrixTranslation(2, -0.5f, 0));
     m_envmap->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
+    // Environment map, animating the amount, with no fresnel.
+    m_envmapNoFresnel->SetEnvironmentMapAmount(alphaFade);
+    m_envmapNoFresnel->SetWorld(world * XMMatrixTranslation(2, -1.5f, 0));
+    m_envmapNoFresnel->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
     // Environment map, animating the amount.
     m_envmap->SetEnvironmentMapAmount(alphaFade);
-    m_envmap->SetWorld(world * XMMatrixTranslation(2, -1.5f, 0));
+    m_envmap->SetWorld(world * XMMatrixTranslation(2, -2.5f, 0));
     m_envmap->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
-    // Environment map, animating the amount, with no fresnel.
-    m_envmapNoFresnel->SetEnvironmentMapAmount(alphaFade);
-    m_envmapNoFresnel->SetWorld(world * XMMatrixTranslation(2, -2.5f, 0));
-    m_envmapNoFresnel->Apply(commandList);
+    // Environment map, with animating specular
+    m_envmapSpec->SetEnvironmentMapSpecular(Colors::Blue * alphaFade);
+    m_envmapSpec->SetWorld(world * XMMatrixTranslation(1, -1.5f, 0));
+    m_envmapSpec->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    {
+        // Light only from above + per pixel lighting, animating the fresnel factor.
+        m_envmapPPL->SetLightDirection(0, XMVectorSet(0, -1, 0, 0));
+        m_envmapPPL->SetLightEnabled(1, false);
+        m_envmapPPL->SetLightEnabled(2, false);
+        m_envmapPPL->SetFresnelFactor(alphaFade * 3);
+        m_envmapPPL->SetWorld(world *  XMMatrixTranslation(3, -0.5f, 0));
+        m_envmapPPL->Apply(commandList);
+        commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+        // Light only from the left + per pixel lighting, animating the amount, with no fresnel.
+        m_envmapNoFresnelPPL->SetEnvironmentMapAmount(alphaFade);
+        m_envmapNoFresnelPPL->SetFresnelFactor(0);
+        m_envmapNoFresnelPPL->SetLightDirection(0, XMVectorSet(1, 0, 0, 0));
+        m_envmapNoFresnelPPL->SetLightEnabled(1, false);
+        m_envmapNoFresnelPPL->SetLightEnabled(2, false);
+        m_envmapNoFresnelPPL->SetWorld(world * XMMatrixTranslation(3, -1.5f, 0));
+        m_envmapNoFresnelPPL->Apply(commandList);
+        commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+        // Light only from straight in front + per pixel lighting with fog.
+        m_envmapFogPPL->SetLightDirection(0, XMVectorSet(0, 0, -1, 0));
+        m_envmapFogPPL->SetLightEnabled(1, false);
+        m_envmapFogPPL->SetLightEnabled(2, false);
+        m_envmapFogPPL->SetWorld(world * XMMatrixTranslation(3, -2.5f, 2 - alphaFade * 6));
+        m_envmapFogPPL->Apply(commandList);
+        commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+        // Light only from the left + per pixel lighting, with animating specular 
+        m_envmapSpecPPL->SetLightDirection(0, XMVectorSet(1, 0, 0, 0));
+        m_envmapSpecPPL->SetLightEnabled(1, false);
+        m_envmapSpecPPL->SetLightEnabled(2, false);
+        m_envmapSpecPPL->SetEnvironmentMapSpecular(Colors::Blue * alphaFade);
+        m_envmapSpecPPL->SetWorld(world * XMMatrixTranslation(1, -2.5f, 0));
+        m_envmapSpecPPL->Apply(commandList);
+        commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+    }
 
     //--- DualTextureEFfect ----------------------------------------------------------------
     m_dualTexture->SetAlpha(1.f);
@@ -608,6 +651,9 @@ void Game::CreateDeviceDependentResources()
         m_envmap = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::None, pdAlpha);
         m_envmap->EnableDefaultLighting();
 
+        m_envmapSpec = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::None, pdAlpha, true, true);
+        m_envmapSpec->EnableDefaultLighting();
+
         m_envmapFog = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::Fog, pdAlpha);
         m_envmapFog->EnableDefaultLighting();
         m_envmapFog->SetFogColor(Colors::Gray);
@@ -616,6 +662,21 @@ void Game::CreateDeviceDependentResources()
 
         m_envmapNoFresnel = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::None, pdAlpha, false);
         m_envmapNoFresnel->EnableDefaultLighting();
+
+        m_envmapPPL = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::PerPixelLighting, pdAlpha);
+        m_envmapPPL->EnableDefaultLighting();
+
+        m_envmapSpecPPL = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::PerPixelLighting, pdAlpha, true, true);
+        m_envmapSpecPPL->EnableDefaultLighting();
+
+        m_envmapFogPPL = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::Fog | EffectFlags::PerPixelLighting, pdAlpha);
+        m_envmapFogPPL->EnableDefaultLighting();
+        m_envmapFogPPL->SetFogColor(Colors::Gray);
+        m_envmapFogPPL->SetFogStart(fogstart);
+        m_envmapFogPPL->SetFogEnd(fogend);
+
+        m_envmapNoFresnelPPL = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::PerPixelLighting, pdAlpha, false);
+        m_envmapNoFresnelPPL->EnableDefaultLighting();
 
         //--- DualTextureEFfect ------------------------------------------------------------
         m_dualTexture = std::make_unique<DualTextureEffect>(device, EffectFlags::None, pdAlpha);
@@ -687,10 +748,20 @@ void Game::CreateDeviceDependentResources()
 
     m_envmap->SetTexture(opaqueCat, m_states->LinearWrap());
     m_envmap->SetEnvironmentMap(cubemap, m_states->AnisotropicWrap());
+    m_envmapSpec->SetTexture(opaqueCat, m_states->LinearWrap());
+    m_envmapSpec->SetEnvironmentMap(cubemap, m_states->AnisotropicWrap());
     m_envmapFog->SetTexture(opaqueCat, m_states->LinearWrap());
     m_envmapFog->SetEnvironmentMap(cubemap, m_states->AnisotropicWrap());
     m_envmapNoFresnel->SetTexture(opaqueCat, m_states->LinearWrap());
     m_envmapNoFresnel->SetEnvironmentMap(cubemap, m_states->AnisotropicWrap());
+    m_envmapPPL->SetTexture(opaqueCat, m_states->LinearWrap());
+    m_envmapPPL->SetEnvironmentMap(cubemap, m_states->AnisotropicWrap());
+    m_envmapSpecPPL->SetTexture(opaqueCat, m_states->LinearWrap());
+    m_envmapSpecPPL->SetEnvironmentMap(cubemap, m_states->AnisotropicWrap());
+    m_envmapFogPPL->SetTexture(opaqueCat, m_states->LinearWrap());
+    m_envmapFogPPL->SetEnvironmentMap(cubemap, m_states->AnisotropicWrap());
+    m_envmapNoFresnelPPL->SetTexture(opaqueCat, m_states->LinearWrap());
+    m_envmapNoFresnelPPL->SetEnvironmentMap(cubemap, m_states->AnisotropicWrap());
 
     auto overlay = m_resourceDescriptors->GetGpuHandle(Descriptors::Overlay);
 
@@ -735,8 +806,13 @@ void Game::CreateWindowSizeDependentResources()
     m_skinnedEffectNoSpecular->SetView(view);
 
     m_envmap->SetView(view);
+    m_envmapSpec->SetView(view);
     m_envmapFog->SetView(view);
     m_envmapNoFresnel->SetView(view);
+    m_envmapPPL->SetView(view);
+    m_envmapSpecPPL->SetView(view);
+    m_envmapFogPPL->SetView(view);
+    m_envmapNoFresnelPPL->SetView(view);
 
     m_dualTexture->SetView(view);
     m_dualTextureFog->SetView(view);
@@ -758,8 +834,13 @@ void Game::CreateWindowSizeDependentResources()
     m_skinnedEffectNoSpecular->SetProjection(projection);
 
     m_envmap->SetProjection(projection);
+    m_envmapSpec->SetProjection(projection);
     m_envmapFog->SetProjection(projection);
     m_envmapNoFresnel->SetProjection(projection);
+    m_envmapPPL->SetProjection(projection);
+    m_envmapSpecPPL->SetProjection(projection);
+    m_envmapFogPPL->SetProjection(projection);
+    m_envmapNoFresnelPPL->SetProjection(projection);
 
     m_dualTexture->SetProjection(projection);
     m_dualTextureFog->SetProjection(projection);
@@ -784,8 +865,13 @@ void Game::OnDeviceLost()
     m_skinnedEffectNoSpecular.reset();
 
     m_envmap.reset();
+    m_envmapSpec.reset();
     m_envmapFog.reset();
     m_envmapNoFresnel.reset();
+    m_envmapPPL.reset();
+    m_envmapSpecPPL.reset();
+    m_envmapFogPPL.reset();
+    m_envmapNoFresnelPPL.reset();
 
     m_dualTexture.reset();
     m_dualTextureFog.reset();

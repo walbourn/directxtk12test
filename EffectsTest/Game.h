@@ -83,8 +83,13 @@ private:
     std::unique_ptr<DirectX::SkinnedEffect>         m_skinnedEffectNoSpecular;
 
     std::unique_ptr<DirectX::EnvironmentMapEffect>  m_envmap;
+    std::unique_ptr<DirectX::EnvironmentMapEffect>  m_envmapSpec;
     std::unique_ptr<DirectX::EnvironmentMapEffect>  m_envmapFog;
     std::unique_ptr<DirectX::EnvironmentMapEffect>  m_envmapNoFresnel;
+    std::unique_ptr<DirectX::EnvironmentMapEffect>  m_envmapPPL;
+    std::unique_ptr<DirectX::EnvironmentMapEffect>  m_envmapSpecPPL;
+    std::unique_ptr<DirectX::EnvironmentMapEffect>  m_envmapFogPPL;
+    std::unique_ptr<DirectX::EnvironmentMapEffect>  m_envmapNoFresnelPPL;
 
     std::unique_ptr<DirectX::DualTextureEffect>     m_dualTexture;
     std::unique_ptr<DirectX::DualTextureEffect>     m_dualTextureFog;
