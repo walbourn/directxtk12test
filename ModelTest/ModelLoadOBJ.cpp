@@ -181,8 +181,8 @@ std::unique_ptr<Model> CreateModelFromOBJ(_In_z_ const wchar_t* szFileName)
                 info.specularColor = mat.vSpecular;
             }
 
-            info.textureIndex = GetUniqueTextureIndex(mat.strTexture, textureDictionary);
-            if (info.textureIndex != -1)
+            info.diffuseTextureIndex = GetUniqueTextureIndex(mat.strTexture, textureDictionary);
+            if (info.diffuseTextureIndex != -1)
             {
                 info.samplerIndex = static_cast<int>(CommonStates::SamplerIndex::AnisotropicWrap);
             }

@@ -327,6 +327,7 @@ void Game::CreateDeviceDependentResources()
 
     m_modelResources = std::make_unique<EffectTextureFactory>(device, resourceUpload, m_resourceDescriptors->Heap());
     m_fxFactory = std::make_unique<EffectFactory>(m_resourceDescriptors->Heap(), m_states->Heap());
+    //m_fxFactory->SetUseNormalMapEffect(false);
 
     // Create cup materials & effects
     int txtOffset = Descriptors::ModelStart;
