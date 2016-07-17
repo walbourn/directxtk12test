@@ -177,6 +177,20 @@ void Game::Render()
     Model::UpdateEffectMatrices(m_cupFog, local, m_view, m_projection);
     m_cup->Draw(commandList, m_cupFog.cbegin());
 
+        // No per pixel lighting
+    local = XMMatrixTranslation(-1.5f, row1, 0.f);
+    Model::UpdateEffectMatrices(m_cupVertexLighting, local, m_view, m_projection);
+    for (auto& it : m_cupVertexLighting)
+    {
+        auto lights = dynamic_cast<IEffectLights*>(it.get());
+        if (lights)
+        {
+            XMVECTOR dir = XMVector3Rotate(g_XMOne, quat);
+            lights->SetLightDirection(0, dir);
+        }
+    }
+    m_cup->Draw(commandList, m_cupVertexLighting.cbegin());
+
     // Draw VBO models
     local = XMMatrixMultiply(XMMatrixScaling(0.25f, 0.25f, 0.25f), XMMatrixTranslation(4.5f, row0, 0.f));
     local = XMMatrixMultiply(world, local);
@@ -327,6 +341,7 @@ void Game::CreateDeviceDependentResources()
 
     m_modelResources = std::make_unique<EffectTextureFactory>(device, resourceUpload, m_resourceDescriptors->Heap());
     m_fxFactory = std::make_unique<EffectFactory>(m_resourceDescriptors->Heap(), m_states->Heap());
+    //m_fxFactory->EnablePerPixelLighting(false);
     //m_fxFactory->SetUseNormalMapEffect(false);
 
     // Create cup materials & effects
@@ -377,6 +392,12 @@ void Game::CreateDeviceDependentResources()
         m_cupFog = m_cup->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
 
         m_fxFactory->EnableFogging(false);
+
+        m_fxFactory->EnablePerPixelLighting(false);
+
+        m_cupVertexLighting = m_cup->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
+
+        m_fxFactory->EnablePerPixelLighting(true);
     }
 
     txtOffset += txtAdd;
@@ -546,6 +567,7 @@ void Game::OnDeviceLost()
     m_cupCustom.clear();
     m_cupWireframe.clear();
     m_cupFog.clear();
+    m_cupVertexLighting.clear();
 
     m_vboNormal.reset();
     m_vboEnvMap.reset();
