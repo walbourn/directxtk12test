@@ -108,15 +108,73 @@ void Game::Render()
     auto commandList = m_deviceResources->GetCommandList();
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Render");
 
-    m_effect->Apply(commandList);
+    // Point
+    m_effectPoint->Apply(commandList);
 
     m_batch->Begin(commandList);
 
-    VertexPositionColor v1(Vector3(0.f, 0.5f, 0.5f), Colors::Red);
-    VertexPositionColor v2(Vector3(0.5f, -0.5f, 0.5f), Colors::Green);
-    VertexPositionColor v3(Vector3(-0.5f, -0.5f, 0.5f), Colors::Blue);
+    {
+        VertexPositionColor points[]
+        {
+            { Vector3(-0.75f, -0.75f, 0.5f), Colors::Red },
+            { Vector3(-0.75f, -0.5f,  0.5f), Colors::Green },
+            { Vector3(-0.75f, -0.25f, 0.5f), Colors::Blue },
+            { Vector3(-0.75f,  0.0f,  0.5f), Colors::Yellow },
+            { Vector3(-0.75f,  0.25f, 0.5f), Colors::Magenta },
+            { Vector3(-0.75f,  0.5f,  0.5f), Colors::Cyan },
+            { Vector3(-0.75f,  0.75f, 0.5f), Colors::White },
+        };
 
-    m_batch->DrawTriangle(v1, v2, v3);
+        m_batch->Draw(D3D_PRIMITIVE_TOPOLOGY_POINTLIST, points, _countof(points));
+    }
+
+    m_batch->End();
+
+    // Lines
+    m_effectLine->Apply(commandList);
+
+    m_batch->Begin(commandList);
+
+    {
+        VertexPositionColor lines[] =
+        {
+            { Vector3(-0.75f, -0.85f, 0.5f), Colors::Red },{ Vector3(0.75f, -0.85f, 0.5f), Colors::DarkRed },
+            { Vector3(-0.75f, -0.90f, 0.5f), Colors::Green },{ Vector3(0.75f, -0.90f, 0.5f), Colors::DarkGreen },
+            { Vector3(-0.75f, -0.95f, 0.5f), Colors::Blue },{ Vector3(0.75f, -0.95f, 0.5f), Colors::DarkBlue },
+        };
+
+        m_batch->DrawLine(lines[0], lines[1]);
+        m_batch->DrawLine(lines[2], lines[3]);
+        m_batch->DrawLine(lines[4], lines[5]);
+    }
+
+    m_batch->End();
+
+    // Triangle
+    m_effectTri->Apply(commandList);
+
+    m_batch->Begin(commandList);
+
+    {
+        VertexPositionColor v1(Vector3(0.f, 0.5f, 0.5f), Colors::Red);
+        VertexPositionColor v2(Vector3(0.5f, -0.5f, 0.5f), Colors::Green);
+        VertexPositionColor v3(Vector3(-0.5f, -0.5f, 0.5f), Colors::Blue);
+
+        m_batch->DrawTriangle(v1, v2, v3);
+    }
+
+    // Quad (same type as triangle)
+    {
+        VertexPositionColor quad[] =
+        {
+            { Vector3(0.75f, 0.75f, 0.5), Colors::Gray },
+            { Vector3(0.95f, 0.75f, 0.5), Colors::Gray },
+            { Vector3(0.95f, -0.75f, 0.5), Colors::DarkGray },
+            { Vector3(0.75f, -0.75f, 0.5), Colors::DarkGray },
+        };
+
+        m_batch->DrawQuad(quad[0], quad[1], quad[2], quad[3]);
+    }
 
     m_batch->End();
 
@@ -208,8 +266,13 @@ void Game::CreateDeviceDependentResources()
             CommonStates::CullNone,
             rtState);
 
-        m_effect = std::make_unique<BasicEffect>(device, EffectFlags::VertexColor, pd);
-        m_effect->EnableDefaultLighting();
+        m_effectTri = std::make_unique<BasicEffect>(device, EffectFlags::VertexColor, pd);
+
+        pd.primitiveTopology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+        m_effectPoint = std::make_unique<BasicEffect>(device, EffectFlags::VertexColor, pd);
+
+        pd.primitiveTopology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
+        m_effectLine = std::make_unique<BasicEffect>(device, EffectFlags::VertexColor, pd);
     }
 }
 
@@ -224,7 +287,9 @@ void Game::CreateWindowSizeDependentResources()
 void Game::OnDeviceLost()
 {
     m_batch.reset();
-    m_effect.reset();
+    m_effectTri.reset();
+    m_effectPoint.reset();
+    m_effectLine.reset();
     m_graphicsMemory.reset();
 }
 

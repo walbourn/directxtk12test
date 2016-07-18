@@ -74,36 +74,36 @@ void Game::Update(DX::StepTimer const& timer)
         m_spriteBatch->SetRotation(DXGI_MODE_ROTATION_ROTATE270);
         assert(m_spriteBatch->GetRotation() == DXGI_MODE_ROTATION_ROTATE270);
 
-        m_spriteBatch2->SetRotation(DXGI_MODE_ROTATION_ROTATE270);
-        m_spriteBatch3->SetRotation(DXGI_MODE_ROTATION_ROTATE270);
-        m_spriteBatch4->SetRotation(DXGI_MODE_ROTATION_ROTATE270);
+        m_spriteBatchPC->SetRotation(DXGI_MODE_ROTATION_ROTATE270);
+        m_spriteBatchAC->SetRotation(DXGI_MODE_ROTATION_ROTATE270);
+        m_spriteBatchAW->SetRotation(DXGI_MODE_ROTATION_ROTATE270);
     }
     else if (kb.Right)
     {
         m_spriteBatch->SetRotation(DXGI_MODE_ROTATION_ROTATE90);
         assert(m_spriteBatch->GetRotation() == DXGI_MODE_ROTATION_ROTATE90);
 
-        m_spriteBatch2->SetRotation(DXGI_MODE_ROTATION_ROTATE90);
-        m_spriteBatch3->SetRotation(DXGI_MODE_ROTATION_ROTATE90);
-        m_spriteBatch4->SetRotation(DXGI_MODE_ROTATION_ROTATE90);
+        m_spriteBatchPC->SetRotation(DXGI_MODE_ROTATION_ROTATE90);
+        m_spriteBatchAC->SetRotation(DXGI_MODE_ROTATION_ROTATE90);
+        m_spriteBatchAW->SetRotation(DXGI_MODE_ROTATION_ROTATE90);
     }
     else if (kb.Up)
     {
         m_spriteBatch->SetRotation(DXGI_MODE_ROTATION_IDENTITY);
         assert(m_spriteBatch->GetRotation() == DXGI_MODE_ROTATION_IDENTITY);
 
-        m_spriteBatch2->SetRotation(DXGI_MODE_ROTATION_IDENTITY);
-        m_spriteBatch3->SetRotation(DXGI_MODE_ROTATION_IDENTITY);
-        m_spriteBatch4->SetRotation(DXGI_MODE_ROTATION_IDENTITY);
+        m_spriteBatchPC->SetRotation(DXGI_MODE_ROTATION_IDENTITY);
+        m_spriteBatchAC->SetRotation(DXGI_MODE_ROTATION_IDENTITY);
+        m_spriteBatchAW->SetRotation(DXGI_MODE_ROTATION_IDENTITY);
     }
     else if (kb.Down)
     {
-        m_spriteBatch->SetRotation(DXGI_MODE_ROTATION_ROTATE180);
+        m_spriteBatch->SetRotation(DXGI_MODE_ROTATION_IDENTITY);
         assert(m_spriteBatch->GetRotation() == DXGI_MODE_ROTATION_ROTATE180);
 
-        m_spriteBatch2->SetRotation(DXGI_MODE_ROTATION_ROTATE180);
-        m_spriteBatch3->SetRotation(DXGI_MODE_ROTATION_ROTATE180);
-        m_spriteBatch4->SetRotation(DXGI_MODE_ROTATION_ROTATE180);
+        m_spriteBatchPC->SetRotation(DXGI_MODE_ROTATION_ROTATE180);
+        m_spriteBatchAC->SetRotation(DXGI_MODE_ROTATION_ROTATE180);
+        m_spriteBatchAW->SetRotation(DXGI_MODE_ROTATION_ROTATE180);
     }
 
     PIXEndEvent();
@@ -219,17 +219,17 @@ void Game::Render()
 
     RECT tileRect = { long(catSize.x), long(catSize.y), long(catSize.x * 3), long(catSize.y * 3) };
 
-    m_spriteBatch2->Begin(commandList);
-    m_spriteBatch2->Draw(cat, catSize, XMFLOAT2(1100.f, 100.f), nullptr, Colors::White, time / 50, XMFLOAT2(128, 128));
-    m_spriteBatch2->End();
+    m_spriteBatchPC->Begin(commandList);
+    m_spriteBatchPC->Draw(cat, catSize, XMFLOAT2(1100.f, 100.f), nullptr, Colors::White, time / 50, XMFLOAT2(128, 128));
+    m_spriteBatchPC->End();
 
-    m_spriteBatch3->Begin(commandList);
-    m_spriteBatch3->Draw(cat, catSize, XMFLOAT2(1100.f, 350.f), &tileRect, Colors::White, time / 50, XMFLOAT2(256, 256));
-    m_spriteBatch3->End();
+    m_spriteBatchAC->Begin(commandList);
+    m_spriteBatchAC->Draw(cat, catSize, XMFLOAT2(1100.f, 350.f), &tileRect, Colors::White, time / 50, XMFLOAT2(256, 256));
+    m_spriteBatchAC->End();
 
-    m_spriteBatch4->Begin(commandList);
-    m_spriteBatch4->Draw(cat, catSize, XMFLOAT2(1100.f, 600.f), &tileRect, Colors::White, time / 50, XMFLOAT2(256, 256));
-    m_spriteBatch4->End();
+    m_spriteBatchAW->Begin(commandList);
+    m_spriteBatchAW->Draw(cat, catSize, XMFLOAT2(1100.f, 600.f), &tileRect, Colors::White, time / 50, XMFLOAT2(256, 256));
+    m_spriteBatchAW->End();
 
     PIXEndEvent(commandList);
 
@@ -336,7 +336,7 @@ void Game::CreateDeviceDependentResources()
             &CommonStates::NonPremultiplied,
             nullptr, nullptr, &sampler);
 
-        m_spriteBatch2 = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
+        m_spriteBatchPC = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
     }
 
     {
@@ -347,7 +347,7 @@ void Game::CreateDeviceDependentResources()
             &CommonStates::NonPremultiplied,
             nullptr, nullptr, &sampler);
 
-        m_spriteBatch3 = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
+        m_spriteBatchAC = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
     }
 
     {
@@ -358,7 +358,7 @@ void Game::CreateDeviceDependentResources()
             &CommonStates::NonPremultiplied,
             nullptr, nullptr, &sampler);
 
-        m_spriteBatch4 = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
+        m_spriteBatchAW = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
     }
 
     DX::ThrowIfFailed(
@@ -392,10 +392,11 @@ void Game::CreateDeviceDependentResources()
 void Game::CreateWindowSizeDependentResources()
 {
     auto viewport = m_deviceResources->GetScreenViewport();
+
     m_spriteBatch->SetViewport(viewport);
-    m_spriteBatch2->SetViewport(viewport);
-    m_spriteBatch3->SetViewport(viewport);
-    m_spriteBatch4->SetViewport(viewport);
+    m_spriteBatchPC->SetViewport(viewport);
+    m_spriteBatchAC->SetViewport(viewport);
+    m_spriteBatchAW->SetViewport(viewport);
 }
 
 void Game::OnDeviceLost()
@@ -407,9 +408,9 @@ void Game::OnDeviceLost()
     m_resourceDescriptors.reset();
     
     m_spriteBatch.reset();
-    m_spriteBatch2.reset();
-    m_spriteBatch3.reset();
-    m_spriteBatch4.reset();
+    m_spriteBatchPC.reset();
+    m_spriteBatchAC.reset();
+    m_spriteBatchAW.reset();
 
     m_states.reset();
     m_graphicsMemory.reset();

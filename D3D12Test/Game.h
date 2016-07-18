@@ -60,6 +60,8 @@ private:
 
     // DirectXTK Test Objects
     std::unique_ptr<DirectX::GraphicsMemory>                                m_graphicsMemory;
-    std::unique_ptr<DirectX::BasicEffect>                                   m_effect;
+    std::unique_ptr<DirectX::BasicEffect>                                   m_effectPoint;
+    std::unique_ptr<DirectX::BasicEffect>                                   m_effectLine;
+    std::unique_ptr<DirectX::BasicEffect>                                   m_effectTri;
     std::unique_ptr<DirectX::PrimitiveBatch<DirectX::VertexPositionColor>>  m_batch;
 };

@@ -62,9 +62,10 @@ private:
     std::unique_ptr<DirectX::GraphicsMemory>    m_graphicsMemory;
     std::unique_ptr<DirectX::CommonStates>      m_states;
     std::unique_ptr<DirectX::SpriteBatch>       m_spriteBatch;
-    std::unique_ptr<DirectX::SpriteBatch>       m_spriteBatch2;
-    std::unique_ptr<DirectX::SpriteBatch>       m_spriteBatch3;
-    std::unique_ptr<DirectX::SpriteBatch>       m_spriteBatch4;
+    std::unique_ptr<DirectX::SpriteBatch>       m_spriteBatchPC;
+    std::unique_ptr<DirectX::SpriteBatch>       m_spriteBatchAC;
+    std::unique_ptr<DirectX::SpriteBatch>       m_spriteBatchAW;
+
     std::unique_ptr<DirectX::DescriptorHeap>    m_resourceDescriptors;
 
     Microsoft::WRL::ComPtr<ID3D12Resource>      m_cat;
