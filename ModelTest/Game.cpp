@@ -203,6 +203,11 @@ void Game::Render()
     m_vbo->Draw(commandList, m_vboEnvMap.get());
 
     // Draw SDKMESH models
+    local = XMMatrixTranslation(0.f, row2, 0.f);
+    local = XMMatrixMultiply(world, local);
+    Model::UpdateEffectMatrices(m_cupMeshNormal, local, m_view, m_projection);
+    m_cupMesh->Draw(commandList, m_cupMeshNormal.cbegin());
+
     local = XMMatrixMultiply(XMMatrixScaling(0.005f, 0.005f, 0.005f), XMMatrixTranslation(2.5f, row2, 0.f));
     local = XMMatrixMultiply(world, local);
     Model::UpdateEffectMatrices(m_tinyNormal, local, m_view, m_projection);
@@ -419,6 +424,24 @@ void Game::CreateDeviceDependentResources()
         m_vboEnvMap->EnableDefaultLighting();
     }
 
+    // SDKMESH Cup
+    m_cupMesh = Model::CreateFromSDKMESH(L"cup.sdkmesh");
+
+    txtAdd = m_cupMesh->LoadTextures(*m_modelResources, txtOffset);
+
+    {
+        EffectPipelineStateDescription pd(
+            nullptr,
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
+            ncull,
+            rtState);
+
+        m_cupMeshNormal = m_cupMesh->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
+    }
+
+    txtOffset += txtAdd;
+
     // SDKMESH Tiny
     m_tiny = Model::CreateFromSDKMESH(L"tiny.sdkmesh");
 
@@ -557,6 +580,7 @@ void Game::CreateWindowSizeDependentResources()
 void Game::OnDeviceLost()
 {
     m_cup.reset();
+    m_cupMesh.reset();
     m_vbo.reset();
     m_tiny.reset();
     m_solider.reset();
@@ -568,6 +592,8 @@ void Game::OnDeviceLost()
     m_cupWireframe.clear();
     m_cupFog.clear();
     m_cupVertexLighting.clear();
+
+    m_cupMeshNormal.clear();
 
     m_vboNormal.reset();
     m_vboEnvMap.reset();

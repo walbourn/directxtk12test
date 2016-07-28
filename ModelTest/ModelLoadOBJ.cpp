@@ -160,6 +160,7 @@ std::unique_ptr<Model> CreateModelFromOBJ(_In_z_ const wchar_t* szFileName)
     size_t sindex = 0;
     size_t nindices = 0;
     uint32_t matIndex = 0;
+    uint32_t partIndex = 0;
     bool isAlpha = false;
     for (auto it = obj->attributes.cbegin(); it != obj->attributes.cend(); ++it)
     {
@@ -198,7 +199,7 @@ std::unique_ptr<Model> CreateModelFromOBJ(_In_z_ const wchar_t* szFileName)
         auto nit = it + 1;
         if (nit == obj->attributes.cend() || *nit != curmaterial)
         {
-            auto part = new ModelMeshPart;
+            auto part = new ModelMeshPart(partIndex++);
 
             part->indexCount = static_cast<uint32_t>(nindices);
             part->startIndex = static_cast<uint32_t>(sindex);

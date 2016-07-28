@@ -71,6 +71,9 @@ private:
     std::vector<std::shared_ptr<DirectX::IEffect>>  m_cupFog;
     std::vector<std::shared_ptr<DirectX::IEffect>>  m_cupVertexLighting;
 
+    std::unique_ptr<DirectX::Model>                 m_cupMesh;
+    std::vector<std::shared_ptr<DirectX::IEffect>>  m_cupMeshNormal;
+
     std::unique_ptr<DirectX::Model>                 m_vbo;
     std::unique_ptr<DirectX::BasicEffect>           m_vboNormal;
     std::unique_ptr<DirectX::EnvironmentMapEffect>  m_vboEnvMap;

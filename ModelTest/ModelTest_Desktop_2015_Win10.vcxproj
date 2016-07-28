@@ -202,6 +202,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="cup.mtl" />
+    <None Include="cup.sdkmesh" />
     <None Include="cup._obj" />
     <None Include="dwarf.sdkmesh" />
     <None Include="player_ship_a.vbo" />
