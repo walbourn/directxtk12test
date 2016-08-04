@@ -9,24 +9,22 @@
 #define _WIN32_WINNT 0x0A00
 #include <SDKDDKVer.h>
 
-// Use the C++ standard templated min/max
+#pragma warning(push)
+#pragma warning(disable : 4005)
 #define NOMINMAX
-
-// DirectX apps don't need GDI
 #define NODRAWTEXT
 #define NOGDI
 #define NOBITMAP
-
-// Include <mcx.h> if you need this
 #define NOMCX
-
-// Include <winsvc.h> if you need this
 #define NOSERVICE
-
-// WinHelp is deprecated
 #define NOHELP
-
 #define WIN32_LEAN_AND_MEAN
+#pragma warning(pop)
+
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+
 #include <windows.h>
 
 #include <wrl/client.h>
