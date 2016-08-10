@@ -10,6 +10,11 @@ using namespace DirectX::SimpleMath;
 
 using Microsoft::WRL::ComPtr;
 
+#define GAMMA_CORRECT_RENDERING
+#define AUTOGENMIPS
+#define PERPIXELLIGHTING
+#define NORMALMAPS
+
 // Build for LH vs. RH coords
 #define LH_COORDS
 
@@ -24,7 +29,11 @@ namespace
 
 Game::Game()
 {
+#ifdef GAMMA_CORRECT_RENDERING
+    m_deviceResources = std::make_unique<DX::DeviceResources>(DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
+#else
     m_deviceResources = std::make_unique<DX::DeviceResources>();
+#endif
     m_deviceResources->RegisterDeviceNotify(this);
 }
 
@@ -270,7 +279,14 @@ void Game::Clear()
     auto dsvDescriptor = m_deviceResources->GetDepthStencilView();
 
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, &dsvDescriptor);
+
+#ifdef GAMMA_CORRECT_RENDERING
+    XMVECTORF32 color;
+    color.v = XMColorSRGBToRGB(Colors::CornflowerBlue);
+    commandList->ClearRenderTargetView(rtvDescriptor, color, 0, nullptr);
+#else
     commandList->ClearRenderTargetView(rtvDescriptor, Colors::CornflowerBlue, 0, nullptr);
+#endif
     commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
     // Set the viewport and scissor rect.
@@ -345,9 +361,23 @@ void Game::CreateDeviceDependentResources()
     resourceUpload.Begin();
 
     m_modelResources = std::make_unique<EffectTextureFactory>(device, resourceUpload, m_resourceDescriptors->Heap());
+#ifdef GAMMA_CORRECT_RENDERING
+    m_modelResources->EnableForceSRGB(true);
+#endif
+
+#ifdef AUTOGENMIPS
+    m_modelResources->EnableAutoGenMips(true);
+#endif
+
     m_fxFactory = std::make_unique<EffectFactory>(m_resourceDescriptors->Heap(), m_states->Heap());
-    //m_fxFactory->EnablePerPixelLighting(false);
-    //m_fxFactory->EnableNormalMapEffect(false);
+
+#ifndef PERPIXELLIGHTING
+    m_fxFactory->EnablePerPixelLighting(false);
+#endif
+
+#ifndef NORMALMAPS
+    m_fxFactory->EnableNormalMapEffect(false);
+#endif
 
     // Create cup materials & effects
     int txtOffset = Descriptors::ModelStart;
@@ -559,6 +589,13 @@ void Game::CreateWindowSizeDependentResources()
     m_projection = XMMatrixPerspectiveFovRH(1, aspect, 1, 15);
 #endif
 
+#ifdef GAMMA_CORRECT_RENDERING
+    XMVECTORF32 fogColor;
+    fogColor.v = XMColorSRGBToRGB(Colors::CornflowerBlue);
+#else
+    XMVECTOR fogColor = Colors::CornflowerBlue;
+#endif
+
     for (auto& it : m_cupFog)
     {
         auto fog = dynamic_cast<IEffectFog*>(it.get());
@@ -566,7 +603,7 @@ void Game::CreateWindowSizeDependentResources()
         {
             fog->SetFogStart(fogstart);
             fog->SetFogEnd(fogend);
-            fog->SetFogColor(Colors::CornflowerBlue);
+            fog->SetFogColor(fogColor);
         }
     }
 
