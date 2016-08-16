@@ -62,5 +62,8 @@
     <None Include="xboxController.spritefont">
       <Filter>Assets</Filter>
     </None>
+    <None Include="XboxOneController.spritefont">
+      <Filter>Assets</Filter>
+    </None>
   </ItemGroup>
 </Project>

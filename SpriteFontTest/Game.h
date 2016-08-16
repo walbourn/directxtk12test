@@ -72,6 +72,7 @@ private:
     std::unique_ptr<DirectX::SpriteFont> m_multicoloredFont;
     std::unique_ptr<DirectX::SpriteFont> m_japaneseFont;
     std::unique_ptr<DirectX::SpriteFont> m_ctrlFont;
+    std::unique_ptr<DirectX::SpriteFont> m_ctrlOneFont;
     std::unique_ptr<DirectX::SpriteFont> m_consolasFont;
 
     enum Descriptors
@@ -83,6 +84,7 @@ private:
         MulticoloredFont,
         JapaneseFont,
         CtrlFont,
+        CtrlOneFont,
         ConsolasFont,
         Count
     };

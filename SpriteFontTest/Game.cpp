@@ -177,6 +177,8 @@ void Game::Render()
 
     m_ctrlFont->DrawString(m_spriteBatch.get(), L" !\"\n#$%\n&'()\n*+,-", XMFLOAT2(650, 130), Colors::White, 0.f, XMFLOAT2(0.f, 0.f), 0.5f);
 
+    m_ctrlOneFont->DrawString(m_spriteBatch.get(), L" !\"\n#$%\n&'()\n*+,-", XMFLOAT2(950, 130), Colors::White, 0.f, XMFLOAT2(0.f, 0.f), 0.5f);
+
     {
         UINT w, h;
 
@@ -199,7 +201,7 @@ void Game::Render()
         for (UINT x = 0; x < w; x += 100)
         {
             swprintf_s(tmp, L"%u\n", x);
-            m_nonproportionalFont->DrawString(m_spriteBatch.get(), tmp, XMFLOAT2(float(x), float(h - 100)), Colors::Yellow);
+            m_nonproportionalFont->DrawString(m_spriteBatch.get(), tmp, XMFLOAT2(float(x), float(h - 50)), Colors::Yellow);
         }
 
         for (UINT y = 0; y < h; y += 100)
@@ -209,17 +211,14 @@ void Game::Render()
         }
     }
 
-#if 0
     m_spriteBatch->End();
 
-    m_spriteBatch->Begin(SpriteSortMode_Deferred, nullptr, nullptr, nullptr, scissorState.Get(), [&]()
-    {
-        CD3D11_RECT r(640, 20, 740, 38);
-        context->RSSetScissorRects(1, &r);
-    });
+    m_spriteBatch->Begin(commandList);
+
+    RECT r = { 640, 20, 740, 38 };
+    commandList->RSSetScissorRects(1, &r);
 
     m_comicFont->DrawString(m_spriteBatch.get(), L"Clipping!", XMFLOAT2(640, 0), Colors::DarkGreen);
-#endif
 
     m_spriteBatch->End();
 
@@ -325,7 +324,7 @@ void Game::CreateDeviceDependentResources()
     m_scriptFont = std::make_unique<SpriteFont>(device, resourceUpload, L"script.spritefont",
         m_resourceDescriptors->GetCpuHandle(Descriptors::ScriptFont), m_resourceDescriptors->GetGpuHandle(Descriptors::ScriptFont));
 
-    m_nonproportionalFont = std::make_unique<SpriteFont>(device, resourceUpload, L"multicolored.spritefont",
+    m_nonproportionalFont = std::make_unique<SpriteFont>(device, resourceUpload, L"nonproportional.spritefont",
         m_resourceDescriptors->GetCpuHandle(Descriptors::NonProportionalFont), m_resourceDescriptors->GetGpuHandle(Descriptors::NonProportionalFont));
 
     m_multicoloredFont = std::make_unique<SpriteFont>(device, resourceUpload, L"multicolored.spritefont",
@@ -336,6 +335,9 @@ void Game::CreateDeviceDependentResources()
 
     m_ctrlFont = std::make_unique<SpriteFont>(device, resourceUpload, L"xboxController.spritefont",
         m_resourceDescriptors->GetCpuHandle(Descriptors::CtrlFont), m_resourceDescriptors->GetGpuHandle(Descriptors::CtrlFont));
+
+    m_ctrlOneFont = std::make_unique<SpriteFont>(device, resourceUpload, L"xboxOneController.spritefont",
+        m_resourceDescriptors->GetCpuHandle(Descriptors::CtrlOneFont), m_resourceDescriptors->GetGpuHandle(Descriptors::CtrlOneFont));
 
     m_consolasFont = std::make_unique<SpriteFont>(device, resourceUpload, L"consolas.spritefont",
         m_resourceDescriptors->GetCpuHandle(Descriptors::ConsolasFont), m_resourceDescriptors->GetGpuHandle(Descriptors::ConsolasFont));
@@ -363,6 +365,7 @@ void Game::OnDeviceLost()
     m_multicoloredFont.reset();
     m_japaneseFont.reset();
     m_ctrlFont.reset();
+    m_ctrlOneFont.reset();
     m_consolasFont.reset();
 
     m_resourceDescriptors.reset();
