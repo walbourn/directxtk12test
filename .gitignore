@@ -17,5 +17,11 @@
 *.ilk
 *.VC.db
 Bin
+Debug
+Durango
+Profile
+Release
 /ipch
 SCREENSHOT.*
+*XDK*.*
+
