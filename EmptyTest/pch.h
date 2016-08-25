@@ -69,18 +69,13 @@
 #include <stdexcept>
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <pix.h>
 
-#include "CommonStates.h"
-#include "DDSTextureLoader.h"
-#include "DescriptorHeap.h"
-#include "DirectXHelpers.h"
 #include "GraphicsMemory.h"
 #include "Keyboard.h"
 #include "Mouse.h"
-#include "ResourceUploadBatch.h"
-#include "SpriteBatch.h"
+#include "RenderTargetState.h"
+#include "SimpleMath.h"
 
 namespace DX
 {

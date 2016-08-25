@@ -2,10 +2,10 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Common">
-      <UniqueIdentifier>92563ae4-de00-4f08-b155-0c7cc38cdd9f</UniqueIdentifier>
+      <UniqueIdentifier>d4080fe3-4345-41a8-8846-887c397145c5</UniqueIdentifier>
     </Filter>
     <Filter Include="Assets">
-      <UniqueIdentifier>5d8e6453-af19-4633-ada0-637f4eb2c400</UniqueIdentifier>
+      <UniqueIdentifier>aa8da389-7855-4214-9674-bea068b8adae</UniqueIdentifier>
       <Extensions>ico;cur;bmp;dds;dlg;fbx;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tga;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
   </ItemGroup>
@@ -33,22 +33,31 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="a.dds">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="b.dds">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="c.dds">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="cat.dds">
-      <Filter>Assets</Filter>
-    </Image>
-  </ItemGroup>
-  <ItemGroup>
     <Manifest Include="..\Common\settings.manifest">
       <Filter>Common</Filter>
     </Manifest>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="cat.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="cubemap.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="default.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="overlay.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="spnza_bricks_a.DDS">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="spnza_bricks_a_normal.DDS">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="spnza_bricks_a_specular.DDS">
+      <Filter>Assets</Filter>
+    </Image>
   </ItemGroup>
 </Project>

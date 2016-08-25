@@ -44,7 +44,10 @@ Game::Game() :
 
 Game::~Game()
 {
-    m_deviceResources->WaitForGpu();
+    if (m_deviceResources)
+    {
+        m_deviceResources->WaitForGpu();
+    }
 }
 
 // Initialize the Direct3D resources required to run.

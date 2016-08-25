@@ -4,10 +4,6 @@
     <Filter Include="Common">
       <UniqueIdentifier>fcd43134-bea4-40d8-894e-3c4569f5d175</UniqueIdentifier>
     </Filter>
-    <Filter Include="Assets">
-      <UniqueIdentifier>ce03be1e-c6d8-4ec6-acbe-27a3edcf55b4</UniqueIdentifier>
-      <Extensions>ico;cur;bmp;dds;dlg;fbx;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tga;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -34,7 +30,7 @@
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="..\Common\settings.manifest">
-      <Filter>Assets</Filter>
+      <Filter>Common</Filter>
     </Manifest>
   </ItemGroup>
 </Project>

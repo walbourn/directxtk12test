@@ -1,7 +1,7 @@
 //--------------------------------------------------------------------------------------
 // File: Game.cpp
 //
-// Developer unit test for basic Direct3D 12 support
+// Developer unit test for DirectXTK ?
 //
 // THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 // ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
@@ -16,9 +16,10 @@
 #include "pch.h"
 #include "Game.h"
 
-#pragma warning( disable : 4238 )
+//#define GAMMA_CORRECT_RENDERING
 
-#define GAMMA_CORRECT_RENDERING
+// Build for LH vs. RH coords
+//#define LH_COORDS
 
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
@@ -75,21 +76,6 @@ void Game::Initialize(
 
     m_deviceResources->CreateWindowSizeDependentResources();
     CreateWindowSizeDependentResources();
-
-#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
-    // SimpleMath interop tests for Windows Runtime types
-    Rectangle test1(10, 20, 50, 100);
-
-    Windows::Foundation::Rect test2 = test1;
-    if (test1.x != long(test2.X)
-        && test1.y != long(test2.Y)
-        && test1.width != long(test2.Width)
-        && test1.height != long(test2.Height))
-    {
-        OutputDebugStringA("SimpleMath::Rectangle operator test A failed!");
-        throw ref new Platform::Exception(E_FAIL);
-    }
-#endif
 }
 
 #pragma region Frame Update
@@ -144,102 +130,7 @@ void Game::Render()
     auto commandList = m_deviceResources->GetCommandList();
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Render");
 
-    XMVECTORF32 red, green, blue, dred, dgreen, dblue, yellow, cyan, magenta, gray, dgray;
-#ifdef GAMMA_CORRECT_RENDERING
-    red.v = XMColorSRGBToRGB(Colors::Red);
-    green.v = XMColorSRGBToRGB(Colors::Green);
-    blue.v = XMColorSRGBToRGB(Colors::Blue);
-    dred.v = XMColorSRGBToRGB(Colors::DarkRed);
-    dgreen.v = XMColorSRGBToRGB(Colors::DarkGreen);
-    dblue.v = XMColorSRGBToRGB(Colors::DarkBlue);
-    yellow.v = XMColorSRGBToRGB(Colors::Yellow);
-    cyan.v = XMColorSRGBToRGB(Colors::Cyan);
-    magenta.v = XMColorSRGBToRGB(Colors::Magenta);
-    gray.v = XMColorSRGBToRGB(Colors::Gray);
-    dgray.v = XMColorSRGBToRGB(Colors::DarkGray);
-#else
-    red.v = Colors::Red;
-    green.v = Colors::Green;
-    blue.v = Colors::Blue;
-    dred.v = Colors::DarkRed;
-    dgreen.v = Colors::DarkGreen;
-    dblue.v = Colors::DarkBlue;
-    yellow.v = Colors::Yellow;
-    cyan.v = Colors::Cyan;
-    magenta.v = Colors::Magenta;
-    gray.v = Colors::Gray;
-    dgray.v = Colors::DarkGray;
-#endif
-
-    // Point
-    m_effectPoint->Apply(commandList);
-
-    m_batch->Begin(commandList);
-
-    {
-        VertexPositionColor points[]
-        {
-            { Vector3(-0.75f, -0.75f, 0.5f), red },
-            { Vector3(-0.75f, -0.5f,  0.5f), green },
-            { Vector3(-0.75f, -0.25f, 0.5f), blue },
-            { Vector3(-0.75f,  0.0f,  0.5f), yellow },
-            { Vector3(-0.75f,  0.25f, 0.5f), magenta },
-            { Vector3(-0.75f,  0.5f,  0.5f), cyan },
-            { Vector3(-0.75f,  0.75f, 0.5f), Colors::White },
-        };
-
-        m_batch->Draw(D3D_PRIMITIVE_TOPOLOGY_POINTLIST, points, _countof(points));
-    }
-
-    m_batch->End();
-
-    // Lines
-    m_effectLine->Apply(commandList);
-
-    m_batch->Begin(commandList);
-
-    {
-        VertexPositionColor lines[] =
-        {
-            { Vector3(-0.75f, -0.85f, 0.5f), red },{ Vector3(0.75f, -0.85f, 0.5f), dred },
-            { Vector3(-0.75f, -0.90f, 0.5f), green },{ Vector3(0.75f, -0.90f, 0.5f), dgreen },
-            { Vector3(-0.75f, -0.95f, 0.5f), blue },{ Vector3(0.75f, -0.95f, 0.5f), dblue },
-        };
-
-        m_batch->DrawLine(lines[0], lines[1]);
-        m_batch->DrawLine(lines[2], lines[3]);
-        m_batch->DrawLine(lines[4], lines[5]);
-    }
-
-    m_batch->End();
-
-    // Triangle
-    m_effectTri->Apply(commandList);
-
-    m_batch->Begin(commandList);
-
-    {
-        VertexPositionColor v1(Vector3(0.f, 0.5f, 0.5f), red);
-        VertexPositionColor v2(Vector3(0.5f, -0.5f, 0.5f), green);
-        VertexPositionColor v3(Vector3(-0.5f, -0.5f, 0.5f), blue);
-
-        m_batch->DrawTriangle(v1, v2, v3);
-    }
-
-    // Quad (same type as triangle)
-    {
-        VertexPositionColor quad[] =
-        {
-            { Vector3(0.75f, 0.75f, 0.5), gray },
-            { Vector3(0.95f, 0.75f, 0.5), gray },
-            { Vector3(0.95f, -0.75f, 0.5), dgray },
-            { Vector3(0.75f, -0.75f, 0.5), dgray },
-        };
-
-        m_batch->DrawQuad(quad[0], quad[1], quad[2], quad[3]);
-    }
-
-    m_batch->End();
+    // TODO: Add your rendering code here.
 
     PIXEndEvent(commandList);
 
@@ -338,43 +229,20 @@ void Game::CreateDeviceDependentResources()
 
     m_graphicsMemory = std::make_unique<GraphicsMemory>(device);
 
-    m_batch = std::make_unique<PrimitiveBatch<VertexPositionColor>>(device);
-
     RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), m_deviceResources->GetDepthBufferFormat());
-
-    {
-        EffectPipelineStateDescription pd(
-            &VertexPositionColor::InputLayout,
-            CommonStates::Opaque,
-            CommonStates::DepthDefault,
-            CommonStates::CullNone,
-            rtState);
-
-        m_effectTri = std::make_unique<BasicEffect>(device, EffectFlags::VertexColor, pd);
-
-        pd.primitiveTopology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
-        m_effectPoint = std::make_unique<BasicEffect>(device, EffectFlags::VertexColor, pd);
-
-        pd.primitiveTopology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
-        m_effectLine = std::make_unique<BasicEffect>(device, EffectFlags::VertexColor, pd);
-    }
+    rtState;
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
 void Game::CreateWindowSizeDependentResources()
 {
-    SetDebugObjectName(m_deviceResources->GetRenderTarget(), L"BackBuffer");
-
-    SetDebugObjectName(m_deviceResources->GetDepthStencil(), L"DepthStencil");
+    // TODO: Initialize windows-size dependent objects here.
 }
 
 #if !defined(_XBOX_ONE) || !defined(_TITLE)
 void Game::OnDeviceLost()
 {
-    m_batch.reset();
-    m_effectTri.reset();
-    m_effectPoint.reset();
-    m_effectLine.reset();
+    // TODO: Add Direct3D resource cleanup here.
     m_graphicsMemory.reset();
 }
 

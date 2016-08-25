@@ -33,6 +33,7 @@ using namespace DirectX::SimpleMath;
 
 using Microsoft::WRL::ComPtr;
 
+// Constructor.
 Game::Game() :
     m_frame(0)
 {
@@ -49,7 +50,10 @@ Game::Game() :
 
 Game::~Game()
 {
-    m_deviceResources->WaitForGpu();
+    if (m_deviceResources)
+    {
+        m_deviceResources->WaitForGpu();
+    }
 }
 
 // Initialize the Direct3D resources required to run.

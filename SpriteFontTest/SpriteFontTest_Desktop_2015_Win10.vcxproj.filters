@@ -33,11 +33,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Manifest Include="..\Common\settings.manifest">
-      <Filter>Assets</Filter>
-    </Manifest>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="comic.spritefont">
       <Filter>Assets</Filter>
     </None>
@@ -65,5 +60,10 @@
     <None Include="XboxOneController.spritefont">
       <Filter>Assets</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="..\Common\settings.manifest">
+      <Filter>Common</Filter>
+    </Manifest>
   </ItemGroup>
 </Project>

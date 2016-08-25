@@ -33,11 +33,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Manifest Include="..\Common\settings.manifest">
-      <Filter>Assets</Filter>
-    </Manifest>
-  </ItemGroup>
-  <ItemGroup>
     <Image Include="cat.dds">
       <Filter>Assets</Filter>
     </Image>
@@ -47,5 +42,10 @@
     <Image Include="reftexture.dds">
       <Filter>Assets</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="..\Common\settings.manifest">
+      <Filter>Common</Filter>
+    </Manifest>
   </ItemGroup>
 </Project>

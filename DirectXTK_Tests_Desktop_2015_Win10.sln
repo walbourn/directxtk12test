@@ -3,23 +3,25 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "D3D12Test_Desktop_2015", "D3D12Test\D3D12Test_Desktop_2015_Win10.vcxproj", "{F99E4E44-9746-4763-BD3A-BDDFDE58A4D1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "D3D12Test_Desktop_2015_Win10", "D3D12Test\D3D12Test_Desktop_2015_Win10.vcxproj", "{F99E4E44-9746-4763-BD3A-BDDFDE58A4D1}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DirectXTK12", "..\DirectXTK_Desktop_2015_Win10.vcxproj", "{3E0E8608-CD9B-4C76-AF33-29CA38F2C9F0}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SpriteBatchTest_Desktop_2015", "SpriteBatchTest\SpriteBatchTest_Desktop_2015_Win10.vcxproj", "{6CE3ABA9-A541-449D-AA72-71C88CF3CD85}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SpriteBatchTest_Desktop_2015_Win10", "SpriteBatchTest\SpriteBatchTest_Desktop_2015_Win10.vcxproj", "{6CE3ABA9-A541-449D-AA72-71C88CF3CD85}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SpriteFontTest_Desktop_2015", "SpriteFontTest\SpriteFontTest_Desktop_2015_Win10.vcxproj", "{0C9F8D27-71DB-449C-BAB2-69EE02ABBFE7}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SpriteFontTest_Desktop_2015_Win10", "SpriteFontTest\SpriteFontTest_Desktop_2015_Win10.vcxproj", "{0C9F8D27-71DB-449C-BAB2-69EE02ABBFE7}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PrimitivesTest_Desktop_2015", "PrimitivesTest\PrimitivesTest_Desktop_2015_Win10.vcxproj", "{8C0828A9-2745-460E-8499-68940509BF70}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PrimitivesTest_Desktop_2015_Win10", "PrimitivesTest\PrimitivesTest_Desktop_2015_Win10.vcxproj", "{8C0828A9-2745-460E-8499-68940509BF70}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LoadTest_Desktop_2015", "LoadTest\LoadTest_Desktop_2015_Win10.vcxproj", "{3FFD498C-90A1-45FE-8232-DD653D216B03}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LoadTest_Desktop_2015_Win10", "LoadTest\LoadTest_Desktop_2015_Win10.vcxproj", "{3FFD498C-90A1-45FE-8232-DD653D216B03}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{B32E701E-AA5B-4017-93DC-724FC1CE4DD0}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EffectsTest_Desktop_2015", "EffectsTest\EffectsTest_Desktop_2015_Win10.vcxproj", "{25A385F0-3EC3-47FC-B582-BDFFC856B580}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EffectsTest_Desktop_2015_Win10", "EffectsTest\EffectsTest_Desktop_2015_Win10.vcxproj", "{25A385F0-3EC3-47FC-B582-BDFFC856B580}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ModelTest_Desktop_2015", "ModelTest\ModelTest_Desktop_2015_Win10.vcxproj", "{836BF98C-D429-434E-ACCC-6460A1C20E09}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ModelTest_Desktop_2015_Win10", "ModelTest\ModelTest_Desktop_2015_Win10.vcxproj", "{836BF98C-D429-434E-ACCC-6460A1C20E09}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ShaderTest_Desktop_2015_Win10", "ShaderTest\ShaderTest_Desktop_2015_Win10.vcxproj", "{3CE15A64-D1BB-4EBF-93BD-BDA32F318BA2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -127,6 +129,18 @@ Global
 		{836BF98C-D429-434E-ACCC-6460A1C20E09}.Release|x64.Build.0 = Release|x64
 		{836BF98C-D429-434E-ACCC-6460A1C20E09}.Release|x86.ActiveCfg = Release|Win32
 		{836BF98C-D429-434E-ACCC-6460A1C20E09}.Release|x86.Build.0 = Release|Win32
+		{3CE15A64-D1BB-4EBF-93BD-BDA32F318BA2}.Debug|x64.ActiveCfg = Debug|x64
+		{3CE15A64-D1BB-4EBF-93BD-BDA32F318BA2}.Debug|x64.Build.0 = Debug|x64
+		{3CE15A64-D1BB-4EBF-93BD-BDA32F318BA2}.Debug|x86.ActiveCfg = Debug|Win32
+		{3CE15A64-D1BB-4EBF-93BD-BDA32F318BA2}.Debug|x86.Build.0 = Debug|Win32
+		{3CE15A64-D1BB-4EBF-93BD-BDA32F318BA2}.Profile|x64.ActiveCfg = Release|x64
+		{3CE15A64-D1BB-4EBF-93BD-BDA32F318BA2}.Profile|x64.Build.0 = Release|x64
+		{3CE15A64-D1BB-4EBF-93BD-BDA32F318BA2}.Profile|x86.ActiveCfg = Release|Win32
+		{3CE15A64-D1BB-4EBF-93BD-BDA32F318BA2}.Profile|x86.Build.0 = Release|Win32
+		{3CE15A64-D1BB-4EBF-93BD-BDA32F318BA2}.Release|x64.ActiveCfg = Release|x64
+		{3CE15A64-D1BB-4EBF-93BD-BDA32F318BA2}.Release|x64.Build.0 = Release|x64
+		{3CE15A64-D1BB-4EBF-93BD-BDA32F318BA2}.Release|x86.ActiveCfg = Release|Win32
+		{3CE15A64-D1BB-4EBF-93BD-BDA32F318BA2}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -139,5 +153,6 @@ Global
 		{3FFD498C-90A1-45FE-8232-DD653D216B03} = {B32E701E-AA5B-4017-93DC-724FC1CE4DD0}
 		{25A385F0-3EC3-47FC-B582-BDFFC856B580} = {B32E701E-AA5B-4017-93DC-724FC1CE4DD0}
 		{836BF98C-D429-434E-ACCC-6460A1C20E09} = {B32E701E-AA5B-4017-93DC-724FC1CE4DD0}
+		{3CE15A64-D1BB-4EBF-93BD-BDA32F318BA2} = {B32E701E-AA5B-4017-93DC-724FC1CE4DD0}
 	EndGlobalSection
 EndGlobal
