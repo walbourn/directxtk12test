@@ -248,6 +248,7 @@ void Game::Initialize(
 #endif
     int width, int height, DXGI_MODE_ROTATION rotation)
 {
+    m_gamePad = std::make_unique<GamePad>();
     m_keyboard = std::make_unique<Keyboard>();
 
 #if defined(_XBOX_ONE) && defined(_TITLE)
@@ -290,9 +291,9 @@ void Game::Update(DX::StepTimer const& timer)
     float elapsedTime = float(timer.GetElapsedSeconds());
     elapsedTime;
 
+    auto pad = m_gamePad->GetState(0);
     auto kb = m_keyboard->GetState();
-
-    if (kb.Escape)
+    if (kb.Escape || (pad.IsConnected() && pad.IsViewPressed()))
     {
 #if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
         PostQuitMessage(0);

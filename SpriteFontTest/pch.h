@@ -72,6 +72,7 @@
 #include <pix.h>
 
 #include "DescriptorHeap.h"
+#include "GamePad.h"
 #include "GraphicsMemory.h"
 #include "Keyboard.h"
 #include "Mouse.h"
