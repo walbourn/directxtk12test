@@ -5,6 +5,12 @@
 
 #pragma once
 
+// Use the C++ standard templated min/max
+#define NOMINMAX
+
+#include <winapifamily.h>
+
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) 
 #include <WinSDKVer.h>
 #define _WIN32_WINNT 0x0A00
 #include <SDKDDKVer.h>
@@ -26,9 +32,9 @@
 #include <crtdbg.h>
 
 #include <windows.h>
+#endif
 
-#include <wrl/client.h>
-#include <wrl/event.h>
+#include <wrl.h>
 
 #include <d3d12.h>
 #include <dxgi1_4.h>
@@ -57,6 +63,7 @@
 #include "GeometricPrimitive.h"
 #include "GraphicsMemory.h"
 #include "Keyboard.h"
+#include "Mouse.h"
 #include "RenderTargetState.h"
 #include "ResourceUploadBatch.h"
 

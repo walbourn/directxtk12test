@@ -1,9 +1,24 @@
+//--------------------------------------------------------------------------------------
+// File: Game.cpp
 //
-// Game.cpp
+// Developer unit test for DirectXTK Geometric Primitives
 //
+// THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
+// ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+// THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
+// PARTICULAR PURPOSE.
+//
+// Copyright (c) Microsoft Corporation. All rights reserved.
+//
+// http://go.microsoft.com/fwlink/?LinkID=615561
+//--------------------------------------------------------------------------------------
 
 #include "pch.h"
 #include "Game.h"
+
+#pragma warning( disable : 4238 )
+
+#define GAMMA_CORRECT_RENDERING
 
 // Build for LH vs. RH coords
 //#define LH_COORDS
@@ -34,8 +49,15 @@ using Microsoft::WRL::ComPtr;
 
 Game::Game()
 {
+#ifdef GAMMA_CORRECT_RENDERING
+    m_deviceResources = std::make_unique<DX::DeviceResources>(DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
+#else
     m_deviceResources = std::make_unique<DX::DeviceResources>();
+#endif
+
+#if !defined(_XBOX_ONE) || !defined(_TITLE)
     m_deviceResources->RegisterDeviceNotify(this);
+#endif
 }
 
 Game::~Game()
@@ -44,11 +66,28 @@ Game::~Game()
 }
 
 // Initialize the Direct3D resources required to run.
-void Game::Initialize(HWND window, int width, int height)
+void Game::Initialize(
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) 
+    HWND window,
+#else
+    IUnknown* window,
+#endif
+    int width, int height, DXGI_MODE_ROTATION rotation)
 {
     m_keyboard = std::make_unique<Keyboard>();
 
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    UNREFERENCED_PARAMETER(rotation);
+    UNREFERENCED_PARAMETER(width);
+    UNREFERENCED_PARAMETER(height);
+    m_deviceResources->SetWindow(window);
+#elif defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+    m_deviceResources->SetWindow(window, width, height, rotation);
+    m_keyboard->SetWindow(reinterpret_cast<ABI::Windows::UI::Core::ICoreWindow*>(window));
+#else
+    UNREFERENCED_PARAMETER(rotation);
     m_deviceResources->SetWindow(window, width, height);
+#endif
 
     m_deviceResources->CreateDeviceResources();
     CreateDeviceDependentResources();
@@ -81,7 +120,11 @@ void Game::Update(DX::StepTimer const& timer)
 
     if (kb.Escape)
     {
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
         PostQuitMessage(0);
+#else
+        Windows::ApplicationModel::Core::CoreApplication::Exit();
+#endif
     }
 
     PIXEndEvent();
@@ -122,6 +165,29 @@ void Game::Render()
     ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap(), m_states->Heap() };
     commandList->SetDescriptorHeaps(_countof(heaps), heaps);
 
+    XMVECTORF32 red, green, blue, yellow, cyan, magenta, cornflower, lime, gray;
+#ifdef GAMMA_CORRECT_RENDERING
+    red.v = XMColorSRGBToRGB(Colors::Red);
+    green.v = XMColorSRGBToRGB(Colors::Green);
+    blue.v = XMColorSRGBToRGB(Colors::Blue);
+    yellow.v = XMColorSRGBToRGB(Colors::Yellow);
+    cyan.v = XMColorSRGBToRGB(Colors::Cyan);
+    magenta.v = XMColorSRGBToRGB(Colors::Magenta);
+    cornflower.v = XMColorSRGBToRGB(Colors::CornflowerBlue);
+    lime.v = XMColorSRGBToRGB(Colors::Lime);
+    gray.v = XMColorSRGBToRGB(Colors::Gray);
+#else
+    red.v = Colors::Red;
+    green.v = Colors::Green;
+    blue.v = Colors::Blue;
+    yellow.v = Colors::Yellow;
+    cyan.v = Colors::Cyan;
+    magenta.v = Colors::Magenta;
+    cornflower.v = Colors::CornflowerBlue;
+    lime.v = Colors::Lime;
+    gray.v = Colors::Gray;
+#endif
+
     // Draw shapes.
     m_effect->SetWorld(world * XMMatrixTranslation(col0, row0, 0));
     m_effect->SetDiffuseColor(Colors::White);
@@ -129,57 +195,57 @@ void Game::Render()
     m_cube->Draw(commandList);
 
     m_effect->SetWorld(world * XMMatrixTranslation(col1, row0, 0));
-    m_effect->SetDiffuseColor(Colors::Red);
+    m_effect->SetDiffuseColor(red);
     m_effect->Apply(commandList);
     m_sphere->Draw(commandList);
 
     m_effect->SetWorld(world * XMMatrixTranslation(col2, row0, 0));
-    m_effect->SetDiffuseColor(Colors::Green);
+    m_effect->SetDiffuseColor(green);
     m_effect->Apply(commandList);
     m_geosphere->Draw(commandList);
 
     m_effect->SetWorld(world * XMMatrixTranslation(col3, row0, 0));
-    m_effect->SetDiffuseColor(Colors::Lime);
+    m_effect->SetDiffuseColor(lime);
     m_effect->Apply(commandList);
     m_cylinder->Draw(commandList);
 
     m_effect->SetWorld(world * XMMatrixTranslation(col4, row0, 0));
-    m_effect->SetDiffuseColor(Colors::Yellow);
+    m_effect->SetDiffuseColor(yellow);
     m_effect->Apply(commandList);
     m_cone->Draw(commandList);
 
     m_effect->SetWorld(world * XMMatrixTranslation(col5, row0, 0));
-    m_effect->SetDiffuseColor(Colors::Blue);
+    m_effect->SetDiffuseColor(blue);
     m_effect->Apply(commandList);
     m_torus->Draw(commandList);
 
     m_effect->SetWorld(world * XMMatrixTranslation(col6, row0, 0));
-    m_effect->SetDiffuseColor(Colors::CornflowerBlue);
+    m_effect->SetDiffuseColor(cornflower);
     m_effect->Apply(commandList);
     m_teapot->Draw(commandList);
 
     m_effect->SetWorld(world * XMMatrixTranslation(col7, row0, 0));
-    m_effect->SetDiffuseColor(Colors::Red);
+    m_effect->SetDiffuseColor(red);
     m_effect->Apply(commandList);
     m_tetra->Draw(commandList);
 
     m_effect->SetWorld(world * XMMatrixTranslation(col8, row0, 0));
-    m_effect->SetDiffuseColor(Colors::Lime);
+    m_effect->SetDiffuseColor(lime);
     m_effect->Apply(commandList);
     m_octa->Draw(commandList);
 
     m_effect->SetWorld(world * XMMatrixTranslation(col9, row0, 0));
-    m_effect->SetDiffuseColor(Colors::Blue);
+    m_effect->SetDiffuseColor(blue);
     m_effect->Apply(commandList);
     m_dodec->Draw(commandList);
 
     m_effect->SetWorld(world * XMMatrixTranslation(col10, row0, 0));
-    m_effect->SetDiffuseColor(Colors::Cyan);
+    m_effect->SetDiffuseColor(cyan);
     m_effect->Apply(commandList);
     m_iso->Draw(commandList);
 
     m_effect->SetWorld(world * XMMatrixTranslation(col8, row3, 0));
-    m_effect->SetDiffuseColor(Colors::Magenta);
+    m_effect->SetDiffuseColor(magenta);
     m_effect->Apply(commandList);
     m_box->Draw(commandList);
 
@@ -191,57 +257,57 @@ void Game::Render()
     m_cube->Draw(commandList);
 
     m_effectTexture->SetWorld(world * XMMatrixTranslation(col1, row1, 0));
-    m_effectTexture->SetDiffuseColor(Colors::Red);
+    m_effectTexture->SetDiffuseColor(red);
     m_effectTexture->Apply(commandList);
     m_sphere->Draw(commandList);
 
     m_effectTexture->SetWorld(world * XMMatrixTranslation(col2, row1, 0));
-    m_effectTexture->SetDiffuseColor(Colors::Green);
+    m_effectTexture->SetDiffuseColor(green);
     m_effectTexture->Apply(commandList);
     m_geosphere->Draw(commandList);
 
     m_effectTexture->SetWorld(world * XMMatrixTranslation(col3, row1, 0));
-    m_effectTexture->SetDiffuseColor(Colors::Lime);
+    m_effectTexture->SetDiffuseColor(lime);
     m_effectTexture->Apply(commandList);
     m_cylinder->Draw(commandList);
 
     m_effectTexture->SetWorld(world * XMMatrixTranslation(col4, row1, 0));
-    m_effectTexture->SetDiffuseColor(Colors::Yellow);
+    m_effectTexture->SetDiffuseColor(yellow);
     m_effectTexture->Apply(commandList);
     m_cone->Draw(commandList);
 
     m_effectTexture->SetWorld(world * XMMatrixTranslation(col5, row1, 0));
-    m_effectTexture->SetDiffuseColor(Colors::Blue);
+    m_effectTexture->SetDiffuseColor(blue);
     m_effectTexture->Apply(commandList);
     m_torus->Draw(commandList);
 
     m_effectTexture->SetWorld(world * XMMatrixTranslation(col6, row1, 0));
-    m_effectTexture->SetDiffuseColor(Colors::CornflowerBlue);
+    m_effectTexture->SetDiffuseColor(cornflower);
     m_effectTexture->Apply(commandList);
     m_teapot->Draw(commandList);
 
     m_effectTexture->SetWorld(world * XMMatrixTranslation(col7, row1, 0));
-    m_effectTexture->SetDiffuseColor(Colors::Red);
+    m_effectTexture->SetDiffuseColor(red);
     m_effectTexture->Apply(commandList);
     m_tetra->Draw(commandList);
 
     m_effectTexture->SetWorld(world * XMMatrixTranslation(col8, row1, 0));
-    m_effectTexture->SetDiffuseColor(Colors::Lime);
+    m_effectTexture->SetDiffuseColor(lime);
     m_effectTexture->Apply(commandList);
     m_octa->Draw(commandList);
 
     m_effectTexture->SetWorld(world * XMMatrixTranslation(col9, row1, 0));
-    m_effectTexture->SetDiffuseColor(Colors::Blue);
+    m_effectTexture->SetDiffuseColor(blue);
     m_effectTexture->Apply(commandList);
     m_dodec->Draw(commandList);
 
     m_effectTexture->SetWorld(world * XMMatrixTranslation(col10, row1, 0));
-    m_effectTexture->SetDiffuseColor(Colors::Cyan);
+    m_effectTexture->SetDiffuseColor(cyan);
     m_effectTexture->Apply(commandList);
     m_iso->Draw(commandList);
 
     m_effectTexture->SetWorld(world * XMMatrixTranslation(col9, row3, 0));
-    m_effectTexture->SetDiffuseColor(Colors::Magenta);
+    m_effectTexture->SetDiffuseColor(magenta);
     m_effectTexture->Apply(commandList);
     m_box->Draw(commandList);
 
@@ -251,7 +317,7 @@ void Game::Render()
     m_customBox->Draw(commandList);
 
     // Draw shapes in wireframe.
-    m_effectWireframe->SetDiffuseColor(Colors::Gray);
+    m_effectWireframe->SetDiffuseColor(gray);
     m_effectWireframe->SetWorld(world * XMMatrixTranslation(col0, row2, 0));
     m_effectWireframe->Apply(commandList);
     m_cube->Draw(commandList);
@@ -357,8 +423,15 @@ void Game::Clear()
     auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
     auto dsvDescriptor = m_deviceResources->GetDepthStencilView();
 
+    XMVECTORF32 color;
+#ifdef GAMMA_CORRECT_RENDERING
+    color.v = XMColorSRGBToRGB(Colors::CornflowerBlue);
+#else
+    color.v = Colors::CornflowerBlue;
+#endif
+
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, &dsvDescriptor);
-    commandList->ClearRenderTargetView(rtvDescriptor, Colors::CornflowerBlue, 0, nullptr);
+    commandList->ClearRenderTargetView(rtvDescriptor, color, 0, nullptr);
     commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
     // Set the viewport and scissor rect.
@@ -390,13 +463,28 @@ void Game::OnResuming()
     m_timer.ResetElapsedTime();
 }
 
-void Game::OnWindowSizeChanged(int width, int height)
+#if !defined(_XBOX_ONE) || !defined(_TITLE)
+void Game::OnWindowSizeChanged(int width, int height, DXGI_MODE_ROTATION rotation)
 {
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+    if (!m_deviceResources->WindowSizeChanged(width, height, rotation))
+        return;
+#else
+    UNREFERENCED_PARAMETER(rotation);
     if (!m_deviceResources->WindowSizeChanged(width, height))
         return;
+#endif
 
     CreateWindowSizeDependentResources();
 }
+#endif
+
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+void Game::ValidateDevice()
+{
+    m_deviceResources->ValidateDevice();
+}
+#endif
 
 // Properties
 void Game::GetDefaultSize(int& width, int& height) const
@@ -522,7 +610,15 @@ void Game::CreateDeviceDependentResources()
         m_effectFog->SetFogStart(6);
         m_effectFog->SetFogEnd(8);
 #endif
-        m_effectFog->SetFogColor(Colors::CornflowerBlue);
+
+        XMVECTORF32 color;
+#ifdef GAMMA_CORRECT_RENDERING
+        color.v = XMColorSRGBToRGB(Colors::CornflowerBlue);
+#else
+        color.v = Colors::CornflowerBlue;
+#endif
+
+        m_effectFog->SetFogColor(color);
     }
 
     // Create shapes.
@@ -569,18 +665,30 @@ void Game::CreateDeviceDependentResources()
 
     resourceUpload.Begin();
 
+#ifdef GAMMA_CORRECT_RENDERING
+    bool forceSRGB = true;
+#else
+    bool forceSRGB = false;
+#endif
+
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFile(device, resourceUpload, L"cat.dds", m_cat.ReleaseAndGetAddressOf()));
+        CreateDDSTextureFromFileEx(device, resourceUpload, L"cat.dds",
+            0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false,
+            m_cat.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_cat.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Cat));
 
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo.dds", m_dxLogo.ReleaseAndGetAddressOf()));
+        CreateDDSTextureFromFileEx(device, resourceUpload, L"dx5_logo.dds",
+            0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false,
+            m_dxLogo.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_dxLogo.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::DirectXLogo));
 
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFile(device, resourceUpload, L"reftexture.dds", m_refTexture.ReleaseAndGetAddressOf()));
+        CreateDDSTextureFromFileEx(device, resourceUpload, L"reftexture.dds",
+            0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false,
+            m_refTexture.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_refTexture.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::RefTexture));
 
@@ -607,6 +715,11 @@ void Game::CreateWindowSizeDependentResources()
     XMMATRIX projection = XMMatrixPerspectiveFovRH(1, aspect, 1, 10);
 #endif
 
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+    XMMATRIX orient = XMLoadFloat4x4( &m_deviceResources->GetOrientationTransform3D() );
+    projection *= orient;
+#endif
+
     m_effect->SetView(view);
     m_effectWireframe->SetView(view);
     m_effectTexture->SetView(view);
@@ -626,6 +739,7 @@ void Game::CreateWindowSizeDependentResources()
     m_effectFog->SetProjection(projection);
 }
 
+#if !defined(_XBOX_ONE) || !defined(_TITLE)
 void Game::OnDeviceLost()
 {
     m_cube.reset();
@@ -666,4 +780,5 @@ void Game::OnDeviceRestored()
 
     CreateWindowSizeDependentResources();
 }
+#endif
 #pragma endregion

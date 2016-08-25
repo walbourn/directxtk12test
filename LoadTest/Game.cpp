@@ -1,22 +1,50 @@
+//--------------------------------------------------------------------------------------
+// File: Game.cpp
 //
-// Game.cpp
+// Developer unit test for DirectXTK DDSTextureLoader & WICTextureLoader
 //
+// THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
+// ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+// THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
+// PARTICULAR PURPOSE.
+//
+// Copyright (c) Microsoft Corporation. All rights reserved.
+//
+// http://go.microsoft.com/fwlink/?LinkID=615561
+//--------------------------------------------------------------------------------------
 
 #include "pch.h"
 #include "Game.h"
 
+#pragma warning( disable : 4238 )
+
+//#define GAMMA_CORRECT_RENDERING
+
 // Build for LH vs. RH coords
 //#define LH_COORDS
+
+namespace
+{
+    float dist = 10.f;
+};
 
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
 using Microsoft::WRL::ComPtr;
 
-Game::Game()
+Game::Game() :
+    m_frame(0)
 {
+#ifdef GAMMA_CORRECT_RENDERING
+    m_deviceResources = std::make_unique<DX::DeviceResources>(DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
+#else
     m_deviceResources = std::make_unique<DX::DeviceResources>();
+#endif
+
+#if !defined(_XBOX_ONE) || !defined(_TITLE)
     m_deviceResources->RegisterDeviceNotify(this);
+#endif
 }
 
 Game::~Game()
@@ -25,11 +53,28 @@ Game::~Game()
 }
 
 // Initialize the Direct3D resources required to run.
-void Game::Initialize(HWND window, int width, int height)
+void Game::Initialize(
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) 
+    HWND window,
+#else
+    IUnknown* window,
+#endif
+    int width, int height, DXGI_MODE_ROTATION rotation)
 {
     m_keyboard = std::make_unique<Keyboard>();
 
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    UNREFERENCED_PARAMETER(rotation);
+    UNREFERENCED_PARAMETER(width);
+    UNREFERENCED_PARAMETER(height);
+    m_deviceResources->SetWindow(window);
+#elif defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+    m_deviceResources->SetWindow(window, width, height, rotation);
+    m_keyboard->SetWindow(reinterpret_cast<ABI::Windows::UI::Core::ICoreWindow*>(window));
+#else
+    UNREFERENCED_PARAMETER(rotation);
     m_deviceResources->SetWindow(window, width, height);
+#endif
 
     m_deviceResources->CreateDeviceResources();
     CreateDeviceDependentResources();
@@ -48,6 +93,8 @@ void Game::Tick()
     });
 
     Render();
+
+    ++m_frame;
 }
 
 // Updates the world.
@@ -62,7 +109,11 @@ void Game::Update(DX::StepTimer const& timer)
 
     if (kb.Escape)
     {
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
         PostQuitMessage(0);
+#else
+        Windows::ApplicationModel::Core::CoreApplication::Exit();
+#endif
     }
 
     PIXEndEvent();
@@ -90,8 +141,6 @@ void Game::Render()
     ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap(), m_states->Heap() };
     commandList->SetDescriptorHeaps(_countof(heaps), heaps);
 
-    float dist = 10.f;
-
     auto t = static_cast<float>(m_timer.GetTotalSeconds());
 
     // Cube 1
@@ -118,7 +167,7 @@ void Game::Render()
     // Cube 4
     world = XMMatrixRotationY(-t) * XMMatrixTranslation(-1.5f, -2.1f, (dist / 2.f) + dist * sin(t));
     m_effect->SetWorld(world);
-    m_effect->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Earth_sRGB), m_states->LinearClamp());
+    m_effect->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Earth_Imm), m_states->LinearClamp());
     m_effect->Apply(commandList);
     m_cube->Draw(commandList);
 
@@ -138,11 +187,117 @@ void Game::Render()
 
     PIXEndEvent(commandList);
 
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
+    if (m_frame == 10)
+    {
+        m_screenshot = m_deviceResources->GetRenderTarget();
+    }
+#endif
+
     // Show the new frame.
     PIXBeginEvent(m_deviceResources->GetCommandQueue(), PIX_COLOR_DEFAULT, L"Present");
     m_deviceResources->Present();
     m_graphicsMemory->Commit(m_deviceResources->GetCommandQueue());
     PIXEndEvent(m_deviceResources->GetCommandQueue());
+
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
+    if (m_screenshot)
+    {
+        // We take the shot here to cope with lost device
+
+        OutputDebugStringA("******** SCREENSHOT TEST BEGIN *************\n");
+
+        DeleteFileW(L"SCREENSHOT.PNG");
+        DeleteFileW(L"SCREENSHOT.JPG");
+        DeleteFileW(L"SCREENSHOT.BMP");
+        DeleteFileW(L"SCREENSHOT.TIF");
+        DeleteFileW(L"SCREENSHOT.DDS");
+
+        DX::ThrowIfFailed(SaveWICTextureToFile(m_deviceResources->GetCommandQueue(), m_screenshot.Get(),
+            GUID_ContainerFormatPng, L"SCREENSHOT.PNG",
+            D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT));
+
+        if (GetFileAttributesW(L"SCREENSHOT.PNG") != INVALID_FILE_ATTRIBUTES)
+        {
+            OutputDebugStringA("Wrote SCREENSHOT.PNG\n");
+        }
+        else
+        {
+            OutputDebugStringA("ERROR: Missing SCREENSHOT.PNG!\n");
+        }
+
+        DX::ThrowIfFailed(SaveWICTextureToFile(m_deviceResources->GetCommandQueue(), m_screenshot.Get(),
+            GUID_ContainerFormatJpeg, L"SCREENSHOT.JPG",
+            D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT));
+
+        if (GetFileAttributesW(L"SCREENSHOT.JPG") != INVALID_FILE_ATTRIBUTES)
+        {
+            OutputDebugStringA("Wrote SCREENSHOT.JPG\n");
+        }
+        else
+        {
+            OutputDebugStringA("ERROR: Missing SCREENSHOT.JPG!\n");
+        }
+
+        DX::ThrowIfFailed(SaveWICTextureToFile(m_deviceResources->GetCommandQueue(), m_screenshot.Get(),
+            GUID_ContainerFormatBmp, L"SCREENSHOT.BMP",
+            D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT,
+            &GUID_WICPixelFormat16bppBGR565));
+
+        if (GetFileAttributesW(L"SCREENSHOT.BMP") != INVALID_FILE_ATTRIBUTES)
+        {
+            OutputDebugStringA("Wrote SCREENSHOT.BMP\n");
+        }
+        else
+        {
+            OutputDebugStringA("ERROR: Missing SCREENSHOT.BMP!\n");
+        }
+
+        DX::ThrowIfFailed(SaveWICTextureToFile(m_deviceResources->GetCommandQueue(), m_screenshot.Get(),
+            GUID_ContainerFormatTiff, L"SCREENSHOT.TIF",
+            D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT,
+            nullptr,
+            [&](IPropertyBag2* props)
+        {
+            PROPBAG2 options[2] = { 0, 0 };
+            options[0].pstrName = L"CompressionQuality";
+            options[1].pstrName = L"TiffCompressionMethod";
+
+            VARIANT varValues[2];
+            varValues[0].vt = VT_R4;
+            varValues[0].fltVal = 0.75f;
+
+            varValues[1].vt = VT_UI1;
+            varValues[1].bVal = WICTiffCompressionNone;
+
+            (void)props->Write(2, options, varValues);
+        }));
+
+        if (GetFileAttributesW(L"SCREENSHOT.TIF") != INVALID_FILE_ATTRIBUTES)
+        {
+            OutputDebugStringA("Wrote SCREENSHOT.TIF\n");
+        }
+        else
+        {
+            OutputDebugStringA("ERROR: Missing SCREENSHOT.TIF!\n");
+        }
+
+        DX::ThrowIfFailed(SaveDDSTextureToFile(m_deviceResources->GetCommandQueue(), m_screenshot.Get(), L"SCREENSHOT.DDS",
+            D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT));
+
+        if (GetFileAttributesW(L"SCREENSHOT.DDS") != INVALID_FILE_ATTRIBUTES)
+        {
+            OutputDebugStringA("Wrote SCREENSHOT.DDS\n");
+        }
+        else
+        {
+            OutputDebugStringA("ERROR: Missing SCREENSHOT.DDS!\n");
+        }
+
+        OutputDebugStringA("********* SCREENSHOT TEST END **************\n");
+        m_screenshot.Reset();
+    }
+#endif
 }
 
 // Helper method to clear the back buffers.
@@ -155,8 +310,14 @@ void Game::Clear()
     auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
     auto dsvDescriptor = m_deviceResources->GetDepthStencilView();
 
+    XMVECTORF32 color;
+#ifdef GAMMA_CORRECT_RENDERING
+    color.v = XMColorSRGBToRGB(Colors::CornflowerBlue);
+#else
+    color.v = Colors::CornflowerBlue;
+#endif
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, &dsvDescriptor);
-    commandList->ClearRenderTargetView(rtvDescriptor, Colors::CornflowerBlue, 0, nullptr);
+    commandList->ClearRenderTargetView(rtvDescriptor, color, 0, nullptr);
     commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
     // Set the viewport and scissor rect.
@@ -188,13 +349,28 @@ void Game::OnResuming()
     m_timer.ResetElapsedTime();
 }
 
-void Game::OnWindowSizeChanged(int width, int height)
+#if !defined(_XBOX_ONE) || !defined(_TITLE)
+void Game::OnWindowSizeChanged(int width, int height, DXGI_MODE_ROTATION rotation)
 {
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+    if (!m_deviceResources->WindowSizeChanged(width, height, rotation))
+        return;
+#else
+    UNREFERENCED_PARAMETER(rotation);
     if (!m_deviceResources->WindowSizeChanged(width, height))
         return;
+#endif
 
     CreateWindowSizeDependentResources();
 }
+#endif
+
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+void Game::ValidateDevice()
+{
+    m_deviceResources->ValidateDevice();
+}
+#endif
 
 // Properties
 void Game::GetDefaultSize(int& width, int& height) const
@@ -274,6 +450,8 @@ void Game::CreateDeviceDependentResources()
     DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, L"earth_A2B10G10R10.dds", 0, D3D12_RESOURCE_FLAG_NONE, true, false, m_earth2.ReleaseAndGetAddressOf()));
 
     {
+        // forceSRGB has no effect for 10:10:10:2
+
         auto desc = m_earth2->GetDesc();
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R10G10B10A2_UNORM
@@ -281,28 +459,14 @@ void Game::CreateDeviceDependentResources()
             || desc.Height != 256
             || desc.MipLevels != 10)
         {
-            OutputDebugStringA("FAILED: earth_A2B10G10R10.dds (sRGB) desc unexpected\n");
+            OutputDebugStringA("FAILED: earth_A2B10G10R10.dds (2) desc unexpected\n");
             success = false;
         }
     }
 
-    CreateShaderResourceView(device, m_earth.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Earth_sRGB));
+    CreateShaderResourceView(device, m_earth2.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Earth_Imm));
 
     // DirectX Logo
-    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen.dds", m_test1.ReleaseAndGetAddressOf(), false));
-    {
-        auto desc = m_test1->GetDesc();
-        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
-            || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM
-            || desc.Width != 256
-            || desc.Height != 256
-            || desc.MipLevels != 1)
-        {
-            OutputDebugStringA("FAILED: dx5_logo_autogen.dds (no autogen) desc unexpected\n");
-            success = false;
-        }
-    }
-
     DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen.dds", m_dxlogo.ReleaseAndGetAddressOf(), true));
 
     {
@@ -319,21 +483,6 @@ void Game::CreateDeviceDependentResources()
     }
 
     CreateShaderResourceView(device, m_dxlogo.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::DirectXLogo));
-
-    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo.dds", m_test2.ReleaseAndGetAddressOf()));
-
-    {
-        auto desc = m_test2->GetDesc();
-        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
-            || desc.Format != DXGI_FORMAT_BC1_UNORM
-            || desc.Width != 256
-            || desc.Height != 256
-            || desc.MipLevels != 9)
-        {
-            OutputDebugStringA("FAILED: dx5_logo.dds (BC1) desc unexpected\n");
-            success = false;
-        }
-    }
 
     DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, L"dx5_logo.dds", 0, D3D12_RESOURCE_FLAG_NONE, true, false, m_dxlogo2.ReleaseAndGetAddressOf()));
 
@@ -353,21 +502,6 @@ void Game::CreateDeviceDependentResources()
     CreateShaderResourceView(device, m_dxlogo2.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::DirectXLogo_BC1));
     
     // Windows 95 logo
-    DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"win95.bmp", m_test3.ReleaseAndGetAddressOf(), false));
-
-    {
-        auto desc = m_test3->GetDesc();
-        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
-            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
-            || desc.Width != 256
-            || desc.Height != 256
-            || desc.MipLevels != 1)
-        {
-            OutputDebugStringA("FAILED: win95.bmp desc unexpected\n");
-            success = false;
-        }
-    }
-
     DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"win95.bmp", m_win95.ReleaseAndGetAddressOf(), true));
 
     {
@@ -388,9 +522,9 @@ void Game::CreateDeviceDependentResources()
     DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"win95.bmp", 0, D3D12_RESOURCE_FLAG_NONE, true, true, m_win95_2.ReleaseAndGetAddressOf()));
 
     {
-        auto desc = m_win95->GetDesc();
+        auto desc = m_win95_2->GetDesc();
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
-            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
+            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
             || desc.Width != 256
             || desc.Height != 256
             || desc.MipLevels != 9)
@@ -429,10 +563,16 @@ void Game::CreateWindowSizeDependentResources()
     XMMATRIX projection = XMMatrixPerspectiveFovRH(XM_PIDIV4, aspect, 0.01f, 100.0f);
 #endif
 
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+    XMMATRIX orient = XMLoadFloat4x4(&m_deviceResources->GetOrientationTransform3D());
+    projection *= orient;
+#endif
+
     m_effect->SetView(view);
     m_effect->SetProjection(projection);
 }
 
+#if !defined(_XBOX_ONE) || !defined(_TITLE)
 void Game::OnDeviceLost()
 {
     m_earth.Reset();
@@ -458,6 +598,8 @@ void Game::OnDeviceLost()
     m_resourceDescriptors.reset();
     m_states.reset();
     m_graphicsMemory.reset();
+
+    m_screenshot.Reset();
 }
 
 void Game::OnDeviceRestored()
@@ -466,11 +608,59 @@ void Game::OnDeviceRestored()
 
     CreateWindowSizeDependentResources();
 }
+#endif
 #pragma endregion
 
 void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
 {
     auto device = m_deviceResources->GetD3DDevice();
+
+    // DirectX Logo (verify DDS for autogen has no mipmaps)
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen.dds", m_test1.ReleaseAndGetAddressOf(), false));
+    {
+        auto desc = m_test1->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM
+            || desc.Width != 256
+            || desc.Height != 256
+            || desc.MipLevels != 1)
+        {
+            OutputDebugStringA("FAILED: dx5_logo_autogen.dds (no autogen) desc unexpected\n");
+            success = false;
+        }
+    }
+
+    // DirectX Logo (verify DDS is BC1 without sRGB)
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo.dds", m_test2.ReleaseAndGetAddressOf()));
+
+    {
+        auto desc = m_test2->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_BC1_UNORM
+            || desc.Width != 256
+            || desc.Height != 256
+            || desc.MipLevels != 9)
+        {
+            OutputDebugStringA("FAILED: dx5_logo.dds (BC1) desc unexpected\n");
+            success = false;
+        }
+    }
+
+    // Windows 95 logo
+    DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"win95.bmp", m_test3.ReleaseAndGetAddressOf(), false));
+
+    {
+        auto desc = m_test3->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
+            || desc.Width != 256
+            || desc.Height != 256
+            || desc.MipLevels != 1)
+        {
+            OutputDebugStringA("FAILED: win95.bmp desc unexpected\n");
+            success = false;
+        }
+    }
 
     // Alpha mode test
     DDS_ALPHA_MODE alphaMode = DDS_ALPHA_MODE_UNKNOWN;

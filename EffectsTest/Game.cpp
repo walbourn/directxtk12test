@@ -1,10 +1,25 @@
+//--------------------------------------------------------------------------------------
+// File: Game.cpp
 //
-// Game.cpp
+// Developer unit test for DirectXTK Effects
 //
+// THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
+// ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+// THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
+// PARTICULAR PURPOSE.
+//
+// Copyright (c) Microsoft Corporation. All rights reserved.
+//
+// http://go.microsoft.com/fwlink/?LinkID=615561
+//--------------------------------------------------------------------------------------
 
 #include "pch.h"
 #include "Game.h"
 #include "Bezier.h"
+
+#pragma warning( disable : 4238 )
+
+#define GAMMA_CORRECT_RENDERING
 
 // Build for LH vs. RH coords
 //#define LH_COORDS
@@ -17,6 +32,27 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
+    const float rowA = -2.f;
+    const float row0 = 2.5f;
+    const float row1 = 1.5f;
+    const float row2 = 0.5f;
+    const float row3 = 0.f;
+    const float row4 = -0.5f;
+    const float row5 = -1.5f;
+    const float row6 = -2.5f;
+
+    const float colA = -5.f;
+    const float col0 = -4.f;
+    const float col1 = -3.f;
+    const float col2 = -2.f;
+    const float col3 = -1.f;
+    const float col4 = 0.f;
+    const float col5 = 1.f;
+    const float col6 = 2.f;
+    const float col7 = 3.f;
+    const float col8 = 4.f;
+    const float col9 = 5.f;
+
     struct TestVertex
     {
         TestVertex(FXMVECTOR position, FXMVECTOR normal, FXMVECTOR textureCoordinate)
@@ -38,6 +74,8 @@ namespace
                 d = 0;
 
             XMStoreFloat4(&this->blendWeight, XMVectorSet(d, 1 - d, u, v));
+
+            color = 0xFFFF00FF;
         }
 
         XMFLOAT3 position;
@@ -47,11 +85,12 @@ namespace
         XMFLOAT2 textureCoordinate2;
         XMUBYTE4 blendIndices;
         XMFLOAT4 blendWeight;
+        XMUBYTE4 color;
 
         static const D3D12_INPUT_LAYOUT_DESC InputLayout;
 
     private:
-        static const int InputElementCount = 7;
+        static const int InputElementCount = 8;
         static const D3D12_INPUT_ELEMENT_DESC InputElements[InputElementCount];
     };
 
@@ -64,6 +103,7 @@ namespace
         { "TEXCOORD",     1, DXGI_FORMAT_R32G32_FLOAT,       0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
         { "BLENDINDICES", 0, DXGI_FORMAT_R8G8B8A8_UINT,      0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
         { "BLENDWEIGHT",  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "COLOR",        0, DXGI_FORMAT_R8G8B8A8_UNORM,     0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
     };
 
     const D3D12_INPUT_LAYOUT_DESC TestVertex::InputLayout =
@@ -238,8 +278,15 @@ namespace
 
 Game::Game()
 {
+#ifdef GAMMA_CORRECT_RENDERING
+    m_deviceResources = std::make_unique<DX::DeviceResources>(DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
+#else
     m_deviceResources = std::make_unique<DX::DeviceResources>();
+#endif
+
+#if !defined(_XBOX_ONE) || !defined(_TITLE)
     m_deviceResources->RegisterDeviceNotify(this);
+#endif
 }
 
 Game::~Game()
@@ -248,11 +295,28 @@ Game::~Game()
 }
 
 // Initialize the Direct3D resources required to run.
-void Game::Initialize(HWND window, int width, int height)
+void Game::Initialize(
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) 
+    HWND window,
+#else
+    IUnknown* window,
+#endif
+    int width, int height, DXGI_MODE_ROTATION rotation)
 {
     m_keyboard = std::make_unique<Keyboard>();
 
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    UNREFERENCED_PARAMETER(rotation);
+    UNREFERENCED_PARAMETER(width);
+    UNREFERENCED_PARAMETER(height);
+    m_deviceResources->SetWindow(window);
+#elif defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+    m_deviceResources->SetWindow(window, width, height, rotation);
+    m_keyboard->SetWindow(reinterpret_cast<ABI::Windows::UI::Core::ICoreWindow*>(window));
+#else
+    UNREFERENCED_PARAMETER(rotation);
     m_deviceResources->SetWindow(window, width, height);
+#endif
 
     m_deviceResources->CreateDeviceResources();
     CreateDeviceDependentResources();
@@ -282,7 +346,11 @@ void Game::Update(DX::StepTimer const& /*timer*/)
 
     if (kb.Escape)
     {
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
         PostQuitMessage(0);
+#else
+        Windows::ApplicationModel::Core::CoreApplication::Exit();
+#endif
     }
 
     PIXEndEvent();
@@ -322,6 +390,13 @@ void Game::Render()
     float pitch = time * 0.7f;
     float roll = time * 1.1f;
 
+    XMVECTORF32 blue;
+#ifdef GAMMA_CORRECT_RENDERING
+    blue.v = XMColorSRGBToRGB(Colors::Blue);
+#else
+    blue.v = Colors::Blue;
+#endif
+
     XMMATRIX world = XMMatrixRotationRollPitchYaw(pitch, yaw, roll);
 
     // Setup for teapot drawing.
@@ -332,48 +407,65 @@ void Game::Render()
     //--- BasicEFfect ----------------------------------------------------------------------
     // Simple unlit teapot.
     m_basicEffectUnlit->SetAlpha(1.f);
-    m_basicEffectUnlit->SetWorld(world * XMMatrixTranslation(-4, 2.5f, 0));
+    m_basicEffectUnlit->SetWorld(world * XMMatrixTranslation(col0, row0, 0));
     m_basicEffectUnlit->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     // Unlit with alpha fading.
     m_basicEffectUnlit->SetAlpha(alphaFade);
-    m_basicEffectUnlit->SetWorld(world * XMMatrixTranslation(-4, 1.5f, 0));
+    m_basicEffectUnlit->SetWorld(world * XMMatrixTranslation(col0, row1, 0));
     m_basicEffectUnlit->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     // Unlit with fog.
-    m_basicEffectUnlitFog->SetWorld(world * XMMatrixTranslation(-4, 0.5f, 2 - alphaFade * 6));
+    m_basicEffectUnlitFog->SetWorld(world * XMMatrixTranslation(col0, row2, 2 - alphaFade * 6));
     m_basicEffectUnlitFog->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    // Simple unlit teapot with vertex colors.
+    m_basicEffectUnlitVc->SetAlpha(1.f);
+    m_basicEffectUnlitVc->SetWorld(world * XMMatrixTranslation(colA, row0, 0));
+    m_basicEffectUnlitVc->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    // Simple unlit teapot with alpha fading with vertex colors.
+    m_basicEffectUnlitVc->SetAlpha(alphaFade);
+    m_basicEffectUnlitVc->SetWorld(world * XMMatrixTranslation(colA, row1, 0));
+    m_basicEffectUnlitVc->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    // Unlit with fog with vertex colors.
+    m_basicEffectUnlitFogVc->SetWorld(world * XMMatrixTranslation(colA, row2, 2 - alphaFade * 6));
+    m_basicEffectUnlitFogVc->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     // Simple lit teapot.
     m_basicEffect->SetAlpha(1.f);
-    m_basicEffect->SetWorld(world * XMMatrixTranslation(-3, 2.5f, 0));
+    m_basicEffect->SetWorld(world * XMMatrixTranslation(col1, row0, 0));
     m_basicEffect->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     // Simple lit teapot, no specular.
     m_basicEffectNoSpecular->SetAlpha(1.f);
-    m_basicEffectNoSpecular->SetWorld(world * XMMatrixTranslation(-2, 0, 0));
+    m_basicEffectNoSpecular->SetWorld(world * XMMatrixTranslation(col2, row3, 0));
     m_basicEffectNoSpecular->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     // Simple lit with alpha fading.
     m_basicEffect->SetAlpha(alphaFade);
-    m_basicEffect->SetWorld(world * XMMatrixTranslation(-3, 1.5f, 0));
+    m_basicEffect->SetWorld(world * XMMatrixTranslation(col1, row1, 0));
     m_basicEffect->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     // Simple lit alpha fading, no specular.
     m_basicEffectNoSpecular->SetAlpha(alphaFade);
-    m_basicEffectNoSpecular->SetWorld(world * XMMatrixTranslation(-1, 0, 0));
+    m_basicEffectNoSpecular->SetWorld(world * XMMatrixTranslation(col3, row3, 0));
     m_basicEffectNoSpecular->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     // Simple lit with fog.
     m_basicEffectFog->SetAlpha(1.f);
-    m_basicEffectFog->SetWorld(world * XMMatrixTranslation(-3, 0.5f, 2 - alphaFade * 6));
+    m_basicEffectFog->SetWorld(world * XMMatrixTranslation(col1, row2, 2 - alphaFade * 6));
     m_basicEffectFog->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
@@ -383,19 +475,19 @@ void Game::Render()
         m_basicEffect->SetLightDirection(0, XMVectorSet(0, -1, 0, 0));
         m_basicEffect->SetLightEnabled(1, false);
         m_basicEffect->SetLightEnabled(2, false);
-        m_basicEffect->SetWorld(world *  XMMatrixTranslation(-2, 2.5f, 0));
+        m_basicEffect->SetWorld(world *  XMMatrixTranslation(col2, row0, 0));
         m_basicEffect->Apply(commandList);
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
         // Light only from the left.
         m_basicEffect->SetLightDirection(0, XMVectorSet(1, 0, 0, 0));
-        m_basicEffect->SetWorld(world * XMMatrixTranslation(-1, 2.5f, 0));
+        m_basicEffect->SetWorld(world * XMMatrixTranslation(col3, row0, 0));
         m_basicEffect->Apply(commandList);
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
         // Light only from straight in front.
         m_basicEffect->SetLightDirection(0, XMVectorSet(0, 0, -1, 0));
-        m_basicEffect->SetWorld(world * XMMatrixTranslation(0, 2.5f, 0));
+        m_basicEffect->SetWorld(world * XMMatrixTranslation(col4, row0, 0));
         m_basicEffect->Apply(commandList);
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
     }
@@ -403,7 +495,7 @@ void Game::Render()
     m_basicEffect->EnableDefaultLighting();
 
     // Non uniform scaling.
-    m_basicEffect->SetWorld(XMMatrixScaling(1, 2, 0.25f) * world * XMMatrixTranslation(1, 2.5f, 0));
+    m_basicEffect->SetWorld(XMMatrixScaling(1, 2, 0.25f) * world * XMMatrixTranslation(col5, row0, 0));
     m_basicEffect->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
@@ -412,26 +504,26 @@ void Game::Render()
         m_basicEffectPPL->SetLightDirection(0, XMVectorSet(0, -1, 0, 0));
         m_basicEffectPPL->SetLightEnabled(1, false);
         m_basicEffectPPL->SetLightEnabled(2, false);
-        m_basicEffectPPL->SetWorld(world *  XMMatrixTranslation(-2, 1.5f, 0));
+        m_basicEffectPPL->SetWorld(world *  XMMatrixTranslation(col2, row1, 0));
         m_basicEffectPPL->Apply(commandList);
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
         // Light only from the left + per pixel lighting.
         m_basicEffectPPL->SetLightDirection(0, XMVectorSet(1, 0, 0, 0));
-        m_basicEffectPPL->SetWorld(world * XMMatrixTranslation(-1, 1.5f, 0));
+        m_basicEffectPPL->SetWorld(world * XMMatrixTranslation(col3, row1, 0));
         m_basicEffectPPL->Apply(commandList);
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
         // Light only from straight in front + per pixel lighting.
         m_basicEffectPPL->SetLightDirection(0, XMVectorSet(0, 0, -1, 0));
-        m_basicEffectPPL->SetWorld(world * XMMatrixTranslation(0, 1.5f, 0));
+        m_basicEffectPPL->SetWorld(world * XMMatrixTranslation(col4, row1, 0));
         m_basicEffectPPL->Apply(commandList);
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
         m_basicEffectPPL->EnableDefaultLighting();
 
         // Non uniform scaling + per pixel lighting.
-        m_basicEffectPPL->SetWorld(XMMatrixScaling(1, 2, 0.25f) * world * XMMatrixTranslation(1, 1.5f, 0));
+        m_basicEffectPPL->SetWorld(XMMatrixScaling(1, 2, 0.25f) * world * XMMatrixTranslation(col5, row1, 0));
         m_basicEffectPPL->Apply(commandList);
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
     }
@@ -451,8 +543,19 @@ void Game::Render()
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     m_skinnedEffectNoSpecular->SetBoneTransforms(bones, 4);
-    m_skinnedEffectNoSpecular->SetWorld(world * XMMatrixTranslation(1, 0, 0));
+    m_skinnedEffectNoSpecular->SetWorld(world * XMMatrixTranslation(col5, row3, 0));
     m_skinnedEffectNoSpecular->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    // Skinned effect with fog.
+    m_skinnedEffectFog->SetBoneTransforms(bones, 4);
+    m_skinnedEffectFog->SetWorld(world * XMMatrixTranslation(colA, rowA, 2 - alphaFade * 6));
+    m_skinnedEffectFog->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_skinnedEffectFogPPL->SetBoneTransforms(bones, 4);
+    m_skinnedEffectFogPPL->SetWorld(world * XMMatrixTranslation(col0, rowA, 2 - alphaFade * 6));
+    m_skinnedEffectFogPPL->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     // Skinned effect, variable scaling transforms.
@@ -470,7 +573,7 @@ void Game::Render()
     }
 
     m_skinnedEffect->SetBoneTransforms(bones, 4);
-    m_skinnedEffect->SetWorld(world * XMMatrixTranslation(-1, -2, 0));
+    m_skinnedEffect->SetWorld(world * XMMatrixTranslation(col3, rowA, 0));
     m_skinnedEffect->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
@@ -488,51 +591,51 @@ void Game::Render()
         bones[i] = XMMatrixScaling(scales2[i], scales2[i], scales2[i]);
     }
 
-    m_skinnedEffect->SetBoneTransforms(bones, 4);
-    m_skinnedEffect->SetWorld(world * XMMatrixTranslation(-3, -2, 0));
-    m_skinnedEffect->Apply(commandList);
+    m_skinnedEffectPPL->SetBoneTransforms(bones, 4);
+    m_skinnedEffectPPL->SetWorld(world * XMMatrixTranslation(col1, rowA, 0));
+    m_skinnedEffectPPL->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     //--- EnvironmentMapEffect -------------------------------------------------------------
     m_envmap->SetEnvironmentMapAmount(1.f);
     m_envmap->SetFresnelFactor(1.f);
-    m_envmap->SetWorld(world * XMMatrixTranslation(2, 2.5f, 0));
+    m_envmap->SetWorld(world * XMMatrixTranslation(col6, row0, 0));
     m_envmap->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     // Environment map with alpha fading.
     m_envmap->SetAlpha(alphaFade);
-    m_envmap->SetWorld(world * XMMatrixTranslation(2, 1.5f, 0));
+    m_envmap->SetWorld(world * XMMatrixTranslation(col6, row1, 0));
     m_envmap->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
     m_envmap->SetAlpha(1.f);
  
     // Environment map with fog.
-    m_envmapFog->SetWorld(world * XMMatrixTranslation(2, 0.5f, 2 - alphaFade * 6));
+    m_envmapFog->SetWorld(world * XMMatrixTranslation(col6, row2, 2 - alphaFade * 6));
     m_envmapFog->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     // Environment map, animating the fresnel factor.
     m_envmap->SetFresnelFactor(alphaFade * 3);
-    m_envmap->SetWorld(world * XMMatrixTranslation(2, -0.5f, 0));
+    m_envmap->SetWorld(world * XMMatrixTranslation(col6, row4, 0));
     m_envmap->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     // Environment map, animating the amount, with no fresnel.
     m_envmapNoFresnel->SetEnvironmentMapAmount(alphaFade);
-    m_envmapNoFresnel->SetWorld(world * XMMatrixTranslation(2, -1.5f, 0));
+    m_envmapNoFresnel->SetWorld(world * XMMatrixTranslation(col6, row5, 0));
     m_envmapNoFresnel->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     // Environment map, animating the amount.
     m_envmap->SetEnvironmentMapAmount(alphaFade);
-    m_envmap->SetWorld(world * XMMatrixTranslation(2, -2.5f, 0));
+    m_envmap->SetWorld(world * XMMatrixTranslation(col6, row6, 0));
     m_envmap->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     // Environment map, with animating specular
-    m_envmapSpec->SetEnvironmentMapSpecular(Colors::Blue * alphaFade);
-    m_envmapSpec->SetWorld(world * XMMatrixTranslation(1, -1.5f, 0));
+    m_envmapSpec->SetEnvironmentMapSpecular(blue * alphaFade);
+    m_envmapSpec->SetWorld(world * XMMatrixTranslation(col5, row5, 0));
     m_envmapSpec->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
@@ -542,7 +645,7 @@ void Game::Render()
         m_envmapPPL->SetLightEnabled(1, false);
         m_envmapPPL->SetLightEnabled(2, false);
         m_envmapPPL->SetFresnelFactor(alphaFade * 3);
-        m_envmapPPL->SetWorld(world *  XMMatrixTranslation(3, -0.5f, 0));
+        m_envmapPPL->SetWorld(world *  XMMatrixTranslation(col7, row4, 0));
         m_envmapPPL->Apply(commandList);
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
@@ -552,7 +655,7 @@ void Game::Render()
         m_envmapNoFresnelPPL->SetLightDirection(0, XMVectorSet(1, 0, 0, 0));
         m_envmapNoFresnelPPL->SetLightEnabled(1, false);
         m_envmapNoFresnelPPL->SetLightEnabled(2, false);
-        m_envmapNoFresnelPPL->SetWorld(world * XMMatrixTranslation(3, -1.5f, 0));
+        m_envmapNoFresnelPPL->SetWorld(world * XMMatrixTranslation(col7, row5, 0));
         m_envmapNoFresnelPPL->Apply(commandList);
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
@@ -560,7 +663,7 @@ void Game::Render()
         m_envmapFogPPL->SetLightDirection(0, XMVectorSet(0, 0, -1, 0));
         m_envmapFogPPL->SetLightEnabled(1, false);
         m_envmapFogPPL->SetLightEnabled(2, false);
-        m_envmapFogPPL->SetWorld(world * XMMatrixTranslation(3, -2.5f, 2 - alphaFade * 6));
+        m_envmapFogPPL->SetWorld(world * XMMatrixTranslation(col7, row6, 2 - alphaFade * 6));
         m_envmapFogPPL->Apply(commandList);
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
@@ -568,26 +671,26 @@ void Game::Render()
         m_envmapSpecPPL->SetLightDirection(0, XMVectorSet(1, 0, 0, 0));
         m_envmapSpecPPL->SetLightEnabled(1, false);
         m_envmapSpecPPL->SetLightEnabled(2, false);
-        m_envmapSpecPPL->SetEnvironmentMapSpecular(Colors::Blue * alphaFade);
-        m_envmapSpecPPL->SetWorld(world * XMMatrixTranslation(1, -2.5f, 0));
+        m_envmapSpecPPL->SetEnvironmentMapSpecular(blue * alphaFade);
+        m_envmapSpecPPL->SetWorld(world * XMMatrixTranslation(col5, row6, 0));
         m_envmapSpecPPL->Apply(commandList);
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
     }
 
     //--- DualTextureEFfect ----------------------------------------------------------------
     m_dualTexture->SetAlpha(1.f);
-    m_dualTexture->SetWorld(world *  XMMatrixTranslation(3, 2.5f, 0));
+    m_dualTexture->SetWorld(world *  XMMatrixTranslation(col7, row0, 0));
     m_dualTexture->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     // Dual texture with alpha fading.
     m_dualTexture->SetAlpha(alphaFade);
-    m_dualTexture->SetWorld(world *  XMMatrixTranslation(3, 1.5f, 0));
+    m_dualTexture->SetWorld(world *  XMMatrixTranslation(col7, row1, 0));
     m_dualTexture->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     // Dual texture with fog.
-    m_dualTextureFog->SetWorld(world *  XMMatrixTranslation(3, 0.5f, 2 - alphaFade * 6));
+    m_dualTextureFog->SetWorld(world *  XMMatrixTranslation(col7, row2, 2 - alphaFade * 6));
     m_dualTextureFog->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
@@ -596,64 +699,64 @@ void Game::Render()
     {
         // Alpha test, > 0.
         m_alphaTest->SetReferenceAlpha(0);
-        m_alphaTest->SetWorld(world * XMMatrixTranslation(4, 2.5f, 0));
+        m_alphaTest->SetWorld(world * XMMatrixTranslation(col8, row0, 0));
         m_alphaTest->Apply(commandList);
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
         // Alpha test, > 128.
         m_alphaTest->SetReferenceAlpha(128);
-        m_alphaTest->SetWorld(world * XMMatrixTranslation(4, 1.5f, 0));
+        m_alphaTest->SetWorld(world * XMMatrixTranslation(col8, row1, 0));
         m_alphaTest->Apply(commandList);
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
         // Alpha test with fog.
         m_alphaTestFog->SetReferenceAlpha(128);
-        m_alphaTestFog->SetWorld(world * XMMatrixTranslation(4, 0.5f, 2 - alphaFade * 6));
+        m_alphaTestFog->SetWorld(world * XMMatrixTranslation(col8, row2, 2 - alphaFade * 6));
         m_alphaTestFog->Apply(commandList);
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
         // Alpha test, < animating value.
         m_alphaTestLess->SetReferenceAlpha(1 + (int)(alphaFade * 254));
-        m_alphaTestLess->SetWorld(world * XMMatrixTranslation(4, -0.5f, 0));
+        m_alphaTestLess->SetWorld(world * XMMatrixTranslation(col8, row4, 0));
         m_alphaTestLess->Apply(commandList);
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
         // Alpha test, = 255.
         m_alphaTestEqual->SetReferenceAlpha(255);
-        m_alphaTestEqual->SetWorld(world * XMMatrixTranslation(4, -1.5f, 0));
+        m_alphaTestEqual->SetWorld(world * XMMatrixTranslation(col8, row5, 0));
         m_alphaTestEqual->Apply(commandList);
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
         // Alpha test, != 0.
         m_alphaTestNotEqual->SetReferenceAlpha(0);
-        m_alphaTestNotEqual->SetWorld(world * XMMatrixTranslation(4, -2.5f, 0));
+        m_alphaTestNotEqual->SetWorld(world * XMMatrixTranslation(col8, row6, 0));
         m_alphaTestNotEqual->Apply(commandList);
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
     }
 
     //--- NormalMapEffect ------------------------------------------------------------------
     m_normalMapEffect->SetAlpha(1.f);
-    m_normalMapEffect->SetWorld(world *  XMMatrixTranslation(5, 2.5f, 0));
+    m_normalMapEffect->SetWorld(world *  XMMatrixTranslation(col9, row0, 0));
     m_normalMapEffect->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     // NormalMapEffect no spec
-    m_normalMapEffectNoSpecular->SetWorld(world *  XMMatrixTranslation(5, 1.5f, 0));
+    m_normalMapEffectNoSpecular->SetWorld(world *  XMMatrixTranslation(col9, row1, 0));
     m_normalMapEffectNoSpecular->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     // NormalMap with fog.
-    m_normalMapEffectFog->SetWorld(world *  XMMatrixTranslation(5, 0.5f, 2 - alphaFade * 6));
+    m_normalMapEffectFog->SetWorld(world *  XMMatrixTranslation(col9, row2, 2 - alphaFade * 6));
     m_normalMapEffectFog->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     // NormalMap with default diffuse
-    m_normalMapEffectNoDiffuse->SetWorld(world *  XMMatrixTranslation(5, -.5f, 0));
+    m_normalMapEffectNoDiffuse->SetWorld(world *  XMMatrixTranslation(col9, row4, 0));
     m_normalMapEffectNoDiffuse->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     // NormalMap with default diffuse no spec
-    m_normalMapEffectNormalsOnly->SetWorld(world *  XMMatrixTranslation(5, -1.5f, 0));
+    m_normalMapEffectNormalsOnly->SetWorld(world *  XMMatrixTranslation(col9, row5, 0));
     m_normalMapEffectNormalsOnly->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
@@ -676,8 +779,14 @@ void Game::Clear()
     auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
     auto dsvDescriptor = m_deviceResources->GetDepthStencilView();
 
+    XMVECTORF32 color;
+#ifdef GAMMA_CORRECT_RENDERING
+    color.v = XMColorSRGBToRGB(Colors::CornflowerBlue);
+#else
+    color.v = Colors::CornflowerBlue;
+#endif
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, &dsvDescriptor);
-    commandList->ClearRenderTargetView(rtvDescriptor, Colors::CornflowerBlue, 0, nullptr);
+    commandList->ClearRenderTargetView(rtvDescriptor, color, 0, nullptr);
     commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
     // Set the viewport and scissor rect.
@@ -709,13 +818,28 @@ void Game::OnResuming()
     m_timer.ResetElapsedTime();
 }
 
-void Game::OnWindowSizeChanged(int width, int height)
+#if !defined(_XBOX_ONE) || !defined(_TITLE)
+void Game::OnWindowSizeChanged(int width, int height, DXGI_MODE_ROTATION rotation)
 {
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+    if (!m_deviceResources->WindowSizeChanged(width, height, rotation))
+        return;
+#else
+    UNREFERENCED_PARAMETER(rotation);
     if (!m_deviceResources->WindowSizeChanged(width, height))
         return;
+#endif
 
     CreateWindowSizeDependentResources();
 }
+#endif
+
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+void Game::ValidateDevice()
+{
+    m_deviceResources->ValidateDevice();
+}
+#endif
 
 // Properties
 void Game::GetDefaultSize(int& width, int& height) const
@@ -748,6 +872,17 @@ void Game::CreateDeviceDependentResources()
     const float fogend = 8;
 #endif
 
+    XMVECTORF32 red, blue, gray;
+#ifdef GAMMA_CORRECT_RENDERING
+    red.v = XMColorSRGBToRGB(Colors::Red);
+    blue.v = XMColorSRGBToRGB(Colors::Blue);
+    gray.v = XMColorSRGBToRGB(Colors::Gray);
+#else
+    red.v = Colors::Red;
+    blue.v = Colors::Blue;
+    gray.v = Colors::Gray;
+#endif
+
     {
         EffectPipelineStateDescription pdAlpha(
             &TestVertex::InputLayout,
@@ -773,41 +908,63 @@ void Game::CreateDeviceDependentResources()
 
         //--- BasicEFfect ------------------------------------------------------------------
         m_basicEffectUnlit = std::make_unique<BasicEffect>(device, EffectFlags::None, pdAlpha);
-        m_basicEffectUnlit->SetDiffuseColor(Colors::Blue);
+        m_basicEffectUnlit->SetDiffuseColor(blue);
 
         m_basicEffectUnlitFog = std::make_unique<BasicEffect>(device, EffectFlags::Fog, pdAlpha);
-        m_basicEffectUnlitFog->SetDiffuseColor(Colors::Blue);
-        m_basicEffectUnlitFog->SetFogColor(Colors::Gray);
+        m_basicEffectUnlitFog->SetDiffuseColor(blue);
+        m_basicEffectUnlitFog->SetFogColor(gray);
         m_basicEffectUnlitFog->SetFogStart(fogstart);
         m_basicEffectUnlitFog->SetFogEnd(fogend);
 
+        m_basicEffectUnlitVc = std::make_unique<BasicEffect>(device, EffectFlags::VertexColor, pdAlpha);
+
+        m_basicEffectUnlitFogVc = std::make_unique<BasicEffect>(device, EffectFlags::VertexColor | EffectFlags::Fog, pdAlpha);
+        m_basicEffectUnlitFogVc->SetFogColor(gray);
+        m_basicEffectUnlitFogVc->SetFogStart(fogstart);
+        m_basicEffectUnlitFogVc->SetFogEnd(fogend);
+
         m_basicEffect = std::make_unique<BasicEffect>(device, EffectFlags::Lighting, pdAlpha);
         m_basicEffect->EnableDefaultLighting();
-        m_basicEffect->SetDiffuseColor(Colors::Red);
+        m_basicEffect->SetDiffuseColor(red);
 
         m_basicEffectFog = std::make_unique<BasicEffect>(device, EffectFlags::Lighting | EffectFlags::Fog, pdAlpha);
         m_basicEffectFog->EnableDefaultLighting();
-        m_basicEffectFog->SetDiffuseColor(Colors::Red);
-        m_basicEffectFog->SetFogColor(Colors::Gray);
+        m_basicEffectFog->SetDiffuseColor(red);
+        m_basicEffectFog->SetFogColor(gray);
         m_basicEffectFog->SetFogStart(fogstart);
         m_basicEffectFog->SetFogEnd(fogend);
 
         m_basicEffectNoSpecular = std::make_unique<BasicEffect>(device, EffectFlags::Lighting, pdAlpha);
         m_basicEffectNoSpecular->EnableDefaultLighting();
-        m_basicEffectNoSpecular->SetDiffuseColor(Colors::Red);
+        m_basicEffectNoSpecular->SetDiffuseColor(red);
         m_basicEffectNoSpecular->DisableSpecular();
 
         m_basicEffectPPL = std::make_unique<BasicEffect>(device, EffectFlags::PerPixelLighting, pdAlpha);
         m_basicEffectPPL->EnableDefaultLighting();
-        m_basicEffectPPL->SetDiffuseColor(Colors::Red);
-        
+        m_basicEffectPPL->SetDiffuseColor(red);
+
         //--- SkinnedEFfect ----------------------------------------------------------------
         m_skinnedEffect = std::make_unique<SkinnedEffect>(device, EffectFlags::Lighting | EffectFlags::Texture, pdAlpha);
         m_skinnedEffect->EnableDefaultLighting();
 
+        m_skinnedEffectFog = std::make_unique<SkinnedEffect>(device, EffectFlags::Lighting | EffectFlags::Texture | EffectFlags::Fog, pdAlpha);
+        m_skinnedEffectFog->EnableDefaultLighting();
+        m_skinnedEffectFog->SetFogColor(gray);
+        m_skinnedEffectFog->SetFogStart(fogstart);
+        m_skinnedEffectFog->SetFogEnd(fogend);
+
         m_skinnedEffectNoSpecular = std::make_unique<SkinnedEffect>(device, EffectFlags::Lighting, pdAlpha);
         m_skinnedEffectNoSpecular->EnableDefaultLighting();
         m_skinnedEffectNoSpecular->DisableSpecular();
+
+        m_skinnedEffectPPL = std::make_unique<SkinnedEffect>(device, EffectFlags::Lighting | EffectFlags::Texture | EffectFlags::PerPixelLighting, pdAlpha);
+        m_skinnedEffectPPL->EnableDefaultLighting();
+
+        m_skinnedEffectFogPPL = std::make_unique<SkinnedEffect>(device, EffectFlags::Lighting | EffectFlags::Texture | EffectFlags::PerPixelLighting | EffectFlags::Fog, pdAlpha);
+        m_skinnedEffectFogPPL->EnableDefaultLighting();
+        m_skinnedEffectFogPPL->SetFogColor(gray);
+        m_skinnedEffectFogPPL->SetFogStart(fogstart);
+        m_skinnedEffectFogPPL->SetFogEnd(fogend);
 
         //--- EnvironmentMapEffect ---------------------------------------------------------
         m_envmap = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::None, pdAlpha);
@@ -818,7 +975,7 @@ void Game::CreateDeviceDependentResources()
 
         m_envmapFog = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::Fog, pdAlpha);
         m_envmapFog->EnableDefaultLighting();
-        m_envmapFog->SetFogColor(Colors::Gray);
+        m_envmapFog->SetFogColor(gray);
         m_envmapFog->SetFogStart(fogstart);
         m_envmapFog->SetFogEnd(fogend);
 
@@ -833,7 +990,7 @@ void Game::CreateDeviceDependentResources()
 
         m_envmapFogPPL = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::Fog | EffectFlags::PerPixelLighting, pdAlpha);
         m_envmapFogPPL->EnableDefaultLighting();
-        m_envmapFogPPL->SetFogColor(Colors::Gray);
+        m_envmapFogPPL->SetFogColor(gray);
         m_envmapFogPPL->SetFogStart(fogstart);
         m_envmapFogPPL->SetFogEnd(fogend);
 
@@ -844,7 +1001,7 @@ void Game::CreateDeviceDependentResources()
         m_dualTexture = std::make_unique<DualTextureEffect>(device, EffectFlags::None, pdAlpha);
 
         m_dualTextureFog = std::make_unique<DualTextureEffect>(device, EffectFlags::Fog, pdAlpha);
-        m_dualTextureFog->SetFogColor(Colors::Gray);
+        m_dualTextureFog->SetFogColor(gray);
         m_dualTextureFog->SetFogStart(fogstart);
         m_dualTextureFog->SetFogEnd(fogend);
 
@@ -852,7 +1009,7 @@ void Game::CreateDeviceDependentResources()
         m_alphaTest = std::make_unique<AlphaTestEffect>(device, EffectFlags::None, pdOpaque);
 
         m_alphaTestFog = std::make_unique<AlphaTestEffect>(device, EffectFlags::Fog, pdOpaque);
-        m_alphaTestFog->SetFogColor(Colors::Red);
+        m_alphaTestFog->SetFogColor(red);
         m_alphaTestFog->SetFogStart(fogstart);
         m_alphaTestFog->SetFogEnd(fogend);
 
@@ -868,7 +1025,7 @@ void Game::CreateDeviceDependentResources()
         m_normalMapEffect->SetDiffuseColor(Colors::White);
 
         m_normalMapEffectFog = std::make_unique<NormalMapEffect>(device, EffectFlags::Fog, pdOpaque);
-        m_normalMapEffectFog->SetFogColor(Colors::Gray);
+        m_normalMapEffectFog->SetFogColor(gray);
         m_normalMapEffectFog->SetFogStart(fogstart);
         m_normalMapEffectFog->SetFogEnd(fogend);
         m_normalMapEffectFog->SetDiffuseColor(Colors::White);
@@ -899,34 +1056,52 @@ void Game::CreateDeviceDependentResources()
 
     resourceUpload.Begin();
 
+#ifdef GAMMA_CORRECT_RENDERING
+    bool forceSRGB = true;
+#else
+    bool forceSRGB = false;
+#endif
+
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFile(device, resourceUpload, L"cat.dds", m_cat.ReleaseAndGetAddressOf()));
+        CreateDDSTextureFromFileEx(device, resourceUpload, L"cat.dds",
+            0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false, 
+            m_cat.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_cat.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Cat));
 
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFile(device, resourceUpload, L"opaqueCat.dds", m_opaqueCat.ReleaseAndGetAddressOf()));
+        CreateDDSTextureFromFileEx(device, resourceUpload, L"opaqueCat.dds",
+            0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false,
+            m_opaqueCat.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_opaqueCat.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::OpaqueCat));
 
     bool iscubemap;
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFile(device, resourceUpload, L"cubemap.dds", m_cubemap.ReleaseAndGetAddressOf(), false, 0, nullptr, &iscubemap));
+        CreateDDSTextureFromFileEx(device, resourceUpload, L"cubemap.dds",
+            0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false, 
+            m_cubemap.ReleaseAndGetAddressOf(), nullptr, &iscubemap));
 
     CreateShaderResourceView(device, m_cubemap.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Cubemap), iscubemap);
 
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFile(device, resourceUpload, L"overlay.dds", m_overlay.ReleaseAndGetAddressOf()));
+        CreateDDSTextureFromFileEx(device, resourceUpload, L"overlay.dds",
+            0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false, 
+            m_overlay.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_overlay.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Overlay));
 
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFile(device, resourceUpload, L"default.dds", m_defaultTex.ReleaseAndGetAddressOf()));
+        CreateDDSTextureFromFileEx(device, resourceUpload, L"default.dds",
+            0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false, 
+            m_defaultTex.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_defaultTex.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::DefaultTex));
 
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFile(device, resourceUpload, L"spnza_bricks_a.DDS", m_brickDiffuse.ReleaseAndGetAddressOf()));
+        CreateDDSTextureFromFileEx(device, resourceUpload, L"spnza_bricks_a.DDS",
+            0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false, 
+            m_brickDiffuse.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_brickDiffuse.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::BrickDiffuse));
 
@@ -950,7 +1125,10 @@ void Game::CreateDeviceDependentResources()
     auto opaqueCat = m_resourceDescriptors->GetGpuHandle(Descriptors::OpaqueCat);
 
     m_skinnedEffect->SetTexture(opaqueCat, m_states->LinearWrap());
+    m_skinnedEffectFog->SetTexture(opaqueCat, m_states->LinearWrap());
     m_skinnedEffectNoSpecular->SetTexture(opaqueCat, m_states->LinearWrap());
+    m_skinnedEffectPPL->SetTexture(opaqueCat, m_states->LinearWrap());
+    m_skinnedEffectFogPPL->SetTexture(opaqueCat, m_states->LinearWrap());
 
     auto cubemap = m_resourceDescriptors->GetGpuHandle(Descriptors::Cubemap);
 
@@ -1030,15 +1208,25 @@ void Game::CreateWindowSizeDependentResources()
     XMMATRIX projection = XMMatrixPerspectiveFovRH(1, aspect, 1, 15);
 #endif
 
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+    XMMATRIX orient = XMLoadFloat4x4(&m_deviceResources->GetOrientationTransform3D());
+    projection *= orient;
+#endif
+
     m_basicEffectUnlit->SetView(view);
     m_basicEffectUnlitFog->SetView(view);
+    m_basicEffectUnlitVc->SetView(view);
+    m_basicEffectUnlitFogVc->SetView(view);
     m_basicEffect->SetView(view);
     m_basicEffectFog->SetView(view);
     m_basicEffectNoSpecular->SetView(view);
     m_basicEffectPPL->SetView(view);
 
     m_skinnedEffect->SetView(view);
+    m_skinnedEffectFog->SetView(view);
     m_skinnedEffectNoSpecular->SetView(view);
+    m_skinnedEffectPPL->SetView(view);
+    m_skinnedEffectFogPPL->SetView(view);
 
     m_envmap->SetView(view);
     m_envmapSpec->SetView(view);
@@ -1066,13 +1254,18 @@ void Game::CreateWindowSizeDependentResources()
 
     m_basicEffectUnlit->SetProjection(projection);
     m_basicEffectUnlitFog->SetProjection(projection);
+    m_basicEffectUnlitVc->SetProjection(projection);
+    m_basicEffectUnlitFogVc->SetProjection(projection);
     m_basicEffect->SetProjection(projection);
     m_basicEffectFog->SetProjection(projection);
     m_basicEffectNoSpecular->SetProjection(projection);
     m_basicEffectPPL->SetProjection(projection);
 
     m_skinnedEffect->SetProjection(projection);
+    m_skinnedEffectFog->SetProjection(projection);
     m_skinnedEffectNoSpecular->SetProjection(projection);
+    m_skinnedEffectPPL->SetProjection(projection);
+    m_skinnedEffectFogPPL->SetProjection(projection);
 
     m_envmap->SetProjection(projection);
     m_envmapSpec->SetProjection(projection);
@@ -1099,17 +1292,23 @@ void Game::CreateWindowSizeDependentResources()
     m_normalMapEffectNoSpecular->SetProjection(projection);
 }
 
+#if !defined(_XBOX_ONE) || !defined(_TITLE)
 void Game::OnDeviceLost()
 {
     m_basicEffectUnlit.reset();
     m_basicEffectUnlitFog.reset();
+    m_basicEffectUnlitVc.reset();
+    m_basicEffectUnlitFogVc.reset();
     m_basicEffect.reset();
     m_basicEffectFog.reset();
     m_basicEffectNoSpecular.reset();
     m_basicEffectPPL.reset();
 
     m_skinnedEffect.reset();
+    m_skinnedEffectFog.reset();
     m_skinnedEffectNoSpecular.reset();
+    m_skinnedEffectPPL.reset();
+    m_skinnedEffectFogPPL.reset();
 
     m_envmap.reset();
     m_envmapSpec.reset();
@@ -1155,6 +1354,7 @@ void Game::OnDeviceRestored()
 
     CreateWindowSizeDependentResources();
 }
+#endif
 #pragma endregion
 
 // Creates a teapot primitive with test input layout.

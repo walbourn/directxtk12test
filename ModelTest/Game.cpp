@@ -1,6 +1,17 @@
+//--------------------------------------------------------------------------------------
+// File: Game.cpp
 //
-// Game.cpp
+// Developer unit test for DirectXTK Model
 //
+// THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
+// ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+// THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
+// PARTICULAR PURPOSE.
+//
+// Copyright (c) Microsoft Corporation. All rights reserved.
+//
+// http://go.microsoft.com/fwlink/?LinkID=615561
+//--------------------------------------------------------------------------------------
 
 #include "pch.h"
 #include "Game.h"
@@ -34,7 +45,10 @@ Game::Game()
 #else
     m_deviceResources = std::make_unique<DX::DeviceResources>();
 #endif
+
+#if !defined(_XBOX_ONE) || !defined(_TITLE)
     m_deviceResources->RegisterDeviceNotify(this);
+#endif
 }
 
 Game::~Game()
@@ -43,11 +57,28 @@ Game::~Game()
 }
 
 // Initialize the Direct3D resources required to run.
-void Game::Initialize(HWND window, int width, int height)
+void Game::Initialize(
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) 
+    HWND window,
+#else
+    IUnknown* window,
+#endif
+    int width, int height, DXGI_MODE_ROTATION rotation)
 {
     m_keyboard = std::make_unique<Keyboard>();
 
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    UNREFERENCED_PARAMETER(rotation);
+    UNREFERENCED_PARAMETER(width);
+    UNREFERENCED_PARAMETER(height);
+    m_deviceResources->SetWindow(window);
+#elif defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+    m_deviceResources->SetWindow(window, width, height, rotation);
+    m_keyboard->SetWindow(reinterpret_cast<ABI::Windows::UI::Core::ICoreWindow*>(window));
+#else
+    UNREFERENCED_PARAMETER(rotation);
     m_deviceResources->SetWindow(window, width, height);
+#endif
 
     m_deviceResources->CreateDeviceResources();
     CreateDeviceDependentResources();
@@ -87,7 +118,11 @@ void Game::Update(DX::StepTimer const& timer)
 
     if (kb.Escape)
     {
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
         PostQuitMessage(0);
+#else
+        Windows::ApplicationModel::Core::CoreApplication::Exit();
+#endif
     }
 
     PIXEndEvent();
@@ -139,7 +174,7 @@ void Game::Render()
     ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap(), m_states->Heap() };
     commandList->SetDescriptorHeaps(_countof(heaps), heaps);
 
-    // Draw Wavefront OBJ models
+    //--- Draw Wavefront OBJ models --------------------------------------------------------
     for (auto& it : m_cupNormal)
     {
         auto lights = dynamic_cast<IEffectLights*>(it.get());
@@ -181,13 +216,8 @@ void Game::Render()
     Model::UpdateEffectMatrices(m_cupNormal, local, m_view, m_projection);
     m_cup->Draw(commandList, m_cupNormal.cbegin());
 
-        // Fog settings
-    local = XMMatrixTranslation(-3.f, row0, cos(time) * 2.f);
-    Model::UpdateEffectMatrices(m_cupFog, local, m_view, m_projection);
-    m_cup->Draw(commandList, m_cupFog.cbegin());
-
         // No per pixel lighting
-    local = XMMatrixTranslation(-1.5f, row1, 0.f);
+    local = XMMatrixTranslation(-3.f, row0, 0.f);
     Model::UpdateEffectMatrices(m_cupVertexLighting, local, m_view, m_projection);
     for (auto& it : m_cupVertexLighting)
     {
@@ -196,11 +226,17 @@ void Game::Render()
         {
             XMVECTOR dir = XMVector3Rotate(g_XMOne, quat);
             lights->SetLightDirection(0, dir);
+
         }
     }
     m_cup->Draw(commandList, m_cupVertexLighting.cbegin());
 
-    // Draw VBO models
+        // Fog settings
+    local = XMMatrixTranslation(-4.f, row0, cos(time) * 2.f);
+    Model::UpdateEffectMatrices(m_cupFog, local, m_view, m_projection);
+    m_cup->Draw(commandList, m_cupFog.cbegin());
+
+    //--- Draw VBO models ------------------------------------------------------------------
     local = XMMatrixMultiply(XMMatrixScaling(0.25f, 0.25f, 0.25f), XMMatrixTranslation(4.5f, row0, 0.f));
     local = XMMatrixMultiply(world, local);
     m_vboNormal->SetWorld(local);
@@ -211,7 +247,7 @@ void Game::Render()
     m_vboEnvMap->SetWorld(local);
     m_vbo->Draw(commandList, m_vboEnvMap.get());
 
-    // Draw SDKMESH models
+    //--- Draw SDKMESH models --------------------------------------------------------------
     local = XMMatrixTranslation(0.f, row2, 0.f);
     local = XMMatrixMultiply(world, local);
     Model::UpdateEffectMatrices(m_cupMeshNormal, local, m_view, m_projection);
@@ -244,7 +280,7 @@ void Game::Render()
     local = XMMatrixMultiply(XMMatrixScaling(2.f, 2.f, 2.f), XMMatrixTranslation(3.5f, row1, 0.f));
     local = XMMatrixMultiply(world, local);
     Model::UpdateEffectMatrices(m_soldierNormal, local, m_view, m_projection);
-    m_solider->Draw(commandList, m_soldierNormal.cbegin());
+    m_soldier->Draw(commandList, m_soldierNormal.cbegin());
 
     for (auto& it : m_soldierNormal)
     {
@@ -257,7 +293,7 @@ void Game::Render()
 
     local = XMMatrixMultiply(XMMatrixScaling(2.f, 2.f, 2.f), XMMatrixTranslation(2.5f, row1, 0.f));
     Model::UpdateEffectMatrices(m_soldierNormal, local, m_view, m_projection);
-    m_solider->Draw(commandList, m_soldierNormal.cbegin());
+    m_soldier->Draw(commandList, m_soldierNormal.cbegin());
 
     PIXEndEvent(commandList);
 
@@ -280,13 +316,13 @@ void Game::Clear()
 
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, &dsvDescriptor);
 
-#ifdef GAMMA_CORRECT_RENDERING
     XMVECTORF32 color;
+#ifdef GAMMA_CORRECT_RENDERING
     color.v = XMColorSRGBToRGB(Colors::CornflowerBlue);
-    commandList->ClearRenderTargetView(rtvDescriptor, color, 0, nullptr);
 #else
-    commandList->ClearRenderTargetView(rtvDescriptor, Colors::CornflowerBlue, 0, nullptr);
+    color.v = Colors::CornflowerBlue;
 #endif
+    commandList->ClearRenderTargetView(rtvDescriptor, color, 0, nullptr);
     commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
     // Set the viewport and scissor rect.
@@ -318,13 +354,28 @@ void Game::OnResuming()
     m_timer.ResetElapsedTime();
 }
 
-void Game::OnWindowSizeChanged(int width, int height)
+#if !defined(_XBOX_ONE) || !defined(_TITLE)
+void Game::OnWindowSizeChanged(int width, int height, DXGI_MODE_ROTATION rotation)
 {
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+    if (!m_deviceResources->WindowSizeChanged(width, height, rotation))
+        return;
+#else
+    UNREFERENCED_PARAMETER(rotation);
     if (!m_deviceResources->WindowSizeChanged(width, height))
         return;
+#endif
 
     CreateWindowSizeDependentResources();
 }
+#endif
+
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+void Game::ValidateDevice()
+{
+    m_deviceResources->ValidateDevice();
+}
+#endif
 
 // Properties
 void Game::GetDefaultSize(int& width, int& height) const
@@ -384,11 +435,9 @@ void Game::CreateDeviceDependentResources()
     int txtAdd = m_cup->LoadTextures(*m_modelResources, txtOffset);
 
 #ifdef LH_COORDS
-    auto& cull = CommonStates::CullClockwise;
     auto& ncull = CommonStates::CullCounterClockwise;
     
 #else
-    auto& cull = CommonStates::CullCounterClockwise;
     auto& ncull = CommonStates::CullClockwise;
 #endif
 
@@ -491,9 +540,9 @@ void Game::CreateDeviceDependentResources()
     txtOffset += txtAdd;
 
     // SDKMESH Soldier
-    m_solider = Model::CreateFromSDKMESH(L"soldier.sdkmesh");
+    m_soldier = Model::CreateFromSDKMESH(L"soldier.sdkmesh");
 
-    txtAdd = m_solider->LoadTextures(*m_modelResources, txtOffset);
+    txtAdd = m_soldier->LoadTextures(*m_modelResources, txtOffset);
 
     {
         EffectPipelineStateDescription pd(
@@ -503,7 +552,7 @@ void Game::CreateDeviceDependentResources()
             ncull,
             rtState);
 
-        m_soldierNormal = m_solider->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
+        m_soldierNormal = m_soldier->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
     }
 
     txtOffset += txtAdd;
@@ -543,17 +592,27 @@ void Game::CreateDeviceDependentResources()
     }
 
     txtOffset += txtAdd;
-    
+
+#ifdef GAMMA_CORRECT_RENDERING
+    bool forceSRGB = true;
+#else
+    bool forceSRGB = false;
+#endif
+
     // Load test textures
     {
         DX::ThrowIfFailed(
-            CreateDDSTextureFromFile(device, resourceUpload, L"default.dds", m_defaultTex.ReleaseAndGetAddressOf()));
+            CreateDDSTextureFromFileEx(device, resourceUpload, L"default.dds",
+                0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false,
+                m_defaultTex.ReleaseAndGetAddressOf()));
 
         CreateShaderResourceView(device, m_defaultTex.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::DefaultTex));
 
         bool iscubemap;
         DX::ThrowIfFailed(
-            CreateDDSTextureFromFile(device, resourceUpload, L"cubemap.dds", m_cubemap.ReleaseAndGetAddressOf(), false, 0, nullptr, &iscubemap));
+            CreateDDSTextureFromFileEx(device, resourceUpload, L"cubemap.dds",
+                0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false,
+                m_cubemap.ReleaseAndGetAddressOf(), nullptr, &iscubemap));
 
         CreateShaderResourceView(device, m_cubemap.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Cubemap), iscubemap);
     }
@@ -583,10 +642,15 @@ void Game::CreateWindowSizeDependentResources()
     float fogstart = -5;
     float fogend = -8;
 #else
-    float fogstart = 5;
-    float flogend = 8;
     m_view = XMMatrixLookAtRH(cameraPosition, g_XMZero, XMVectorSet(0, 1, 0, 0));
     m_projection = XMMatrixPerspectiveFovRH(1, aspect, 1, 15);
+    float fogstart = 5;
+    float fogend = 8;
+#endif
+
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+    XMMATRIX orient = XMLoadFloat4x4(&m_deviceResources->GetOrientationTransform3D());
+    m_projection *= orient;
 #endif
 
 #ifdef GAMMA_CORRECT_RENDERING
@@ -614,13 +678,14 @@ void Game::CreateWindowSizeDependentResources()
     m_vboEnvMap->SetProjection(m_projection);
 }
 
+#if !defined(_XBOX_ONE) || !defined(_TITLE)
 void Game::OnDeviceLost()
 {
     m_cup.reset();
     m_cupMesh.reset();
     m_vbo.reset();
     m_tiny.reset();
-    m_solider.reset();
+    m_soldier.reset();
     m_dwarf.reset();
     m_lmap.reset();
 
@@ -659,4 +724,5 @@ void Game::OnDeviceRestored()
 
     CreateWindowSizeDependentResources();
 }
+#endif
 #pragma endregion

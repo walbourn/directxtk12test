@@ -1,9 +1,22 @@
+//--------------------------------------------------------------------------------------
+// File: Game.cpp
 //
-// Game.cpp
+// Developer unit test for DirectXTK SpriteBatch
 //
+// THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
+// ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+// THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
+// PARTICULAR PURPOSE.
+//
+// Copyright (c) Microsoft Corporation. All rights reserved.
+//
+// http://go.microsoft.com/fwlink/?LinkID=615561
+//--------------------------------------------------------------------------------------
 
 #include "pch.h"
 #include "Game.h"
+
+#define GAMMA_CORRECT_RENDERING
 
 namespace
 {
@@ -19,8 +32,16 @@ using Microsoft::WRL::ComPtr;
 
 Game::Game()
 {
-    m_deviceResources = std::make_unique<DX::DeviceResources>();
+    // 2D only rendering
+#ifdef GAMMA_CORRECT_RENDERING
+    m_deviceResources = std::make_unique<DX::DeviceResources>(DXGI_FORMAT_B8G8R8A8_UNORM_SRGB, DXGI_FORMAT_UNKNOWN);
+#else
+    m_deviceResources = std::make_unique<DX::DeviceResources>(DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_UNKNOWN);
+#endif
+
+#if !defined(_XBOX_ONE) || !defined(_TITLE)
     m_deviceResources->RegisterDeviceNotify(this);
+#endif
 }
 
 Game::~Game()
@@ -29,11 +50,28 @@ Game::~Game()
 }
 
 // Initialize the Direct3D resources required to run.
-void Game::Initialize(HWND window, int width, int height)
+void Game::Initialize(
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) 
+    HWND window,
+#else
+    IUnknown* window,
+#endif
+    int width, int height, DXGI_MODE_ROTATION rotation)
 {
     m_keyboard = std::make_unique<Keyboard>();
 
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    UNREFERENCED_PARAMETER(rotation);
+    UNREFERENCED_PARAMETER(width);
+    UNREFERENCED_PARAMETER(height);
+    m_deviceResources->SetWindow(window);
+#elif defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+    m_deviceResources->SetWindow(window, width, height, rotation);
+    m_keyboard->SetWindow(reinterpret_cast<ABI::Windows::UI::Core::ICoreWindow*>(window));
+#else
+    UNREFERENCED_PARAMETER(rotation);
     m_deviceResources->SetWindow(window, width, height);
+#endif
 
     m_deviceResources->CreateDeviceResources();
     CreateDeviceDependentResources();
@@ -66,7 +104,11 @@ void Game::Update(DX::StepTimer const& timer)
 
     if (kb.Escape)
     {
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
         PostQuitMessage(0);
+#else
+        Windows::ApplicationModel::Core::CoreApplication::Exit();
+#endif
     }
 
     if (kb.Left)
@@ -119,6 +161,23 @@ void Game::Render()
     {
         return;
     }
+
+    XMVECTORF32 red, blue, gray, lime, pink, lsgreen;
+#ifdef GAMMA_CORRECT_RENDERING
+    red.v = XMColorSRGBToRGB(Colors::Red);
+    blue.v = XMColorSRGBToRGB(Colors::Blue);
+    gray.v = XMColorSRGBToRGB(Colors::Gray);
+    lime.v = XMColorSRGBToRGB(Colors::Lime);
+    pink.v = XMColorSRGBToRGB(Colors::Pink);
+    lsgreen.v = XMColorSRGBToRGB(Colors::LightSeaGreen);
+#else
+    red.v = Colors::Red;
+    blue.v = Colors::Blue;
+    gray.v = Colors::Gray;
+    lime.v = Colors::Lime;
+    pink.v = Colors::Pink;
+    lsgreen.v = Colors::LightSeaGreen;
+#endif
 
     // Prepare the command list to render a new frame.
     m_deviceResources->Prepare();
@@ -186,31 +245,31 @@ void Game::Render()
     RECT source = { 16, 32, 256, 192 };
 
     // Draw overloads specifying position, origin and scale as XMFLOAT2.
-    m_spriteBatch->Draw(cat, catSize, XMFLOAT2(-40, 320), Colors::Red);
+    m_spriteBatch->Draw(cat, catSize, XMFLOAT2(-40, 320), red);
 
-    m_spriteBatch->Draw(cat, catSize, XMFLOAT2(200, 320), nullptr, Colors::Lime, time / 500, XMFLOAT2(32, 128), 0.5f, SpriteEffects_None, 0.5f);
-    m_spriteBatch->Draw(cat, catSize, XMFLOAT2(300, 320), &source, Colors::Lime, time / 500, XMFLOAT2(120, 80), 0.5f, SpriteEffects_None, 0.5f);
+    m_spriteBatch->Draw(cat, catSize, XMFLOAT2(200, 320), nullptr, lime, time / 500, XMFLOAT2(32, 128), 0.5f, SpriteEffects_None, 0.5f);
+    m_spriteBatch->Draw(cat, catSize, XMFLOAT2(300, 320), &source, lime, time / 500, XMFLOAT2(120, 80), 0.5f, SpriteEffects_None, 0.5f);
 
-    m_spriteBatch->Draw(cat, catSize, XMFLOAT2(350, 320), nullptr, Colors::Blue, time / 500, XMFLOAT2(32, 128), XMFLOAT2(0.25f, 0.5f), SpriteEffects_None, 0.5f);
-    m_spriteBatch->Draw(cat, catSize, XMFLOAT2(450, 320), &source, Colors::Blue, time / 500, XMFLOAT2(120, 80), XMFLOAT2(0.5f, 0.25f), SpriteEffects_None, 0.5f);
+    m_spriteBatch->Draw(cat, catSize, XMFLOAT2(350, 320), nullptr, blue, time / 500, XMFLOAT2(32, 128), XMFLOAT2(0.25f, 0.5f), SpriteEffects_None, 0.5f);
+    m_spriteBatch->Draw(cat, catSize, XMFLOAT2(450, 320), &source, blue, time / 500, XMFLOAT2(120, 80), XMFLOAT2(0.5f, 0.25f), SpriteEffects_None, 0.5f);
 
     // Draw overloads specifying position, origin and scale via the first two components of an XMVECTOR.
-    m_spriteBatch->Draw(cat, catSize, XMVectorSet(0, 450, randf(), randf()), Colors::Pink);
+    m_spriteBatch->Draw(cat, catSize, XMVectorSet(0, 450, randf(), randf()), pink);
 
-    m_spriteBatch->Draw(cat, catSize, XMVectorSet(200, 450, randf(), randf()), nullptr, Colors::Lime, time / 500, XMVectorSet(32, 128, randf(), randf()), 0.5f, SpriteEffects_None, 0.5f);
-    m_spriteBatch->Draw(cat, catSize, XMVectorSet(300, 450, randf(), randf()), &source, Colors::Lime, time / 500, XMVectorSet(120, 80, randf(), randf()), 0.5f, SpriteEffects_None, 0.5f);
+    m_spriteBatch->Draw(cat, catSize, XMVectorSet(200, 450, randf(), randf()), nullptr, lime, time / 500, XMVectorSet(32, 128, randf(), randf()), 0.5f, SpriteEffects_None, 0.5f);
+    m_spriteBatch->Draw(cat, catSize, XMVectorSet(300, 450, randf(), randf()), &source, lime, time / 500, XMVectorSet(120, 80, randf(), randf()), 0.5f, SpriteEffects_None, 0.5f);
 
-    m_spriteBatch->Draw(cat, catSize, XMVectorSet(350, 450, randf(), randf()), nullptr, Colors::Blue, time / 500, XMVectorSet(32, 128, randf(), randf()), XMVectorSet(0.25f, 0.5f, randf(), randf()), SpriteEffects_None, 0.5f);
-    m_spriteBatch->Draw(cat, catSize, XMVectorSet(450, 450, randf(), randf()), &source, Colors::Blue, time / 500, XMVectorSet(120, 80, randf(), randf()), XMVectorSet(0.5f, 0.25f, randf(), randf()), SpriteEffects_None, 0.5f);
+    m_spriteBatch->Draw(cat, catSize, XMVectorSet(350, 450, randf(), randf()), nullptr, blue, time / 500, XMVectorSet(32, 128, randf(), randf()), XMVectorSet(0.25f, 0.5f, randf(), randf()), SpriteEffects_None, 0.5f);
+    m_spriteBatch->Draw(cat, catSize, XMVectorSet(450, 450, randf(), randf()), &source, blue, time / 500, XMVectorSet(120, 80, randf(), randf()), XMVectorSet(0.5f, 0.25f, randf(), randf()), SpriteEffects_None, 0.5f);
 
     // Draw overloads specifying position as a RECT.
     RECT rc1 = { 500, 320, 600, 420 };
     RECT rc2 = { 550, 450, 650, 550 };
     RECT rc3 = { 550, 550, 650, 650 };
 
-    m_spriteBatch->Draw(cat, catSize, rc1, Colors::Gray);
-    m_spriteBatch->Draw(cat, catSize, rc2, nullptr, Colors::LightSeaGreen, time / 300, XMFLOAT2(128, 128), SpriteEffects_None, 0.5f);
-    m_spriteBatch->Draw(cat, catSize, rc3, &source, Colors::LightSeaGreen, time / 300, XMFLOAT2(128, 128), SpriteEffects_None, 0.5f);
+    m_spriteBatch->Draw(cat, catSize, rc1, gray);
+    m_spriteBatch->Draw(cat, catSize, rc2, nullptr, lsgreen, time / 300, XMFLOAT2(128, 128), SpriteEffects_None, 0.5f);
+    m_spriteBatch->Draw(cat, catSize, rc3, &source, lsgreen, time / 300, XMFLOAT2(128, 128), SpriteEffects_None, 0.5f);
 
     m_spriteBatch->End();
 
@@ -248,11 +307,15 @@ void Game::Clear()
 
     // Clear the views.
     auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
-    auto dsvDescriptor = m_deviceResources->GetDepthStencilView();
 
-    commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, &dsvDescriptor);
-    commandList->ClearRenderTargetView(rtvDescriptor, Colors::CornflowerBlue, 0, nullptr);
-    commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+    XMVECTORF32 color;
+#ifdef GAMMA_CORRECT_RENDERING
+    color.v = XMColorSRGBToRGB(Colors::CornflowerBlue);
+#else
+    color.v = Colors::CornflowerBlue;
+#endif
+    commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, nullptr);
+    commandList->ClearRenderTargetView(rtvDescriptor, color, 0, nullptr);
 
     // Set the viewport and scissor rect.
     auto viewport = m_deviceResources->GetScreenViewport();
@@ -283,13 +346,28 @@ void Game::OnResuming()
     m_timer.ResetElapsedTime();
 }
 
-void Game::OnWindowSizeChanged(int width, int height)
+#if !defined(_XBOX_ONE) || !defined(_TITLE)
+void Game::OnWindowSizeChanged(int width, int height, DXGI_MODE_ROTATION rotation)
 {
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+    if (!m_deviceResources->WindowSizeChanged(width, height, rotation))
+        return;
+#else
+    UNREFERENCED_PARAMETER(rotation);
     if (!m_deviceResources->WindowSizeChanged(width, height))
         return;
+#endif
 
     CreateWindowSizeDependentResources();
 }
+#endif
+
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+void Game::ValidateDevice()
+{
+    m_deviceResources->ValidateDevice();
+}
+#endif
 
 // Properties
 void Game::GetDefaultSize(int& width, int& height) const
@@ -361,23 +439,37 @@ void Game::CreateDeviceDependentResources()
         m_spriteBatchAW = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
     }
 
+#ifdef GAMMA_CORRECT_RENDERING
+    bool forceSRGB = true;
+#else
+    bool forceSRGB = false;
+#endif
+
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFile(device, resourceUpload, L"cat.dds",m_cat.ReleaseAndGetAddressOf()));
+        CreateDDSTextureFromFileEx(device, resourceUpload, L"cat.dds",
+            0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false,
+            m_cat.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_cat.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Cat));
 
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFile(device, resourceUpload, L"a.dds", m_letterA.ReleaseAndGetAddressOf()));
+        CreateDDSTextureFromFileEx(device, resourceUpload, L"a.dds",
+            0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false,
+            m_letterA.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_letterA.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::A));
 
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFile(device, resourceUpload, L"b.dds", m_letterB.ReleaseAndGetAddressOf()));
+        CreateDDSTextureFromFileEx(device, resourceUpload, L"b.dds",
+            0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false,
+            m_letterB.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_letterB.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::B));
 
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFile(device, resourceUpload, L"c.dds", m_letterC.ReleaseAndGetAddressOf()));
+        CreateDDSTextureFromFileEx(device, resourceUpload, L"c.dds",
+            0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false,
+            m_letterC.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_letterC.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::C));
 
@@ -397,8 +489,17 @@ void Game::CreateWindowSizeDependentResources()
     m_spriteBatchPC->SetViewport(viewport);
     m_spriteBatchAC->SetViewport(viewport);
     m_spriteBatchAW->SetViewport(viewport);
+
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+    auto rotation = m_deviceResources->GetRotation();
+    m_spriteBatch->SetRotation(rotation);
+    m_spriteBatchPC->SetRotation(rotation);
+    m_spriteBatchAC->SetViewport(viewport);
+    m_spriteBatchAW->SetViewport(viewport);
+#endif
 }
 
+#if !defined(_XBOX_ONE) || !defined(_TITLE)
 void Game::OnDeviceLost()
 {
     m_cat.Reset();
@@ -422,4 +523,5 @@ void Game::OnDeviceRestored()
 
     CreateWindowSizeDependentResources();
 }
+#endif
 #pragma endregion

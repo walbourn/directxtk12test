@@ -1,16 +1,35 @@
+//--------------------------------------------------------------------------------------
+// File: Game.h
 //
-// Game.h
+// Developer unit test for basic Direct3D 12 support
 //
-
+// THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
+// ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+// THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
+// PARTICULAR PURPOSE.
+//
+// Copyright (c) Microsoft Corporation. All rights reserved.
+//
+// http://go.microsoft.com/fwlink/?LinkID=615561
+//--------------------------------------------------------------------------------------
 #pragma once
 
+#if defined(_XBOX_ONE) && defined(_TITLE)
+#include "DeviceResourcesXDK.h"
+#elif defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+#include "DeviceResourcesUWP.h"
+#else
 #include "DeviceResourcesPC.h"
+#endif
 #include "StepTimer.h"
 
 
 // A basic game implementation that creates a D3D12 device and
 // provides a game loop.
-class Game : public DX::IDeviceNotify
+class Game
+#if !defined(_XBOX_ONE) || !defined(_TITLE)
+    : public DX::IDeviceNotify
+#endif
 {
 public:
 
@@ -18,7 +37,11 @@ public:
     ~Game();
 
     // Initialization and management
-    void Initialize(HWND window, int width, int height);
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) 
+    void Initialize(HWND window, int width, int height, DXGI_MODE_ROTATION rotation);
+#else
+    void Initialize(IUnknown* window, int width, int height, DXGI_MODE_ROTATION rotation);
+#endif
 
     // Basic game loop
     void Tick();
@@ -27,16 +50,25 @@ public:
     // Rendering helpers
     void Clear();
 
+#if !defined(_XBOX_ONE) || !defined(_TITLE)
     // IDeviceNotify
     virtual void OnDeviceLost() override;
     virtual void OnDeviceRestored() override;
+#endif
 
     // Messages
     void OnActivated();
     void OnDeactivated();
     void OnSuspending();
     void OnResuming();
-    void OnWindowSizeChanged(int width, int height);
+
+#if !defined(_XBOX_ONE) || !defined(_TITLE)
+    void OnWindowSizeChanged(int width, int height, DXGI_MODE_ROTATION rotation);
+#endif
+
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+    void ValidateDevice();
+#endif
 
     // Properties
     void GetDefaultSize( int& width, int& height ) const;

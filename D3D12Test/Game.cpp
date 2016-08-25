@@ -1,9 +1,24 @@
+//--------------------------------------------------------------------------------------
+// File: Game.cpp
 //
-// Game.cpp
+// Developer unit test for basic Direct3D 12 support
 //
+// THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
+// ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+// THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
+// PARTICULAR PURPOSE.
+//
+// Copyright (c) Microsoft Corporation. All rights reserved.
+//
+// http://go.microsoft.com/fwlink/?LinkID=615561
+//--------------------------------------------------------------------------------------
 
 #include "pch.h"
 #include "Game.h"
+
+#pragma warning( disable : 4238 )
+
+#define GAMMA_CORRECT_RENDERING
 
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
@@ -12,8 +27,15 @@ using Microsoft::WRL::ComPtr;
 
 Game::Game()
 {
+#ifdef GAMMA_CORRECT_RENDERING
+    m_deviceResources = std::make_unique<DX::DeviceResources>(DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
+#else
     m_deviceResources = std::make_unique<DX::DeviceResources>();
+#endif
+
+#if !defined(_XBOX_ONE) || !defined(_TITLE)
     m_deviceResources->RegisterDeviceNotify(this);
+#endif
 }
 
 Game::~Game()
@@ -22,11 +44,28 @@ Game::~Game()
 }
 
 // Initialize the Direct3D resources required to run.
-void Game::Initialize(HWND window, int width, int height)
+void Game::Initialize(
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) 
+    HWND window,
+#else
+    IUnknown* window,
+#endif
+    int width, int height, DXGI_MODE_ROTATION rotation)
 {
     m_keyboard = std::make_unique<Keyboard>();
 
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    UNREFERENCED_PARAMETER(rotation);
+    UNREFERENCED_PARAMETER(width);
+    UNREFERENCED_PARAMETER(height);
+    m_deviceResources->SetWindow(window);
+#elif defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+    m_deviceResources->SetWindow(window, width, height, rotation);
+    m_keyboard->SetWindow(reinterpret_cast<ABI::Windows::UI::Core::ICoreWindow*>(window));
+#else
+    UNREFERENCED_PARAMETER(rotation);
     m_deviceResources->SetWindow(window, width, height);
+#endif
 
     m_deviceResources->CreateDeviceResources();
     CreateDeviceDependentResources();
@@ -74,7 +113,11 @@ void Game::Update(DX::StepTimer const& timer)
 
     if (kb.Escape)
     {
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
         PostQuitMessage(0);
+#else
+        Windows::ApplicationModel::Core::CoreApplication::Exit();
+#endif
     }
 
     PIXEndEvent();
@@ -98,6 +141,33 @@ void Game::Render()
     auto commandList = m_deviceResources->GetCommandList();
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Render");
 
+    XMVECTORF32 red, green, blue, dred, dgreen, dblue, yellow, cyan, magenta, gray, dgray;
+#ifdef GAMMA_CORRECT_RENDERING
+    red.v = XMColorSRGBToRGB(Colors::Red);
+    green.v = XMColorSRGBToRGB(Colors::Green);
+    blue.v = XMColorSRGBToRGB(Colors::Blue);
+    dred.v = XMColorSRGBToRGB(Colors::DarkRed);
+    dgreen.v = XMColorSRGBToRGB(Colors::DarkGreen);
+    dblue.v = XMColorSRGBToRGB(Colors::DarkBlue);
+    yellow.v = XMColorSRGBToRGB(Colors::Yellow);
+    cyan.v = XMColorSRGBToRGB(Colors::Cyan);
+    magenta.v = XMColorSRGBToRGB(Colors::Magenta);
+    gray.v = XMColorSRGBToRGB(Colors::Gray);
+    dgray.v = XMColorSRGBToRGB(Colors::DarkGray);
+#else
+    red.v = Colors::Red;
+    green.v = Colors::Green;
+    blue.v = Colors::Blue;
+    dred.v = Colors::DarkRed;
+    dgreen.v = Colors::DarkGreen;
+    dblue.v = Colors::DarkBlue;
+    yellow.v = Colors::Yellow;
+    cyan.v = Colors::Cyan;
+    magenta.v = Colors::Magenta;
+    gray.v = Colors::Gray;
+    dgray.v = Colors::DarkGray;
+#endif
+
     // Point
     m_effectPoint->Apply(commandList);
 
@@ -106,12 +176,12 @@ void Game::Render()
     {
         VertexPositionColor points[]
         {
-            { Vector3(-0.75f, -0.75f, 0.5f), Colors::Red },
-            { Vector3(-0.75f, -0.5f,  0.5f), Colors::Green },
-            { Vector3(-0.75f, -0.25f, 0.5f), Colors::Blue },
-            { Vector3(-0.75f,  0.0f,  0.5f), Colors::Yellow },
-            { Vector3(-0.75f,  0.25f, 0.5f), Colors::Magenta },
-            { Vector3(-0.75f,  0.5f,  0.5f), Colors::Cyan },
+            { Vector3(-0.75f, -0.75f, 0.5f), red },
+            { Vector3(-0.75f, -0.5f,  0.5f), green },
+            { Vector3(-0.75f, -0.25f, 0.5f), blue },
+            { Vector3(-0.75f,  0.0f,  0.5f), yellow },
+            { Vector3(-0.75f,  0.25f, 0.5f), magenta },
+            { Vector3(-0.75f,  0.5f,  0.5f), cyan },
             { Vector3(-0.75f,  0.75f, 0.5f), Colors::White },
         };
 
@@ -128,9 +198,9 @@ void Game::Render()
     {
         VertexPositionColor lines[] =
         {
-            { Vector3(-0.75f, -0.85f, 0.5f), Colors::Red },{ Vector3(0.75f, -0.85f, 0.5f), Colors::DarkRed },
-            { Vector3(-0.75f, -0.90f, 0.5f), Colors::Green },{ Vector3(0.75f, -0.90f, 0.5f), Colors::DarkGreen },
-            { Vector3(-0.75f, -0.95f, 0.5f), Colors::Blue },{ Vector3(0.75f, -0.95f, 0.5f), Colors::DarkBlue },
+            { Vector3(-0.75f, -0.85f, 0.5f), red },{ Vector3(0.75f, -0.85f, 0.5f), dred },
+            { Vector3(-0.75f, -0.90f, 0.5f), green },{ Vector3(0.75f, -0.90f, 0.5f), dgreen },
+            { Vector3(-0.75f, -0.95f, 0.5f), blue },{ Vector3(0.75f, -0.95f, 0.5f), dblue },
         };
 
         m_batch->DrawLine(lines[0], lines[1]);
@@ -146,9 +216,9 @@ void Game::Render()
     m_batch->Begin(commandList);
 
     {
-        VertexPositionColor v1(Vector3(0.f, 0.5f, 0.5f), Colors::Red);
-        VertexPositionColor v2(Vector3(0.5f, -0.5f, 0.5f), Colors::Green);
-        VertexPositionColor v3(Vector3(-0.5f, -0.5f, 0.5f), Colors::Blue);
+        VertexPositionColor v1(Vector3(0.f, 0.5f, 0.5f), red);
+        VertexPositionColor v2(Vector3(0.5f, -0.5f, 0.5f), green);
+        VertexPositionColor v3(Vector3(-0.5f, -0.5f, 0.5f), blue);
 
         m_batch->DrawTriangle(v1, v2, v3);
     }
@@ -157,10 +227,10 @@ void Game::Render()
     {
         VertexPositionColor quad[] =
         {
-            { Vector3(0.75f, 0.75f, 0.5), Colors::Gray },
-            { Vector3(0.95f, 0.75f, 0.5), Colors::Gray },
-            { Vector3(0.95f, -0.75f, 0.5), Colors::DarkGray },
-            { Vector3(0.75f, -0.75f, 0.5), Colors::DarkGray },
+            { Vector3(0.75f, 0.75f, 0.5), gray },
+            { Vector3(0.95f, 0.75f, 0.5), gray },
+            { Vector3(0.95f, -0.75f, 0.5), dgray },
+            { Vector3(0.75f, -0.75f, 0.5), dgray },
         };
 
         m_batch->DrawQuad(quad[0], quad[1], quad[2], quad[3]);
@@ -187,8 +257,14 @@ void Game::Clear()
     auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
     auto dsvDescriptor = m_deviceResources->GetDepthStencilView();
 
+    XMVECTORF32 color;
+#ifdef GAMMA_CORRECT_RENDERING
+    color.v = XMColorSRGBToRGB(Colors::CornflowerBlue);
+#else
+    color.v = Colors::CornflowerBlue;
+#endif
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, &dsvDescriptor);
-    commandList->ClearRenderTargetView(rtvDescriptor, Colors::CornflowerBlue, 0, nullptr);
+    commandList->ClearRenderTargetView(rtvDescriptor, color, 0, nullptr);
     commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
     // Set the viewport and scissor rect.
@@ -220,13 +296,28 @@ void Game::OnResuming()
     m_timer.ResetElapsedTime();
 }
 
-void Game::OnWindowSizeChanged(int width, int height)
+#if !defined(_XBOX_ONE) || !defined(_TITLE)
+void Game::OnWindowSizeChanged(int width, int height, DXGI_MODE_ROTATION rotation)
 {
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+    if (!m_deviceResources->WindowSizeChanged(width, height, rotation))
+        return;
+#else
+    UNREFERENCED_PARAMETER(rotation);
     if (!m_deviceResources->WindowSizeChanged(width, height))
         return;
+#endif
 
     CreateWindowSizeDependentResources();
 }
+#endif
+
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+void Game::ValidateDevice()
+{
+    m_deviceResources->ValidateDevice();
+}
+#endif
 
 // Properties
 void Game::GetDefaultSize(int& width, int& height) const
@@ -274,6 +365,7 @@ void Game::CreateWindowSizeDependentResources()
     SetDebugObjectName(m_deviceResources->GetDepthStencil(), L"DepthStencil");
 }
 
+#if !defined(_XBOX_ONE) || !defined(_TITLE)
 void Game::OnDeviceLost()
 {
     m_batch.reset();
@@ -289,4 +381,5 @@ void Game::OnDeviceRestored()
 
     CreateWindowSizeDependentResources();
 }
+#endif
 #pragma endregion
