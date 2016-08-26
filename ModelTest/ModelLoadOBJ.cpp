@@ -19,15 +19,6 @@
 
 #include <map>
 
-#if 0
-#include <algorithm>
-#include <fstream>
-#include <vector>
-#include <unordered_map>
-
-#include "PlatformHelpers.h"
-#endif
-
 #include "WaveFrontReader.h"
 
 using namespace DirectX;

@@ -16,6 +16,8 @@
 #include "pch.h"
 #include "Game.h"
 
+#pragma warning( disable : 4238 )
+
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
