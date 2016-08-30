@@ -1347,6 +1347,9 @@ void Game::OnDeviceLost()
     m_brickNormal.Reset();
     m_brickSpecular.Reset();
 
+    m_indexBuffer.Reset();
+    m_vertexBuffer.Reset();
+
     m_resourceDescriptors.reset();
     m_states.reset();
     m_graphicsMemory.reset();

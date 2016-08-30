@@ -474,6 +474,8 @@ void Game::OnDeviceRestored()
     CreateDeviceDependentResources();
 
     CreateWindowSizeDependentResources();
+
+    m_comicFont->SetDefaultCharacter('-');
 }
 #endif
 #pragma endregion
