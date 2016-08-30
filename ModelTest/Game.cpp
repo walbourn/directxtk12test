@@ -274,6 +274,11 @@ void Game::Render()
     Model::UpdateEffectMatrices(m_lmapNormal, local, m_view, m_projection);
     m_lmap->Draw(commandList, m_lmapNormal.cbegin());
 
+    local = XMMatrixMultiply(XMMatrixScaling(0.05f, 0.05f, 0.05f), XMMatrixTranslation(-4.0f, row1, 0.f));
+    local = XMMatrixMultiply(world, local);
+    Model::UpdateEffectMatrices(m_nmapNormal, local, m_view, m_projection);
+    m_nmap->Draw(commandList, m_nmapNormal.cbegin());
+
     for (auto& it : m_soldierNormal)
     {
         auto skin = dynamic_cast<IEffectSkinning*>(it.get());
@@ -599,6 +604,24 @@ void Game::CreateDeviceDependentResources()
 
     txtOffset += txtAdd;
 
+    // SDKMESH Normalmap
+    m_nmap = Model::CreateFromSDKMESH(L"Helmet.sdkmesh");
+
+    txtAdd = m_nmap->LoadTextures(*m_modelResources, txtOffset);
+
+    {
+        EffectPipelineStateDescription pd(
+            nullptr,
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
+            ncull,
+            rtState);
+
+        m_nmapNormal = m_nmap->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
+    }
+
+    txtOffset += txtAdd;
+
 #ifdef GAMMA_CORRECT_RENDERING
     bool forceSRGB = true;
 #else
@@ -694,6 +717,7 @@ void Game::OnDeviceLost()
     m_soldier.reset();
     m_dwarf.reset();
     m_lmap.reset();
+    m_nmap.reset();
 
     m_cupNormal.clear();
     m_cupCustom.clear();
@@ -713,6 +737,8 @@ void Game::OnDeviceLost()
     m_dwarfNormal.clear();
 
     m_lmapNormal.clear();
+
+    m_nmapNormal.clear();
 
     m_defaultTex.Reset();
     m_cubemap.Reset();

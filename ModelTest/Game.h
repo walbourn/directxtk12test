@@ -124,6 +124,9 @@ private:
     std::unique_ptr<DirectX::Model>                 m_lmap;
     std::vector<std::shared_ptr<DirectX::IEffect>>  m_lmapNormal;
 
+    std::unique_ptr<DirectX::Model>                 m_nmap;
+    std::vector<std::shared_ptr<DirectX::IEffect>>  m_nmapNormal;
+
     std::unique_ptr<DirectX::EffectTextureFactory>  m_modelResources;
     std::unique_ptr<DirectX::EffectFactory>         m_fxFactory;
 

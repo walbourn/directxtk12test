@@ -23,6 +23,9 @@
     <Filter Include="Assets\Tiny">
       <UniqueIdentifier>{25aeb293-b86c-4387-9946-a15242a9b2a4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Assets\Normalmap">
+      <UniqueIdentifier>{0179377f-7515-4bfe-8449-4a23b293c932}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -122,6 +125,15 @@
     <Image Include="default.dds">
       <Filter>Assets</Filter>
     </Image>
+    <Image Include="Helmet_diff.dds">
+      <Filter>Assets\Normalmap</Filter>
+    </Image>
+    <Image Include="Helmet_norm.dds">
+      <Filter>Assets\Normalmap</Filter>
+    </Image>
+    <Image Include="Helmet_spec.dds">
+      <Filter>Assets\Normalmap</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="PackageUWP.appxmanifest" />
@@ -150,6 +162,9 @@
     </None>
     <None Include="player_ship_a.vbo">
       <Filter>Assets</Filter>
+    </None>
+    <None Include="Helmet.sdkmesh">
+      <Filter>Assets\Normalmap</Filter>
     </None>
   </ItemGroup>
 </Project>

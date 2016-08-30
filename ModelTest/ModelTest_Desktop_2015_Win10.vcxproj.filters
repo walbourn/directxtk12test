@@ -23,6 +23,9 @@
     <Filter Include="Assets\Lightmap">
       <UniqueIdentifier>{9154a617-c449-4afd-a9cd-f9f9e0b111b7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Assets\Normalmap">
+      <UniqueIdentifier>{ac5bd0f5-fddb-4f66-8da6-6fb3f9c2bffa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -78,6 +81,9 @@
     </None>
     <None Include="SimpleLightMap.sdkmesh">
       <Filter>Assets\Lightmap</Filter>
+    </None>
+    <None Include="Helmet.sdkmesh">
+      <Filter>Assets\Normalmap</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -137,6 +143,15 @@
     </Image>
     <Image Include="Text001LightingMap.dds">
       <Filter>Assets\Lightmap</Filter>
+    </Image>
+    <Image Include="Helmet_diff.dds">
+      <Filter>Assets\Normalmap</Filter>
+    </Image>
+    <Image Include="Helmet_norm.dds">
+      <Filter>Assets\Normalmap</Filter>
+    </Image>
+    <Image Include="Helmet_spec.dds">
+      <Filter>Assets\Normalmap</Filter>
     </Image>
   </ItemGroup>
 </Project>
