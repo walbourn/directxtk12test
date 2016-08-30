@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package xmlns="http://schemas.microsoft.com/appx/2010/manifest"
+         xmlns:mx="http://schemas.microsoft.com/appx/2013/xbox/manifest"
+         IgnorableNamespaces="mx">
+
+  <Identity Name="1c4a1286-deaf-4b19-98b9-4fcc8dd76e67"
+            Publisher="CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+            Version="1.0.0.0" />
+
+  <Properties>
+    <DisplayName>LoadTest (DirectX 12)</DisplayName>
+    <PublisherDisplayName>Microsoft Corporation</PublisherDisplayName>
+    <Logo>StoreLogo.png</Logo>
+    <Description>LoadTest</Description>
+  </Properties>
+
+  <Prerequisites>
+    <OSMinVersion>6.2</OSMinVersion>
+    <OSMaxVersionTested>6.2</OSMaxVersionTested>
+  </Prerequisites>
+
+  <Resources>
+    <Resource Language="en-us"/>
+  </Resources>
+
+  <Applications>
+    <Application Id="App"
+        Executable="$targetnametoken$.exe"
+        EntryPoint="LoadTest.App">
+      <VisualElements
+          DisplayName="LoadTest (DirectX 12)"
+          Logo="Logo.png"
+          SmallLogo="SmallLogo.png"
+          Description="LoadTest"
+          ForegroundText="light"
+          BackgroundColor="#464646">
+        <SplashScreen Image="SplashScreen.png" />
+      </VisualElements>
+      <Extensions>
+        <mx:Extension Category="xbox.system.resources">
+          <mx:XboxSystemResources />
+        </mx:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+  <Capabilities>
+    <Capability Name="internetClientServer" />
+  </Capabilities>
+</Package>
