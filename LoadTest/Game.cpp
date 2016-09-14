@@ -250,9 +250,6 @@ void Game::Render()
                 throw std::exception("TemporaryFolder");
             }
         }
-
-
-        // TODO -
 #else
         const wchar_t sspath[MAX_PATH] = L".";
 #endif
@@ -364,6 +361,10 @@ void Game::Render()
             OutputDebugStringA("ERROR: Missing SCREENSHOT.DDS!\n");
             success = false;
         }
+
+        // TODO - pass in D3D12_HEAP_TYPE_READBACK resource
+
+        // ScreenGrab of an MSAA resource is tested elsewhere
 
         OutputDebugStringA(success ? "Passed\n" : "Failed\n");
         OutputDebugStringA("********* SCREENSHOT TEST END **************\n");
