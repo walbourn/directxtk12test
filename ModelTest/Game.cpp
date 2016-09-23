@@ -623,16 +623,16 @@ void Game::CreateDeviceDependentResources()
     txtOffset += txtAdd;
 
 #ifdef GAMMA_CORRECT_RENDERING
-    bool forceSRGB = true;
+    unsigned int loadFlags = DDS_LOADER_FORCE_SRGB;
 #else
-    bool forceSRGB = false;
+    unsigned int loadFlags = DDS_LOADER_DEFAULT;
 #endif
 
     // Load test textures
     {
         DX::ThrowIfFailed(
             CreateDDSTextureFromFileEx(device, resourceUpload, L"default.dds",
-                0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false,
+                0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
                 m_defaultTex.ReleaseAndGetAddressOf()));
 
         CreateShaderResourceView(device, m_defaultTex.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::DefaultTex));
@@ -640,7 +640,7 @@ void Game::CreateDeviceDependentResources()
         bool iscubemap;
         DX::ThrowIfFailed(
             CreateDDSTextureFromFileEx(device, resourceUpload, L"cubemap.dds",
-                0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false,
+                0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
                 m_cubemap.ReleaseAndGetAddressOf(), nullptr, &iscubemap));
 
         CreateShaderResourceView(device, m_cubemap.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Cubemap), iscubemap);

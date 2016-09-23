@@ -670,28 +670,28 @@ void Game::CreateDeviceDependentResources()
     resourceUpload.Begin();
 
 #ifdef GAMMA_CORRECT_RENDERING
-    bool forceSRGB = true;
+    unsigned int loadFlags = DDS_LOADER_FORCE_SRGB;
 #else
-    bool forceSRGB = false;
+    unsigned int loadFlags = DDS_LOADER_DEFAULT;
 #endif
 
     DX::ThrowIfFailed(
         CreateDDSTextureFromFileEx(device, resourceUpload, L"cat.dds",
-            0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false,
+            0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
             m_cat.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_cat.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Cat));
 
     DX::ThrowIfFailed(
         CreateDDSTextureFromFileEx(device, resourceUpload, L"dx5_logo.dds",
-            0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false,
+            0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
             m_dxLogo.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_dxLogo.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::DirectXLogo));
 
     DX::ThrowIfFailed(
         CreateDDSTextureFromFileEx(device, resourceUpload, L"reftexture.dds",
-            0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false,
+            0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
             m_refTexture.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_refTexture.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::RefTexture));

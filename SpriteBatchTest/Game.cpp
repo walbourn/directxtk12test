@@ -444,35 +444,35 @@ void Game::CreateDeviceDependentResources()
     }
 
 #ifdef GAMMA_CORRECT_RENDERING
-    bool forceSRGB = true;
+    unsigned int loadFlags = DDS_LOADER_FORCE_SRGB;
 #else
-    bool forceSRGB = false;
+    unsigned int loadFlags = DDS_LOADER_DEFAULT;
 #endif
 
     DX::ThrowIfFailed(
         CreateDDSTextureFromFileEx(device, resourceUpload, L"cat.dds",
-            0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false,
+            0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
             m_cat.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_cat.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Cat));
 
     DX::ThrowIfFailed(
         CreateDDSTextureFromFileEx(device, resourceUpload, L"a.dds",
-            0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false,
+            0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
             m_letterA.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_letterA.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::A));
 
     DX::ThrowIfFailed(
         CreateDDSTextureFromFileEx(device, resourceUpload, L"b.dds",
-            0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false,
+            0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
             m_letterB.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_letterB.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::B));
 
     DX::ThrowIfFailed(
         CreateDDSTextureFromFileEx(device, resourceUpload, L"c.dds",
-            0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false,
+            0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
             m_letterC.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_letterC.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::C));

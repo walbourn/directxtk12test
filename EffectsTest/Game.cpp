@@ -1061,21 +1061,21 @@ void Game::CreateDeviceDependentResources()
     resourceUpload.Begin();
 
 #ifdef GAMMA_CORRECT_RENDERING
-    bool forceSRGB = true;
+    unsigned int loadFlags = DDS_LOADER_FORCE_SRGB;
 #else
-    bool forceSRGB = false;
+    unsigned int loadFlags = DDS_LOADER_DEFAULT;
 #endif
 
     DX::ThrowIfFailed(
         CreateDDSTextureFromFileEx(device, resourceUpload, L"cat.dds",
-            0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false, 
+            0, D3D12_RESOURCE_FLAG_NONE, loadFlags, 
             m_cat.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_cat.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Cat));
 
     DX::ThrowIfFailed(
         CreateDDSTextureFromFileEx(device, resourceUpload, L"opaqueCat.dds",
-            0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false,
+            0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
             m_opaqueCat.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_opaqueCat.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::OpaqueCat));
@@ -1083,28 +1083,28 @@ void Game::CreateDeviceDependentResources()
     bool iscubemap;
     DX::ThrowIfFailed(
         CreateDDSTextureFromFileEx(device, resourceUpload, L"cubemap.dds",
-            0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false, 
+            0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
             m_cubemap.ReleaseAndGetAddressOf(), nullptr, &iscubemap));
 
     CreateShaderResourceView(device, m_cubemap.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Cubemap), iscubemap);
 
     DX::ThrowIfFailed(
         CreateDDSTextureFromFileEx(device, resourceUpload, L"overlay.dds",
-            0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false, 
+            0, D3D12_RESOURCE_FLAG_NONE, loadFlags, 
             m_overlay.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_overlay.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Overlay));
 
     DX::ThrowIfFailed(
         CreateDDSTextureFromFileEx(device, resourceUpload, L"default.dds",
-            0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false, 
+            0, D3D12_RESOURCE_FLAG_NONE, loadFlags, 
             m_defaultTex.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_defaultTex.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::DefaultTex));
 
     DX::ThrowIfFailed(
         CreateDDSTextureFromFileEx(device, resourceUpload, L"spnza_bricks_a.DDS",
-            0, D3D12_RESOURCE_FLAG_NONE, forceSRGB, false, 
+            0, D3D12_RESOURCE_FLAG_NONE, loadFlags, 
             m_brickDiffuse.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_brickDiffuse.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::BrickDiffuse));

@@ -519,7 +519,7 @@ void Game::CreateDeviceDependentResources()
 
     CreateShaderResourceView(device, m_earth.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Earth));
 
-    DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, L"earth_A2B10G10R10.dds", 0, D3D12_RESOURCE_FLAG_NONE, true, false, m_earth2.ReleaseAndGetAddressOf()));
+    DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, L"earth_A2B10G10R10.dds", 0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_FORCE_SRGB, m_earth2.ReleaseAndGetAddressOf()));
 
     {
         // forceSRGB has no effect for 10:10:10:2
@@ -556,7 +556,7 @@ void Game::CreateDeviceDependentResources()
 
     CreateShaderResourceView(device, m_dxlogo.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::DirectXLogo));
 
-    DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, L"dx5_logo.dds", 0, D3D12_RESOURCE_FLAG_NONE, true, false, m_dxlogo2.ReleaseAndGetAddressOf()));
+    DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, L"dx5_logo.dds", 0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_FORCE_SRGB, m_dxlogo2.ReleaseAndGetAddressOf()));
 
     {
         auto desc = m_dxlogo2->GetDesc();
@@ -591,7 +591,8 @@ void Game::CreateDeviceDependentResources()
 
     CreateShaderResourceView(device, m_win95.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Windows95));
 
-    DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"win95.bmp", 0, D3D12_RESOURCE_FLAG_NONE, true, true, m_win95_2.ReleaseAndGetAddressOf()));
+    DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"win95.bmp", 0, D3D12_RESOURCE_FLAG_NONE,
+        WIC_LOADER_FORCE_SRGB | WIC_LOADER_MIP_AUTOGEN, m_win95_2.ReleaseAndGetAddressOf()));
 
     {
         auto desc = m_win95_2->GetDesc();
@@ -664,6 +665,8 @@ void Game::OnDeviceLost()
     m_test8.Reset();
     m_test9.Reset();
     m_test10.Reset();
+    m_test11.Reset();
+    m_test12.Reset();
 
     m_screenshot.Reset();
 
@@ -843,14 +846,46 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"cup_small.jpg", m_test10.ReleaseAndGetAddressOf(), true));
 
     {
-        auto desc = m_test9->GetDesc();
+        auto desc = m_test10->GetDesc();
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
             || desc.Width != 512
             || desc.Height != 683
+            || desc.MipLevels != 10)
+        {
+            OutputDebugStringA("FAILED: cup_small.jpg (autogen) desc unexpected\n");
+            success = false;
+        }
+    }
+
+    DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"cup_small.jpg", 0,
+        D3D12_RESOURCE_FLAG_NONE, WIC_LOADER_IGNORE_SRGB, m_test11.ReleaseAndGetAddressOf()));
+
+    {
+        auto desc = m_test11->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
+            || desc.Width != 512
+            || desc.Height != 683
             || desc.MipLevels != 1)
         {
-            OutputDebugStringA("FAILED: cup_small.jpg desc unexpected\n");
+            OutputDebugStringA("FAILED: cup_small.jpg (ignore srgb) desc unexpected\n");
+            success = false;
+        }
+    }
+
+    DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"cup_small.jpg", 0,
+        D3D12_RESOURCE_FLAG_NONE, WIC_LOADER_IGNORE_SRGB | WIC_LOADER_MIP_AUTOGEN, m_test12.ReleaseAndGetAddressOf()));
+
+    {
+        auto desc = m_test12->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
+            || desc.Width != 512
+            || desc.Height != 683
+            || desc.MipLevels != 10)
+        {
+            OutputDebugStringA("FAILED: cup_small.jpg (autogen ignore srgb) desc unexpected\n");
             success = false;
         }
     }
