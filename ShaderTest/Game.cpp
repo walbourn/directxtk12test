@@ -28,6 +28,8 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
+    const float SWAP_TIME = 10.f;
+
     const float ortho_width = 5.f;
     const float ortho_height = 5.f;
 
@@ -45,7 +47,8 @@ namespace
 
             XMStoreFloat4(&this->blendWeight, XMVectorSet(1.f, 0.f, 0.f, 0.f));
 
-            this->color = color;
+            XMVECTOR clr = XMLoadUByteN4(reinterpret_cast<XMUBYTEN4*>(&color));
+            XMStoreFloat4(&this->color, clr);
         }
 
         XMFLOAT3 position;
@@ -55,7 +58,7 @@ namespace
         XMFLOAT2 textureCoordinate2;
         XMUBYTE4 blendIndices;
         XMFLOAT4 blendWeight;
-        XMUBYTE4 color;
+        XMFLOAT4 color;
 
         static const D3D12_INPUT_LAYOUT_DESC InputLayout;
 
@@ -73,7 +76,7 @@ namespace
         { "TEXCOORD",     1, DXGI_FORMAT_R32G32_FLOAT,       0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
         { "BLENDINDICES", 0, DXGI_FORMAT_R8G8B8A8_UINT,      0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
         { "BLENDWEIGHT",  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        { "COLOR",        0, DXGI_FORMAT_R8G8B8A8_UNORM,     0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "COLOR",        0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
     };
 
     const D3D12_INPUT_LAYOUT_DESC TestVertex::InputLayout =
@@ -81,14 +84,12 @@ namespace
         TestVertex::InputElements,
         TestVertex::InputElementCount
     };
-
+    
     typedef std::vector<TestVertex> VertexCollection;
     typedef std::vector<uint16_t> IndexCollection;
-
-
+    
     struct aligned_deleter { void operator()(void* p) { _aligned_free(p); } };
-
-
+    
     // Helper for computing tangents (see DirectXMesh <http://go.microsoft.com/fwlink/?LinkID=324981>)
     void ComputeTangents(const IndexCollection& indices, VertexCollection& vertices)
     {
@@ -216,9 +217,75 @@ namespace
             XMStoreFloat3(&vertices[j].tangent, b1);
         }
     }
+    
+    struct TestCompressedVertex
+    {
+        TestCompressedVertex(const TestVertex& bn)
+        {
+            position = bn.position;
+            blendIndices = bn.blendIndices;
+
+            XMVECTOR v = XMLoadFloat3(&bn.normal);
+            v = v * g_XMOneHalf;
+            v += g_XMOneHalf;
+            XMStoreFloat3PK(&this->normal, v);
+
+            v = XMLoadFloat3(&bn.tangent);
+            v = v * g_XMOneHalf;
+            v += g_XMOneHalf;
+            XMStoreFloat3PK(&this->tangent, v);
+
+            v = XMLoadFloat2(&bn.textureCoordinate);
+            XMStoreHalf2(&this->textureCoordinate, v);
+
+            v = XMLoadFloat2(&bn.textureCoordinate2);
+            XMStoreHalf2(&this->textureCoordinate2, v);
+
+            v = XMLoadFloat4(&bn.blendWeight);
+            XMStoreUByteN4(&this->blendWeight, v);
+
+            v = XMLoadFloat4(&bn.color);
+            XMStoreColor(&this->color, v);
+        }
+
+        XMFLOAT3 position;
+        XMFLOAT3PK normal;
+        XMFLOAT3PK tangent;
+        XMHALF2 textureCoordinate;
+        XMHALF2 textureCoordinate2;
+        XMUBYTE4 blendIndices;
+        XMUBYTEN4 blendWeight;
+        XMCOLOR color;
+
+        static const D3D12_INPUT_LAYOUT_DESC InputLayout;
+
+    private:
+        static const int InputElementCount = 8;
+        static const D3D12_INPUT_ELEMENT_DESC InputElements[InputElementCount];
+    };
+
+    const D3D12_INPUT_ELEMENT_DESC TestCompressedVertex::InputElements[] =
+    {
+        { "SV_Position",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "NORMAL",       0, DXGI_FORMAT_R11G11B10_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "TANGENT",      0, DXGI_FORMAT_R11G11B10_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "TEXCOORD",     0, DXGI_FORMAT_R16G16_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "TEXCOORD",     1, DXGI_FORMAT_R16G16_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "BLENDINDICES", 0, DXGI_FORMAT_R8G8B8A8_UINT,   0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "BLENDWEIGHT",  0, DXGI_FORMAT_R8G8B8A8_UNORM,  0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "COLOR",        0, DXGI_FORMAT_B8G8R8A8_UNORM,  0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+    };
+
+    const D3D12_INPUT_LAYOUT_DESC TestCompressedVertex::InputLayout =
+    {
+        TestCompressedVertex::InputElements,
+        TestCompressedVertex::InputElementCount
+    };
 }  // anonymous namespace
 
-Game::Game()
+Game::Game() :
+    m_showCompressed(false),
+    m_delay(0)
 {
 #ifdef GAMMA_CORRECT_RENDERING
     m_deviceResources = std::make_unique<DX::DeviceResources>(DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
@@ -269,6 +336,8 @@ void Game::Initialize(
 
     m_deviceResources->CreateWindowSizeDependentResources();
     CreateWindowSizeDependentResources();
+
+    m_delay = SWAP_TIME;
 }
 
 #pragma region Frame Update
@@ -300,6 +369,33 @@ void Game::Update(DX::StepTimer const& timer)
 #else
         Windows::ApplicationModel::Core::CoreApplication::Exit();
 #endif
+    }
+
+    if (pad.IsConnected())
+    {
+        m_gamePadButtons.Update(pad);
+    }
+    else
+    {
+        m_gamePadButtons.Reset();
+    }
+
+    m_keyboardButtons.Update(kb);
+
+    if (m_keyboardButtons.IsKeyPressed(Keyboard::Space) || (m_gamePadButtons.y == GamePad::ButtonStateTracker::PRESSED))
+    {
+        m_showCompressed = !m_showCompressed;
+        m_delay = SWAP_TIME;
+    }
+    else if (!kb.Space && !(pad.IsConnected() && pad.IsYPressed()))
+    {
+        m_delay -= static_cast<float>(timer.GetElapsedSeconds());
+
+        if (m_delay <= 0.f)
+        {
+            m_showCompressed = !m_showCompressed;
+            m_delay = SWAP_TIME;
+        }
     }
 
     PIXEndEvent();
@@ -337,15 +433,17 @@ void Game::Render()
     commandList->SetDescriptorHeaps(_countof(heaps), heaps);
 
     // Setup for cube drawing.
-    commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+    commandList->IASetVertexBuffers(0, 1, (m_showCompressed) ? &m_vertexBufferViewBn : &m_vertexBufferView);
     commandList->IASetIndexBuffer(&m_indexBufferView);
+
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     // BasicEffect
     float y = ortho_height - 0.5f;
     {
-        auto it = m_basic.begin();
-        assert(it != m_basic.end());
+        auto it = (m_showCompressed) ? m_basicBn.cbegin() : m_basic.cbegin();
+        auto eit = (m_showCompressed) ? m_basicBn.cend() : m_basic.cend();
+        assert(it != eit);
 
         for (; y > -ortho_height; y -= 1.f)
         {
@@ -356,24 +454,25 @@ void Game::Render()
                 commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
                 ++it;
-                if (it == m_basic.cend())
+                if (it == eit)
                     break;
             }
 
-            if (it == m_basic.cend())
+            if (it == eit)
                 break;
         }
 
         // Make sure we drew all the effects
-        assert(it == m_basic.cend());
+        assert(it == eit);
 
         y -= 1.f;
     }
 
     // SkinnedEffect
     {
-        auto it = m_skinning.begin();
-        assert(it != m_skinning.end());
+        auto it = (m_showCompressed) ? m_skinningBn.cbegin() : m_skinning.cbegin();
+        auto eit = (m_showCompressed) ? m_skinningBn.cend() : m_skinning.cend();
+        assert(it != eit);
 
         XMMATRIX bones[4] =
         {
@@ -393,24 +492,25 @@ void Game::Render()
                 commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
                 ++it;
-                if (it == m_skinning.cend())
+                if (it == eit)
                     break;
             }
 
-            if (it == m_skinning.cend())
+            if (it == eit)
                 break;
         }
 
         // Make sure we drew all the effects
-        assert(it == m_skinning.cend());
+        assert(it == eit);
 
         y -= 1.f;
     }
 
     // EnvironmentMapEffect
     {
-        auto it = m_envmap.begin();
-        assert(it != m_envmap.end());
+        auto it = (m_showCompressed) ? m_envmapBn.cbegin() : m_envmap.cbegin();
+        auto eit = (m_showCompressed) ? m_envmapBn.cend() : m_envmap.cend();
+        assert(it != eit);
 
         for (; y > -ortho_height; y -= 1.f)
         {
@@ -421,19 +521,21 @@ void Game::Render()
                 commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
                 ++it;
-                if (it == m_envmap.cend())
+                if (it == eit)
                     break;
             }
 
-            if (it == m_envmap.cend())
+            if (it == eit)
                 break;
         }
 
         // Make sure we drew all the effects
-        assert(it == m_envmap.cend());
+        assert(it == eit);
 
         y -= 1.f;
     }
+
+    commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 
     // DualTextureEffect
     {
@@ -491,10 +593,13 @@ void Game::Render()
         y -= 1.f;
     }
 
+    commandList->IASetVertexBuffers(0, 1, (m_showCompressed) ? &m_vertexBufferViewBn : &m_vertexBufferView);
+
     // NormalMapEffect
     {
-        auto it = m_normalMap.begin();
-        assert(it != m_normalMap.end());
+        auto it = (m_showCompressed) ? m_normalMapBn.cbegin() : m_normalMap.cbegin();
+        auto eit = (m_showCompressed) ? m_normalMapBn.cend() : m_normalMap.cend();
+        assert(it != eit);
 
         for (; y > -ortho_height; y -= 1.f)
         {
@@ -505,16 +610,16 @@ void Game::Render()
                 commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
                 ++it;
-                if (it == m_normalMap.cend())
+                if (it == eit)
                     break;
             }
 
-            if (it == m_normalMap.cend())
+            if (it == eit)
                 break;
         }
 
         // Make sure we drew all the effects
-        assert(it == m_normalMap.cend());
+        assert(it == eit);
 
         y -= 1.f;
     }
@@ -562,6 +667,8 @@ void Game::Clear()
 // Message handlers
 void Game::OnActivated()
 {
+    m_gamePadButtons.Reset();
+    m_keyboardButtons.Reset();
 }
 
 void Game::OnDeactivated()
@@ -575,6 +682,8 @@ void Game::OnSuspending()
 void Game::OnResuming()
 {
     m_timer.ResetElapsedTime();
+    m_gamePadButtons.Reset();
+    m_keyboardButtons.Reset();
 }
 
 #if !defined(_XBOX_ONE) || !defined(_TITLE)
@@ -684,13 +793,467 @@ void Game::CreateDeviceDependentResources()
 
     auto uploadResourcesFinished = resourceUpload.End(m_deviceResources->GetCommandQueue());
 
-    //m_deviceResources->WaitForGpu();
-
     uploadResourcesFinished.wait();
 
     // Create test effects
     RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), m_deviceResources->GetDepthBufferFormat());
     rtState;
+
+    auto sampler = m_states->LinearWrap();
+
+    auto defaultTex = m_resourceDescriptors->GetGpuHandle(Descriptors::DefaultTex);
+
+    for (int j = 0; j < 2; ++j)
+    {
+        EffectPipelineStateDescription pd(
+            nullptr,
+            CommonStates::AlphaBlend,
+            CommonStates::DepthDefault,
+            CommonStates::CullNone,
+            rtState);
+
+        pd.inputLayout = (!j) ? TestVertex::InputLayout : TestCompressedVertex::InputLayout;
+
+        unsigned int eflags = (!j) ? EffectFlags::None : EffectFlags::BiasedVertexNormals;
+
+        //--- BasicEffect ------------------------------------------------------------------
+
+        {
+            std::vector<std::unique_ptr<DirectX::BasicEffect>> basic;
+
+            // BasicEffect (no texture)
+            {
+                auto effect = std::make_unique<BasicEffect>(device, eflags, pd);
+                basic.emplace_back(std::move(effect));
+
+                effect = std::make_unique<BasicEffect>(device, eflags | EffectFlags::Fog, pd);
+                effect->SetFogColor(Colors::Black);
+                basic.emplace_back(std::move(effect));
+
+                effect = std::make_unique<BasicEffect>(device, eflags | EffectFlags::VertexColor, pd);
+                basic.emplace_back(std::move(effect));
+
+                effect = std::make_unique<BasicEffect>(device, eflags | EffectFlags::Fog | EffectFlags::VertexColor, pd);
+                effect->SetFogColor(Colors::Black);
+                basic.emplace_back(std::move(effect));
+            }
+
+            // BasicEffect (textured)
+            {
+                auto effect = std::make_unique<BasicEffect>(device, eflags | EffectFlags::Texture, pd);
+                effect->SetTexture(defaultTex, sampler);
+                basic.emplace_back(std::move(effect));
+
+                effect = std::make_unique<BasicEffect>(device, eflags | EffectFlags::Texture | EffectFlags::Fog, pd);
+                effect->SetTexture(defaultTex, sampler);
+                effect->SetFogColor(Colors::Black);
+                basic.emplace_back(std::move(effect));
+
+                effect = std::make_unique<BasicEffect>(device, eflags | EffectFlags::Texture | EffectFlags::VertexColor, pd);
+                effect->SetTexture(defaultTex, sampler);
+                basic.emplace_back(std::move(effect));
+
+                effect = std::make_unique<BasicEffect>(device, eflags | EffectFlags::Texture | EffectFlags::Fog | EffectFlags::VertexColor, pd);
+                effect->SetFogColor(Colors::Black);
+                effect->SetTexture(defaultTex, sampler);
+                basic.emplace_back(std::move(effect));
+            }
+
+            // BasicEffect (vertex lighting)
+            {
+                auto effect = std::make_unique<BasicEffect>(device, eflags | EffectFlags::Lighting, pd);
+                effect->EnableDefaultLighting();
+                basic.emplace_back(std::move(effect));
+
+                effect = std::make_unique<BasicEffect>(device, eflags | EffectFlags::Lighting | EffectFlags::Fog, pd);
+                effect->EnableDefaultLighting();
+                effect->SetFogColor(Colors::Black);
+                basic.emplace_back(std::move(effect));
+
+                effect = std::make_unique<BasicEffect>(device, eflags | EffectFlags::Lighting | EffectFlags::VertexColor, pd);
+                effect->EnableDefaultLighting();
+                basic.emplace_back(std::move(effect));
+
+                effect = std::make_unique<BasicEffect>(device, eflags | EffectFlags::Lighting | EffectFlags::Fog | EffectFlags::VertexColor, pd);
+                effect->SetFogColor(Colors::Black);
+                effect->EnableDefaultLighting();
+                basic.emplace_back(std::move(effect));
+
+                effect = std::make_unique<BasicEffect>(device, eflags | EffectFlags::Lighting | EffectFlags::Texture, pd);
+                effect->EnableDefaultLighting();
+                effect->SetTexture(defaultTex, sampler);
+                basic.emplace_back(std::move(effect));
+
+                effect = std::make_unique<BasicEffect>(device, eflags | EffectFlags::Lighting | EffectFlags::Texture | EffectFlags::Fog, pd);
+                effect->EnableDefaultLighting();
+                effect->SetTexture(defaultTex, sampler);
+                effect->SetFogColor(Colors::Black);
+                basic.emplace_back(std::move(effect));
+
+                effect = std::make_unique<BasicEffect>(device, eflags | EffectFlags::Lighting | EffectFlags::Texture | EffectFlags::VertexColor, pd);
+                effect->EnableDefaultLighting();
+                effect->SetTexture(defaultTex, sampler);
+                basic.emplace_back(std::move(effect));
+
+                effect = std::make_unique<BasicEffect>(device, eflags | EffectFlags::Lighting | EffectFlags::Texture | EffectFlags::Fog | EffectFlags::VertexColor, pd);
+                effect->EnableDefaultLighting();
+                effect->SetFogColor(Colors::Black);
+                effect->SetTexture(defaultTex, sampler);
+                basic.emplace_back(std::move(effect));
+            }
+
+            // BasicEffect (per pixel light)
+            {
+                auto effect = std::make_unique<BasicEffect>(device, eflags | EffectFlags::PerPixelLighting, pd);
+                effect->EnableDefaultLighting();
+                basic.emplace_back(std::move(effect));
+
+                effect = std::make_unique<BasicEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Fog, pd);
+                effect->EnableDefaultLighting();
+                effect->SetFogColor(Colors::Black);
+                basic.emplace_back(std::move(effect));
+
+                effect = std::make_unique<BasicEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::VertexColor, pd);
+                effect->EnableDefaultLighting();
+                basic.emplace_back(std::move(effect));
+
+                effect = std::make_unique<BasicEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Fog | EffectFlags::VertexColor, pd);
+                effect->EnableDefaultLighting();
+                effect->SetFogColor(Colors::Black);
+                basic.emplace_back(std::move(effect));
+
+                effect = std::make_unique<BasicEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Texture, pd);
+                effect->EnableDefaultLighting();
+                effect->SetTexture(defaultTex, sampler);
+                basic.emplace_back(std::move(effect));
+
+                effect = std::make_unique<BasicEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Texture | EffectFlags::Fog, pd);
+                effect->EnableDefaultLighting();
+                effect->SetTexture(defaultTex, sampler);
+                effect->SetFogColor(Colors::Black);
+                basic.emplace_back(std::move(effect));
+
+                effect = std::make_unique<BasicEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Texture | EffectFlags::VertexColor, pd);
+                effect->EnableDefaultLighting();
+                effect->SetTexture(defaultTex, sampler);
+                basic.emplace_back(std::move(effect));
+
+                effect = std::make_unique<BasicEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Texture | EffectFlags::Fog | EffectFlags::VertexColor, pd);
+                effect->EnableDefaultLighting();
+                effect->SetFogColor(Colors::Black);
+                effect->SetTexture(defaultTex, sampler);
+                basic.emplace_back(std::move(effect));
+            }
+
+            if (!j)
+            {
+                m_basic.swap(basic);
+            }
+            else
+            {
+                m_basicBn.swap(basic);
+            }
+        }
+
+        //--- SkinnedEFfect ----------------------------------------------------------------
+
+        {
+            std::vector<std::unique_ptr<DirectX::SkinnedEffect>> skinning;
+
+            // SkinnedEFfect (vertex lighting)
+            {
+                auto effect = std::make_unique<SkinnedEffect>(device, eflags, pd);
+                effect->EnableDefaultLighting();
+                effect->SetTexture(defaultTex, sampler);
+                skinning.emplace_back(std::move(effect));
+
+                effect = std::make_unique<SkinnedEffect>(device, eflags | EffectFlags::Fog, pd);
+                effect->EnableDefaultLighting();
+                effect->SetTexture(defaultTex, sampler);
+                effect->SetFogColor(Colors::Black);
+                skinning.emplace_back(std::move(effect));
+
+                effect = std::make_unique<SkinnedEffect>(device, eflags, pd, 2);
+                effect->EnableDefaultLighting();
+                effect->SetTexture(defaultTex, sampler);
+                skinning.emplace_back(std::move(effect));
+
+                effect = std::make_unique<SkinnedEffect>(device, eflags | EffectFlags::Fog, pd, 2);
+                effect->EnableDefaultLighting();
+                effect->SetTexture(defaultTex, sampler);
+                effect->SetFogColor(Colors::Black);
+                skinning.emplace_back(std::move(effect));
+
+                effect = std::make_unique<SkinnedEffect>(device, eflags, pd, 1);
+                effect->EnableDefaultLighting();
+                effect->SetTexture(defaultTex, sampler);
+                skinning.emplace_back(std::move(effect));
+
+                effect = std::make_unique<SkinnedEffect>(device, eflags | EffectFlags::Fog, pd, 1);
+                effect->EnableDefaultLighting();
+                effect->SetTexture(defaultTex, sampler);
+                effect->SetFogColor(Colors::Black);
+                skinning.emplace_back(std::move(effect));
+            }
+
+            // SkinnedEFfect (per pixel lighting)
+            {
+                auto effect = std::make_unique<SkinnedEffect>(device, eflags | EffectFlags::PerPixelLighting, pd);
+                effect->EnableDefaultLighting();
+                effect->SetTexture(defaultTex, sampler);
+                skinning.emplace_back(std::move(effect));
+
+                effect = std::make_unique<SkinnedEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Fog, pd);
+                effect->EnableDefaultLighting();
+                effect->SetTexture(defaultTex, sampler);
+                effect->SetFogColor(Colors::Black);
+                skinning.emplace_back(std::move(effect));
+
+                effect = std::make_unique<SkinnedEffect>(device, eflags | EffectFlags::PerPixelLighting, pd, 2);
+                effect->EnableDefaultLighting();
+                effect->SetTexture(defaultTex, sampler);
+                skinning.emplace_back(std::move(effect));
+
+                effect = std::make_unique<SkinnedEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Fog, pd, 2);
+                effect->EnableDefaultLighting();
+                effect->SetTexture(defaultTex, sampler);
+                effect->SetFogColor(Colors::Black);
+                skinning.emplace_back(std::move(effect));
+
+                effect = std::make_unique<SkinnedEffect>(device, eflags | EffectFlags::PerPixelLighting, pd, 1);
+                effect->EnableDefaultLighting();
+                effect->SetTexture(defaultTex, sampler);
+                skinning.emplace_back(std::move(effect));
+
+                effect = std::make_unique<SkinnedEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Fog, pd, 1);
+                effect->EnableDefaultLighting();
+                effect->SetTexture(defaultTex, sampler);
+                effect->SetFogColor(Colors::Black);
+                skinning.emplace_back(std::move(effect));
+            }
+
+            if (!j)
+            {
+                m_skinning.swap(skinning);
+            }
+            else
+            {
+                m_skinningBn.swap(skinning);
+            }
+        }
+
+        //--- EnvironmentMapEffect ---------------------------------------------------------
+
+        {
+            auto envmap = m_resourceDescriptors->GetGpuHandle(Descriptors::Cubemap);
+
+            std::vector<std::unique_ptr<DirectX::EnvironmentMapEffect>> envmaps;
+
+            // EnvironmentMapEffect (fresnel)
+            auto effect = std::make_unique<EnvironmentMapEffect>(device, eflags, pd);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetEnvironmentMap(envmap, sampler);
+            envmaps.emplace_back(std::move(effect));
+
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::Fog, pd);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetEnvironmentMap(envmap, sampler);
+            effect->SetFogColor(Colors::Black);
+            envmaps.emplace_back(std::move(effect));
+
+            // EnvironmentMapEffect (no fresnel)
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags, pd, false);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetEnvironmentMap(envmap, sampler);
+            envmaps.emplace_back(std::move(effect));
+
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::Fog, pd, false);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetEnvironmentMap(envmap, sampler);
+            effect->SetFogColor(Colors::Black);
+            envmaps.emplace_back(std::move(effect));
+
+            // EnvironmentMapEffect (specular)
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags, pd, false, true);
+            effect->EnableDefaultLighting();
+            effect->SetEnvironmentMapSpecular(Colors::Blue);
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetEnvironmentMap(envmap, sampler);
+            envmaps.emplace_back(std::move(effect));
+
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::Fog, pd, false, true);
+            effect->EnableDefaultLighting();
+            effect->SetEnvironmentMapSpecular(Colors::Blue);
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetEnvironmentMap(envmap, sampler);
+            effect->SetFogColor(Colors::Black);
+            envmaps.emplace_back(std::move(effect));
+
+            // EnvironmentMapEffect (fresnel + specular)
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags, pd, true, true);
+            effect->EnableDefaultLighting();
+            effect->SetEnvironmentMapSpecular(Colors::Blue);
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetEnvironmentMap(envmap, sampler);
+            envmaps.emplace_back(std::move(effect));
+
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::Fog, pd, true, true);
+            effect->EnableDefaultLighting();
+            effect->SetEnvironmentMapSpecular(Colors::Blue);
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetEnvironmentMap(envmap, sampler);
+            effect->SetFogColor(Colors::Black);
+            envmaps.emplace_back(std::move(effect));
+
+            // EnvironmentMapEffect (per pixel lighting)
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting, pd);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetEnvironmentMap(envmap, sampler);
+            envmaps.emplace_back(std::move(effect));
+
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Fog, pd);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetEnvironmentMap(envmap, sampler);
+            effect->SetFogColor(Colors::Black);
+            envmaps.emplace_back(std::move(effect));
+
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting, pd, false);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetEnvironmentMap(envmap, sampler);
+            envmaps.emplace_back(std::move(effect));
+
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Fog, pd, false);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetEnvironmentMap(envmap, sampler);
+            effect->SetFogColor(Colors::Black);
+            envmaps.emplace_back(std::move(effect));
+
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting, pd, false, true);
+            effect->EnableDefaultLighting();
+            effect->SetEnvironmentMapSpecular(Colors::Blue);
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetEnvironmentMap(envmap, sampler);
+            envmaps.emplace_back(std::move(effect));
+
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Fog, pd, false, true);
+            effect->EnableDefaultLighting();
+            effect->SetEnvironmentMapSpecular(Colors::Blue);
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetEnvironmentMap(envmap, sampler);
+            effect->SetFogColor(Colors::Black);
+            envmaps.emplace_back(std::move(effect));
+
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting, pd, true, true);
+            effect->EnableDefaultLighting();
+            effect->SetEnvironmentMapSpecular(Colors::Blue);
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetEnvironmentMap(envmap, sampler);
+            envmaps.emplace_back(std::move(effect));
+
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Fog, pd, true, true);
+            effect->EnableDefaultLighting();
+            effect->SetEnvironmentMapSpecular(Colors::Blue);
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetEnvironmentMap(envmap, sampler);
+            effect->SetFogColor(Colors::Black);
+            envmaps.emplace_back(std::move(effect));
+
+            if (!j)
+            {
+                m_envmap.swap(envmaps);
+            }
+            else
+            {
+                m_envmapBn.swap(envmaps);
+            }
+        }
+
+        //--- NormalMapEffect --------------------------------------------------------------
+
+        {
+            auto diffuse = m_resourceDescriptors->GetGpuHandle(Descriptors::BrickDiffuse);
+            auto normal = m_resourceDescriptors->GetGpuHandle(Descriptors::BrickNormal);
+            auto specular = m_resourceDescriptors->GetGpuHandle(Descriptors::BrickSpecular);
+
+            std::vector<std::unique_ptr<DirectX::NormalMapEffect>> normalMap;
+
+            // NormalMapEffect (no specular)
+            auto effect = std::make_unique<NormalMapEffect>(device, eflags, pd, false);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(diffuse, sampler);
+            effect->SetNormalTexture(normal);
+            normalMap.emplace_back(std::move(effect));
+
+            effect = std::make_unique<NormalMapEffect>(device, eflags | EffectFlags::Fog, pd, false);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(diffuse, sampler);
+            effect->SetNormalTexture(normal);
+            effect->SetFogColor(Colors::Black);
+            normalMap.emplace_back(std::move(effect));
+
+            // NormalMapEffect (specular)
+            effect = std::make_unique<NormalMapEffect>(device, eflags, pd);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(diffuse, sampler);
+            effect->SetNormalTexture(normal);
+            effect->SetSpecularTexture(specular);
+            normalMap.emplace_back(std::move(effect));
+
+            effect = std::make_unique<NormalMapEffect>(device, eflags | EffectFlags::Fog, pd);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(diffuse, sampler);
+            effect->SetNormalTexture(normal);
+            effect->SetSpecularTexture(specular);
+            effect->SetFogColor(Colors::Black);
+            normalMap.emplace_back(std::move(effect));
+
+            // NormalMapEffect (vertex color)
+            effect = std::make_unique<NormalMapEffect>(device, eflags | EffectFlags::VertexColor, pd, false);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(diffuse, sampler);
+            effect->SetNormalTexture(normal);
+            normalMap.emplace_back(std::move(effect));
+
+            effect = std::make_unique<NormalMapEffect>(device, eflags | EffectFlags::VertexColor | EffectFlags::Fog, pd, false);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(diffuse, sampler);
+            effect->SetNormalTexture(normal);
+            effect->SetFogColor(Colors::Black);
+            normalMap.emplace_back(std::move(effect));
+
+            effect = std::make_unique<NormalMapEffect>(device, eflags | EffectFlags::VertexColor, pd);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(diffuse, sampler);
+            effect->SetNormalTexture(normal);
+            effect->SetSpecularTexture(specular);
+            normalMap.emplace_back(std::move(effect));
+
+            effect = std::make_unique<NormalMapEffect>(device, eflags | EffectFlags::VertexColor | EffectFlags::Fog, pd);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(diffuse, sampler);
+            effect->SetNormalTexture(normal);
+            effect->SetSpecularTexture(specular);
+            effect->SetFogColor(Colors::Black);
+            normalMap.emplace_back(std::move(effect));
+
+            if (!j)
+            {
+                m_normalMap.swap(normalMap);
+            }
+            else
+            {
+                m_normalMapBn.swap(normalMap);
+            }
+        }
+    }
 
     EffectPipelineStateDescription pd(
         &TestVertex::InputLayout,
@@ -698,334 +1261,6 @@ void Game::CreateDeviceDependentResources()
         CommonStates::DepthDefault,
         CommonStates::CullNone,
         rtState);
-
-    auto sampler = m_states->LinearWrap();
-
-    auto defaultTex = m_resourceDescriptors->GetGpuHandle(Descriptors::DefaultTex);
-
-    //--- BasicEffect ----------------------------------------------------------------------
-
-    // BasicEffect (no texture)
-    {
-        auto effect =  std::make_unique<BasicEffect>(device, EffectFlags::None, pd);
-        m_basic.emplace_back(std::move(effect));
-
-        effect = std::make_unique<BasicEffect>(device, EffectFlags::Fog, pd);
-        effect->SetFogColor(Colors::Black);
-        m_basic.emplace_back(std::move(effect));
-
-        effect = std::make_unique<BasicEffect>(device, EffectFlags::VertexColor, pd);
-        m_basic.emplace_back(std::move(effect));
-
-        effect = std::make_unique<BasicEffect>(device, EffectFlags::Fog | EffectFlags::VertexColor, pd);
-        effect->SetFogColor(Colors::Black);
-        m_basic.emplace_back(std::move(effect));
-    }
-
-    // BasicEffect (textured)
-    {
-
-        auto effect = std::make_unique<BasicEffect>(device, EffectFlags::Texture, pd);
-        effect->SetTexture(defaultTex, sampler);
-        m_basic.emplace_back(std::move(effect));
-
-        effect = std::make_unique<BasicEffect>(device, EffectFlags::Texture | EffectFlags::Fog, pd);
-        effect->SetTexture(defaultTex, sampler);
-        effect->SetFogColor(Colors::Black);
-        m_basic.emplace_back(std::move(effect));
-
-        effect = std::make_unique<BasicEffect>(device, EffectFlags::Texture | EffectFlags::VertexColor, pd);
-        effect->SetTexture(defaultTex, sampler);
-        m_basic.emplace_back(std::move(effect));
-
-        effect = std::make_unique<BasicEffect>(device, EffectFlags::Texture | EffectFlags::Fog | EffectFlags::VertexColor, pd);
-        effect->SetFogColor(Colors::Black);
-        effect->SetTexture(defaultTex, sampler);
-        m_basic.emplace_back(std::move(effect));
-    }
-
-    // BasicEffect (vertex lighting)
-    {
-        auto effect = std::make_unique<BasicEffect>(device, EffectFlags::Lighting | EffectFlags::None, pd);
-        effect->EnableDefaultLighting();
-        m_basic.emplace_back(std::move(effect));
-
-        effect = std::make_unique<BasicEffect>(device, EffectFlags::Lighting | EffectFlags::Fog, pd);
-        effect->EnableDefaultLighting();
-        effect->SetFogColor(Colors::Black);
-        m_basic.emplace_back(std::move(effect));
-
-        effect = std::make_unique<BasicEffect>(device, EffectFlags::Lighting | EffectFlags::VertexColor, pd);
-        effect->EnableDefaultLighting();
-        m_basic.emplace_back(std::move(effect));
-
-        effect = std::make_unique<BasicEffect>(device, EffectFlags::Lighting | EffectFlags::Fog | EffectFlags::VertexColor, pd);
-        effect->SetFogColor(Colors::Black);
-        effect->EnableDefaultLighting();
-        m_basic.emplace_back(std::move(effect));
-
-        effect = std::make_unique<BasicEffect>(device, EffectFlags::Lighting | EffectFlags::Texture, pd);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(defaultTex, sampler);
-        m_basic.emplace_back(std::move(effect));
-
-        effect = std::make_unique<BasicEffect>(device, EffectFlags::Lighting | EffectFlags::Texture | EffectFlags::Fog, pd);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(defaultTex, sampler);
-        effect->SetFogColor(Colors::Black);
-        m_basic.emplace_back(std::move(effect));
-
-        effect = std::make_unique<BasicEffect>(device, EffectFlags::Lighting | EffectFlags::Texture | EffectFlags::VertexColor, pd);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(defaultTex, sampler);
-        m_basic.emplace_back(std::move(effect));
-
-        effect = std::make_unique<BasicEffect>(device, EffectFlags::Lighting | EffectFlags::Texture | EffectFlags::Fog | EffectFlags::VertexColor, pd);
-        effect->EnableDefaultLighting();
-        effect->SetFogColor(Colors::Black);
-        effect->SetTexture(defaultTex, sampler);
-        m_basic.emplace_back(std::move(effect));
-    }
-
-    // BasicEffect (per pixel light)
-    {
-        auto effect = std::make_unique<BasicEffect>(device, EffectFlags::PerPixelLighting | EffectFlags::None, pd);
-        effect->EnableDefaultLighting();
-        m_basic.emplace_back(std::move(effect));
-
-        effect = std::make_unique<BasicEffect>(device, EffectFlags::PerPixelLighting | EffectFlags::Fog, pd);
-        effect->EnableDefaultLighting();
-        effect->SetFogColor(Colors::Black);
-        m_basic.emplace_back(std::move(effect));
-
-        effect = std::make_unique<BasicEffect>(device, EffectFlags::PerPixelLighting | EffectFlags::VertexColor, pd);
-        effect->EnableDefaultLighting();
-        m_basic.emplace_back(std::move(effect));
-
-        effect = std::make_unique<BasicEffect>(device, EffectFlags::PerPixelLighting | EffectFlags::Fog | EffectFlags::VertexColor, pd);
-        effect->EnableDefaultLighting();
-        effect->SetFogColor(Colors::Black);
-        m_basic.emplace_back(std::move(effect));
-
-        effect = std::make_unique<BasicEffect>(device, EffectFlags::PerPixelLighting | EffectFlags::Texture, pd);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(defaultTex, sampler);
-        m_basic.emplace_back(std::move(effect));
-
-        effect = std::make_unique<BasicEffect>(device, EffectFlags::PerPixelLighting | EffectFlags::Texture | EffectFlags::Fog, pd);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(defaultTex, sampler);
-        effect->SetFogColor(Colors::Black);
-        m_basic.emplace_back(std::move(effect));
-
-        effect = std::make_unique<BasicEffect>(device, EffectFlags::PerPixelLighting | EffectFlags::Texture | EffectFlags::VertexColor, pd);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(defaultTex, sampler);
-        m_basic.emplace_back(std::move(effect));
-
-        effect = std::make_unique<BasicEffect>(device, EffectFlags::PerPixelLighting | EffectFlags::Texture | EffectFlags::Fog | EffectFlags::VertexColor, pd);
-        effect->EnableDefaultLighting();
-        effect->SetFogColor(Colors::Black);
-        effect->SetTexture(defaultTex, sampler);
-        m_basic.emplace_back(std::move(effect));
-    }
-
-    //--- SkinnedEFfect --------------------------------------------------------------------
-
-    // SkinnedEFfect (vertex lighting)
-    {
-        auto effect = std::make_unique<SkinnedEffect>(device, EffectFlags::None, pd);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(defaultTex, sampler);
-        m_skinning.emplace_back(std::move(effect));
-
-        effect = std::make_unique<SkinnedEffect>(device, EffectFlags::Fog, pd);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(defaultTex, sampler);
-        effect->SetFogColor(Colors::Black);
-        m_skinning.emplace_back(std::move(effect));
-
-        effect = std::make_unique<SkinnedEffect>(device, EffectFlags::None, pd, 2);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(defaultTex, sampler);
-        m_skinning.emplace_back(std::move(effect));
-
-        effect = std::make_unique<SkinnedEffect>(device, EffectFlags::Fog, pd, 2);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(defaultTex, sampler);
-        effect->SetFogColor(Colors::Black);
-        m_skinning.emplace_back(std::move(effect));
-
-        effect = std::make_unique<SkinnedEffect>(device, EffectFlags::None, pd, 1);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(defaultTex, sampler);
-        m_skinning.emplace_back(std::move(effect));
-
-        effect = std::make_unique<SkinnedEffect>(device, EffectFlags::Fog, pd, 1);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(defaultTex, sampler);
-        effect->SetFogColor(Colors::Black);
-        m_skinning.emplace_back(std::move(effect));
-    }
-
-    // SkinnedEFfect (per pixel lighting)
-    {
-        auto effect = std::make_unique<SkinnedEffect>(device, EffectFlags::PerPixelLighting, pd);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(defaultTex, sampler);
-        m_skinning.emplace_back(std::move(effect));
-
-        effect = std::make_unique<SkinnedEffect>(device, EffectFlags::PerPixelLighting | EffectFlags::Fog, pd);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(defaultTex, sampler);
-        effect->SetFogColor(Colors::Black);
-        m_skinning.emplace_back(std::move(effect));
-
-        effect = std::make_unique<SkinnedEffect>(device, EffectFlags::PerPixelLighting, pd, 2);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(defaultTex, sampler);
-        m_skinning.emplace_back(std::move(effect));
-
-        effect = std::make_unique<SkinnedEffect>(device, EffectFlags::PerPixelLighting | EffectFlags::Fog, pd, 2);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(defaultTex, sampler);
-        effect->SetFogColor(Colors::Black);
-        m_skinning.emplace_back(std::move(effect));
-
-        effect = std::make_unique<SkinnedEffect>(device, EffectFlags::PerPixelLighting, pd, 1);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(defaultTex, sampler);
-        m_skinning.emplace_back(std::move(effect));
-
-        effect = std::make_unique<SkinnedEffect>(device, EffectFlags::PerPixelLighting | EffectFlags::Fog, pd, 1);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(defaultTex, sampler);
-        effect->SetFogColor(Colors::Black);
-        m_skinning.emplace_back(std::move(effect));
-    }
-
-    //--- EnvironmentMapEffect -------------------------------------------------------------
-
-    {
-        auto envmap = m_resourceDescriptors->GetGpuHandle(Descriptors::Cubemap);
-
-        // EnvironmentMapEffect (fresnel)
-        auto effect = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::None, pd);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(defaultTex, sampler);
-        effect->SetEnvironmentMap(envmap, sampler);
-        m_envmap.emplace_back(std::move(effect));
-
-        effect = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::Fog, pd);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(defaultTex, sampler);
-        effect->SetEnvironmentMap(envmap, sampler);
-        effect->SetFogColor(Colors::Black);
-        m_envmap.emplace_back(std::move(effect));
-
-        // EnvironmentMapEffect (no fresnel)
-        effect = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::None, pd, false);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(defaultTex, sampler);
-        effect->SetEnvironmentMap(envmap, sampler);
-        m_envmap.emplace_back(std::move(effect));
-
-        effect = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::Fog, pd, false);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(defaultTex, sampler);
-        effect->SetEnvironmentMap(envmap, sampler);
-        effect->SetFogColor(Colors::Black);
-        m_envmap.emplace_back(std::move(effect));
-
-        // EnvironmentMapEffect (specular)
-        effect = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::None, pd, false, true);
-        effect->EnableDefaultLighting();
-        effect->SetEnvironmentMapSpecular(Colors::Blue);
-        effect->SetTexture(defaultTex, sampler);
-        effect->SetEnvironmentMap(envmap, sampler);
-        m_envmap.emplace_back(std::move(effect));
-
-        effect = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::Fog, pd, false, true);
-        effect->EnableDefaultLighting();
-        effect->SetEnvironmentMapSpecular(Colors::Blue);
-        effect->SetTexture(defaultTex, sampler);
-        effect->SetEnvironmentMap(envmap, sampler);
-        effect->SetFogColor(Colors::Black);
-        m_envmap.emplace_back(std::move(effect));
-
-        // EnvironmentMapEffect (fresnel + specular)
-        effect = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::None, pd, true, true);
-        effect->EnableDefaultLighting();
-        effect->SetEnvironmentMapSpecular(Colors::Blue);
-        effect->SetTexture(defaultTex, sampler);
-        effect->SetEnvironmentMap(envmap, sampler);
-        m_envmap.emplace_back(std::move(effect));
-
-        effect = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::Fog, pd, true, true);
-        effect->EnableDefaultLighting();
-        effect->SetEnvironmentMapSpecular(Colors::Blue);
-        effect->SetTexture(defaultTex, sampler);
-        effect->SetEnvironmentMap(envmap, sampler);
-        effect->SetFogColor(Colors::Black);
-        m_envmap.emplace_back(std::move(effect));
-
-        // EnvironmentMapEffect (per pixel lighting)
-        effect = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::PerPixelLighting, pd);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(defaultTex, sampler);
-        effect->SetEnvironmentMap(envmap, sampler);
-        m_envmap.emplace_back(std::move(effect));
-
-        effect = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::PerPixelLighting | EffectFlags::Fog, pd);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(defaultTex, sampler);
-        effect->SetEnvironmentMap(envmap, sampler);
-        effect->SetFogColor(Colors::Black);
-        m_envmap.emplace_back(std::move(effect));
-
-        effect = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::PerPixelLighting, pd, false);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(defaultTex, sampler);
-        effect->SetEnvironmentMap(envmap, sampler);
-        m_envmap.emplace_back(std::move(effect));
-
-        effect = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::PerPixelLighting | EffectFlags::Fog, pd, false);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(defaultTex, sampler);
-        effect->SetEnvironmentMap(envmap, sampler);
-        effect->SetFogColor(Colors::Black);
-        m_envmap.emplace_back(std::move(effect));
-
-        effect = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::PerPixelLighting, pd, false, true);
-        effect->EnableDefaultLighting();
-        effect->SetEnvironmentMapSpecular(Colors::Blue);
-        effect->SetTexture(defaultTex, sampler);
-        effect->SetEnvironmentMap(envmap, sampler);
-        m_envmap.emplace_back(std::move(effect));
-
-        effect = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::PerPixelLighting | EffectFlags::Fog, pd, false, true);
-        effect->EnableDefaultLighting();
-        effect->SetEnvironmentMapSpecular(Colors::Blue);
-        effect->SetTexture(defaultTex, sampler);
-        effect->SetEnvironmentMap(envmap, sampler);
-        effect->SetFogColor(Colors::Black);
-        m_envmap.emplace_back(std::move(effect));
-
-        effect = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::PerPixelLighting, pd, true, true);
-        effect->EnableDefaultLighting();
-        effect->SetEnvironmentMapSpecular(Colors::Blue);
-        effect->SetTexture(defaultTex, sampler);
-        effect->SetEnvironmentMap(envmap, sampler);
-        m_envmap.emplace_back(std::move(effect));
-
-        effect = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::PerPixelLighting | EffectFlags::Fog, pd, true, true);
-        effect->EnableDefaultLighting();
-        effect->SetEnvironmentMapSpecular(Colors::Blue);
-        effect->SetTexture(defaultTex, sampler);
-        effect->SetEnvironmentMap(envmap, sampler);
-        effect->SetFogColor(Colors::Black);
-        m_envmap.emplace_back(std::move(effect));
-    }
 
     //--- DualTextureEFfect ----------------------------------------------------------------
 
@@ -1098,75 +1333,6 @@ void Game::CreateDeviceDependentResources()
         effect->SetFogColor(Colors::Black);
         m_alphTest.emplace_back(std::move(effect));
     }
-
-    //--- NormalMapEffect ------------------------------------------------------------------
-
-    {
-        auto diffuse = m_resourceDescriptors->GetGpuHandle(Descriptors::BrickDiffuse);
-        auto normal = m_resourceDescriptors->GetGpuHandle(Descriptors::BrickNormal);
-        auto specular = m_resourceDescriptors->GetGpuHandle(Descriptors::BrickSpecular);
-
-        // NormalMapEffect (no specular)
-        auto effect = std::make_unique<NormalMapEffect>(device, EffectFlags::None, pd, false);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(diffuse, sampler);
-        effect->SetNormalTexture(normal);
-        m_normalMap.emplace_back(std::move(effect));
-
-        effect = std::make_unique<NormalMapEffect>(device, EffectFlags::Fog, pd, false);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(diffuse, sampler);
-        effect->SetNormalTexture(normal);
-        effect->SetFogColor(Colors::Black);
-        m_normalMap.emplace_back(std::move(effect));
-
-        // NormalMapEffect (specular)
-        effect = std::make_unique<NormalMapEffect>(device, EffectFlags::None, pd);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(diffuse, sampler);
-        effect->SetNormalTexture(normal);
-        effect->SetSpecularTexture(specular);
-        m_normalMap.emplace_back(std::move(effect));
-
-        effect = std::make_unique<NormalMapEffect>(device, EffectFlags::Fog, pd);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(diffuse, sampler);
-        effect->SetNormalTexture(normal);
-        effect->SetSpecularTexture(specular);
-        effect->SetFogColor(Colors::Black);
-        m_normalMap.emplace_back(std::move(effect));
-
-        // NormalMapEffect (vertex color)
-        effect = std::make_unique<NormalMapEffect>(device, EffectFlags::VertexColor, pd, false);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(diffuse, sampler);
-        effect->SetNormalTexture(normal);
-        m_normalMap.emplace_back(std::move(effect));
-
-        effect = std::make_unique<NormalMapEffect>(device, EffectFlags::VertexColor | EffectFlags::Fog, pd, false);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(diffuse, sampler);
-        effect->SetNormalTexture(normal);
-        effect->SetFogColor(Colors::Black);
-        m_normalMap.emplace_back(std::move(effect));
-
-        effect = std::make_unique<NormalMapEffect>(device, EffectFlags::VertexColor, pd);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(diffuse, sampler);
-        effect->SetNormalTexture(normal);
-        effect->SetSpecularTexture(specular);
-        m_normalMap.emplace_back(std::move(effect));
-
-        effect = std::make_unique<NormalMapEffect>(device, EffectFlags::VertexColor | EffectFlags::Fog, pd);
-        effect->EnableDefaultLighting();
-        effect->SetTexture(diffuse, sampler);
-        effect->SetNormalTexture(normal);
-        effect->SetSpecularTexture(specular);
-        effect->SetFogColor(Colors::Black);
-        m_normalMap.emplace_back(std::move(effect));
-    }
-
-    // TODO -
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
@@ -1184,12 +1350,27 @@ void Game::CreateWindowSizeDependentResources()
         it->SetProjection(projection);
     }
 
+    for (auto& it : m_basicBn)
+    {
+        it->SetProjection(projection);
+    }
+
     for (auto& it : m_skinning)
     {
         it->SetProjection(projection);
     }
 
+    for (auto& it : m_skinningBn)
+    {
+        it->SetProjection(projection);
+    }
+
     for (auto& it : m_envmap)
+    {
+        it->SetProjection(projection);
+    }
+
+    for (auto& it : m_envmapBn)
     {
         it->SetProjection(projection);
     }
@@ -1208,17 +1389,26 @@ void Game::CreateWindowSizeDependentResources()
     {
         it->SetProjection(projection);
     }
+
+    for (auto& it : m_normalMapBn)
+    {
+        it->SetProjection(projection);
+    }
 }
 
 #if !defined(_XBOX_ONE) || !defined(_TITLE)
 void Game::OnDeviceLost()
 {
     m_basic.clear();
+    m_basicBn.clear();
     m_skinning.clear();
+    m_skinningBn.clear();
     m_envmap.clear();
+    m_envmapBn.clear();
     m_dual.clear();
     m_alphTest.clear();
     m_normalMap.clear();
+    m_normalMapBn.clear();
 
     m_cat.Reset();
     m_cubemap.Reset();
@@ -1230,6 +1420,7 @@ void Game::OnDeviceLost()
 
     m_indexBuffer.Reset();
     m_vertexBuffer.Reset();
+    m_vertexBufferBn.Reset();
 
     m_resourceDescriptors.reset();
     m_states.reset();
@@ -1316,11 +1507,30 @@ void Game::CreateCube()
     ComputeTangents(indices, vertices);
 
     // Vertex data
-    auto verts = reinterpret_cast<const uint8_t*>(vertices.data());
-    size_t vertSizeBytes = vertices.size() * sizeof(TestVertex);
+    {
+        auto verts = reinterpret_cast<const uint8_t*>(vertices.data());
+        size_t vertSizeBytes = vertices.size() * sizeof(TestVertex);
 
-    m_vertexBuffer = GraphicsMemory::Get().Allocate(vertSizeBytes);
-    memcpy(m_vertexBuffer.Memory(), verts, vertSizeBytes);
+        m_vertexBuffer = GraphicsMemory::Get().Allocate(vertSizeBytes);
+        memcpy(m_vertexBuffer.Memory(), verts, vertSizeBytes);
+    }
+
+    // Compressed Vertex data
+    {
+        std::vector<TestCompressedVertex> cvertices;
+        cvertices.reserve(vertices.size());
+        for (auto&i : vertices)
+        {
+            TestCompressedVertex cv(i);
+            cvertices.emplace_back(std::move(cv));
+        }
+
+        auto verts = reinterpret_cast<const uint8_t*>(cvertices.data());
+        size_t vertSizeBytes = cvertices.size() * sizeof(TestCompressedVertex);
+
+        m_vertexBufferBn = GraphicsMemory::Get().Allocate(vertSizeBytes);
+        memcpy(m_vertexBufferBn.Memory(), verts, vertSizeBytes);
+    }
 
     // Index data
     auto ind = reinterpret_cast<const uint8_t*>(indices.data());
@@ -1334,8 +1544,12 @@ void Game::CreateCube()
 
     // Create views
     m_vertexBufferView.BufferLocation = m_vertexBuffer.GpuAddress();
-    m_vertexBufferView.StrideInBytes = static_cast<UINT>(sizeof(VertexCollection::value_type));
+    m_vertexBufferView.StrideInBytes = static_cast<UINT>(sizeof(TestVertex));
     m_vertexBufferView.SizeInBytes = static_cast<UINT>(m_vertexBuffer.Size());
+
+    m_vertexBufferViewBn.BufferLocation = m_vertexBufferBn.GpuAddress();
+    m_vertexBufferViewBn.StrideInBytes = static_cast<UINT>(sizeof(TestCompressedVertex));
+    m_vertexBufferViewBn.SizeInBytes = static_cast<UINT>(m_vertexBufferBn.Size());
 
     m_indexBufferView.BufferLocation = m_indexBuffer.GpuAddress();
     m_indexBufferView.SizeInBytes = static_cast<UINT>(m_indexBuffer.Size());

@@ -92,6 +92,9 @@ private:
     std::unique_ptr<DirectX::GamePad>       m_gamePad;
     std::unique_ptr<DirectX::Keyboard>      m_keyboard;
 
+    DirectX::GamePad::ButtonStateTracker    m_gamePadButtons;
+    DirectX::Keyboard::KeyboardStateTracker m_keyboardButtons;
+
     // DirectXTK Test Objects
     std::unique_ptr<DirectX::GraphicsMemory>    m_graphicsMemory;
 
@@ -99,17 +102,23 @@ private:
     std::unique_ptr<DirectX::DescriptorHeap>    m_resourceDescriptors;
 
     std::vector<std::unique_ptr<DirectX::BasicEffect>> m_basic;
+    std::vector<std::unique_ptr<DirectX::BasicEffect>> m_basicBn;
     std::vector<std::unique_ptr<DirectX::SkinnedEffect>> m_skinning;
+    std::vector<std::unique_ptr<DirectX::SkinnedEffect>> m_skinningBn;
     std::vector<std::unique_ptr<DirectX::EnvironmentMapEffect>> m_envmap;
+    std::vector<std::unique_ptr<DirectX::EnvironmentMapEffect>> m_envmapBn;
     std::vector<std::unique_ptr<DirectX::DualTextureEffect>> m_dual;
     std::vector<std::unique_ptr<DirectX::AlphaTestEffect>> m_alphTest;
     std::vector<std::unique_ptr<DirectX::NormalMapEffect>> m_normalMap;
+    std::vector<std::unique_ptr<DirectX::NormalMapEffect>> m_normalMapBn;
 
     UINT					                        m_indexCount;
     DirectX::GraphicsResource		                m_indexBuffer;
     DirectX::GraphicsResource		                m_vertexBuffer;
+    DirectX::GraphicsResource		                m_vertexBufferBn;
 
     D3D12_VERTEX_BUFFER_VIEW                        m_vertexBufferView;
+    D3D12_VERTEX_BUFFER_VIEW                        m_vertexBufferViewBn;
     D3D12_INDEX_BUFFER_VIEW                         m_indexBufferView;
 
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_cat;
@@ -119,6 +128,10 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_brickDiffuse;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_brickNormal;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_brickSpecular;
+
+    bool                                            m_showCompressed;
+
+    float                                           m_delay;
 
     enum Descriptors
     {

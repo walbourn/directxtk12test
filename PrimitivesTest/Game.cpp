@@ -698,8 +698,6 @@ void Game::CreateDeviceDependentResources()
 
     auto uploadResourcesFinished = resourceUpload.End(m_deviceResources->GetCommandQueue());
 
-    //m_deviceResources->WaitForGpu();
-
     uploadResourcesFinished.wait();
 }
 
