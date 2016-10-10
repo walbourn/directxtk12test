@@ -204,7 +204,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             if (!s_in_suspend && game)
                 game->OnSuspending();
             s_in_suspend = true;
-            return true;
+            return TRUE;
 
         case PBT_APMRESUMESUSPEND:
             if (!s_minimized)
@@ -213,7 +213,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     game->OnResuming();
                 s_in_suspend = false;
             }
-            return true;
+            return TRUE;
         }
         break;
 
@@ -274,6 +274,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_MOUSEHOVER:
         Mouse::ProcessMessage(message, wParam, lParam);
         break;
+
+    case WM_MENUCHAR:
+        // A menu is active and the user presses a key that does not correspond
+        // to any mnemonic or accelerator key. Ignore so we don't produce an error beep.
+        return MAKELRESULT(0, MNC_CLOSE);
     }
 
     return DefWindowProc(hWnd, message, wParam, lParam);
