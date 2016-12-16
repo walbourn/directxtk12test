@@ -119,7 +119,7 @@ void DX::DeviceResources::CreateDeviceResources()
         throw std::exception("CreateEvent");
     }
 
-#if _XDK_VER >= 0x38390835
+#if _XDK_VER >= 0x38390868 /* XDK Edition 161000 */
     if (s_render4K)
     {
         D3D12XBOX_GPU_HARDWARE_CONFIGURATION hwConfig = {};
