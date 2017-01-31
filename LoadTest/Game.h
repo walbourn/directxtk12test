@@ -118,6 +118,7 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_test10;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_test11;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_test12;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_test13;
 
     enum Descriptors
     {

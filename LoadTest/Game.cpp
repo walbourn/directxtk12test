@@ -665,6 +665,7 @@ void Game::OnDeviceLost()
     m_test10.Reset();
     m_test11.Reset();
     m_test12.Reset();
+    m_test13.Reset();
 
     m_screenshot.Reset();
 
@@ -884,6 +885,22 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             || desc.MipLevels != 10)
         {
             OutputDebugStringA("FAILED: cup_small.jpg (autogen ignore srgb) desc unexpected\n");
+            success = false;
+        }
+    }
+
+    // Video textures
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"lenaNV12.dds", m_test13.ReleaseAndGetAddressOf()));
+
+    {
+        auto desc = m_test12->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_NV12
+            || desc.Width != 200
+            || desc.Height != 200
+            || desc.MipLevels != 1)
+        {
+            OutputDebugStringA("FAILED: lenaNV12.dds desc unexpected\n");
             success = false;
         }
     }

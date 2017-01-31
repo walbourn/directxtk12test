@@ -68,5 +68,8 @@
     <Image Include="win95.bmp">
       <Filter>Assets</Filter>
     </Image>
+    <Image Include="lenaNV12.dds">
+      <Filter>Assets</Filter>
+    </Image>
   </ItemGroup>
 </Project>
