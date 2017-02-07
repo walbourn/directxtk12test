@@ -893,7 +893,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"lenaNV12.dds", m_test13.ReleaseAndGetAddressOf()));
 
     {
-        auto desc = m_test12->GetDesc();
+        auto desc = m_test13->GetDesc();
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_NV12
             || desc.Width != 200
