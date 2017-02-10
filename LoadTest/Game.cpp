@@ -544,7 +544,7 @@ void Game::CreateDeviceDependentResources()
     {
         auto desc = m_dxlogo->GetDesc();
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
-            || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM
+            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
             || desc.Width != 256
             || desc.Height != 256
             || desc.MipLevels != 9)
@@ -666,6 +666,10 @@ void Game::OnDeviceLost()
     m_test11.Reset();
     m_test12.Reset();
     m_test13.Reset();
+    m_test14.Reset();
+    m_test15.Reset();
+    m_test16.Reset();
+    m_test17.Reset();
 
     m_screenshot.Reset();
 
@@ -901,6 +905,67 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             || desc.MipLevels != 1)
         {
             OutputDebugStringA("FAILED: lenaNV12.dds desc unexpected\n");
+            success = false;
+        }
+    }
+
+    // Autogen
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen_bgra.dds", m_test14.ReleaseAndGetAddressOf()));
+
+    {
+        auto desc = m_test14->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM
+            || desc.Width != 256
+            || desc.Height != 256
+            || desc.MipLevels != 1)
+        {
+            OutputDebugStringA("FAILED: dx5_logo_autogen_bgra.dds desc unexpected\n");
+            success = false;
+        }
+    }
+
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen_bgra.dds", m_test15.ReleaseAndGetAddressOf(), true));
+
+    {
+        auto desc = m_test15->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM
+            || desc.Width != 256
+            || desc.Height != 256
+            || desc.MipLevels != 9)
+        {
+            OutputDebugStringA("FAILED: dx5_logo_autogen_bgra.dds (autogen) desc unexpected\n");
+            success = false;
+        }
+    }
+
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen_srgb.dds", m_test16.ReleaseAndGetAddressOf()));
+
+    {
+        auto desc = m_test16->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
+            || desc.Width != 256
+            || desc.Height != 256
+            || desc.MipLevels != 1)
+        {
+            OutputDebugStringA("FAILED: dx5_logo_autogen_srgb.dds desc unexpected\n");
+            success = false;
+        }
+    }
+
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen_srgb.dds", m_test17.ReleaseAndGetAddressOf(), true));
+
+    {
+        auto desc = m_test17->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
+            || desc.Width != 256
+            || desc.Height != 256
+            || desc.MipLevels != 9)
+        {
+            OutputDebugStringA("FAILED: dx5_logo_autogen_srgb.dds (autogen) desc unexpected\n");
             success = false;
         }
     }

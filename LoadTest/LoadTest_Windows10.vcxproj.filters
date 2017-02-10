@@ -81,6 +81,12 @@
     <Image Include="lenaNV12.dds">
       <Filter>Assets</Filter>
     </Image>
+    <Image Include="dx5_logo_autogen_bgra.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="dx5_logo_autogen_srgb.DDS">
+      <Filter>Assets</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="PackageUWP.appxmanifest" />
