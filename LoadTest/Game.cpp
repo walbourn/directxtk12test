@@ -539,17 +539,17 @@ void Game::CreateDeviceDependentResources()
     CreateShaderResourceView(device, m_earth2.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Earth_Imm));
 
     // DirectX Logo
-    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen.dds", m_dxlogo.ReleaseAndGetAddressOf(), true));
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen_bgra.dds", m_dxlogo.ReleaseAndGetAddressOf(), true));
 
     {
         auto desc = m_dxlogo->GetDesc();
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
-            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
+            || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM
             || desc.Width != 256
             || desc.Height != 256
             || desc.MipLevels != 9)
         {
-            OutputDebugStringA("FAILED: dx5_logo_autogen.dds (autogen) desc unexpected\n");
+            OutputDebugStringA("FAILED: dx5_logo_autogen_bgra.dds (autogen) desc unexpected\n");
             success = false;
         }
     }
@@ -694,7 +694,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     auto device = m_deviceResources->GetD3DDevice();
 
     // DirectX Logo (verify DDS for autogen has no mipmaps)
-    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen.dds", m_test1.ReleaseAndGetAddressOf(), false));
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen_bgra.dds", m_test1.ReleaseAndGetAddressOf(), false));
     {
         auto desc = m_test1->GetDesc();
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
@@ -703,7 +703,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             || desc.Height != 256
             || desc.MipLevels != 1)
         {
-            OutputDebugStringA("FAILED: dx5_logo_autogen.dds (no autogen) desc unexpected\n");
+            OutputDebugStringA("FAILED: dx5_logo_autogen_bgra.dds (no autogen) desc unexpected\n");
             success = false;
         }
     }
@@ -894,6 +894,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     }
 
     // Video textures
+#if 0
     DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"lenaNV12.dds", m_test13.ReleaseAndGetAddressOf()));
 
     {
@@ -908,34 +909,35 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             success = false;
         }
     }
+#endif
 
     // Autogen
-    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen_bgra.dds", m_test14.ReleaseAndGetAddressOf()));
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen.dds", m_test14.ReleaseAndGetAddressOf()));
 
     {
         auto desc = m_test14->GetDesc();
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
-            || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM
+            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
             || desc.Width != 256
             || desc.Height != 256
             || desc.MipLevels != 1)
         {
-            OutputDebugStringA("FAILED: dx5_logo_autogen_bgra.dds desc unexpected\n");
+            OutputDebugStringA("FAILED: dx5_logo_autogen.dds desc unexpected\n");
             success = false;
         }
     }
 
-    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen_bgra.dds", m_test15.ReleaseAndGetAddressOf(), true));
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen.dds", m_test15.ReleaseAndGetAddressOf(), true));
 
     {
         auto desc = m_test15->GetDesc();
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
-            || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM
+            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
             || desc.Width != 256
             || desc.Height != 256
             || desc.MipLevels != 9)
         {
-            OutputDebugStringA("FAILED: dx5_logo_autogen_bgra.dds (autogen) desc unexpected\n");
+            OutputDebugStringA("FAILED: dx5_logo_autogen.dds (autogen) desc unexpected\n");
             success = false;
         }
     }
