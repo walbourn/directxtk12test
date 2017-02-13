@@ -894,7 +894,6 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     }
 
     // Video textures
-#if 0
     DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"lenaNV12.dds", m_test13.ReleaseAndGetAddressOf()));
 
     {
@@ -909,7 +908,6 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             success = false;
         }
     }
-#endif
 
     // Autogen
     DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen.dds", m_test14.ReleaseAndGetAddressOf()));
