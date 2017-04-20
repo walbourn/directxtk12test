@@ -1,0 +1,169 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="Game.h" />
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="..\Common\DeviceResourcesXDK.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\StepTimer.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="WaveFrontReader.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="..\Common\DeviceResourcesXDK.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\MainXDK.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelLoadOBJ.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Assets">
+      <UniqueIdentifier>{7acb670e-db6c-486f-8bde-08048b4e117e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common">
+      <UniqueIdentifier>{f3a5383e-2dc2-476b-b702-63edaa470565}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets\Logos">
+      <UniqueIdentifier>{2b872ab0-d4df-400f-8c1d-89874ac4b68b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets\Cup">
+      <UniqueIdentifier>{8a98c0ac-b2f9-4754-9f3e-d3c7323130f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets\Dwarf">
+      <UniqueIdentifier>{ee15ff06-66d9-44d5-a740-3603a3a0f097}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets\Lightmap">
+      <UniqueIdentifier>{e4c7a23f-aaad-4dd7-bcc2-4b8fad0486a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets\Soldier">
+      <UniqueIdentifier>{5abbc013-fe7a-4c9e-b798-0dfecbe1dfd1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets\Tiny">
+      <UniqueIdentifier>{2701af56-8c7d-4b56-9e48-27618219c652}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets\Normalmap">
+      <UniqueIdentifier>{9defd1b5-ffce-41d9-9e46-c842dcb3c6de}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\Common\Logo.scale-100.png">
+      <Filter>Assets\Logos</Filter>
+    </Image>
+    <Image Include="..\Common\SmallLogo.scale-100.png">
+      <Filter>Assets\Logos</Filter>
+    </Image>
+    <Image Include="..\Common\SplashScreen.scale-100.png">
+      <Filter>Assets\Logos</Filter>
+    </Image>
+    <Image Include="..\Common\StoreLogo.scale-100.png">
+      <Filter>Assets\Logos</Filter>
+    </Image>
+    <Image Include="..\Common\WideLogo.scale-100.png">
+      <Filter>Assets\Logos</Filter>
+    </Image>
+    <Image Include="cup.jpg">
+      <Filter>Assets\Cup</Filter>
+    </Image>
+    <Image Include="Armor.dds">
+      <Filter>Assets\Dwarf</Filter>
+    </Image>
+    <Image Include="Body.dds">
+      <Filter>Assets\Dwarf</Filter>
+    </Image>
+    <Image Include="DwarfHead.dds">
+      <Filter>Assets\Dwarf</Filter>
+    </Image>
+    <Image Include="Headgear.dds">
+      <Filter>Assets\Dwarf</Filter>
+    </Image>
+    <Image Include="Helmet.dds">
+      <Filter>Assets\Dwarf</Filter>
+    </Image>
+    <Image Include="Pack.dds">
+      <Filter>Assets\Dwarf</Filter>
+    </Image>
+    <Image Include="Weapons.dds">
+      <Filter>Assets\Dwarf</Filter>
+    </Image>
+    <Image Include="Cement.dds">
+      <Filter>Assets\Lightmap</Filter>
+    </Image>
+    <Image Include="Plane001LightingMap.dds">
+      <Filter>Assets\Lightmap</Filter>
+    </Image>
+    <Image Include="StripeConcrete.dds">
+      <Filter>Assets\Lightmap</Filter>
+    </Image>
+    <Image Include="Text001LightingMap.dds">
+      <Filter>Assets\Lightmap</Filter>
+    </Image>
+    <Image Include="head_diff.dds">
+      <Filter>Assets\Soldier</Filter>
+    </Image>
+    <Image Include="jacket_diff.dds">
+      <Filter>Assets\Soldier</Filter>
+    </Image>
+    <Image Include="pants_diff.dds">
+      <Filter>Assets\Soldier</Filter>
+    </Image>
+    <Image Include="upBody_diff.dds">
+      <Filter>Assets\Soldier</Filter>
+    </Image>
+    <Image Include="Tiny_skin.dds">
+      <Filter>Assets\Tiny</Filter>
+    </Image>
+    <Image Include="cubemap.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="default.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Helmet_diff.dds">
+      <Filter>Assets\Normalmap</Filter>
+    </Image>
+    <Image Include="Helmet_norm.dds">
+      <Filter>Assets\Normalmap</Filter>
+    </Image>
+    <Image Include="Helmet_spec.dds">
+      <Filter>Assets\Normalmap</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cup._obj">
+      <Filter>Assets\Cup</Filter>
+    </None>
+    <None Include="cup.mtl">
+      <Filter>Assets\Cup</Filter>
+    </None>
+    <None Include="cup.sdkmesh">
+      <Filter>Assets\Cup</Filter>
+    </None>
+    <None Include="dwarf.sdkmesh">
+      <Filter>Assets\Dwarf</Filter>
+    </None>
+    <None Include="SimpleLightMap.sdkmesh">
+      <Filter>Assets\Lightmap</Filter>
+    </None>
+    <None Include="soldier.sdkmesh">
+      <Filter>Assets\Soldier</Filter>
+    </None>
+    <None Include="tiny.sdkmesh">
+      <Filter>Assets\Tiny</Filter>
+    </None>
+    <None Include="player_ship_a.vbo">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="Helmet.sdkmesh">
+      <Filter>Assets\Normalmap</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <AppxManifest Include="PackageXDK.appxmanifest" />
+  </ItemGroup>
+</Project>
