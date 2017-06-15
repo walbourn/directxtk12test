@@ -183,6 +183,9 @@
     <Image Include="..\Common\SplashScreen.scale-100.png" />
     <Image Include="..\Common\StoreLogo.scale-100.png" />
     <Image Include="..\Common\WideLogo.scale-100.png" />
+    <Image Include="earth.bmp" />
+    <Image Include="HDR_029_Sky_Cloudy_Refbc6h.DDS" />
+    <Image Include="sunset.jpg" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="PackageXDK.appxmanifest" />
@@ -191,6 +194,13 @@
     <ProjectReference Include="..\..\DirectXTK_XboxOneXDK_2017.vcxproj">
       <Project>{0ee6c863-556c-4815-8bff-a5a0b25a948f}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="comic.spritefont">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Durango'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Durango'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Profile|Durango'">true</DeploymentContent>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -81,15 +81,66 @@ private:
     void CreateWindowSizeDependentResources();
 
     // Device resources.
-    std::unique_ptr<DX::DeviceResources>    m_deviceResources;
+    std::unique_ptr<DX::DeviceResources>            m_deviceResources;
 
     // Rendering loop timer.
-    DX::StepTimer                           m_timer;
+    DX::StepTimer                                   m_timer;
 
     // Input devices.
-    std::unique_ptr<DirectX::GamePad>       m_gamePad;
-    std::unique_ptr<DirectX::Keyboard>      m_keyboard;
+    std::unique_ptr<DirectX::GamePad>               m_gamePad;
+    std::unique_ptr<DirectX::Keyboard>              m_keyboard;
+
+    DirectX::GamePad::ButtonStateTracker            m_gamePadButtons;
+    DirectX::Keyboard::KeyboardStateTracker         m_keyboardButtons;
 
     // DirectXTK Test Objects
-    std::unique_ptr<DirectX::GraphicsMemory>    m_graphicsMemory;
+    std::unique_ptr<DirectX::GraphicsMemory>        m_graphicsMemory;
+
+    std::unique_ptr<DirectX::DescriptorHeap>        m_resourceDescriptors;
+
+    DirectX::SimpleMath::Matrix                     m_world;
+    DirectX::SimpleMath::Matrix                     m_view;
+    DirectX::SimpleMath::Matrix                     m_proj;
+
+    int                                             m_scene;
+
+    std::unique_ptr<DirectX::SpriteBatch>           m_spriteBatch;
+    std::unique_ptr<DirectX::SpriteBatch>           m_spriteBatchUI;
+    std::unique_ptr<DirectX::SpriteFont>            m_font;
+    std::unique_ptr<DirectX::CommonStates>          m_states;
+    std::unique_ptr<DirectX::BasicEffect>           m_effect;
+    std::unique_ptr<DirectX::GeometricPrimitive>    m_shape;
+
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_texture;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_background;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_hdrTexture;
+
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_sceneTex;
+
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_blur1Tex;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_blur2Tex;
+
+    std::unique_ptr<DirectX::BasicPostProcess>      m_basicPostProcess[DirectX::BasicPostProcess::Effect_Max];
+    std::unique_ptr<DirectX::DualPostProcess>       m_dualPostProcess[DirectX::DualPostProcess::Effect_Max];
+
+    static const size_t ToneMapCount = static_cast<size_t>(DirectX::ToneMapPostProcess::Operator_Max)
+                                       * static_cast<size_t>(DirectX::ToneMapPostProcess::TransferFunction_Max)
+#if defined(_XBOX_ONE) && defined(_TITLE)
+                                       * 2
+#endif
+                                       ;
+
+    std::unique_ptr<DirectX::ToneMapPostProcess>    m_toneMapPostProcess[ToneMapCount];
+
+    enum Descriptors
+    {
+        Font,
+        Texture,
+        Background,
+        HDRTexture,
+        SceneTex,
+        Blur1Tex,
+        Blur2Tex,
+        Count
+    };
 };

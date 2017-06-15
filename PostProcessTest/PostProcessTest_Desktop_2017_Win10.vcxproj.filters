@@ -37,4 +37,20 @@
       <Filter>Assets</Filter>
     </Manifest>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="comic.spritefont">
+      <Filter>Assets</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="earth.bmp">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="sunset.jpg">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="HDR_029_Sky_Cloudy_Refbc6h.DDS">
+      <Filter>Assets</Filter>
+    </Image>
+  </ItemGroup>
 </Project>
