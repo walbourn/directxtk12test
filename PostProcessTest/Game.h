@@ -120,6 +120,9 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_blur1Tex;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_blur2Tex;
 
+    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>    m_rtvDescriptorHeap;
+    uint32_t                                        m_rtvIncrement;
+
     std::unique_ptr<DirectX::BasicPostProcess>      m_basicPostProcess[DirectX::BasicPostProcess::Effect_Max];
     std::unique_ptr<DirectX::DualPostProcess>       m_dualPostProcess[DirectX::DualPostProcess::Effect_Max];
 
@@ -142,5 +145,13 @@ private:
         Blur1Tex,
         Blur2Tex,
         Count
+    };
+
+    enum RTDescriptors
+    {
+        SceneRT,
+        Blur1RT,
+        Blur2RT,
+        RTCount
     };
 };

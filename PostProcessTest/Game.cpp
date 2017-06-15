@@ -23,13 +23,17 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
-    const int MaxScene = 1;
+    const int MaxScene = 27;
+
+    const DXGI_FORMAT c_sdrFormat = DXGI_FORMAT_R10G10B10A2_UNORM;
+    const DXGI_FORMAT c_hdrFormat = DXGI_FORMAT_R16G16B16A16_FLOAT;
 }
 
 Game::Game() :
-    m_scene(0)
+    m_scene(0),
+    m_rtvIncrement(0)
 {
-    m_deviceResources = std::make_unique<DX::DeviceResources>(DXGI_FORMAT_R10G10B10A2_UNORM);
+    m_deviceResources = std::make_unique<DX::DeviceResources>(c_sdrFormat);
 
 #if !defined(_XBOX_ONE) || !defined(_TITLE)
     m_deviceResources->RegisterDeviceNotify(this);
@@ -184,15 +188,549 @@ void Game::Render()
     m_effect->Apply(commandList);
     m_shape->Draw(commandList);
 
+    {
+        auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_sceneTex.Get(),
+            D3D12_RESOURCE_STATE_RENDER_TARGET,
+            D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0);
+        commandList->ResourceBarrier(1, &barrier);
+    }
+
+    {
+        auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
+        commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, nullptr);
+    }
+
     // Post process.
     const wchar_t* descstr = nullptr;
     switch (m_scene)
     {
     case 0:
     default:
-        descstr = L"Copy (passthrough)";
-        // TODO -
+        {
+            descstr = L"Copy (passthrough)";
+            auto pp = m_basicPostProcess[BasicPostProcess::Copy].get();
+            pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex), m_sceneTex.Get());
+            pp->Process(commandList);
+        }
         break;
+
+    case 1:
+        {
+            descstr = L"Monochrome";
+            auto pp = m_basicPostProcess[BasicPostProcess::Monochrome].get();
+            pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex), m_sceneTex.Get());
+            pp->Process(commandList);
+        }
+        break;
+
+    case 2:
+        {
+            descstr = L"Sepia";
+            auto pp = m_basicPostProcess[BasicPostProcess::Sepia].get();
+            pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex), m_sceneTex.Get());
+            pp->Process(commandList);
+        }
+        break;
+
+    case 3:
+        {
+            descstr = L"Downscale 2x2";
+            auto pp = m_basicPostProcess[BasicPostProcess::DownScale_2x2].get();
+            pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex), m_sceneTex.Get());
+            pp->Process(commandList);
+        }
+        break;
+
+    case 4:
+        {
+            descstr = L"Downscale 4x4";
+            auto pp = m_basicPostProcess[BasicPostProcess::DownScale_4x4].get();
+            pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex), m_sceneTex.Get());
+            pp->Process(commandList);
+        }
+        break;
+
+    case 5:
+        {
+            descstr = L"GaussianBlur 5x5";
+            auto pp = m_basicPostProcess[BasicPostProcess::GaussianBlur_5x5].get();
+            pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex), m_sceneTex.Get());
+            pp->SetGaussianParameter(1.f);
+            pp->Process(commandList);
+        }
+        break;
+
+    case 6:
+        {
+            descstr = L"GaussianBlur 5x5 (2X)";
+            auto pp = m_basicPostProcess[BasicPostProcess::GaussianBlur_5x5].get();
+            pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex), m_sceneTex.Get());
+            pp->SetGaussianParameter(2.f);
+            pp->Process(commandList);
+        }
+        break;
+
+    case 7:
+        {
+            descstr = L"BloomExtract";
+            auto pp = m_basicPostProcess[BasicPostProcess::BloomExtract].get();
+            pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex), m_sceneTex.Get());
+            pp->SetBloomExtractParameter(0.25f);
+            pp->Process(commandList);
+        }
+        break;
+
+    case 8:
+        {
+            descstr = L"BloomBlur (extract + horizontal)";
+
+            // Pass 1 (scene -> blur1)
+            auto pp = m_basicPostProcess[BasicPostProcess::BloomExtract].get();
+            pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex), m_sceneTex.Get());
+            pp->SetBloomExtractParameter(0.25f);
+
+            auto blurRT1 = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), RTDescriptors::Blur1RT, m_rtvIncrement);
+            commandList->OMSetRenderTargets(1, &blurRT1, FALSE, nullptr);
+
+            pp->Process(commandList);
+
+            {
+                auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                    D3D12_RESOURCE_STATE_RENDER_TARGET,
+                    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0);
+                commandList->ResourceBarrier(1, &barrier);
+            }
+
+            // Pass 2 (blur1 -> rt)
+            pp = m_basicPostProcess[BasicPostProcess::BloomBlur].get();
+            pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Blur1Tex), m_blur1Tex.Get());
+            pp->SetBloomBlurParameters(true, 4.f, 1.f);
+
+            auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
+            commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, nullptr);
+
+            pp->Process(commandList);
+
+            {
+                auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+                    D3D12_RESOURCE_STATE_RENDER_TARGET, 0);
+                commandList->ResourceBarrier(1, &barrier);
+            }
+        }
+        break;
+
+    case 9:
+        {
+            descstr = L"BloomBlur (extract + vertical)";
+
+            // Pass 1 (scene -> blur1)
+            auto pp = m_basicPostProcess[BasicPostProcess::BloomExtract].get();
+            pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex), m_sceneTex.Get());
+            pp->SetBloomExtractParameter(0.25f);
+
+            auto blurRT1 = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), RTDescriptors::Blur1RT, m_rtvIncrement);
+            commandList->OMSetRenderTargets(1, &blurRT1, FALSE, nullptr);
+
+            pp->Process(commandList);
+
+            {
+                auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                    D3D12_RESOURCE_STATE_RENDER_TARGET,
+                    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0);
+                commandList->ResourceBarrier(1, &barrier);
+            }
+
+            // Pass 2 (blur1 -> rt)
+            pp = m_basicPostProcess[BasicPostProcess::BloomBlur].get();
+            pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Blur1Tex), m_blur1Tex.Get());
+            pp->SetBloomBlurParameters(false, 4.f, 1.f);
+
+            auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
+            commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, nullptr);
+
+            pp->Process(commandList);
+
+            {
+                auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+                    D3D12_RESOURCE_STATE_RENDER_TARGET, 0);
+                commandList->ResourceBarrier(1, &barrier);
+            }
+        }
+        break;
+
+    case 10:
+        {
+            descstr = L"BloomBlur (extract + horz + vert)";
+
+            // Pass 1 (scene -> blur1)
+            auto pp = m_basicPostProcess[BasicPostProcess::BloomExtract].get();
+            pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex), m_sceneTex.Get());
+            pp->SetBloomExtractParameter(0.25f);
+
+            auto blurRT1 = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), RTDescriptors::Blur1RT, m_rtvIncrement);
+            commandList->OMSetRenderTargets(1, &blurRT1, FALSE, nullptr);
+
+            pp->Process(commandList);
+
+            {
+                auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                    D3D12_RESOURCE_STATE_RENDER_TARGET,
+                    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0);
+                commandList->ResourceBarrier(1, &barrier);
+            }
+
+            // Pass 2 (blur1 -> blur2)
+            pp = m_basicPostProcess[BasicPostProcess::BloomBlur].get();
+            pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Blur1Tex), m_blur1Tex.Get());
+            pp->SetBloomBlurParameters(true, 4.f, 1.f);
+
+            auto blurRT2 = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), RTDescriptors::Blur2RT, m_rtvIncrement);
+            commandList->OMSetRenderTargets(1, &blurRT2, FALSE, nullptr);
+
+            pp->Process(commandList);
+
+            {
+                auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur2Tex.Get(),
+                    D3D12_RESOURCE_STATE_RENDER_TARGET,
+                    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0);
+                commandList->ResourceBarrier(1, &barrier);
+            }
+
+            // Pass 3 (blur2 -> rt)
+            pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Blur2Tex), m_blur2Tex.Get());
+            pp->SetBloomBlurParameters(false, 4.f, 1.f);
+
+            auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
+            commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, nullptr);
+
+            pp->Process(commandList);
+
+            {
+                CD3DX12_RESOURCE_BARRIER barriers[2] =
+                {
+                    CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                        D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+                        D3D12_RESOURCE_STATE_RENDER_TARGET, 0),
+                    CD3DX12_RESOURCE_BARRIER::Transition(m_blur2Tex.Get(),
+                        D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+                        D3D12_RESOURCE_STATE_RENDER_TARGET, 0),
+                };
+                commandList->ResourceBarrier(2, barriers);
+            }
+        }
+        break;
+
+    case 11:
+        {
+            descstr = L"Bloom";
+
+            // Pass 1 (scene -> blur1)
+            auto pp = m_basicPostProcess[BasicPostProcess::BloomExtract].get();
+            pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex), m_sceneTex.Get());
+            pp->SetBloomExtractParameter(0.25f);
+
+            auto blurRT1 = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), RTDescriptors::Blur1RT, m_rtvIncrement);
+            commandList->OMSetRenderTargets(1, &blurRT1, FALSE, nullptr);
+
+            pp->Process(commandList);
+
+            {
+                auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                    D3D12_RESOURCE_STATE_RENDER_TARGET,
+                    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0);
+                commandList->ResourceBarrier(1, &barrier);
+            }
+
+            // Pass 2 (blur1 -> blur2)
+            pp = m_basicPostProcess[BasicPostProcess::BloomBlur].get();
+            pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Blur1Tex), m_blur1Tex.Get());
+            pp->SetBloomBlurParameters(true, 4.f, 1.f);
+
+            auto blurRT2 = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), RTDescriptors::Blur2RT, m_rtvIncrement);
+            commandList->OMSetRenderTargets(1, &blurRT2, FALSE, nullptr);
+
+            pp->Process(commandList);
+
+            {
+                CD3DX12_RESOURCE_BARRIER barriers[2] =
+                {
+                    CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+                    D3D12_RESOURCE_STATE_RENDER_TARGET, 0),
+                    CD3DX12_RESOURCE_BARRIER::Transition(m_blur2Tex.Get(),
+                    D3D12_RESOURCE_STATE_RENDER_TARGET,
+                    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0),
+                };
+                commandList->ResourceBarrier(2, barriers);
+            }
+
+            // Pass 3 (blur2 -> blur1)
+            pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Blur2Tex), m_blur2Tex.Get());
+            pp->SetBloomBlurParameters(false, 4.f, 1.f);
+
+            commandList->OMSetRenderTargets(1, &blurRT1, FALSE, nullptr);
+
+            pp->Process(commandList);
+
+            {
+                auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                    D3D12_RESOURCE_STATE_RENDER_TARGET,
+                    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0);
+                commandList->ResourceBarrier(1, &barrier);
+            }
+
+            // Pass 4 (scene+blur1 -> rt)
+            auto dp = m_dualPostProcess[DualPostProcess::BloomCombine].get();
+            dp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex));
+            dp->SetSourceTexture2(m_resourceDescriptors->GetGpuHandle(Descriptors::Blur1Tex));
+            dp->SetBloomCombineParameters(1.25f, 1.f, 1.f, 1.f);
+
+            auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
+            commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, nullptr);
+
+            dp->Process(commandList);
+
+            {
+                CD3DX12_RESOURCE_BARRIER barriers[2] =
+                {
+                    CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                        D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+                        D3D12_RESOURCE_STATE_RENDER_TARGET, 0),
+                    CD3DX12_RESOURCE_BARRIER::Transition(m_blur2Tex.Get(),
+                        D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+                        D3D12_RESOURCE_STATE_RENDER_TARGET, 0),
+                };
+                commandList->ResourceBarrier(2, barriers);
+            }
+        }
+        break;
+
+    case 12:
+        {
+            descstr = L"Bloom (Saturated)";
+
+            // Pass 1 (scene -> blur1)
+            auto pp = m_basicPostProcess[BasicPostProcess::BloomExtract].get();
+            pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex), m_sceneTex.Get());
+            pp->SetBloomExtractParameter(0.25f);
+
+            auto blurRT1 = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), RTDescriptors::Blur1RT, m_rtvIncrement);
+            commandList->OMSetRenderTargets(1, &blurRT1, FALSE, nullptr);
+
+            pp->Process(commandList);
+
+            {
+                auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                    D3D12_RESOURCE_STATE_RENDER_TARGET,
+                    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0);
+                commandList->ResourceBarrier(1, &barrier);
+            }
+
+            // Pass 2 (blur1 -> blur2)
+            pp = m_basicPostProcess[BasicPostProcess::BloomBlur].get();
+            pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Blur1Tex), m_blur1Tex.Get());
+            pp->SetBloomBlurParameters(true, 4.f, 1.f);
+
+            auto blurRT2 = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), RTDescriptors::Blur2RT, m_rtvIncrement);
+            commandList->OMSetRenderTargets(1, &blurRT2, FALSE, nullptr);
+
+            pp->Process(commandList);
+
+            {
+                CD3DX12_RESOURCE_BARRIER barriers[2] =
+                {
+                    CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+                    D3D12_RESOURCE_STATE_RENDER_TARGET, 0),
+                    CD3DX12_RESOURCE_BARRIER::Transition(m_blur2Tex.Get(),
+                    D3D12_RESOURCE_STATE_RENDER_TARGET,
+                    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0),
+                };
+                commandList->ResourceBarrier(2, barriers);
+            }
+
+            // Pass 3 (blur2 -> blur1)
+            pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Blur2Tex), m_blur2Tex.Get());
+            pp->SetBloomBlurParameters(false, 4.f, 1.f);
+
+            commandList->OMSetRenderTargets(1, &blurRT1, FALSE, nullptr);
+
+            pp->Process(commandList);
+
+            {
+                auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                    D3D12_RESOURCE_STATE_RENDER_TARGET,
+                    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0);
+                commandList->ResourceBarrier(1, &barrier);
+            }
+
+            // Pass 4 (scene+blur1 -> rt)
+            auto dp = m_dualPostProcess[DualPostProcess::BloomCombine].get();
+            dp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex));
+            dp->SetSourceTexture2(m_resourceDescriptors->GetGpuHandle(Descriptors::Blur1Tex));
+            dp->SetBloomCombineParameters(2.f, 1.f, 2.f, 0.f);
+
+            auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
+            commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, nullptr);
+
+            dp->Process(commandList);
+
+            {
+                CD3DX12_RESOURCE_BARRIER barriers[2] =
+                {
+                    CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+                    D3D12_RESOURCE_STATE_RENDER_TARGET, 0),
+                    CD3DX12_RESOURCE_BARRIER::Transition(m_blur2Tex.Get(),
+                    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+                    D3D12_RESOURCE_STATE_RENDER_TARGET, 0),
+                };
+                commandList->ResourceBarrier(2, barriers);
+            }
+        }
+        break;
+
+    case 13:
+        {
+            descstr = L"Merge (90%/10%)";
+            auto pp = m_dualPostProcess[DualPostProcess::Merge].get();
+            pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex));
+            pp->SetSourceTexture2(m_resourceDescriptors->GetGpuHandle(Descriptors::HDRTexture));
+            pp->SetMergeParameters(0.9f, 0.1f);
+            pp->Process(commandList);
+        }
+        break;
+
+    case 14:
+        {
+            descstr = L"Merge (50%/%50%)";
+            auto pp = m_dualPostProcess[DualPostProcess::Merge].get();
+            pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex));
+            pp->SetSourceTexture2(m_resourceDescriptors->GetGpuHandle(Descriptors::HDRTexture));
+            pp->SetMergeParameters(0.5f, 0.5f);
+            pp->Process(commandList);
+        }
+        break;
+
+    case 15:
+        {
+            descstr = L"Merge (10%/%90%)";
+            auto pp = m_dualPostProcess[DualPostProcess::Merge].get();
+            pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex));
+            pp->SetSourceTexture2(m_resourceDescriptors->GetGpuHandle(Descriptors::HDRTexture));
+            pp->SetMergeParameters(0.1f, 0.9f);
+            pp->Process(commandList);
+        }
+        break;
+       
+    case 16:
+        {
+            descstr = L"ToneMap (None)";
+            auto pp = m_toneMapPostProcess[0].get();
+            pp->SetHDRSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex));
+            pp->Process(commandList);
+        }
+        break;
+
+    case 17:
+        {
+            descstr = L"ToneMap (Saturate)";
+            auto pp = m_toneMapPostProcess[3].get();
+            pp->SetHDRSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex));
+            pp->Process(commandList);
+        }
+        break;
+
+    case 18:
+        {
+            descstr = L"ToneMap (Reinhard)";
+            auto pp = m_toneMapPostProcess[6].get();
+            pp->SetHDRSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex));
+            pp->Process(commandList);
+        }
+        break;
+
+    case 19:
+        {
+            descstr = L"ToneMap (ACES Filmic)";
+            auto pp = m_toneMapPostProcess[9].get();
+            pp->SetHDRSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex));
+            pp->Process(commandList);
+        }
+        break;
+
+    case 20:
+        {
+            descstr = L"ToneMap (SRGB)";
+            auto pp = m_toneMapPostProcess[1].get();
+            pp->SetHDRSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex));
+            pp->Process(commandList);
+        }
+        break;
+
+    case 21:
+        {
+            descstr = L"ToneMap (Saturate SRGB)";
+            auto pp = m_toneMapPostProcess[4].get();
+            pp->SetHDRSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex));
+            pp->SetExposure(0.f);
+            pp->Process(commandList);
+        }
+        break;
+
+    case 22:
+        {
+            descstr = L"ToneMap (Reinhard SRGB)";
+            auto pp = m_toneMapPostProcess[7].get();
+            pp->SetHDRSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex));
+            pp->SetExposure(0.f);
+            pp->Process(commandList);
+        }
+        break;
+
+    case 23:
+        {
+            descstr = L"ToneMap (ACES Filmic SRGB)";
+            auto pp = m_toneMapPostProcess[10].get();
+            pp->SetHDRSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex));
+            pp->SetExposure(0.f);
+            pp->Process(commandList);
+        }
+        break;
+
+    case 24:
+        {
+            descstr = L"ToneMap (Saturate SRGB EV 2)";
+            auto pp = m_toneMapPostProcess[4].get();
+            pp->SetHDRSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex));
+            pp->SetExposure(2.f);
+            pp->Process(commandList);
+        }
+        break;
+
+    case 25:
+        {
+            descstr = L"ToneMap (Reinhard SRGB EV 2)";
+            auto pp = m_toneMapPostProcess[7].get();
+            pp->SetHDRSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex));
+            pp->SetExposure(2.f);
+            pp->Process(commandList);
+        }
+        break;
+
+    case 26:
+        {
+            descstr = L"ToneMap (ACES Filmic SRGB, EV 2)";
+            auto pp = m_toneMapPostProcess[10].get();
+            pp->SetHDRSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex));
+            pp->SetExposure(2.f);
+            pp->Process(commandList);
+        }
+        break;
+
+        // ST2084 scenarios and MRT are convered in the HDRTest
     }
 
     // Draw UI.
@@ -203,6 +741,14 @@ void Game::Render()
     m_spriteBatchUI->End();
 
     PIXEndEvent(commandList);
+
+    // Set scene texture for next frame
+    {
+        auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_sceneTex.Get(),
+            D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+            D3D12_RESOURCE_STATE_RENDER_TARGET, 0);
+        commandList->ResourceBarrier(1, &barrier);
+    }
 
     // Show the new frame.
     PIXBeginEvent(m_deviceResources->GetCommandQueue(), PIX_COLOR_DEFAULT, L"Present");
@@ -218,13 +764,11 @@ void Game::Clear()
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Clear");
 
     // Clear the views.
-    auto rtvDescriptor = m_deviceResources->GetRenderTargetView(); // TODO - Use m_sceneTex
+    auto rtvDescriptor = m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
     auto dsvDescriptor = m_deviceResources->GetDepthStencilView();
 
-    XMVECTORF32 color;
-    color.v = Colors::CornflowerBlue;
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, &dsvDescriptor);
-    commandList->ClearRenderTargetView(rtvDescriptor, color, 0, nullptr);
+    commandList->ClearRenderTargetView(rtvDescriptor, Colors::CornflowerBlue, 0, nullptr);
     commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
     // Set the viewport and scissor rect.
@@ -300,14 +844,23 @@ void Game::CreateDeviceDependentResources()
 
     m_graphicsMemory = std::make_unique<GraphicsMemory>(device);
 
-    RenderTargetState hdrState(m_deviceResources->GetBackBufferFormat() /*DXGI_FORMAT_R16G16B16A16_FLOAT*/, m_deviceResources->GetDepthBufferFormat());
+    RenderTargetState hdrState(c_hdrFormat, m_deviceResources->GetDepthBufferFormat());
 
-    RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), m_deviceResources->GetDepthBufferFormat());
+    RenderTargetState rtState(c_sdrFormat, m_deviceResources->GetDepthBufferFormat());
 
     m_resourceDescriptors = std::make_unique<DescriptorHeap>(device,
         D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
         D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
         Descriptors::Count);
+
+    D3D12_DESCRIPTOR_HEAP_DESC desc = { D3D12_DESCRIPTOR_HEAP_TYPE_RTV, RTDescriptors::RTCount, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 0 };
+    DX::ThrowIfFailed(
+        device->CreateDescriptorHeap(&desc, IID_GRAPHICS_PPV_ARGS(m_rtvDescriptorHeap.ReleaseAndGetAddressOf()))
+    );
+
+    m_rtvDescriptorHeap->SetName(L"RTV Heap");
+
+    m_rtvIncrement = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
     ResourceUploadBatch resourceUpload(device);
 
@@ -418,10 +971,55 @@ void Game::CreateWindowSizeDependentResources()
     // Create scene render target
     auto device = m_deviceResources->GetD3DDevice();
 
-    // TODO -
+    auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+
+    {
+        D3D12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(c_hdrFormat,
+            width, height,
+            1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
+
+        D3D12_CLEAR_VALUE clearValue = { c_hdrFormat };
+        memcpy(clearValue.Color, Colors::CornflowerBlue.f, sizeof(clearValue.Color));
+
+        device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES,
+            &desc,
+            D3D12_RESOURCE_STATE_RENDER_TARGET, &clearValue,
+            IID_GRAPHICS_PPV_ARGS(m_sceneTex.ReleaseAndGetAddressOf()));
+
+        device->CreateRenderTargetView(m_sceneTex.Get(), nullptr, m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+
+        device->CreateShaderResourceView(m_sceneTex.Get(), nullptr, m_resourceDescriptors->GetCpuHandle(Descriptors::SceneTex));
+    }
 
     // Create additional render targets
-    // TODO -
+    {
+        D3D12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(c_sdrFormat,
+            width, height,
+            1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
+
+        D3D12_CLEAR_VALUE clearValue = { c_sdrFormat };
+        memcpy(clearValue.Color, Colors::CornflowerBlue.f, sizeof(clearValue.Color));
+
+        device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES,
+            &desc,
+            D3D12_RESOURCE_STATE_RENDER_TARGET, &clearValue,
+            IID_GRAPHICS_PPV_ARGS(m_blur1Tex.ReleaseAndGetAddressOf()));
+
+        device->CreateRenderTargetView(m_blur1Tex.Get(), nullptr,
+            CD3DX12_CPU_DESCRIPTOR_HANDLE(m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), RTDescriptors::Blur1RT, m_rtvIncrement));
+
+        device->CreateShaderResourceView(m_blur1Tex.Get(), nullptr, m_resourceDescriptors->GetCpuHandle(Descriptors::Blur1Tex));
+    
+        device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES,
+            &desc,
+            D3D12_RESOURCE_STATE_RENDER_TARGET, &clearValue,
+            IID_GRAPHICS_PPV_ARGS(m_blur2Tex.ReleaseAndGetAddressOf()));
+
+        device->CreateRenderTargetView(m_blur2Tex.Get(), nullptr,
+            CD3DX12_CPU_DESCRIPTOR_HANDLE(m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), RTDescriptors::Blur2RT, m_rtvIncrement));
+
+        device->CreateShaderResourceView(m_blur2Tex.Get(), nullptr, m_resourceDescriptors->GetCpuHandle(Descriptors::Blur2Tex));
+    }
 
     // Setup matrices
     m_view = Matrix::CreateLookAt(Vector3(2.f, 2.f, 2.f),
@@ -450,6 +1048,8 @@ void Game::OnDeviceLost()
     m_sceneTex.Reset();
     m_blur1Tex.Reset();
     m_blur2Tex.Reset();
+
+    m_rtvDescriptorHeap.Reset();
 
     for (int j = 0; j < static_cast<int>(BasicPostProcess::Effect_Max); ++j)
     {
