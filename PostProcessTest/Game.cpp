@@ -976,10 +976,12 @@ void Game::CreateWindowSizeDependentResources()
         D3D12_CLEAR_VALUE clearValue = { c_hdrFormat };
         memcpy(clearValue.Color, Colors::CornflowerBlue.f, sizeof(clearValue.Color));
 
-        device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES,
-            &desc,
-            D3D12_RESOURCE_STATE_RENDER_TARGET, &clearValue,
-            IID_GRAPHICS_PPV_ARGS(m_sceneTex.ReleaseAndGetAddressOf()));
+        DX::ThrowIfFailed(
+            device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES,
+                &desc,
+                D3D12_RESOURCE_STATE_RENDER_TARGET, &clearValue,
+                IID_GRAPHICS_PPV_ARGS(m_sceneTex.ReleaseAndGetAddressOf()))
+        );
 
         device->CreateRenderTargetView(m_sceneTex.Get(), nullptr, m_rtvDescriptors->GetCpuHandle(RTDescriptors::SceneRT));
 
@@ -995,20 +997,24 @@ void Game::CreateWindowSizeDependentResources()
         D3D12_CLEAR_VALUE clearValue = { c_sdrFormat };
         memcpy(clearValue.Color, Colors::CornflowerBlue.f, sizeof(clearValue.Color));
 
-        device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES,
-            &desc,
-            D3D12_RESOURCE_STATE_RENDER_TARGET, &clearValue,
-            IID_GRAPHICS_PPV_ARGS(m_blur1Tex.ReleaseAndGetAddressOf()));
+        DX::ThrowIfFailed(
+            device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES,
+                &desc,
+                D3D12_RESOURCE_STATE_RENDER_TARGET, &clearValue,
+                IID_GRAPHICS_PPV_ARGS(m_blur1Tex.ReleaseAndGetAddressOf()))
+        );
 
         device->CreateRenderTargetView(m_blur1Tex.Get(), nullptr,
             m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur1RT));
 
         device->CreateShaderResourceView(m_blur1Tex.Get(), nullptr, m_resourceDescriptors->GetCpuHandle(Descriptors::Blur1Tex));
     
-        device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES,
-            &desc,
-            D3D12_RESOURCE_STATE_RENDER_TARGET, &clearValue,
-            IID_GRAPHICS_PPV_ARGS(m_blur2Tex.ReleaseAndGetAddressOf()));
+        DX::ThrowIfFailed(
+            device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES,
+                &desc,
+                D3D12_RESOURCE_STATE_RENDER_TARGET, &clearValue,
+                IID_GRAPHICS_PPV_ARGS(m_blur2Tex.ReleaseAndGetAddressOf()))
+        );
 
         device->CreateRenderTargetView(m_blur2Tex.Get(), nullptr,
             m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur2RT));
