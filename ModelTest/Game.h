@@ -95,7 +95,7 @@ private:
     // DirectXTK Test Objects
     std::unique_ptr<DirectX::GraphicsMemory>        m_graphicsMemory;
     std::unique_ptr<DirectX::CommonStates>          m_states;
-    std::unique_ptr<DirectX::DescriptorHeap>        m_resourceDescriptors;
+    std::unique_ptr<DirectX::DescriptorPile>        m_resourceDescriptors;
   
     std::unique_ptr<DirectX::Model>                 m_cup;
     std::vector<std::shared_ptr<DirectX::IEffect>>  m_cupNormal;
@@ -137,11 +137,10 @@ private:
 
     std::unique_ptr<DirectX::XMMATRIX[], DirectX::aligned_deleter> m_bones;
 
-    enum Descriptors
+    enum StaticDescriptors
     {
         DefaultTex = 0,
         Cubemap = 1,
-        ModelStart = 10,
-        Count = 100,
+        Reserve
     };
 };

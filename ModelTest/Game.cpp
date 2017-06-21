@@ -413,10 +413,11 @@ void Game::CreateDeviceDependentResources()
     m_vbo = Model::CreateFromVBO(L"player_ship_a.vbo");
 
     // Load textures & effects
-    m_resourceDescriptors = std::make_unique<DescriptorHeap>(device,
+    m_resourceDescriptors = std::make_unique<DescriptorPile>(device,
         D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
         D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
-        Descriptors::Count);
+        128,
+        StaticDescriptors::Reserve);
 
     ResourceUploadBatch resourceUpload(device);
 
@@ -442,8 +443,13 @@ void Game::CreateDeviceDependentResources()
 #endif
 
     // Create cup materials & effects
-    int txtOffset = Descriptors::ModelStart;
-    int txtAdd = m_cup->LoadTextures(*m_modelResources, txtOffset);
+    int txtOffset = 0;
+    {
+        size_t start, end;
+        m_resourceDescriptors->AllocateRange(m_cup->textureNames.size(), start, end);
+        txtOffset = static_cast<int>(start);
+    }
+    m_cup->LoadTextures(*m_modelResources, txtOffset);
 
 #ifdef LH_COORDS
     auto& ncull = CommonStates::CullCounterClockwise;
@@ -475,7 +481,7 @@ void Game::CreateDeviceDependentResources()
             auto basic = dynamic_cast<BasicEffect*>(m_cupCustom[1].get());
             if (basic)
             {
-                basic->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::DefaultTex), m_states->AnisotropicWrap());
+                basic->SetTexture(m_resourceDescriptors->GetGpuHandle(StaticDescriptors::DefaultTex), m_states->AnisotropicWrap());
             }
         }
         m_fxFactory->SetSharing(true);
@@ -494,8 +500,6 @@ void Game::CreateDeviceDependentResources()
 
         m_fxFactory->EnablePerPixelLighting(true);
     }
-
-    txtOffset += txtAdd;
 
     // Create VBO effects (no textures)
 
@@ -517,7 +521,12 @@ void Game::CreateDeviceDependentResources()
     // SDKMESH Cup
     m_cupMesh = Model::CreateFromSDKMESH(L"cup.sdkmesh");
 
-    txtAdd = m_cupMesh->LoadTextures(*m_modelResources, txtOffset);
+    {
+        size_t start, end;
+        m_resourceDescriptors->AllocateRange(m_cupMesh->textureNames.size(), start, end);
+        txtOffset = static_cast<int>(start);
+    }
+    m_cupMesh->LoadTextures(*m_modelResources, txtOffset);
 
     {
         EffectPipelineStateDescription pd(
@@ -530,12 +539,15 @@ void Game::CreateDeviceDependentResources()
         m_cupMeshNormal = m_cupMesh->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
     }
 
-    txtOffset += txtAdd;
-
     // SDKMESH Tiny
     m_tiny = Model::CreateFromSDKMESH(L"tiny.sdkmesh");
 
-    txtAdd = m_tiny->LoadTextures(*m_modelResources, txtOffset);
+    {
+        size_t start, end;
+        m_resourceDescriptors->AllocateRange(m_tiny->textureNames.size(), start, end);
+        txtOffset = static_cast<int>(start);
+    }
+    m_tiny->LoadTextures(*m_modelResources, txtOffset);
 
     {
         EffectPipelineStateDescription pd(
@@ -548,12 +560,15 @@ void Game::CreateDeviceDependentResources()
         m_tinyNormal = m_tiny->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
     }
 
-    txtOffset += txtAdd;
-
     // SDKMESH Soldier
     m_soldier = Model::CreateFromSDKMESH(L"soldier.sdkmesh");
 
-    txtAdd = m_soldier->LoadTextures(*m_modelResources, txtOffset);
+    {
+        size_t start, end;
+        m_resourceDescriptors->AllocateRange(m_soldier->textureNames.size(), start, end);
+        txtOffset = static_cast<int>(start);
+    }
+    m_soldier->LoadTextures(*m_modelResources, txtOffset);
 
     {
         EffectPipelineStateDescription pd(
@@ -566,12 +581,15 @@ void Game::CreateDeviceDependentResources()
         m_soldierNormal = m_soldier->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
     }
 
-    txtOffset += txtAdd;
-
     // SDKMESH Dwarf
     m_dwarf = Model::CreateFromSDKMESH(L"dwarf.sdkmesh");
 
-    txtAdd = m_dwarf->LoadTextures(*m_modelResources, txtOffset);
+    {
+        size_t start, end;
+        m_resourceDescriptors->AllocateRange(m_dwarf->textureNames.size(), start, end);
+        txtOffset = static_cast<int>(start);
+    }
+    m_dwarf->LoadTextures(*m_modelResources, txtOffset);
 
     {
         EffectPipelineStateDescription pd(
@@ -584,12 +602,15 @@ void Game::CreateDeviceDependentResources()
         m_dwarfNormal = m_dwarf->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
     }
 
-    txtOffset += txtAdd;
-
     // SDKMESH Lightmap
     m_lmap = Model::CreateFromSDKMESH(L"SimpleLightMap.sdkmesh");
 
-    txtAdd = m_lmap->LoadTextures(*m_modelResources, txtOffset);
+    {
+        size_t start, end;
+        m_resourceDescriptors->AllocateRange(m_lmap->textureNames.size(), start, end);
+        txtOffset = static_cast<int>(start);
+    }
+    m_lmap->LoadTextures(*m_modelResources, txtOffset);
 
     {
         EffectPipelineStateDescription pd(
@@ -602,12 +623,15 @@ void Game::CreateDeviceDependentResources()
         m_lmapNormal = m_lmap->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
     }
 
-    txtOffset += txtAdd;
-
     // SDKMESH Normalmap
     m_nmap = Model::CreateFromSDKMESH(L"Helmet.sdkmesh");
 
-    txtAdd = m_nmap->LoadTextures(*m_modelResources, txtOffset);
+    {
+        size_t start, end;
+        m_resourceDescriptors->AllocateRange(m_nmap->textureNames.size(), start, end);
+        txtOffset = static_cast<int>(start);
+    }
+    m_nmap->LoadTextures(*m_modelResources, txtOffset);
 
     {
         EffectPipelineStateDescription pd(
@@ -619,8 +643,6 @@ void Game::CreateDeviceDependentResources()
 
         m_nmapNormal = m_nmap->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
     }
-
-    txtOffset += txtAdd;
 
 #ifdef GAMMA_CORRECT_RENDERING
     unsigned int loadFlags = DDS_LOADER_FORCE_SRGB;
@@ -635,7 +657,7 @@ void Game::CreateDeviceDependentResources()
                 0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
                 m_defaultTex.ReleaseAndGetAddressOf()));
 
-        CreateShaderResourceView(device, m_defaultTex.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::DefaultTex));
+        CreateShaderResourceView(device, m_defaultTex.Get(), m_resourceDescriptors->GetCpuHandle(StaticDescriptors::DefaultTex));
 
         bool iscubemap;
         DX::ThrowIfFailed(
@@ -643,7 +665,7 @@ void Game::CreateDeviceDependentResources()
                 0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
                 m_cubemap.ReleaseAndGetAddressOf(), nullptr, &iscubemap));
 
-        CreateShaderResourceView(device, m_cubemap.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Cubemap), iscubemap);
+        CreateShaderResourceView(device, m_cubemap.Get(), m_resourceDescriptors->GetCpuHandle(StaticDescriptors::Cubemap), iscubemap);
     }
 
     auto uploadResourcesFinished = resourceUpload.End(m_deviceResources->GetCommandQueue());
@@ -651,8 +673,8 @@ void Game::CreateDeviceDependentResources()
     uploadResourcesFinished.wait();
 
     // Set textures
-    m_vboEnvMap->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::DefaultTex), m_states->AnisotropicWrap());
-    m_vboEnvMap->SetEnvironmentMap(m_resourceDescriptors->GetGpuHandle(Descriptors::Cubemap), m_states->AnisotropicWrap());
+    m_vboEnvMap->SetTexture(m_resourceDescriptors->GetGpuHandle(StaticDescriptors::DefaultTex), m_states->AnisotropicWrap());
+    m_vboEnvMap->SetEnvironmentMap(m_resourceDescriptors->GetGpuHandle(StaticDescriptors::Cubemap), m_states->AnisotropicWrap());
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
