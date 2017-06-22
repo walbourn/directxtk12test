@@ -23,8 +23,6 @@ namespace
     }
 };
 
-bool DX::DeviceResources::s_render4K = false;
-
 // Constructor for DeviceResources.
 DX::DeviceResources::DeviceResources(DXGI_FORMAT backBufferFormat, DXGI_FORMAT depthBufferFormat, UINT backBufferCount) :
     m_backBufferIndex(0),
@@ -122,26 +120,17 @@ void DX::DeviceResources::CreateDeviceResources()
         throw std::exception("CreateEvent");
     }
 
-#if _XDK_VER >= 0x38390868 /* XDK Edition 161000 */
-    if (s_render4K)
+#if _XDK_VER >= 0x3F5B03F5 /* XDK Edition 170600 */
     {
         D3D12XBOX_GPU_HARDWARE_CONFIGURATION hwConfig = {};
         m_d3dDevice->GetGpuHardwareConfigurationX(&hwConfig);
-        if (hwConfig.HardwareVersion >= D3D12XBOX_HARDWARE_VERSION_XBOX_ONE_S)
+        if (hwConfig.HardwareVersion >= D3D12XBOX_HARDWARE_VERSION_XBOX_ONE_X)
         {
             m_outputSize = { 0, 0, 3840, 2160 };
-        }
 #ifdef _DEBUG
-        else
-        {
-            OutputDebugStringA("INFO: 4K UHD output requires Xbox One S or later; using 1080p\n");
-        }
+            OutputDebugStringA("INFO: Swapchain using 4k (3840 x 2160)\n");
 #endif
-    }
-#elif defined(_DEBUG)
-    if (s_render4K)
-    {
-        OutputDebugStringA("WARNING: 4K UHD detection not supported prior to October 2016 XDK; using 1080p\n");
+        }
     }
 #endif
 }
