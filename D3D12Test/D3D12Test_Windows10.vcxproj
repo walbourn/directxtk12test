@@ -254,7 +254,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <AppxManifest Include="PackageUWP.appxmanifest" />
+    <AppxManifest Include="PackageUWP.appxmanifest">
+      <SubType>Designer</SubType>
+    </AppxManifest>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\DirectXTK_Windows10.vcxproj">
