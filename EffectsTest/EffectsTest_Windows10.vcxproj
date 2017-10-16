@@ -274,7 +274,9 @@
     <Image Include="spnza_bricks_a_specular.DDS" />
   </ItemGroup>
   <ItemGroup>
-    <AppxManifest Include="..\PrimitivesTest\PackageUWP.appxmanifest" />
+    <AppxManifest Include="..\PrimitivesTest\PackageUWP.appxmanifest">
+      <SubType>Designer</SubType>
+    </AppxManifest>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
