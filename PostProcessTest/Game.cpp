@@ -16,6 +16,8 @@
 #include "pch.h"
 #include "Game.h"
 
+extern void ExitGame();
+
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
@@ -100,11 +102,7 @@ void Game::Update(DX::StepTimer const& timer)
     auto kb = m_keyboard->GetState();
     if (kb.Escape || (pad.IsConnected() && pad.IsViewPressed()))
     {
-#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
-        PostQuitMessage(0);
-#else
-        Windows::ApplicationModel::Core::CoreApplication::Exit();
-#endif
+        ExitGame();
     }
 
     if (pad.IsConnected())
