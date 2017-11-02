@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.12
+VisualStudioVersion = 15.0.27004.2005
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DirectXTK12", "..\DirectXTK_Windows10.vcxproj", "{945B8F0E-AE5F-447C-933A-9D069532D3E4}"
 EndProject
@@ -24,6 +24,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ShaderTest_Windows10", "ShaderTest\ShaderTest_Windows10.vcxproj", "{3A802CA2-2A82-46CF-A572-A248A0527FB2}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PostProcessTest_Windows10", "PostProcessTest\PostProcessTest_Windows10.vcxproj", "{4F6D0AE7-F9C4-434E-ADED-6142EAFF4EE5}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HDRTest_Windows10", "HDRTest\HDRTest_Windows10.vcxproj", "{EE63E3F2-C86E-4BCA-8540-ED10F5E6B6CE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -209,6 +211,24 @@ Global
 		{4F6D0AE7-F9C4-434E-ADED-6142EAFF4EE5}.Release|x86.ActiveCfg = Release|Win32
 		{4F6D0AE7-F9C4-434E-ADED-6142EAFF4EE5}.Release|x86.Build.0 = Release|Win32
 		{4F6D0AE7-F9C4-434E-ADED-6142EAFF4EE5}.Release|x86.Deploy.0 = Release|Win32
+		{EE63E3F2-C86E-4BCA-8540-ED10F5E6B6CE}.Debug|ARM.ActiveCfg = Debug|ARM
+		{EE63E3F2-C86E-4BCA-8540-ED10F5E6B6CE}.Debug|ARM.Build.0 = Debug|ARM
+		{EE63E3F2-C86E-4BCA-8540-ED10F5E6B6CE}.Debug|ARM.Deploy.0 = Debug|ARM
+		{EE63E3F2-C86E-4BCA-8540-ED10F5E6B6CE}.Debug|x64.ActiveCfg = Debug|x64
+		{EE63E3F2-C86E-4BCA-8540-ED10F5E6B6CE}.Debug|x64.Build.0 = Debug|x64
+		{EE63E3F2-C86E-4BCA-8540-ED10F5E6B6CE}.Debug|x64.Deploy.0 = Debug|x64
+		{EE63E3F2-C86E-4BCA-8540-ED10F5E6B6CE}.Debug|x86.ActiveCfg = Debug|Win32
+		{EE63E3F2-C86E-4BCA-8540-ED10F5E6B6CE}.Debug|x86.Build.0 = Debug|Win32
+		{EE63E3F2-C86E-4BCA-8540-ED10F5E6B6CE}.Debug|x86.Deploy.0 = Debug|Win32
+		{EE63E3F2-C86E-4BCA-8540-ED10F5E6B6CE}.Release|ARM.ActiveCfg = Release|ARM
+		{EE63E3F2-C86E-4BCA-8540-ED10F5E6B6CE}.Release|ARM.Build.0 = Release|ARM
+		{EE63E3F2-C86E-4BCA-8540-ED10F5E6B6CE}.Release|ARM.Deploy.0 = Release|ARM
+		{EE63E3F2-C86E-4BCA-8540-ED10F5E6B6CE}.Release|x64.ActiveCfg = Release|x64
+		{EE63E3F2-C86E-4BCA-8540-ED10F5E6B6CE}.Release|x64.Build.0 = Release|x64
+		{EE63E3F2-C86E-4BCA-8540-ED10F5E6B6CE}.Release|x64.Deploy.0 = Release|x64
+		{EE63E3F2-C86E-4BCA-8540-ED10F5E6B6CE}.Release|x86.ActiveCfg = Release|Win32
+		{EE63E3F2-C86E-4BCA-8540-ED10F5E6B6CE}.Release|x86.Build.0 = Release|Win32
+		{EE63E3F2-C86E-4BCA-8540-ED10F5E6B6CE}.Release|x86.Deploy.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -223,5 +243,9 @@ Global
 		{115C2234-CA8C-4ACE-9A01-FCD49C1AB392} = {B27983AE-0CD1-467F-A90F-1ED342CF5428}
 		{3A802CA2-2A82-46CF-A572-A248A0527FB2} = {B27983AE-0CD1-467F-A90F-1ED342CF5428}
 		{4F6D0AE7-F9C4-434E-ADED-6142EAFF4EE5} = {B27983AE-0CD1-467F-A90F-1ED342CF5428}
+		{EE63E3F2-C86E-4BCA-8540-ED10F5E6B6CE} = {B27983AE-0CD1-467F-A90F-1ED342CF5428}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CC90875C-37E9-47BB-BA00-941F0622244C}
 	EndGlobalSection
 EndGlobal

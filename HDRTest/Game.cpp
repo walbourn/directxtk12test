@@ -1,7 +1,7 @@
 //--------------------------------------------------------------------------------------
 // File: Game.cpp
 //
-// Developer unit test for DirectXTK ?
+// Developer unit test for DirectXTK PostProcess (HDR10/ToneMap)
 //
 // THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 // ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
@@ -16,8 +16,6 @@
 #include "pch.h"
 #include "Game.h"
 
-//#define GAMMA_CORRECT_RENDERING
-
 // Build for LH vs. RH coords
 //#define LH_COORDS
 
@@ -30,15 +28,28 @@ using Microsoft::WRL::ComPtr;
 
 Game::Game()
 {
-#ifdef GAMMA_CORRECT_RENDERING
-    m_deviceResources = std::make_unique<DX::DeviceResources>(DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    m_deviceResources = std::make_unique<DX::DeviceResources>(
+        DXGI_FORMAT_R10G10B10A2_UNORM, DXGI_FORMAT_D32_FLOAT, 2,
+        DX::DeviceResources::c_Enable4K_UHD
+        | DX::DeviceResources::c_EnableHDR);
 #else
-    m_deviceResources = std::make_unique<DX::DeviceResources>();
+    m_deviceResources = std::make_unique<DX::DeviceResources>(
+        DXGI_FORMAT_R10G10B10A2_UNORM, DXGI_FORMAT_D32_FLOAT, 2,
+        D3D_FEATURE_LEVEL_11_0,
+        DX::DeviceResources::c_EnableHDR);
 #endif
 
 #if !defined(_XBOX_ONE) || !defined(_TITLE)
     m_deviceResources->RegisterDeviceNotify(this);
 #endif
+
+    // Set up for HDR rendering.
+    m_hdrScene = std::make_unique<DX::RenderTexture>(DXGI_FORMAT_R16G16B16A16_FLOAT);
+
+    XMVECTORF32 color;
+    color.v = XMColorSRGBToRGB(Colors::CornflowerBlue);
+    m_hdrScene->SetClearColor(color);
 }
 
 Game::~Game()
@@ -124,12 +135,50 @@ void Game::Render()
 
     // Prepare the command list to render a new frame.
     m_deviceResources->Prepare();
-    Clear();
 
     auto commandList = m_deviceResources->GetCommandList();
+    m_hdrScene->BeginScene(commandList);
+
+    Clear();
+
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Render");
 
+    ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap() };
+    commandList->SetDescriptorHeaps(_countof(heaps), heaps);
+
     // TODO: Add your rendering code here.
+
+    PIXEndEvent(commandList);
+
+    // Tonemap the frame.
+    m_hdrScene->EndScene(commandList);
+
+    PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Tonemap");
+
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptors[2] = { m_deviceResources->GetRenderTargetView(), m_deviceResources->GetGameDVRRenderTargetView() };
+    commandList->OMSetRenderTargets(2, rtvDescriptors, FALSE, nullptr);
+
+    m_toneMap->Process(commandList);
+#else
+    auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
+    commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, nullptr);
+
+    switch (m_deviceResources->GetColorSpace())
+    {
+    default:
+        m_toneMap->Process(commandList);
+        break;
+
+    case DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020:
+        m_toneMapHDR10->Process(commandList);
+        break;
+
+    case DXGI_COLOR_SPACE_RGB_FULL_G10_NONE_P709:
+        m_toneMapLinear->Process(commandList);
+        break;
+    }
+#endif
 
     PIXEndEvent(commandList);
 
@@ -147,15 +196,11 @@ void Game::Clear()
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Clear");
 
     // Clear the views.
-    auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
+    auto rtvDescriptor = m_renderDescriptors->GetCpuHandle(RTDescriptors::HDRScene);
     auto dsvDescriptor = m_deviceResources->GetDepthStencilView();
 
     XMVECTORF32 color;
-#ifdef GAMMA_CORRECT_RENDERING
     color.v = XMColorSRGBToRGB(Colors::CornflowerBlue);
-#else
-    color.v = Colors::CornflowerBlue;
-#endif
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, &dsvDescriptor);
     commandList->ClearRenderTargetView(rtvDescriptor, color, 0, nullptr);
     commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
@@ -228,20 +273,77 @@ void Game::CreateDeviceDependentResources()
 
     m_graphicsMemory = std::make_unique<GraphicsMemory>(device);
 
-    RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), m_deviceResources->GetDepthBufferFormat());
-    rtState;
+    m_resourceDescriptors = std::make_unique<DescriptorHeap>(device,
+        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+        D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+        Descriptors::Count);
+
+    m_renderDescriptors = std::make_unique<DescriptorHeap>(device,
+        D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
+        D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+        RTDescriptors::RTCount);
+
+    m_hdrScene->SetDevice(device,
+        m_resourceDescriptors->GetCpuHandle(Descriptors::SceneTex),
+        m_renderDescriptors->GetCpuHandle(RTDescriptors::HDRScene));
+
+    RenderTargetState hdrState(m_hdrScene->GetFormat(), m_deviceResources->GetDepthBufferFormat());
+
+    RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), DXGI_FORMAT_UNKNOWN);
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    rtState.numRenderTargets = 2;
+    rtState.rtvFormats[1] = m_deviceResources->GetGameDVRFormat();
+#endif
+
+    m_toneMap = std::make_unique<ToneMapPostProcess>(
+        device,
+        rtState,
+        ToneMapPostProcess::ACESFilmic, (m_deviceResources->GetBackBufferFormat() == DXGI_FORMAT_R16G16B16A16_FLOAT) ? ToneMapPostProcess::Linear : ToneMapPostProcess::SRGB
+#if defined(_XBOX_ONE) && defined(_TITLE)
+        , true
+#endif
+        );
+
+#if !defined(_XBOX_ONE) || !defined(_TITLE)
+    m_toneMapLinear = std::make_unique<ToneMapPostProcess>(device, rtState, ToneMapPostProcess::None, ToneMapPostProcess::Linear);
+    m_toneMapHDR10 = std::make_unique<ToneMapPostProcess>(device, rtState, ToneMapPostProcess::None, ToneMapPostProcess::ST2084);
+#endif
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
 void Game::CreateWindowSizeDependentResources()
 {
     // TODO: Initialize windows-size dependent objects here.
+
+    // Set windows size for HDR.
+    auto size = m_deviceResources->GetOutputSize();
+    m_hdrScene->SetWindow(size);
+
+    m_toneMap->SetHDRSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex));
+
+#if !defined(_XBOX_ONE) || !defined(_TITLE)
+    m_toneMapLinear->SetHDRSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex));
+    m_toneMapHDR10->SetHDRSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex));
+#endif
 }
 
 #if !defined(_XBOX_ONE) || !defined(_TITLE)
 void Game::OnDeviceLost()
 {
     // TODO: Add Direct3D resource cleanup here.
+
+    m_toneMap.reset();
+
+#if !defined(_XBOX_ONE) || !defined(_TITLE)
+    m_toneMapLinear.reset();
+    m_toneMapHDR10.reset();
+#endif
+
+    m_hdrScene->ReleaseDevice();
+
+    m_resourceDescriptors.reset();
+    m_renderDescriptors.reset();
+
     m_graphicsMemory.reset();
 }
 
