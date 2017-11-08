@@ -69,6 +69,7 @@ public:
     // Properties
     void GetDefaultSize( int& width, int& height ) const;
     const wchar_t* GetAppName() const { return L"SpriteFontTest (DirectX 12)"; }
+    bool RequestHDRMode() const { return m_deviceResources ? (m_deviceResources->GetDeviceOptions() & DX::DeviceResources::c_EnableHDR) != 0 : false; }
 
 private:
 
