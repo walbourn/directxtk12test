@@ -59,6 +59,10 @@ public:
     void OnSuspending();
     void OnResuming();
 
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) 
+    void OnWindowMoved();
+#endif
+
 #if !defined(_XBOX_ONE) || !defined(_TITLE)
     void OnWindowSizeChanged(int width, int height, DXGI_MODE_ROTATION rotation);
 #endif
@@ -107,9 +111,29 @@ private:
 
     std::unique_ptr<DX::RenderTexture>              m_hdrScene;
 
+    // Test resources.
+    std::unique_ptr<DirectX::SpriteBatch>           m_batch;
+    std::unique_ptr<DirectX::SpriteFont>            m_font;
+
+    std::unique_ptr<DirectX::GeometricPrimitive>    m_shape;
+    std::unique_ptr<DirectX::CommonStates>          m_states;
+
+    std::unique_ptr<DirectX::BasicEffect>           m_flatEffect;
+    std::unique_ptr<DirectX::BasicEffect>           m_basicEffect;
+    std::unique_ptr<DirectX::BasicEffect>           m_brightEffect;
+
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_hdrImage1;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_hdrImage2;
+
+    DirectX::SimpleMath::Matrix                     m_view;
+    DirectX::SimpleMath::Matrix                     m_projection;
+
     enum Descriptors
     {
         SceneTex,
+        Font,
+        HDRImage1,
+        HDRImage2,
         Count
     };
 

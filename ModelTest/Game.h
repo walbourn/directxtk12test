@@ -60,6 +60,10 @@ public:
     void OnSuspending();
     void OnResuming();
 
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) 
+    void OnWindowMoved();
+#endif
+
 #if !defined(_XBOX_ONE) || !defined(_TITLE)
     void OnWindowSizeChanged(int width, int height, DXGI_MODE_ROTATION rotation);
 #endif
