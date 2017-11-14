@@ -83,9 +83,13 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>Bin\Desktop_2017_Win10\$(Platform)\</OutDir>
+    <IntDir>Bin\Desktop_2017_Win10\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>Bin\Desktop_2017_Win10\$(Platform)\</OutDir>
+    <IntDir>Bin\Desktop_2017_Win10\$(Platform)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
