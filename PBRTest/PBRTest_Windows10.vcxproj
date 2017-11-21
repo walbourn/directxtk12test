@@ -258,6 +258,10 @@
     <Image Include="Atrium_specularIBL.dds" />
     <Image Include="Garage_diffuseIBL.dds" />
     <Image Include="Garage_specularIBL.dds" />
+    <Image Include="Sphere2Mat_baseColor.png" />
+    <Image Include="Sphere2Mat_emissive.png" />
+    <Image Include="Sphere2Mat_normal.png" />
+    <Image Include="Sphere2Mat_occlusionRoughnessMetallic.png" />
     <Image Include="SphereMat_baseColor.png" />
     <Image Include="SphereMat_normal.png" />
     <Image Include="SphereMat_occlusionRoughnessMetallic.png" />

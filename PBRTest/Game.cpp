@@ -42,9 +42,9 @@ namespace
     const float col6 = 3.f;
     const float col7 = 4.25f;
 
-    const float row0 = 2.5f;
-    const float row1 = 1.f;
-    const float row2 = -1.f;
+    const float row0 = 2.f;
+    const float row1 = 0.25f;
+    const float row2 = -1.1f;
     const float row3 = -2.5f;
 
     struct aligned_deleter { void operator()(void* p) { _aligned_free(p); } };
@@ -173,11 +173,7 @@ namespace
                 }
             }
 
-            XMVECTOR bi = XMVector3Cross(b0, tan1);
-            float w = XMVector3Less(XMVector3Dot(bi, tan2), g_XMZero) ? -1.f : 1.f;
-
-            bi = XMVectorSetW(b1, w);
-            XMStoreFloat4(&vertices[j].tangent, bi);
+            XMStoreFloat3(&vertices[j].tangent, b1);
         }
     }
 }
@@ -370,6 +366,8 @@ void Game::Render()
 
     XMMATRIX world = XMMatrixRotationRollPitchYaw(pitch, yaw, roll);
 
+    XMMATRIX worldX2 = world * XMMatrixScaling(2.f, 2.f, 2.f);
+
     // Setup for teapot drawing.
     commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
     commandList->IASetIndexBuffer(&m_indexBufferView);
@@ -382,25 +380,92 @@ void Game::Render()
     auto irradianceTex = m_resourceDescriptors->GetGpuHandle(Descriptors::IrradianceIBL1 + m_ibl);
     m_pbr->SetIBLTextures(radianceTex, diffuseDesc.MipLevels, irradianceTex, m_states->AnisotropicClamp());
     m_pbrConstant->SetIBLTextures(radianceTex, diffuseDesc.MipLevels, irradianceTex, m_states->LinearWrap());
+    m_pbrEmissive->SetIBLTextures(radianceTex, diffuseDesc.MipLevels, irradianceTex, m_states->LinearWrap());
 
     auto albetoTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::BaseColor1);
     auto normalTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::NormalMap1);
-    auto rmaTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::RMA1);
+
+    auto albetoTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::BaseColor2);
+    auto normalTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::NormalMap2);
 
     //--- NormalMap ------------------------------------------------------------------------
-    m_normalMapEffect->SetWorld(world * XMMatrixTranslation(col0, row0, 0));
+    m_normalMapEffect->SetWorld(worldX2 * XMMatrixTranslation(col0, row0, 0));
     m_normalMapEffect->SetTexture(albetoTex1, m_states->AnisotropicClamp());
     m_normalMapEffect->SetNormalTexture(normalTex1);
     m_normalMapEffect->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
-    //--- PBREffect (basic) ----------------------------------------------------------------
-    m_pbr->SetWorld(world * XMMatrixTranslation(col0, row1, 0));
-    m_pbr->SetSurfaceTextures(albetoTex1, normalTex1, rmaTex1, m_states->AnisotropicClamp());
-    m_pbr->Apply(commandList);
+    m_normalMapEffect->SetWorld(worldX2 * XMMatrixTranslation(col4, row0, 0));
+    m_normalMapEffect->SetTexture(albetoTex2, m_states->AnisotropicClamp());
+    m_normalMapEffect->SetNormalTexture(normalTex2);
+    m_normalMapEffect->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
+    //--- PBREffect (basic) ----------------------------------------------------------------
+    {
+        auto rmaTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::RMA1);
+
+        m_pbr->SetWorld(worldX2 * XMMatrixTranslation(col2, row0, 0));
+        m_pbr->SetSurfaceTextures(albetoTex1, normalTex1, rmaTex1, m_states->AnisotropicClamp());
+        m_pbr->Apply(commandList);
+        commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+    }   
+
+    {
+        auto rmaTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::RMA2);
+        auto emissiveTex = m_resourceDescriptors->GetGpuHandle(Descriptors::EmissiveTexture);
+
+        m_pbrEmissive->SetWorld(worldX2 * XMMatrixTranslation(col6, row0, 0));
+        m_pbrEmissive->SetSurfaceTextures(albetoTex2, normalTex2, rmaTex2, m_states->AnisotropicClamp());
+        m_pbrEmissive->SetEmissiveTexture(emissiveTex);
+        m_pbrEmissive->Apply(commandList);
+        commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+    }   
+
     //--- PBREffect (constant) -------------------------------------------------------------   
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col0, row1, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::Blue);
+    m_pbrConstant->SetConstantMetallic(1.f);
+    m_pbrConstant->SetConstantRoughness(0.2f);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col1, row1, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::Green);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col2, row1, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::Red);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col3, row1, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::Yellow);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col4, row1, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::Cyan);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col5, row1, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::Magenta);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col6, row1, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::Black);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col7, row1, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::White);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    // Row 2
     m_pbrConstant->SetWorld(world * XMMatrixTranslation(col0, row2, 0));
     m_pbrConstant->SetConstantAlbedo(Colors::Blue);
     m_pbrConstant->SetConstantMetallic(0.f);
@@ -450,7 +515,7 @@ void Game::Render()
     m_pbrConstant->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
-    // TODO: Add your rendering code here.
+    // Row3
     m_pbrConstant->SetWorld(world * XMMatrixTranslation(col0, row3, 0));
     m_pbrConstant->SetConstantAlbedo(Colors::Blue);
     m_pbrConstant->SetConstantMetallic(0.5f);
@@ -659,11 +724,14 @@ void Game::CreateDeviceDependentResources()
     m_normalMapEffect = std::make_unique<NormalMapEffect>(device, EffectFlags::Texture, pipelineDesc, false);
     m_normalMapEffect->EnableDefaultLighting();
 
-    m_pbrConstant = std::make_unique<PBREffect>(device, EffectFlags::None, pipelineDesc, false);
+    m_pbrConstant = std::make_unique<PBREffect>(device, EffectFlags::None, pipelineDesc);
     m_pbrConstant->EnableDefaultLighting();
 
-    m_pbr = std::make_unique<PBREffect>(device, EffectFlags::Texture, pipelineDesc, false);
+    m_pbr = std::make_unique<PBREffect>(device, EffectFlags::Texture, pipelineDesc);
     m_pbr->EnableDefaultLighting();
+
+    m_pbrEmissive = std::make_unique<PBREffect>(device, EffectFlags::Texture, pipelineDesc, true);
+    m_pbrEmissive->EnableDefaultLighting();
 
     RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), DXGI_FORMAT_UNKNOWN);
 #if defined(_XBOX_ONE) && defined(_TITLE)
@@ -743,9 +811,21 @@ void Game::CreateDeviceDependentResources()
     resourceUpload.Begin();
 
     // Load textures
-    static const wchar_t* s_albetoTextures[s_nMaterials] = { L"SphereMat_baseColor.png" };
-    static const wchar_t* s_normalMapTextures[s_nMaterials] = { L"SphereMat_normal.png" };
-    static const wchar_t* s_rmaTextures[s_nMaterials] = { L"SphereMat_occlusionRoughnessMetallic.png" };
+    static const wchar_t* s_albetoTextures[s_nMaterials] =
+    {
+        L"SphereMat_baseColor.png",
+        L"Sphere2Mat_baseColor.png"
+    };
+    static const wchar_t* s_normalMapTextures[s_nMaterials] =
+    {
+        L"SphereMat_normal.png",
+        L"Sphere2Mat_normal.png"
+    };
+    static const wchar_t* s_rmaTextures[s_nMaterials] =
+    {
+        L"SphereMat_occlusionRoughnessMetallic.png",
+        L"Sphere2Mat_occlusionRoughnessMetallic.png"
+    };
 
     for (size_t j = 0; j < s_nMaterials; ++j)
     {
@@ -765,6 +845,12 @@ void Game::CreateDeviceDependentResources()
         CreateShaderResourceView(device, m_normalMap[j].Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::NormalMap1 + j), false);
         CreateShaderResourceView(device, m_rma[j].Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::RMA1 + j), false);
     }
+
+    DX::ThrowIfFailed(
+        CreateWICTextureFromFile(device, resourceUpload, L"Sphere2Mat_emissive.png", m_emissiveMap.ReleaseAndGetAddressOf(), true)
+    );
+
+    CreateShaderResourceView(device, m_emissiveMap.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::EmissiveTexture), false);
 
     static const wchar_t* s_radianceIBL[s_nIBL] =
     {
@@ -821,10 +907,12 @@ void Game::CreateWindowSizeDependentResources()
     m_normalMapEffect->SetView(view);
     m_pbr->SetView(view);
     m_pbrConstant->SetView(view);
+    m_pbrEmissive->SetView(view);
 
     m_normalMapEffect->SetProjection(projection);
     m_pbr->SetProjection(projection);
     m_pbrConstant->SetProjection(projection);
+    m_pbrEmissive->SetProjection(projection);
 
     // Set windows size for HDR.
     m_hdrScene->SetWindow(size);
@@ -846,6 +934,8 @@ void Game::OnDeviceLost()
         m_normalMap[j].Reset();
         m_rma[j].Reset();
     }
+
+    m_emissiveMap.Reset();
 
     for (size_t j = 0; j < s_nIBL; ++j)
     {

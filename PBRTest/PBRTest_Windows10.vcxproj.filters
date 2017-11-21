@@ -81,6 +81,18 @@
     <Image Include="SphereMat_occlusionRoughnessMetallic.png">
       <Filter>Assets</Filter>
     </Image>
+    <Image Include="Sphere2Mat_baseColor.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Sphere2Mat_emissive.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Sphere2Mat_normal.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Sphere2Mat_occlusionRoughnessMetallic.png">
+      <Filter>Assets</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="PackageUWP.appxmanifest" />

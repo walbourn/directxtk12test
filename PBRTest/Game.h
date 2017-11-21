@@ -127,13 +127,15 @@ private:
     std::unique_ptr<DirectX::NormalMapEffect>       m_normalMapEffect;
     std::unique_ptr<DirectX::PBREffect>             m_pbr;
     std::unique_ptr<DirectX::PBREffect>             m_pbrConstant;
+    std::unique_ptr<DirectX::PBREffect>             m_pbrEmissive;
 
-    static const size_t s_nMaterials = 1;
+    static const size_t s_nMaterials = 2;
     static const size_t s_nIBL = 3;
 
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_baseColor[s_nMaterials];
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_normalMap[s_nMaterials];
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_rma[s_nMaterials];
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_emissiveMap;
 
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_radianceIBL[s_nIBL];
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_irradianceIBL[s_nIBL];
@@ -144,14 +146,18 @@ private:
     {
         SceneTex,
         BaseColor1,
+        BaseColor2,
         NormalMap1,
+        NormalMap2,
         RMA1,
+        RMA2,
         RadianceIBL1,
         RadianceIBL2,
         RadianceIBL3,
         IrradianceIBL1,
         IrradianceIBL2,
         IrradianceIBL3,
+        EmissiveTexture,
         Count
     };
 
