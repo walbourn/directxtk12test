@@ -72,18 +72,27 @@
 #include <exception>
 #include <memory>
 #include <stdexcept>
+#include <vector>
 
 #include <stdio.h>
 #include <pix.h>
 
+#include "CommonStates.h"
+#include "DDSTextureLoader.h"
 #include "DescriptorHeap.h"
+#include "DirectXHelpers.h"
+#include "Effects.h"
 #include "GamePad.h"
+#include "GeometricPrimitive.h"
 #include "GraphicsMemory.h"
 #include "Keyboard.h"
 #include "Mouse.h"
 #include "PostProcess.h"
 #include "RenderTargetState.h"
+#include "ResourceUploadBatch.h"
 #include "SimpleMath.h"
+#include "VertexTypes.h"
+#include "WICTextureLoader.h"
 
 namespace DX
 {

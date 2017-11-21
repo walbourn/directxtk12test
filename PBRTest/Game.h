@@ -96,10 +96,14 @@ private:
     std::unique_ptr<DirectX::GamePad>       m_gamePad;
     std::unique_ptr<DirectX::Keyboard>      m_keyboard;
 
+    DirectX::GamePad::ButtonStateTracker    m_gamePadButtons;
+    DirectX::Keyboard::KeyboardStateTracker m_keyboardButtons;
+
     // DirectXTK Test Objects
     std::unique_ptr<DirectX::GraphicsMemory>    m_graphicsMemory;
     std::unique_ptr<DirectX::DescriptorHeap>    m_resourceDescriptors;
     std::unique_ptr<DirectX::DescriptorHeap>    m_renderDescriptors;
+    std::unique_ptr<DirectX::CommonStates>      m_states;
 
     // HDR resources
     std::unique_ptr<DirectX::ToneMapPostProcess>    m_toneMap;
@@ -111,9 +115,43 @@ private:
 
     std::unique_ptr<DX::RenderTexture>              m_hdrScene;
 
+    // Test geometry
+    UINT					                        m_indexCount;
+    DirectX::GraphicsResource		                m_indexBuffer;
+    DirectX::GraphicsResource		                m_vertexBuffer;
+
+    D3D12_VERTEX_BUFFER_VIEW                        m_vertexBufferView;
+    D3D12_INDEX_BUFFER_VIEW                         m_indexBufferView;
+
+    // Test materials
+    std::unique_ptr<DirectX::NormalMapEffect>       m_normalMapEffect;
+    std::unique_ptr<DirectX::PBREffect>             m_pbr;
+    std::unique_ptr<DirectX::PBREffect>             m_pbrConstant;
+
+    static const size_t s_nMaterials = 1;
+    static const size_t s_nIBL = 3;
+
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_baseColor[s_nMaterials];
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_normalMap[s_nMaterials];
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_rma[s_nMaterials];
+
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_radianceIBL[s_nIBL];
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_irradianceIBL[s_nIBL];
+
+    uint32_t m_ibl;
+
     enum Descriptors
     {
         SceneTex,
+        BaseColor1,
+        NormalMap1,
+        RMA1,
+        RadianceIBL1,
+        RadianceIBL2,
+        RadianceIBL3,
+        IrradianceIBL1,
+        IrradianceIBL2,
+        IrradianceIBL3,
         Count
     };
 

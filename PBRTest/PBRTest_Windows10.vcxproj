@@ -254,9 +254,20 @@
     <Image Include="..\Common\SplashScreen.scale-100.png" />
     <Image Include="..\Common\StoreLogo.scale-100.png" />
     <Image Include="..\Common\WideLogo.scale-100.png" />
+    <Image Include="Atrium_diffuseIBL.dds" />
+    <Image Include="Atrium_specularIBL.dds" />
+    <Image Include="Garage_diffuseIBL.dds" />
+    <Image Include="Garage_specularIBL.dds" />
+    <Image Include="SphereMat_baseColor.png" />
+    <Image Include="SphereMat_normal.png" />
+    <Image Include="SphereMat_occlusionRoughnessMetallic.png" />
+    <Image Include="SunSubMixer_diffuseIBL.dds" />
+    <Image Include="SunSubMixer_specularIBL.dds" />
   </ItemGroup>
   <ItemGroup>
-    <AppxManifest Include="PackageUWP.appxmanifest" />
+    <AppxManifest Include="PackageUWP.appxmanifest">
+      <SubType>Designer</SubType>
+    </AppxManifest>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
