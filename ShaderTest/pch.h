@@ -90,6 +90,7 @@
 #include "RenderTargetState.h"
 #include "ResourceUploadBatch.h"
 #include "SimpleMath.h"
+#include "WICTextureLoader.h"
 
 namespace DX
 {

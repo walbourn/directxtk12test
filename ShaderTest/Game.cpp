@@ -32,8 +32,8 @@ namespace
 {
     const float SWAP_TIME = 10.f;
 
-    const float ortho_width = 5.f;
-    const float ortho_height = 5.f;
+    const float ortho_width = 6.f;
+    const float ortho_height = 6.f;
 
     struct TestVertex
     {
@@ -298,6 +298,9 @@ Game::Game() :
 #if !defined(_XBOX_ONE) || !defined(_TITLE)
     m_deviceResources->RegisterDeviceNotify(this);
 #endif
+
+    // Used for PBREffect velocity buffer
+    m_velocityBuffer = std::make_unique<DX::RenderTexture>(DXGI_FORMAT_R10G10B10A2_UNORM);
 }
 
 Game::~Game()
@@ -622,6 +625,35 @@ void Game::Render()
         y -= 1.f;
     }
 
+    // PBREffect
+    {
+        auto it = (m_showCompressed) ? m_pbrBn.cbegin() : m_pbr.cbegin();
+        auto eit = (m_showCompressed) ? m_pbrBn.cend() : m_pbr.cend();
+        assert(it != eit);
+
+        for (; y > -ortho_height; y -= 1.f)
+        {
+            for (float x = -ortho_width + 0.5f; x < ortho_width; x += 1.f)
+            {
+                (*it)->SetWorld(world * XMMatrixTranslation(x, y, -1.f));
+                (*it)->Apply(commandList);
+                commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+                ++it;
+                if (it == eit)
+                    break;
+            }
+
+            if (it == eit)
+                break;
+        }
+
+        // Make sure we drew all the effects
+        assert(it == eit);
+
+        y -= 1.f;
+    }
+
     PIXEndEvent(commandList);
 
     // Show the new frame.
@@ -647,7 +679,9 @@ void Game::Clear()
 #else
     color.v = Colors::CornflowerBlue;
 #endif
-    commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, &dsvDescriptor);
+
+    D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptors[2] = { rtvDescriptor, m_renderDescriptors->GetCpuHandle(RTDescriptors::RTVelocityBuffer) };
+    commandList->OMSetRenderTargets(2, rtvDescriptors, FALSE, &dsvDescriptor);
     commandList->ClearRenderTargetView(rtvDescriptor, color, 0, nullptr);
     commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
@@ -741,6 +775,15 @@ void Game::CreateDeviceDependentResources()
         D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
         Descriptors::Count);
 
+    m_renderDescriptors = std::make_unique<DescriptorHeap>(device,
+        D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
+        D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+        RTDescriptors::RTCount);
+
+    m_velocityBuffer->SetDevice(device,
+        m_resourceDescriptors->GetCpuHandle(Descriptors::VelocityBuffer),
+        m_renderDescriptors->GetCpuHandle(RTDescriptors::RTVelocityBuffer));
+
     ResourceUploadBatch resourceUpload(device);
 
     resourceUpload.Begin();
@@ -797,13 +840,46 @@ void Game::CreateDeviceDependentResources()
 
     CreateShaderResourceView(device, m_brickSpecular.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::BrickSpecular));
 
+    DX::ThrowIfFailed(
+        CreateWICTextureFromFile(device, resourceUpload, L"Sphere2Mat_baseColor.png", m_pbrAlbeto.ReleaseAndGetAddressOf()));
+
+    CreateShaderResourceView(device, m_pbrAlbeto.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::PBRAlbeto));
+
+    DX::ThrowIfFailed(
+        CreateWICTextureFromFile(device, resourceUpload, L"Sphere2Mat_normal.png", m_pbrNormal.ReleaseAndGetAddressOf()));
+
+    CreateShaderResourceView(device, m_pbrNormal.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::PBRNormal));
+
+    DX::ThrowIfFailed(
+        CreateWICTextureFromFile(device, resourceUpload, L"Sphere2Mat_occlusionRoughnessMetallic.png", m_pbrRMA.ReleaseAndGetAddressOf()));
+
+    CreateShaderResourceView(device, m_pbrRMA.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::PBR_RMA));
+
+    DX::ThrowIfFailed(
+        CreateWICTextureFromFile(device, resourceUpload, L"Sphere2Mat_emissive.png", m_pbrEmissive.ReleaseAndGetAddressOf()));
+
+    CreateShaderResourceView(device, m_pbrEmissive.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::PBREmissive));
+
+    DX::ThrowIfFailed(
+        CreateDDSTextureFromFile(device, resourceUpload, L"Atrium_diffuseIBL.dds", m_radianceIBL.ReleaseAndGetAddressOf())
+    );
+
+    CreateShaderResourceView(device, m_radianceIBL.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::RadianceIBL), true);
+
+    DX::ThrowIfFailed(
+        CreateDDSTextureFromFile(device, resourceUpload, L"Atrium_specularIBL.dds", m_irradianceIBL.ReleaseAndGetAddressOf())
+    );
+
+    CreateShaderResourceView(device, m_irradianceIBL.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::IrradianceIBL), true);
+
     auto uploadResourcesFinished = resourceUpload.End(m_deviceResources->GetCommandQueue());
 
     uploadResourcesFinished.wait();
 
     // Create test effects
     RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), m_deviceResources->GetDepthBufferFormat());
-    rtState;
+    rtState.numRenderTargets = 2;
+    rtState.rtvFormats[1] = m_velocityBuffer->GetFormat();
 
     auto sampler = m_states->LinearWrap();
 
@@ -1259,6 +1335,69 @@ void Game::CreateDeviceDependentResources()
                 m_normalMapBn.swap(normalMap);
             }
         }
+
+        //--- PBREffect --------------------------------------------------------------------
+
+        {
+            auto radiance = m_resourceDescriptors->GetGpuHandle(Descriptors::RadianceIBL);
+            auto diffuseDesc = m_radianceIBL->GetDesc();
+            auto irradiance = m_resourceDescriptors->GetGpuHandle(Descriptors::IrradianceIBL);
+
+            std::vector<std::unique_ptr<DirectX::PBREffect>> pbr;
+
+            // PBREffect
+            auto effect = std::make_unique<PBREffect>(device, eflags, pd, false, false);
+            effect->EnableDefaultLighting();
+            effect->SetIBLTextures(radiance, diffuseDesc.MipLevels, irradiance, m_states->LinearWrap());
+            pbr.emplace_back(std::move(effect));
+
+            // PBREffect (textured)
+            auto albeto = m_resourceDescriptors->GetGpuHandle(Descriptors::PBRAlbeto);
+            auto normal = m_resourceDescriptors->GetGpuHandle(Descriptors::PBRNormal);
+            auto rma = m_resourceDescriptors->GetGpuHandle(Descriptors::PBR_RMA);
+
+            effect = std::make_unique<PBREffect>(device, eflags | EffectFlags::Texture, pd, false, false);
+            effect->EnableDefaultLighting();
+            effect->SetIBLTextures(radiance, diffuseDesc.MipLevels, irradiance, m_states->LinearWrap());
+            effect->SetSurfaceTextures(albeto, normal, rma, m_states->AnisotropicClamp());
+            pbr.emplace_back(std::move(effect));
+
+            // PBREffect (emissive)
+            auto emissive = m_resourceDescriptors->GetGpuHandle(Descriptors::PBREmissive);
+
+            effect = std::make_unique<PBREffect>(device, eflags | EffectFlags::Texture, pd, true, false);
+            effect->EnableDefaultLighting();
+            effect->SetIBLTextures(radiance, diffuseDesc.MipLevels, irradiance, m_states->LinearWrap());
+            effect->SetSurfaceTextures(albeto, normal, rma, m_states->AnisotropicClamp());
+            effect->SetEmissiveTexture(emissive);
+            pbr.emplace_back(std::move(effect));
+
+            // PBREffect (velocity)
+            effect = std::make_unique<PBREffect>(device, eflags | EffectFlags::Texture, pd, false, true);
+            effect->EnableDefaultLighting();
+            effect->SetIBLTextures(radiance, diffuseDesc.MipLevels, irradiance, m_states->LinearWrap());
+            effect->SetSurfaceTextures(albeto, normal, rma, m_states->AnisotropicClamp());
+            effect->SetRenderTargetSizeInPixels(1920, 1080);
+            pbr.emplace_back(std::move(effect));
+
+            // PBREffect (velocity + emissive)
+            effect = std::make_unique<PBREffect>(device, eflags | EffectFlags::Texture, pd, true, true);
+            effect->EnableDefaultLighting();
+            effect->SetIBLTextures(radiance, diffuseDesc.MipLevels, irradiance, m_states->LinearWrap());
+            effect->SetSurfaceTextures(albeto, normal, rma, m_states->AnisotropicClamp());
+            effect->SetEmissiveTexture(emissive);
+            effect->SetRenderTargetSizeInPixels(1920, 1080);
+            pbr.emplace_back(std::move(effect));
+
+            if (!j)
+            {
+                m_pbr.swap(pbr);
+            }
+            else
+            {
+                m_pbrBn.swap(pbr);
+            }
+        }
     }
 
     EffectPipelineStateDescription pd(
@@ -1344,6 +1483,9 @@ void Game::CreateDeviceDependentResources()
 // Allocate all memory resources that change on a window SizeChanged event.
 void Game::CreateWindowSizeDependentResources()
 {
+    auto size = m_deviceResources->GetOutputSize();
+    m_velocityBuffer->SetWindow(size);
+
     XMMATRIX projection = XMMatrixOrthographicRH(ortho_width * 2.f, ortho_height * 2.f, 0.1f, 10.f);
 
 #if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
@@ -1400,6 +1542,16 @@ void Game::CreateWindowSizeDependentResources()
     {
         it->SetProjection(projection);
     }
+
+    for (auto& it : m_pbr)
+    {
+        it->SetProjection(projection);
+    }
+
+    for (auto& it : m_pbrBn)
+    {
+        it->SetProjection(projection);
+    }
 }
 
 #if !defined(_XBOX_ONE) || !defined(_TITLE)
@@ -1415,6 +1567,8 @@ void Game::OnDeviceLost()
     m_alphTest.clear();
     m_normalMap.clear();
     m_normalMapBn.clear();
+    m_pbr.clear();
+    m_pbrBn.clear();
 
     m_cat.Reset();
     m_cubemap.Reset();
@@ -1423,12 +1577,21 @@ void Game::OnDeviceLost()
     m_brickDiffuse.Reset();
     m_brickNormal.Reset();
     m_brickSpecular.Reset();
+    m_pbrAlbeto.Reset();
+    m_pbrNormal.Reset();
+    m_pbrRMA.Reset();
+    m_pbrEmissive.Reset();
+    m_radianceIBL.Reset();
+    m_irradianceIBL.Reset();
 
     m_indexBuffer.Reset();
     m_vertexBuffer.Reset();
     m_vertexBufferBn.Reset();
 
+    m_velocityBuffer->ReleaseDevice();
+
     m_resourceDescriptors.reset();
+    m_renderDescriptors.reset();
     m_states.reset();
     m_graphicsMemory.reset();
 }
