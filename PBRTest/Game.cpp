@@ -366,8 +366,6 @@ void Game::Render()
 
     XMMATRIX world = XMMatrixRotationRollPitchYaw(pitch, yaw, roll);
 
-    XMMATRIX worldX2 = world * XMMatrixScaling(2.f, 2.f, 2.f);
-
     // Setup for teapot drawing.
     commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
     commandList->IASetIndexBuffer(&m_indexBufferView);
@@ -389,13 +387,13 @@ void Game::Render()
     auto normalTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::NormalMap2);
 
     //--- NormalMap ------------------------------------------------------------------------
-    m_normalMapEffect->SetWorld(worldX2 * XMMatrixTranslation(col0, row0, 0));
+    m_normalMapEffect->SetWorld(world * XMMatrixTranslation(col0, row0, 0));
     m_normalMapEffect->SetTexture(albetoTex1, m_states->AnisotropicClamp());
     m_normalMapEffect->SetNormalTexture(normalTex1);
     m_normalMapEffect->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
-    m_normalMapEffect->SetWorld(worldX2 * XMMatrixTranslation(col4, row0, 0));
+    m_normalMapEffect->SetWorld(world * XMMatrixTranslation(col4, row0, 0));
     m_normalMapEffect->SetTexture(albetoTex2, m_states->AnisotropicClamp());
     m_normalMapEffect->SetNormalTexture(normalTex2);
     m_normalMapEffect->Apply(commandList);
@@ -405,24 +403,38 @@ void Game::Render()
     {
         auto rmaTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::RMA1);
 
-        m_pbr->SetWorld(worldX2 * XMMatrixTranslation(col2, row0, 0));
+        m_pbr->SetAlpha(1.f);
+        m_pbr->SetWorld(world * XMMatrixTranslation(col1, row0, 0));
         m_pbr->SetSurfaceTextures(albetoTex1, normalTex1, rmaTex1, m_states->AnisotropicClamp());
+        m_pbr->Apply(commandList);
+        commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+        m_pbr->SetAlpha(alphaFade);
+        m_pbr->SetWorld(world * XMMatrixTranslation(col2, row0, 0));
         m_pbr->Apply(commandList);
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
     }   
 
+    //--- PBREffect (emissive) -------------------------------------------------------------
     {
         auto rmaTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::RMA2);
         auto emissiveTex = m_resourceDescriptors->GetGpuHandle(Descriptors::EmissiveTexture);
 
-        m_pbrEmissive->SetWorld(worldX2 * XMMatrixTranslation(col6, row0, 0));
+        m_pbrEmissive->SetAlpha(1.f);
+        m_pbrEmissive->SetWorld(world * XMMatrixTranslation(col5, row0, 0));
         m_pbrEmissive->SetSurfaceTextures(albetoTex2, normalTex2, rmaTex2, m_states->AnisotropicClamp());
         m_pbrEmissive->SetEmissiveTexture(emissiveTex);
+        m_pbrEmissive->Apply(commandList);
+        commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+        m_pbrEmissive->SetAlpha(alphaFade);
+        m_pbrEmissive->SetWorld(world * XMMatrixTranslation(col6, row0, 0));
         m_pbrEmissive->Apply(commandList);
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
     }   
 
     //--- PBREffect (constant) -------------------------------------------------------------   
+    m_pbrConstant->SetAlpha(1.f);
     m_pbrConstant->SetWorld(world * XMMatrixTranslation(col0, row1, 0));
     m_pbrConstant->SetConstantAlbedo(Colors::Blue);
     m_pbrConstant->SetConstantMetallic(1.f);
@@ -466,6 +478,7 @@ void Game::Render()
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     // Row 2
+    m_pbrConstant->SetAlpha(alphaFade);
     m_pbrConstant->SetWorld(world * XMMatrixTranslation(col0, row2, 0));
     m_pbrConstant->SetConstantAlbedo(Colors::Blue);
     m_pbrConstant->SetConstantMetallic(0.f);
@@ -516,6 +529,7 @@ void Game::Render()
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     // Row3
+    m_pbrConstant->SetAlpha(1.f);
     m_pbrConstant->SetWorld(world * XMMatrixTranslation(col0, row3, 0));
     m_pbrConstant->SetConstantAlbedo(Colors::Blue);
     m_pbrConstant->SetConstantMetallic(0.5f);
@@ -718,7 +732,11 @@ void Game::CreateDeviceDependentResources()
         &VertexPositionNormalTextureTangent::InputLayout,
         CommonStates::AlphaBlend,
         CommonStates::DepthDefault,
-        CommonStates::CullNone,
+#ifdef LH_COORDS
+            CommonStates::CullClockwise,
+#else
+            CommonStates::CullCounterClockwise,
+#endif
         hdrState);
 
     m_normalMapEffect = std::make_unique<NormalMapEffect>(device, EffectFlags::Texture, pipelineDesc, false);
