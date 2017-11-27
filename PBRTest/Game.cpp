@@ -47,10 +47,63 @@ namespace
     const float row2 = -1.1f;
     const float row3 = -2.5f;
 
+    struct TestVertex
+    {
+        TestVertex() = default;
+
+        TestVertex(XMFLOAT3 const& position,
+            XMFLOAT3 const& normal,
+            XMFLOAT2 const& textureCoordinate,
+            XMFLOAT3 const& tangent)
+            : position(position),
+            normal(normal),
+            textureCoordinate(textureCoordinate),
+            tangent(tangent)
+        { }
+
+        TestVertex(FXMVECTOR position,
+            FXMVECTOR normal,
+            CXMVECTOR textureCoordinate,
+            FXMVECTOR tangent)
+        {
+            XMStoreFloat3(&this->position, position);
+            XMStoreFloat3(&this->normal, normal);
+            XMStoreFloat2(&this->textureCoordinate, textureCoordinate);
+            XMStoreFloat3(&this->tangent, tangent);
+        }
+
+        XMFLOAT3 position;
+        XMFLOAT3 normal;
+        XMFLOAT2 textureCoordinate;
+        XMFLOAT3 tangent;
+
+        static const D3D12_INPUT_LAYOUT_DESC InputLayout;
+
+    private:
+        static const int InputElementCount = 4;
+        static const D3D12_INPUT_ELEMENT_DESC InputElements[InputElementCount];
+    };
+
+    const D3D12_INPUT_ELEMENT_DESC TestVertex::InputElements[] =
+    {
+        { "SV_Position", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "NORMAL",      0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "TEXCOORD",    0, DXGI_FORMAT_R32G32_FLOAT,       0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "TANGENT",     0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+    };
+
+    static_assert(sizeof(TestVertex) == 44, "Vertex struct/layout mismatch");
+
+    const D3D12_INPUT_LAYOUT_DESC TestVertex::InputLayout =
+    {
+        TestVertex::InputElements,
+        TestVertex::InputElementCount
+    };
+
     struct aligned_deleter { void operator()(void* p) { _aligned_free(p); } };
 
     // Helper for computing tangents (see DirectXMesh <http://go.microsoft.com/fwlink/?LinkID=324981>)
-    void ComputeTangents(const std::vector<uint16_t>& indices, std::vector<VertexPositionNormalTextureTangent>& vertices)
+    void ComputeTangents(const std::vector<uint16_t>& indices, std::vector<TestVertex>& vertices)
     {
         static const float EPSILON = 0.0001f;
         static const XMVECTORF32 s_flips = { 1.f, -1.f, -1.f, 1.f };
@@ -729,7 +782,7 @@ void Game::CreateDeviceDependentResources()
     RenderTargetState hdrState(m_hdrScene->GetFormat(), m_deviceResources->GetDepthBufferFormat());
 
     EffectPipelineStateDescription pipelineDesc(
-        &VertexPositionNormalTextureTangent::InputLayout,
+        &TestVertex::InputLayout,
         CommonStates::AlphaBlend,
         CommonStates::DepthDefault,
 #ifdef LH_COORDS
@@ -778,12 +831,12 @@ void Game::CreateDeviceDependentResources()
 
         GeometricPrimitive::CreateSphere(origVerts, indices);
 
-        std::vector<VertexPositionNormalTextureTangent> vertices;
+        std::vector<TestVertex> vertices;
         vertices.reserve(origVerts.size());
 
         for (auto it = origVerts.cbegin(); it != origVerts.cend(); ++it)
         {
-            VertexPositionNormalTextureTangent v;
+            TestVertex v;
             v.position = it->position;
             v.normal = it->normal;
             v.textureCoordinate = it->textureCoordinate;
@@ -800,7 +853,7 @@ void Game::CreateDeviceDependentResources()
 
         // Vertex data
         auto verts = reinterpret_cast<const uint8_t*>(vertices.data());
-        size_t vertSizeBytes = vertices.size() * sizeof(VertexPositionNormalTextureTangent);
+        size_t vertSizeBytes = vertices.size() * sizeof(TestVertex);
 
         m_vertexBuffer = GraphicsMemory::Get().Allocate(vertSizeBytes);
         memcpy(m_vertexBuffer.Memory(), verts, vertSizeBytes);
@@ -817,7 +870,7 @@ void Game::CreateDeviceDependentResources()
 
         // Create views
         m_vertexBufferView.BufferLocation = m_vertexBuffer.GpuAddress();
-        m_vertexBufferView.StrideInBytes = static_cast<UINT>(sizeof(VertexPositionNormalTextureTangent));
+        m_vertexBufferView.StrideInBytes = static_cast<UINT>(sizeof(TestVertex));
         m_vertexBufferView.SizeInBytes = static_cast<UINT>(m_vertexBuffer.Size());
 
         m_indexBufferView.BufferLocation = m_indexBuffer.GpuAddress();
