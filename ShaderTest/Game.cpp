@@ -841,9 +841,9 @@ void Game::CreateDeviceDependentResources()
     CreateShaderResourceView(device, m_brickSpecular.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::BrickSpecular));
 
     DX::ThrowIfFailed(
-        CreateWICTextureFromFile(device, resourceUpload, L"Sphere2Mat_baseColor.png", m_pbrAlbeto.ReleaseAndGetAddressOf()));
+        CreateWICTextureFromFile(device, resourceUpload, L"Sphere2Mat_baseColor.png", m_pbrAlbedo.ReleaseAndGetAddressOf()));
 
-    CreateShaderResourceView(device, m_pbrAlbeto.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::PBRAlbeto));
+    CreateShaderResourceView(device, m_pbrAlbedo.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::PBRAlbedo));
 
     DX::ThrowIfFailed(
         CreateWICTextureFromFile(device, resourceUpload, L"Sphere2Mat_normal.png", m_pbrNormal.ReleaseAndGetAddressOf()));
@@ -1352,7 +1352,7 @@ void Game::CreateDeviceDependentResources()
             pbr.emplace_back(std::move(effect));
 
             // PBREffect (textured)
-            auto albeto = m_resourceDescriptors->GetGpuHandle(Descriptors::PBRAlbeto);
+            auto albeto = m_resourceDescriptors->GetGpuHandle(Descriptors::PBRAlbedo);
             auto normal = m_resourceDescriptors->GetGpuHandle(Descriptors::PBRNormal);
             auto rma = m_resourceDescriptors->GetGpuHandle(Descriptors::PBR_RMA);
 
@@ -1577,7 +1577,7 @@ void Game::OnDeviceLost()
     m_brickDiffuse.Reset();
     m_brickNormal.Reset();
     m_brickSpecular.Reset();
-    m_pbrAlbeto.Reset();
+    m_pbrAlbedo.Reset();
     m_pbrNormal.Reset();
     m_pbrRMA.Reset();
     m_pbrEmissive.Reset();

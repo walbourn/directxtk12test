@@ -139,7 +139,7 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_brickDiffuse;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_brickNormal;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_brickSpecular;
-    Microsoft::WRL::ComPtr<ID3D12Resource>          m_pbrAlbeto;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_pbrAlbedo;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_pbrNormal;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_pbrRMA;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_pbrEmissive;
@@ -159,7 +159,7 @@ private:
         BrickDiffuse,
         BrickNormal,
         BrickSpecular,
-        PBRAlbeto,
+        PBRAlbedo,
         PBRNormal,
         PBR_RMA,
         PBREmissive,
