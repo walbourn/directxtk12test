@@ -116,9 +116,9 @@ private:
     std::unique_ptr<DX::RenderTexture>              m_hdrScene;
 
     // Test geometry
-    UINT					                        m_indexCount;
-    DirectX::GraphicsResource		                m_indexBuffer;
-    DirectX::GraphicsResource		                m_vertexBuffer;
+    UINT                                            m_indexCount;
+    DirectX::GraphicsResource                       m_indexBuffer;
+    DirectX::GraphicsResource                       m_vertexBuffer;
 
     D3D12_VERTEX_BUFFER_VIEW                        m_vertexBufferView;
     D3D12_INDEX_BUFFER_VIEW                         m_indexBufferView;
