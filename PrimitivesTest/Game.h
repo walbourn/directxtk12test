@@ -121,6 +121,7 @@ private:
     std::unique_ptr<DirectX::GeometricPrimitive>    m_dodec;
     std::unique_ptr<DirectX::GeometricPrimitive>    m_iso;
     std::unique_ptr<DirectX::GeometricPrimitive>    m_customBox;
+    std::unique_ptr<DirectX::GeometricPrimitive>    m_customBox2;
 
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_cat;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_dxLogo;
