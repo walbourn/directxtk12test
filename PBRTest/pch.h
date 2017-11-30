@@ -70,6 +70,7 @@
 
 #include <algorithm>
 #include <exception>
+#include <fstream>
 #include <memory>
 #include <stdexcept>
 #include <vector>

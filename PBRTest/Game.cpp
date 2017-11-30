@@ -15,6 +15,7 @@
 
 #include "pch.h"
 #include "Game.h"
+#include "vbo.h"
 
 #pragma warning( disable : 4238 )
 
@@ -229,6 +230,57 @@ namespace
             XMStoreFloat3(&vertices[j].tangent, b1);
         }
     }
+
+    void ReadVBO(_In_z_ const wchar_t* name, std::vector<VertexPositionNormalTexture>& vertices, std::vector<uint16_t>& indices)
+    {
+        std::vector<uint8_t> blob;
+        {
+            std::ifstream inFile(name, std::ios::in | std::ios::binary | std::ios::ate);
+
+            if (!inFile)
+                throw std::exception("ReadVBO");
+
+            std::streampos len = inFile.tellg();
+            if (!inFile)
+                throw std::exception("ReadVBO");
+
+            if (len < sizeof(VBO::header_t))
+                throw std::exception("ReadVBO");
+
+            blob.resize(size_t(len));
+
+            inFile.seekg(0, std::ios::beg);
+            if (!inFile)
+                throw std::exception("ReadVBO");
+
+            inFile.read(reinterpret_cast<char*>(blob.data()), len);
+            if (!inFile)
+                throw std::exception("ReadVBO");
+
+            inFile.close();
+        }
+
+        auto hdr = reinterpret_cast<const VBO::header_t*>(blob.data());
+
+        if (!hdr->numIndices || !hdr->numIndices)
+            throw std::exception("ReadVBO");
+
+        size_t vertSize = sizeof(VertexPositionNormalTexture) * hdr->numVertices;
+        if (blob.size() < (vertSize + sizeof(VBO::header_t)))
+            throw std::exception("End of file");
+
+        size_t indexSize = sizeof(uint16_t) * hdr->numIndices;
+        if (blob.size() < (sizeof(VBO::header_t) + vertSize + indexSize))
+            throw std::exception("End of file");
+
+        vertices.resize(hdr->numVertices);
+        auto verts = reinterpret_cast<const VertexPositionNormalTexture*>(blob.data() + sizeof(VBO::header_t));
+        memcpy_s(vertices.data(), vertices.size() * sizeof(VertexPositionNormalTexture), verts, vertSize);
+
+        indices.resize(hdr->numIndices);
+        auto tris = reinterpret_cast<const uint16_t*>(blob.data() + sizeof(VBO::header_t) + vertSize);
+        memcpy_s(indices.data(), indices.size() * sizeof(uint16_t), tris, indexSize);
+    }
 }
 
 Game::Game() :
@@ -288,6 +340,7 @@ void Game::Initialize(
     UNREFERENCED_PARAMETER(width);
     UNREFERENCED_PARAMETER(height);
     m_deviceResources->SetWindow(window);
+    m_keyboard->SetWindow(reinterpret_cast<ABI::Windows::UI::Core::ICoreWindow*>(window));
 #elif defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
     m_deviceResources->SetWindow(window, width, height, rotation);
     m_keyboard->SetWindow(reinterpret_cast<ABI::Windows::UI::Core::ICoreWindow*>(window));
@@ -432,6 +485,7 @@ void Game::Render()
     m_pbr->SetIBLTextures(radianceTex, diffuseDesc.MipLevels, irradianceTex, m_states->AnisotropicClamp());
     m_pbrConstant->SetIBLTextures(radianceTex, diffuseDesc.MipLevels, irradianceTex, m_states->LinearWrap());
     m_pbrEmissive->SetIBLTextures(radianceTex, diffuseDesc.MipLevels, irradianceTex, m_states->LinearWrap());
+    m_pbrCube->SetIBLTextures(radianceTex, diffuseDesc.MipLevels, irradianceTex, m_states->LinearWrap());
 
     auto albetoTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::BaseColor1);
     auto normalTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::NormalMap1);
@@ -446,7 +500,7 @@ void Game::Render()
     m_normalMapEffect->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
-    m_normalMapEffect->SetWorld(world * XMMatrixTranslation(col4, row0, 0));
+    m_normalMapEffect->SetWorld(world * XMMatrixTranslation(col3, row0, 0));
     m_normalMapEffect->SetTexture(albetoTex2, m_states->AnisotropicClamp());
     m_normalMapEffect->SetNormalTexture(normalTex2);
     m_normalMapEffect->Apply(commandList);
@@ -468,20 +522,29 @@ void Game::Render()
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
     }   
 
+    commandList->IASetVertexBuffers(0, 1, &m_vertexBufferViewCube);
+    commandList->IASetIndexBuffer(&m_indexBufferViewCube);
+    m_pbrCube->SetWorld(XMMatrixTranslation(col7, row0, 0));
+    m_pbrCube->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCountCube, 1, 0, 0, 0);
+
     //--- PBREffect (emissive) -------------------------------------------------------------
+    commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+    commandList->IASetIndexBuffer(&m_indexBufferView);
+
     {
         auto rmaTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::RMA2);
-        auto emissiveTex = m_resourceDescriptors->GetGpuHandle(Descriptors::EmissiveTexture);
+        auto emissiveTex = m_resourceDescriptors->GetGpuHandle(Descriptors::EmissiveTexture2);
 
         m_pbrEmissive->SetAlpha(1.f);
-        m_pbrEmissive->SetWorld(world * XMMatrixTranslation(col5, row0, 0));
+        m_pbrEmissive->SetWorld(world * XMMatrixTranslation(col4, row0, 0));
         m_pbrEmissive->SetSurfaceTextures(albetoTex2, normalTex2, rmaTex2, m_states->AnisotropicClamp());
         m_pbrEmissive->SetEmissiveTexture(emissiveTex);
         m_pbrEmissive->Apply(commandList);
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
         m_pbrEmissive->SetAlpha(alphaFade);
-        m_pbrEmissive->SetWorld(world * XMMatrixTranslation(col6, row0, 0));
+        m_pbrEmissive->SetWorld(world * XMMatrixTranslation(col5, row0, 0));
         m_pbrEmissive->Apply(commandList);
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
     }   
@@ -806,6 +869,9 @@ void Game::CreateDeviceDependentResources()
     m_pbrEmissive = std::make_unique<PBREffect>(device, EffectFlags::Texture, pipelineDesc, true);
     m_pbrEmissive->EnableDefaultLighting();
 
+    m_pbrCube = std::make_unique<PBREffect>(device, EffectFlags::Texture, pipelineDesc, true);
+    m_pbrCube->EnableDefaultLighting();
+
     RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), DXGI_FORMAT_UNKNOWN);
 #if defined(_XBOX_ONE) && defined(_TITLE)
     rtState.numRenderTargets = 2;
@@ -880,6 +946,60 @@ void Game::CreateDeviceDependentResources()
         m_indexBufferView.Format = DXGI_FORMAT_R16_UINT;
     }
 
+    // Create cube geometry with tangent frame
+    {
+        std::vector<GeometricPrimitive::VertexType> origVerts;
+        std::vector<uint16_t> indices;
+
+        ReadVBO(L"BrokenCube.vbo", origVerts, indices);
+
+        std::vector<TestVertex> vertices;
+        vertices.reserve(origVerts.size());
+
+        for (auto it = origVerts.cbegin(); it != origVerts.cend(); ++it)
+        {
+            TestVertex v;
+            v.position = it->position;
+            v.normal = it->normal;
+            v.textureCoordinate = it->textureCoordinate;
+            vertices.emplace_back(v);
+        }
+
+        assert(origVerts.size() == vertices.size());
+
+        ComputeTangents(indices, vertices);
+
+        // Create the D3D buffers.
+        if (vertices.size() >= USHRT_MAX)
+            throw std::exception("Too many vertices for 16-bit index buffer");
+
+        // Vertex data
+        auto verts = reinterpret_cast<const uint8_t*>(vertices.data());
+        size_t vertSizeBytes = vertices.size() * sizeof(TestVertex);
+
+        m_vertexBufferCube = GraphicsMemory::Get().Allocate(vertSizeBytes);
+        memcpy(m_vertexBufferCube.Memory(), verts, vertSizeBytes);
+
+        // Index data
+        auto ind = reinterpret_cast<const uint8_t*>(indices.data());
+        size_t indSizeBytes = indices.size() * sizeof(uint16_t);
+
+        m_indexBufferCube = GraphicsMemory::Get().Allocate(indSizeBytes);
+        memcpy(m_indexBufferCube.Memory(), ind, indSizeBytes);
+
+        // Record index count for draw
+        m_indexCountCube = static_cast<UINT>(indices.size());
+
+        // Create views
+        m_vertexBufferViewCube.BufferLocation = m_vertexBufferCube.GpuAddress();
+        m_vertexBufferViewCube.StrideInBytes = static_cast<UINT>(sizeof(TestVertex));
+        m_vertexBufferViewCube.SizeInBytes = static_cast<UINT>(m_vertexBufferCube.Size());
+
+        m_indexBufferViewCube.BufferLocation = m_indexBufferCube.GpuAddress();
+        m_indexBufferViewCube.SizeInBytes = static_cast<UINT>(m_indexBufferCube.Size());
+        m_indexBufferViewCube.Format = DXGI_FORMAT_R16_UINT;
+    }
+
     ResourceUploadBatch resourceUpload(device);
     resourceUpload.Begin();
 
@@ -887,18 +1007,31 @@ void Game::CreateDeviceDependentResources()
     static const wchar_t* s_albetoTextures[s_nMaterials] =
     {
         L"SphereMat_baseColor.png",
-        L"Sphere2Mat_baseColor.png"
+        L"Sphere2Mat_baseColor.png",
+        L"BrokenCube_baseColor.png",
     };
     static const wchar_t* s_normalMapTextures[s_nMaterials] =
     {
         L"SphereMat_normal.png",
-        L"Sphere2Mat_normal.png"
+        L"Sphere2Mat_normal.png",
+        L"BrokenCube_normal.png",
     };
     static const wchar_t* s_rmaTextures[s_nMaterials] =
     {
         L"SphereMat_occlusionRoughnessMetallic.png",
-        L"Sphere2Mat_occlusionRoughnessMetallic.png"
+        L"Sphere2Mat_occlusionRoughnessMetallic.png",
+        L"BrokenCube_occlusionRoughnessMetallic.png",
     };
+    static const wchar_t* s_emissiveTextures[s_nMaterials] =
+    {
+        nullptr,
+        L"Sphere2Mat_emissive.png",
+        L"BrokenCube_emissive.png",
+    };
+
+    static_assert(_countof(s_albetoTextures) == _countof(s_normalMapTextures), "Material array mismatch");
+    static_assert(_countof(s_albetoTextures) == _countof(s_rmaTextures), "Material array mismatch");
+    static_assert(_countof(s_albetoTextures) == _countof(s_emissiveTextures), "Material array mismatch");
 
     for (size_t j = 0; j < s_nMaterials; ++j)
     {
@@ -917,13 +1050,23 @@ void Game::CreateDeviceDependentResources()
         CreateShaderResourceView(device, m_baseColor[j].Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::BaseColor1 + j), false);
         CreateShaderResourceView(device, m_normalMap[j].Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::NormalMap1 + j), false);
         CreateShaderResourceView(device, m_rma[j].Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::RMA1 + j), false);
+
+        if (s_emissiveTextures[j])
+        {
+            DX::ThrowIfFailed(
+                CreateWICTextureFromFile(device, resourceUpload, s_emissiveTextures[j], m_emissiveMap[j].ReleaseAndGetAddressOf(), true)
+            );
+
+            CreateShaderResourceView(device, m_emissiveMap[j].Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::EmissiveTexture1 + j), false);
+        }
     }
 
-    DX::ThrowIfFailed(
-        CreateWICTextureFromFile(device, resourceUpload, L"Sphere2Mat_emissive.png", m_emissiveMap.ReleaseAndGetAddressOf(), true)
-    );
-
-    CreateShaderResourceView(device, m_emissiveMap.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::EmissiveTexture), false);
+    m_pbrCube->SetSurfaceTextures(
+        m_resourceDescriptors->GetGpuHandle(Descriptors::BaseColor3),
+        m_resourceDescriptors->GetGpuHandle(Descriptors::NormalMap3),
+        m_resourceDescriptors->GetGpuHandle(Descriptors::RMA3),
+        m_states->AnisotropicClamp());
+    m_pbrCube->SetEmissiveTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::EmissiveTexture3));
 
     static const wchar_t* s_radianceIBL[s_nIBL] =
     {
@@ -937,6 +1080,8 @@ void Game::CreateDeviceDependentResources()
         L"Garage_specularIBL.dds",
         L"SunSubMixer_specularIBL.dds",
     };
+
+    static_assert(_countof(s_radianceIBL) == _countof(s_irradianceIBL), "IBL array mismatch");
 
     for (size_t j = 0; j < s_nIBL; ++j)
     {
@@ -981,11 +1126,13 @@ void Game::CreateWindowSizeDependentResources()
     m_pbr->SetView(view);
     m_pbrConstant->SetView(view);
     m_pbrEmissive->SetView(view);
+    m_pbrCube->SetView(view);
 
     m_normalMapEffect->SetProjection(projection);
     m_pbr->SetProjection(projection);
     m_pbrConstant->SetProjection(projection);
     m_pbrEmissive->SetProjection(projection);
+    m_pbrCube->SetProjection(projection);
 
     // Set windows size for HDR.
     m_hdrScene->SetWindow(size);
@@ -1006,9 +1153,8 @@ void Game::OnDeviceLost()
         m_baseColor[j].Reset();
         m_normalMap[j].Reset();
         m_rma[j].Reset();
+        m_emissiveMap[j].Reset();
     }
-
-    m_emissiveMap.Reset();
 
     for (size_t j = 0; j < s_nIBL; ++j)
     {
@@ -1019,9 +1165,13 @@ void Game::OnDeviceLost()
     m_indexBuffer.Reset();
     m_vertexBuffer.Reset();
 
+    m_indexBufferCube.Reset();
+    m_vertexBufferCube.Reset();
+
     m_normalMapEffect.reset();
     m_pbr.reset();
     m_pbrConstant.reset();
+    m_pbrCube.reset();
 
     m_states.reset();
 
