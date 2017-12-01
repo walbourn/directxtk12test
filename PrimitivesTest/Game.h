@@ -95,6 +95,9 @@ private:
     std::unique_ptr<DirectX::GamePad>       m_gamePad;
     std::unique_ptr<DirectX::Keyboard>      m_keyboard;
 
+    DirectX::GamePad::ButtonStateTracker    m_gamePadButtons;
+    DirectX::Keyboard::KeyboardStateTracker m_keyboardButtons;
+
     // DirectXTK Test Objects
     std::unique_ptr<DirectX::GraphicsMemory>        m_graphicsMemory;
     std::unique_ptr<DirectX::CommonStates>          m_states;
@@ -126,6 +129,10 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_cat;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_dxLogo;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_refTexture;
+
+    bool m_spinning;
+    float m_pitch;
+    float m_yaw;
 
     enum Descriptors
     {

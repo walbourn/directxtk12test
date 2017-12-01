@@ -149,6 +149,9 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_irradianceIBL[s_nIBL];
 
     uint32_t m_ibl;
+    bool m_spinning;
+    float m_pitch;
+    float m_yaw;
 
     enum Descriptors
     {
