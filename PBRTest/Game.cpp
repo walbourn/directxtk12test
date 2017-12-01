@@ -15,6 +15,9 @@
 
 #include "pch.h"
 #include "Game.h"
+#include "vbo.h"
+
+#pragma warning( disable : 4238 )
 
 // Build for LH vs. RH coords
 //#define LH_COORDS
@@ -29,7 +32,264 @@ using namespace DirectX::SimpleMath;
 
 using Microsoft::WRL::ComPtr;
 
-Game::Game()
+namespace
+{
+    const float col0 = -4.25f;
+    const float col1 = -3.f;
+    const float col2 = -1.75f;
+    const float col3 = -.6f;
+    const float col4 = .6f;
+    const float col5 = 1.75f;
+    const float col6 = 3.f;
+    const float col7 = 4.25f;
+
+    const float row0 = 2.f;
+    const float row1 = 0.25f;
+    const float row2 = -1.1f;
+    const float row3 = -2.5f;
+
+    struct TestVertex
+    {
+        TestVertex() = default;
+
+        TestVertex(XMFLOAT3 const& position,
+            XMFLOAT3 const& normal,
+            XMFLOAT2 const& textureCoordinate,
+            XMFLOAT3 const& tangent)
+            : position(position),
+            normal(normal),
+            textureCoordinate(textureCoordinate),
+            tangent(tangent)
+        { }
+
+        TestVertex(FXMVECTOR position,
+            FXMVECTOR normal,
+            CXMVECTOR textureCoordinate,
+            FXMVECTOR tangent)
+        {
+            XMStoreFloat3(&this->position, position);
+            XMStoreFloat3(&this->normal, normal);
+            XMStoreFloat2(&this->textureCoordinate, textureCoordinate);
+            XMStoreFloat3(&this->tangent, tangent);
+        }
+
+        XMFLOAT3 position;
+        XMFLOAT3 normal;
+        XMFLOAT2 textureCoordinate;
+        XMFLOAT3 tangent;
+
+        static const D3D12_INPUT_LAYOUT_DESC InputLayout;
+
+    private:
+        static const int InputElementCount = 4;
+        static const D3D12_INPUT_ELEMENT_DESC InputElements[InputElementCount];
+    };
+
+    const D3D12_INPUT_ELEMENT_DESC TestVertex::InputElements[] =
+    {
+        { "SV_Position", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "NORMAL",      0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "TEXCOORD",    0, DXGI_FORMAT_R32G32_FLOAT,       0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "TANGENT",     0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+    };
+
+    static_assert(sizeof(TestVertex) == 44, "Vertex struct/layout mismatch");
+
+    const D3D12_INPUT_LAYOUT_DESC TestVertex::InputLayout =
+    {
+        TestVertex::InputElements,
+        TestVertex::InputElementCount
+    };
+
+    struct aligned_deleter { void operator()(void* p) { _aligned_free(p); } };
+
+    // Helper for computing tangents (see DirectXMesh <http://go.microsoft.com/fwlink/?LinkID=324981>)
+    void ComputeTangents(const std::vector<uint16_t>& indices, std::vector<TestVertex>& vertices)
+    {
+        static const float EPSILON = 0.0001f;
+        static const XMVECTORF32 s_flips = { 1.f, -1.f, -1.f, 1.f };
+
+        size_t nFaces = indices.size() / 3;
+        size_t nVerts = vertices.size();
+
+        std::unique_ptr<XMVECTOR[], aligned_deleter> temp(reinterpret_cast<XMVECTOR*>(_aligned_malloc(sizeof(XMVECTOR) * nVerts * 2, 16)));
+
+        memset(temp.get(), 0, sizeof(XMVECTOR) * nVerts * 2);
+
+        XMVECTOR* tangent1 = temp.get();
+        XMVECTOR* tangent2 = temp.get() + nVerts;
+
+        for (size_t face = 0; face < nFaces; ++face)
+        {
+            uint16_t i0 = indices[face * 3];
+            uint16_t i1 = indices[face * 3 + 1];
+            uint16_t i2 = indices[face * 3 + 2];
+
+            if (i0 >= nVerts
+                || i1 >= nVerts
+                || i2 >= nVerts)
+            {
+                throw std::exception("ComputeTangents");
+            }
+
+            XMVECTOR t0 = XMLoadFloat2(&vertices[i0].textureCoordinate);
+            XMVECTOR t1 = XMLoadFloat2(&vertices[i1].textureCoordinate);
+            XMVECTOR t2 = XMLoadFloat2(&vertices[i2].textureCoordinate);
+
+            XMVECTOR s = XMVectorMergeXY(t1 - t0, t2 - t0);
+
+            XMFLOAT4A tmp;
+            XMStoreFloat4A(&tmp, s);
+
+            float d = tmp.x * tmp.w - tmp.z * tmp.y;
+            d = (fabsf(d) <= EPSILON) ? 1.f : (1.f / d);
+            s *= d;
+            s = XMVectorMultiply(s, s_flips);
+
+            XMMATRIX m0;
+            m0.r[0] = XMVectorPermute<3, 2, 6, 7>(s, g_XMZero);
+            m0.r[1] = XMVectorPermute<1, 0, 4, 5>(s, g_XMZero);
+            m0.r[2] = m0.r[3] = g_XMZero;
+
+            XMVECTOR p0 = XMLoadFloat3(&vertices[i0].position);
+            XMVECTOR p1 = XMLoadFloat3(&vertices[i1].position);
+            XMVECTOR p2 = XMLoadFloat3(&vertices[i2].position);
+
+            XMMATRIX m1;
+            m1.r[0] = p1 - p0;
+            m1.r[1] = p2 - p0;
+            m1.r[2] = m1.r[3] = g_XMZero;
+
+            XMMATRIX uv = XMMatrixMultiply(m0, m1);
+
+            tangent1[i0] = XMVectorAdd(tangent1[i0], uv.r[0]);
+            tangent1[i1] = XMVectorAdd(tangent1[i1], uv.r[0]);
+            tangent1[i2] = XMVectorAdd(tangent1[i2], uv.r[0]);
+
+            tangent2[i0] = XMVectorAdd(tangent2[i0], uv.r[1]);
+            tangent2[i1] = XMVectorAdd(tangent2[i1], uv.r[1]);
+            tangent2[i2] = XMVectorAdd(tangent2[i2], uv.r[1]);
+        }
+
+        for (size_t j = 0; j < nVerts; ++j)
+        {
+            // Gram-Schmidt orthonormalization
+            XMVECTOR b0 = XMLoadFloat3(&vertices[j].normal);
+            b0 = XMVector3Normalize(b0);
+
+            XMVECTOR tan1 = tangent1[j];
+            XMVECTOR b1 = tan1 - XMVector3Dot(b0, tan1) * b0;
+            b1 = XMVector3Normalize(b1);
+
+            XMVECTOR tan2 = tangent2[j];
+            XMVECTOR b2 = tan2 - XMVector3Dot(b0, tan2) * b0 - XMVector3Dot(b1, tan2) * b1;
+            b2 = XMVector3Normalize(b2);
+
+            // handle degenerate vectors
+            float len1 = XMVectorGetX(XMVector3Length(b1));
+            float len2 = XMVectorGetY(XMVector3Length(b2));
+
+            if ((len1 <= EPSILON) || (len2 <= EPSILON))
+            {
+                if (len1 > 0.5f)
+                {
+                    // Reset bi-tangent from tangent and normal
+                    b2 = XMVector3Cross(b0, b1);
+                }
+                else if (len2 > 0.5f)
+                {
+                    // Reset tangent from bi-tangent and normal
+                    b1 = XMVector3Cross(b2, b0);
+                }
+                else
+                {
+                    // Reset both tangent and bi-tangent from normal
+                    XMVECTOR axis;
+
+                    float d0 = fabs(XMVectorGetX(XMVector3Dot(g_XMIdentityR0, b0)));
+                    float d1 = fabs(XMVectorGetX(XMVector3Dot(g_XMIdentityR1, b0)));
+                    float d2 = fabs(XMVectorGetX(XMVector3Dot(g_XMIdentityR2, b0)));
+                    if (d0 < d1)
+                    {
+                        axis = (d0 < d2) ? g_XMIdentityR0 : g_XMIdentityR2;
+                    }
+                    else if (d1 < d2)
+                    {
+                        axis = g_XMIdentityR1;
+                    }
+                    else
+                    {
+                        axis = g_XMIdentityR2;
+                    }
+
+                    b1 = XMVector3Cross(b0, axis);
+                    b2 = XMVector3Cross(b0, b1);
+                }
+            }
+
+            XMStoreFloat3(&vertices[j].tangent, b1);
+        }
+    }
+
+    void ReadVBO(_In_z_ const wchar_t* name, std::vector<VertexPositionNormalTexture>& vertices, std::vector<uint16_t>& indices)
+    {
+        std::vector<uint8_t> blob;
+        {
+            std::ifstream inFile(name, std::ios::in | std::ios::binary | std::ios::ate);
+
+            if (!inFile)
+                throw std::exception("ReadVBO");
+
+            std::streampos len = inFile.tellg();
+            if (!inFile)
+                throw std::exception("ReadVBO");
+
+            if (len < sizeof(VBO::header_t))
+                throw std::exception("ReadVBO");
+
+            blob.resize(size_t(len));
+
+            inFile.seekg(0, std::ios::beg);
+            if (!inFile)
+                throw std::exception("ReadVBO");
+
+            inFile.read(reinterpret_cast<char*>(blob.data()), len);
+            if (!inFile)
+                throw std::exception("ReadVBO");
+
+            inFile.close();
+        }
+
+        auto hdr = reinterpret_cast<const VBO::header_t*>(blob.data());
+
+        if (!hdr->numIndices || !hdr->numIndices)
+            throw std::exception("ReadVBO");
+
+        static_assert(sizeof(VertexPositionNormalTexture) == 32, "VBO vertex size mismatch");
+
+        size_t vertSize = sizeof(VertexPositionNormalTexture) * hdr->numVertices;
+        if (blob.size() < (vertSize + sizeof(VBO::header_t)))
+            throw std::exception("End of file");
+
+        size_t indexSize = sizeof(uint16_t) * hdr->numIndices;
+        if (blob.size() < (sizeof(VBO::header_t) + vertSize + indexSize))
+            throw std::exception("End of file");
+
+        vertices.resize(hdr->numVertices);
+        auto verts = reinterpret_cast<const VertexPositionNormalTexture*>(blob.data() + sizeof(VBO::header_t));
+        memcpy_s(vertices.data(), vertices.size() * sizeof(VertexPositionNormalTexture), verts, vertSize);
+
+        indices.resize(hdr->numIndices);
+        auto tris = reinterpret_cast<const uint16_t*>(blob.data() + sizeof(VBO::header_t) + vertSize);
+        memcpy_s(indices.data(), indices.size() * sizeof(uint16_t), tris, indexSize);
+    }
+}
+
+Game::Game() :
+    m_ibl(0),
+    m_spinning(true),
+    m_pitch(0),
+    m_yaw(0)
 {
 #if defined(_XBOX_ONE) && defined(_TITLE)
     m_deviceResources = std::make_unique<DX::DeviceResources>(
@@ -85,6 +345,7 @@ void Game::Initialize(
     UNREFERENCED_PARAMETER(width);
     UNREFERENCED_PARAMETER(height);
     m_deviceResources->SetWindow(window);
+    m_keyboard->SetWindow(reinterpret_cast<ABI::Windows::UI::Core::ICoreWindow*>(window));
 #elif defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
     m_deviceResources->SetWindow(window, width, height, rotation);
     m_keyboard->SetWindow(reinterpret_cast<ABI::Windows::UI::Core::ICoreWindow*>(window));
@@ -113,18 +374,113 @@ void Game::Tick()
 }
 
 // Updates the world.
-void Game::Update(DX::StepTimer const& timer)
+void Game::Update(DX::StepTimer const&)
 {
     PIXBeginEvent(PIX_COLOR_DEFAULT, L"Update");
 
-    float elapsedTime = float(timer.GetElapsedSeconds());
-    elapsedTime;
+    auto kb = m_keyboard->GetState();
+    m_keyboardButtons.Update(kb);
 
     auto pad = m_gamePad->GetState(0);
-    auto kb = m_keyboard->GetState();
-    if (kb.Escape || (pad.IsConnected() && pad.IsViewPressed()))
+    if (pad.IsConnected())
+    {
+        m_gamePadButtons.Update(pad);
+
+        if (pad.IsViewPressed())
+        {
+            ExitGame();
+        }
+
+        if (m_gamePadButtons.dpadDown == GamePad::ButtonStateTracker::PRESSED
+            || m_gamePadButtons.dpadLeft == GamePad::ButtonStateTracker::PRESSED)
+        {
+            ++m_ibl;
+            if (m_ibl >= s_nIBL)
+            {
+                m_ibl = 0;
+            }
+        }
+        else if (m_gamePadButtons.dpadUp == GamePad::ButtonStateTracker::PRESSED
+            || m_gamePadButtons.dpadRight == GamePad::ButtonStateTracker::PRESSED)
+        {
+            if (!m_ibl)
+                m_ibl = s_nIBL - 1;
+            else
+                --m_ibl;
+        }
+
+        if (m_gamePadButtons.a == GamePad::ButtonStateTracker::PRESSED)
+        {
+            m_spinning = !m_spinning;
+        }
+
+        if (pad.IsLeftStickPressed())
+        {
+            m_spinning = false;
+            m_yaw = m_pitch = 0.f;
+        }
+        else
+        {
+            m_yaw += pad.thumbSticks.leftX * 0.1f;
+            m_pitch -= pad.thumbSticks.leftY * 0.1f;
+        }
+    }
+    else
+    {
+        m_gamePadButtons.Reset();
+
+        if (kb.A || kb.D)
+        {
+            m_spinning = false;
+            m_yaw += (kb.D ? 0.1f : -0.1f);
+        }
+
+        if (kb.W || kb.S)
+        {
+            m_spinning = false;
+            m_pitch += (kb.W ? 0.1f : -0.1f);
+        }
+
+        if (kb.Home)
+        {
+            m_spinning = false;
+            m_yaw = m_pitch = 0.f;
+        }
+    }
+
+    if (m_yaw > XM_PI)
+    {
+        m_yaw -= XM_PI * 2.f;
+    }
+    else if (m_yaw < -XM_PI)
+    {
+        m_yaw += XM_PI * 2.f;
+    }
+
+    if (kb.Escape)
     {
         ExitGame();
+    }
+
+    if (m_keyboardButtons.IsKeyPressed(Keyboard::Enter) && !kb.LeftAlt && !kb.RightAlt)
+    {
+        ++m_ibl;
+        if (m_ibl >= s_nIBL)
+        {
+            m_ibl = 0;
+        }
+    }
+    else if (m_keyboardButtons.IsKeyPressed(Keyboard::Back))
+    {
+        if (!m_ibl)
+            m_ibl = s_nIBL - 1;
+        else
+            --m_ibl;
+    }
+
+    if (m_keyboardButtons.IsKeyPressed(Keyboard::Space))
+    {
+        m_spinning = !m_spinning;
     }
 
     PIXEndEvent();
@@ -151,10 +507,252 @@ void Game::Render()
 
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Render");
 
-    ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap() };
+    ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap(), m_states->Heap() };
     commandList->SetDescriptorHeaps(_countof(heaps), heaps);
 
-    // TODO: Add your rendering code here.
+    // Time-based animation
+    float time = static_cast<float>(m_timer.GetTotalSeconds());
+
+    float alphaFade = (sin(time * 2) + 1) / 2;
+
+    if (alphaFade >= 1)
+        alphaFade = 1 - FLT_EPSILON;
+
+    float yaw = time * 0.4f;
+    float pitch = time * 0.7f;
+    float roll = time * 1.1f;
+
+    XMMATRIX world;
+
+    if (m_spinning)
+    {
+        world = XMMatrixRotationRollPitchYaw(pitch, yaw, roll);
+    }
+    else
+    {
+        world = XMMatrixRotationRollPitchYaw(m_pitch, m_yaw, 0);
+    }
+
+    // Setup for teapot drawing.
+    commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+    commandList->IASetIndexBuffer(&m_indexBufferView);
+    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    auto radianceTex = m_resourceDescriptors->GetGpuHandle(Descriptors::RadianceIBL1 + m_ibl);
+
+    auto diffuseDesc = m_radianceIBL[0]->GetDesc();
+
+    auto irradianceTex = m_resourceDescriptors->GetGpuHandle(Descriptors::IrradianceIBL1 + m_ibl);
+    m_pbr->SetIBLTextures(radianceTex, diffuseDesc.MipLevels, irradianceTex, m_states->AnisotropicClamp());
+    m_pbrConstant->SetIBLTextures(radianceTex, diffuseDesc.MipLevels, irradianceTex, m_states->LinearWrap());
+    m_pbrEmissive->SetIBLTextures(radianceTex, diffuseDesc.MipLevels, irradianceTex, m_states->LinearWrap());
+    m_pbrCube->SetIBLTextures(radianceTex, diffuseDesc.MipLevels, irradianceTex, m_states->LinearWrap());
+
+    auto albetoTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::BaseColor1);
+    auto normalTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::NormalMap1);
+
+    auto albetoTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::BaseColor2);
+    auto normalTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::NormalMap2);
+
+    //--- NormalMap ------------------------------------------------------------------------
+    m_normalMapEffect->SetWorld(world * XMMatrixTranslation(col0, row0, 0));
+    m_normalMapEffect->SetTexture(albetoTex1, m_states->AnisotropicClamp());
+    m_normalMapEffect->SetNormalTexture(normalTex1);
+    m_normalMapEffect->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_normalMapEffect->SetWorld(world * XMMatrixTranslation(col3, row0, 0));
+    m_normalMapEffect->SetTexture(albetoTex2, m_states->AnisotropicClamp());
+    m_normalMapEffect->SetNormalTexture(normalTex2);
+    m_normalMapEffect->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    //--- PBREffect (basic) ----------------------------------------------------------------
+    {
+        auto rmaTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::RMA1);
+
+        m_pbr->SetAlpha(1.f);
+        m_pbr->SetWorld(world * XMMatrixTranslation(col1, row0, 0));
+        m_pbr->SetSurfaceTextures(albetoTex1, normalTex1, rmaTex1, m_states->AnisotropicClamp());
+        m_pbr->Apply(commandList);
+        commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+        m_pbr->SetAlpha(alphaFade);
+        m_pbr->SetWorld(world * XMMatrixTranslation(col2, row0, 0));
+        m_pbr->Apply(commandList);
+        commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+    }   
+
+    commandList->IASetVertexBuffers(0, 1, &m_vertexBufferViewCube);
+    commandList->IASetIndexBuffer(&m_indexBufferViewCube);
+    m_pbrCube->SetWorld(world * XMMatrixTranslation(col7, row0, 0));
+    m_pbrCube->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCountCube, 1, 0, 0, 0);
+
+    //--- PBREffect (emissive) -------------------------------------------------------------
+    commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+    commandList->IASetIndexBuffer(&m_indexBufferView);
+
+    {
+        auto rmaTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::RMA2);
+        auto emissiveTex = m_resourceDescriptors->GetGpuHandle(Descriptors::EmissiveTexture2);
+
+        m_pbrEmissive->SetAlpha(1.f);
+        m_pbrEmissive->SetWorld(world * XMMatrixTranslation(col4, row0, 0));
+        m_pbrEmissive->SetSurfaceTextures(albetoTex2, normalTex2, rmaTex2, m_states->AnisotropicClamp());
+        m_pbrEmissive->SetEmissiveTexture(emissiveTex);
+        m_pbrEmissive->Apply(commandList);
+        commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+        m_pbrEmissive->SetAlpha(alphaFade);
+        m_pbrEmissive->SetWorld(world * XMMatrixTranslation(col5, row0, 0));
+        m_pbrEmissive->Apply(commandList);
+        commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+    }   
+
+    //--- PBREffect (constant) -------------------------------------------------------------   
+    m_pbrConstant->SetAlpha(1.f);
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col0, row1, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::Blue);
+    m_pbrConstant->SetConstantMetallic(1.f);
+    m_pbrConstant->SetConstantRoughness(0.2f);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col1, row1, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::Green);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col2, row1, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::Red);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col3, row1, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::Yellow);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col4, row1, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::Cyan);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col5, row1, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::Magenta);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col6, row1, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::Black);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col7, row1, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::White);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    // Row 2
+    m_pbrConstant->SetAlpha(alphaFade);
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col0, row2, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::Blue);
+    m_pbrConstant->SetConstantMetallic(0.f);
+    m_pbrConstant->SetConstantRoughness(0.2f);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col1, row2, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::Green);
+    m_pbrConstant->SetConstantMetallic(0.25f);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col2, row2, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::Red);
+    m_pbrConstant->SetConstantMetallic(0.5f);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col3, row2, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::Yellow);
+    m_pbrConstant->SetConstantMetallic(0.75f);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col4, row2, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::Cyan);
+    m_pbrConstant->SetConstantMetallic(1.f);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col5, row2, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::Magenta);
+    m_pbrConstant->SetConstantMetallic(0.5f);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col6, row2, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::Black);
+    m_pbrConstant->SetConstantMetallic(0.75f);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col7, row2, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::White);
+    m_pbrConstant->SetConstantMetallic(0.8f);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    // Row3
+    m_pbrConstant->SetAlpha(1.f);
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col0, row3, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::Blue);
+    m_pbrConstant->SetConstantMetallic(0.5f);
+    m_pbrConstant->SetConstantRoughness(0.0f);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col1, row3, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::Green);
+    m_pbrConstant->SetConstantRoughness(0.25f);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col2, row3, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::Red);
+    m_pbrConstant->SetConstantRoughness(0.5f);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col3, row3, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::Yellow);
+    m_pbrConstant->SetConstantRoughness(0.75f);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col4, row3, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::Cyan);
+    m_pbrConstant->SetConstantRoughness(1.0f);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col5, row3, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::Magenta);
+    m_pbrConstant->SetConstantRoughness(0.2f);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col6, row3, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::Black);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_pbrConstant->SetWorld(world * XMMatrixTranslation(col7, row3, 0));
+    m_pbrConstant->SetConstantAlbedo(Colors::White);
+    m_pbrConstant->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     PIXEndEvent(commandList);
 
@@ -240,6 +838,8 @@ void Game::OnSuspending()
 void Game::OnResuming()
 {
     m_timer.ResetElapsedTime();
+    m_gamePadButtons.Reset();
+    m_keyboardButtons.Reset();
 }
 
 #if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) 
@@ -299,12 +899,39 @@ void Game::CreateDeviceDependentResources()
         D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
         RTDescriptors::RTCount);
 
+    m_states = std::make_unique<CommonStates>(device);
+
     m_hdrScene->SetDevice(device,
         m_resourceDescriptors->GetCpuHandle(Descriptors::SceneTex),
         m_renderDescriptors->GetCpuHandle(RTDescriptors::HDRScene));
 
     RenderTargetState hdrState(m_hdrScene->GetFormat(), m_deviceResources->GetDepthBufferFormat());
-    hdrState;
+
+    EffectPipelineStateDescription pipelineDesc(
+        &TestVertex::InputLayout,
+        CommonStates::AlphaBlend,
+        CommonStates::DepthDefault,
+#ifdef LH_COORDS
+            CommonStates::CullClockwise,
+#else
+            CommonStates::CullCounterClockwise,
+#endif
+        hdrState);
+
+    m_normalMapEffect = std::make_unique<NormalMapEffect>(device, EffectFlags::Texture, pipelineDesc, false);
+    m_normalMapEffect->EnableDefaultLighting();
+
+    m_pbrConstant = std::make_unique<PBREffect>(device, EffectFlags::None, pipelineDesc);
+    m_pbrConstant->EnableDefaultLighting();
+
+    m_pbr = std::make_unique<PBREffect>(device, EffectFlags::Texture, pipelineDesc);
+    m_pbr->EnableDefaultLighting();
+
+    m_pbrEmissive = std::make_unique<PBREffect>(device, EffectFlags::Texture, pipelineDesc, true);
+    m_pbrEmissive->EnableDefaultLighting();
+
+    m_pbrCube = std::make_unique<PBREffect>(device, EffectFlags::Texture, pipelineDesc, true);
+    m_pbrCube->EnableDefaultLighting();
 
     RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), DXGI_FORMAT_UNKNOWN);
 #if defined(_XBOX_ONE) && defined(_TITLE)
@@ -325,12 +952,248 @@ void Game::CreateDeviceDependentResources()
     m_toneMapLinear = std::make_unique<ToneMapPostProcess>(device, rtState, ToneMapPostProcess::None, ToneMapPostProcess::Linear);
     m_toneMapHDR10 = std::make_unique<ToneMapPostProcess>(device, rtState, ToneMapPostProcess::None, ToneMapPostProcess::ST2084);
 #endif
+
+    // Create test geometry with tangent frame
+    {
+        std::vector<GeometricPrimitive::VertexType> origVerts;
+        std::vector<uint16_t> indices;
+
+        GeometricPrimitive::CreateSphere(origVerts, indices);
+
+        std::vector<TestVertex> vertices;
+        vertices.reserve(origVerts.size());
+
+        for (auto it = origVerts.cbegin(); it != origVerts.cend(); ++it)
+        {
+            TestVertex v;
+            v.position = it->position;
+            v.normal = it->normal;
+            v.textureCoordinate = it->textureCoordinate;
+            vertices.emplace_back(v);
+        }
+
+        assert(origVerts.size() == vertices.size());
+
+        ComputeTangents(indices, vertices);
+
+        // Create the D3D buffers.
+        if (vertices.size() >= USHRT_MAX)
+            throw std::exception("Too many vertices for 16-bit index buffer");
+
+        // Vertex data
+        auto verts = reinterpret_cast<const uint8_t*>(vertices.data());
+        size_t vertSizeBytes = vertices.size() * sizeof(TestVertex);
+
+        m_vertexBuffer = GraphicsMemory::Get().Allocate(vertSizeBytes);
+        memcpy(m_vertexBuffer.Memory(), verts, vertSizeBytes);
+
+        // Index data
+        auto ind = reinterpret_cast<const uint8_t*>(indices.data());
+        size_t indSizeBytes = indices.size() * sizeof(uint16_t);
+
+        m_indexBuffer = GraphicsMemory::Get().Allocate(indSizeBytes);
+        memcpy(m_indexBuffer.Memory(), ind, indSizeBytes);
+
+        // Record index count for draw
+        m_indexCount = static_cast<UINT>(indices.size());
+
+        // Create views
+        m_vertexBufferView.BufferLocation = m_vertexBuffer.GpuAddress();
+        m_vertexBufferView.StrideInBytes = static_cast<UINT>(sizeof(TestVertex));
+        m_vertexBufferView.SizeInBytes = static_cast<UINT>(m_vertexBuffer.Size());
+
+        m_indexBufferView.BufferLocation = m_indexBuffer.GpuAddress();
+        m_indexBufferView.SizeInBytes = static_cast<UINT>(m_indexBuffer.Size());
+        m_indexBufferView.Format = DXGI_FORMAT_R16_UINT;
+    }
+
+    // Create cube geometry with tangent frame
+    {
+        std::vector<GeometricPrimitive::VertexType> origVerts;
+        std::vector<uint16_t> indices;
+
+        ReadVBO(L"BrokenCube.vbo", origVerts, indices);
+
+        std::vector<TestVertex> vertices;
+        vertices.reserve(origVerts.size());
+
+        for (auto it = origVerts.cbegin(); it != origVerts.cend(); ++it)
+        {
+            TestVertex v;
+            v.position = it->position;
+            v.normal = it->normal;
+            v.textureCoordinate = it->textureCoordinate;
+            vertices.emplace_back(v);
+        }
+
+        assert(origVerts.size() == vertices.size());
+
+        ComputeTangents(indices, vertices);
+
+        // Create the D3D buffers.
+        if (vertices.size() >= USHRT_MAX)
+            throw std::exception("Too many vertices for 16-bit index buffer");
+
+        // Vertex data
+        auto verts = reinterpret_cast<const uint8_t*>(vertices.data());
+        size_t vertSizeBytes = vertices.size() * sizeof(TestVertex);
+
+        m_vertexBufferCube = GraphicsMemory::Get().Allocate(vertSizeBytes);
+        memcpy(m_vertexBufferCube.Memory(), verts, vertSizeBytes);
+
+        // Index data
+        auto ind = reinterpret_cast<const uint8_t*>(indices.data());
+        size_t indSizeBytes = indices.size() * sizeof(uint16_t);
+
+        m_indexBufferCube = GraphicsMemory::Get().Allocate(indSizeBytes);
+        memcpy(m_indexBufferCube.Memory(), ind, indSizeBytes);
+
+        // Record index count for draw
+        m_indexCountCube = static_cast<UINT>(indices.size());
+
+        // Create views
+        m_vertexBufferViewCube.BufferLocation = m_vertexBufferCube.GpuAddress();
+        m_vertexBufferViewCube.StrideInBytes = static_cast<UINT>(sizeof(TestVertex));
+        m_vertexBufferViewCube.SizeInBytes = static_cast<UINT>(m_vertexBufferCube.Size());
+
+        m_indexBufferViewCube.BufferLocation = m_indexBufferCube.GpuAddress();
+        m_indexBufferViewCube.SizeInBytes = static_cast<UINT>(m_indexBufferCube.Size());
+        m_indexBufferViewCube.Format = DXGI_FORMAT_R16_UINT;
+    }
+
+    ResourceUploadBatch resourceUpload(device);
+    resourceUpload.Begin();
+
+    // Load textures
+    static const wchar_t* s_albetoTextures[s_nMaterials] =
+    {
+        L"SphereMat_baseColor.png",
+        L"Sphere2Mat_baseColor.png",
+        L"BrokenCube_baseColor.png",
+    };
+    static const wchar_t* s_normalMapTextures[s_nMaterials] =
+    {
+        L"SphereMat_normal.png",
+        L"Sphere2Mat_normal.png",
+        L"BrokenCube_normal.png",
+    };
+    static const wchar_t* s_rmaTextures[s_nMaterials] =
+    {
+        L"SphereMat_occlusionRoughnessMetallic.png",
+        L"Sphere2Mat_occlusionRoughnessMetallic.png",
+        L"BrokenCube_occlusionRoughnessMetallic.png",
+    };
+    static const wchar_t* s_emissiveTextures[s_nMaterials] =
+    {
+        nullptr,
+        L"Sphere2Mat_emissive.png",
+        L"BrokenCube_emissive.png",
+    };
+
+    static_assert(_countof(s_albetoTextures) == _countof(s_normalMapTextures), "Material array mismatch");
+    static_assert(_countof(s_albetoTextures) == _countof(s_rmaTextures), "Material array mismatch");
+    static_assert(_countof(s_albetoTextures) == _countof(s_emissiveTextures), "Material array mismatch");
+
+    for (size_t j = 0; j < s_nMaterials; ++j)
+    {
+        DX::ThrowIfFailed(
+            CreateWICTextureFromFile(device, resourceUpload, s_albetoTextures[j], m_baseColor[j].ReleaseAndGetAddressOf(), true)
+        );
+
+        DX::ThrowIfFailed(
+            CreateWICTextureFromFile(device, resourceUpload, s_normalMapTextures[j], m_normalMap[j].ReleaseAndGetAddressOf(), true)
+        );
+
+        DX::ThrowIfFailed(
+            CreateWICTextureFromFile(device, resourceUpload, s_rmaTextures[j], m_rma[j].ReleaseAndGetAddressOf(), true)
+        );
+
+        CreateShaderResourceView(device, m_baseColor[j].Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::BaseColor1 + j), false);
+        CreateShaderResourceView(device, m_normalMap[j].Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::NormalMap1 + j), false);
+        CreateShaderResourceView(device, m_rma[j].Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::RMA1 + j), false);
+
+        if (s_emissiveTextures[j])
+        {
+            DX::ThrowIfFailed(
+                CreateWICTextureFromFile(device, resourceUpload, s_emissiveTextures[j], m_emissiveMap[j].ReleaseAndGetAddressOf(), true)
+            );
+
+            CreateShaderResourceView(device, m_emissiveMap[j].Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::EmissiveTexture1 + j), false);
+        }
+    }
+
+    m_pbrCube->SetSurfaceTextures(
+        m_resourceDescriptors->GetGpuHandle(Descriptors::BaseColor3),
+        m_resourceDescriptors->GetGpuHandle(Descriptors::NormalMap3),
+        m_resourceDescriptors->GetGpuHandle(Descriptors::RMA3),
+        m_states->AnisotropicClamp());
+    m_pbrCube->SetEmissiveTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::EmissiveTexture3));
+
+    static const wchar_t* s_radianceIBL[s_nIBL] =
+    {
+        L"Atrium_diffuseIBL.dds",
+        L"Garage_diffuseIBL.dds",
+        L"SunSubMixer_diffuseIBL.dds",
+    };
+    static const wchar_t* s_irradianceIBL[s_nIBL] =
+    {
+        L"Atrium_specularIBL.dds",
+        L"Garage_specularIBL.dds",
+        L"SunSubMixer_specularIBL.dds",
+    };
+
+    static_assert(_countof(s_radianceIBL) == _countof(s_irradianceIBL), "IBL array mismatch");
+
+    for (size_t j = 0; j < s_nIBL; ++j)
+    {
+        DX::ThrowIfFailed(
+            CreateDDSTextureFromFile(device, resourceUpload, s_radianceIBL[j], m_radianceIBL[j].ReleaseAndGetAddressOf())
+        );
+
+        DX::ThrowIfFailed(
+            CreateDDSTextureFromFile(device, resourceUpload, s_irradianceIBL[j], m_irradianceIBL[j].ReleaseAndGetAddressOf())
+        );
+
+        CreateShaderResourceView(device, m_radianceIBL[j].Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::RadianceIBL1 + j), true);
+        CreateShaderResourceView(device, m_irradianceIBL[j].Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::IrradianceIBL1 + j), true);
+    }
+
+    auto uploadResourcesFinished = resourceUpload.End(m_deviceResources->GetCommandQueue());
+    uploadResourcesFinished.wait();
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
 void Game::CreateWindowSizeDependentResources()
 {
+    static const XMVECTORF32 cameraPosition = { 0, 0, 6 };
+
     auto size = m_deviceResources->GetOutputSize();
+    float aspect = (float)size.right / (float)size.bottom;
+
+#ifdef LH_COORDS
+    XMMATRIX view = XMMatrixLookAtLH(cameraPosition, g_XMZero, XMVectorSet(0, 1, 0, 0));
+    XMMATRIX projection = XMMatrixPerspectiveFovLH(1, aspect, 1, 15);
+#else
+    XMMATRIX view = XMMatrixLookAtRH(cameraPosition, g_XMZero, XMVectorSet(0, 1, 0, 0));
+    XMMATRIX projection = XMMatrixPerspectiveFovRH(1, aspect, 1, 15);
+#endif
+
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+    XMMATRIX orient = XMLoadFloat4x4(&m_deviceResources->GetOrientationTransform3D());
+    projection *= orient;
+#endif
+
+    m_normalMapEffect->SetView(view);
+    m_pbr->SetView(view);
+    m_pbrConstant->SetView(view);
+    m_pbrEmissive->SetView(view);
+    m_pbrCube->SetView(view);
+
+    m_normalMapEffect->SetProjection(projection);
+    m_pbr->SetProjection(projection);
+    m_pbrConstant->SetProjection(projection);
+    m_pbrEmissive->SetProjection(projection);
+    m_pbrCube->SetProjection(projection);
 
     // Set windows size for HDR.
     m_hdrScene->SetWindow(size);
@@ -346,7 +1209,32 @@ void Game::CreateWindowSizeDependentResources()
 #if !defined(_XBOX_ONE) || !defined(_TITLE)
 void Game::OnDeviceLost()
 {
-    // TODO: Add Direct3D resource cleanup here.
+    for (size_t j = 0; j < s_nMaterials; ++j)
+    {
+        m_baseColor[j].Reset();
+        m_normalMap[j].Reset();
+        m_rma[j].Reset();
+        m_emissiveMap[j].Reset();
+    }
+
+    for (size_t j = 0; j < s_nIBL; ++j)
+    {
+        m_radianceIBL[j].Reset();
+        m_irradianceIBL[j].Reset();
+    }
+
+    m_indexBuffer.Reset();
+    m_vertexBuffer.Reset();
+
+    m_indexBufferCube.Reset();
+    m_vertexBufferCube.Reset();
+
+    m_normalMapEffect.reset();
+    m_pbr.reset();
+    m_pbrConstant.reset();
+    m_pbrCube.reset();
+
+    m_states.reset();
 
     m_toneMap.reset();
 

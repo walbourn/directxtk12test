@@ -23,6 +23,7 @@
 #endif
 #include "StepTimer.h"
 
+#include "RenderTexture.h"
 
 // A basic game implementation that creates a D3D12 device and
 // provides a game loop.
@@ -105,6 +106,7 @@ private:
 
     std::unique_ptr<DirectX::CommonStates>      m_states;
     std::unique_ptr<DirectX::DescriptorHeap>    m_resourceDescriptors;
+    std::unique_ptr<DirectX::DescriptorHeap>    m_renderDescriptors;
 
     std::vector<std::unique_ptr<DirectX::BasicEffect>> m_basic;
     std::vector<std::unique_ptr<DirectX::BasicEffect>> m_basicBn;
@@ -116,6 +118,10 @@ private:
     std::vector<std::unique_ptr<DirectX::AlphaTestEffect>> m_alphTest;
     std::vector<std::unique_ptr<DirectX::NormalMapEffect>> m_normalMap;
     std::vector<std::unique_ptr<DirectX::NormalMapEffect>> m_normalMapBn;
+    std::vector<std::unique_ptr<DirectX::PBREffect>> m_pbr;
+    std::vector<std::unique_ptr<DirectX::PBREffect>> m_pbrBn;
+
+    std::unique_ptr<DX::RenderTexture>              m_velocityBuffer;
 
     UINT					                        m_indexCount;
     DirectX::GraphicsResource		                m_indexBuffer;
@@ -133,6 +139,12 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_brickDiffuse;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_brickNormal;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_brickSpecular;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_pbrAlbedo;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_pbrNormal;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_pbrRMA;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_pbrEmissive;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_radianceIBL;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_irradianceIBL;
 
     bool                                            m_showCompressed;
 
@@ -147,6 +159,19 @@ private:
         BrickDiffuse,
         BrickNormal,
         BrickSpecular,
+        PBRAlbedo,
+        PBRNormal,
+        PBR_RMA,
+        PBREmissive,
+        RadianceIBL,
+        IrradianceIBL,
+        VelocityBuffer,
         Count
+    };
+
+    enum RTDescriptors
+    {
+        RTVelocityBuffer,
+        RTCount
     };
 };
