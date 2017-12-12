@@ -288,6 +288,8 @@ namespace
 Game::Game() :
     m_ibl(0),
     m_spinning(true),
+    m_showDebug(false),
+    m_debugMode(DebugEffect::Mode_Default),
     m_pitch(0),
     m_yaw(0)
 {
@@ -414,6 +416,11 @@ void Game::Update(DX::StepTimer const&)
             m_spinning = !m_spinning;
         }
 
+        if (m_gamePadButtons.y == GamePad::ButtonStateTracker::PRESSED)
+        {
+            CycleDebug();
+        }
+
         if (pad.IsLeftStickPressed())
         {
             m_spinning = false;
@@ -483,6 +490,11 @@ void Game::Update(DX::StepTimer const&)
         m_spinning = !m_spinning;
     }
 
+    if (m_keyboardButtons.IsKeyPressed(Keyboard::Tab))
+    {
+        CycleDebug();
+    }
+
     PIXEndEvent();
 }
 #pragma endregion
@@ -548,67 +560,119 @@ void Game::Render()
     m_pbrEmissive->SetIBLTextures(radianceTex, diffuseDesc.MipLevels, irradianceTex, m_states->LinearWrap());
     m_pbrCube->SetIBLTextures(radianceTex, diffuseDesc.MipLevels, irradianceTex, m_states->LinearWrap());
 
-    auto albetoTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::BaseColor1);
-    auto normalTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::NormalMap1);
-
-    auto albetoTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::BaseColor2);
-    auto normalTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::NormalMap2);
-
-    //--- NormalMap ------------------------------------------------------------------------
-    m_normalMapEffect->SetWorld(world * XMMatrixTranslation(col0, row0, 0));
-    m_normalMapEffect->SetTexture(albetoTex1, m_states->AnisotropicClamp());
-    m_normalMapEffect->SetNormalTexture(normalTex1);
-    m_normalMapEffect->Apply(commandList);
-    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
-
-    m_normalMapEffect->SetWorld(world * XMMatrixTranslation(col3, row0, 0));
-    m_normalMapEffect->SetTexture(albetoTex2, m_states->AnisotropicClamp());
-    m_normalMapEffect->SetNormalTexture(normalTex2);
-    m_normalMapEffect->Apply(commandList);
-    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
-
-    //--- PBREffect (basic) ----------------------------------------------------------------
+    if (m_showDebug)
     {
-        auto rmaTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::RMA1);
+        //--- DebugEffect ------------------------------------------------------------------
+        auto debug = m_debug.get();
+        switch (m_debugMode)
+        {
+        case DebugEffect::Mode_Normals: debug = m_debugN.get(); break;
+        case DebugEffect::Mode_Tangents: debug = m_debugT.get(); break;
+        case DebugEffect::Mode_BiTangents: debug = m_debugB.get(); break;
+        }
 
-        m_pbr->SetAlpha(1.f);
-        m_pbr->SetWorld(world * XMMatrixTranslation(col1, row0, 0));
-        m_pbr->SetSurfaceTextures(albetoTex1, normalTex1, rmaTex1, m_states->AnisotropicClamp());
-        m_pbr->Apply(commandList);
+        debug->SetAlpha(1.f);
+        debug->SetWorld(world * XMMatrixTranslation(col0, row0, 0));
+        debug->Apply(commandList);
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
-        m_pbr->SetAlpha(alphaFade);
-        m_pbr->SetWorld(world * XMMatrixTranslation(col2, row0, 0));
-        m_pbr->Apply(commandList);
+        debug->SetWorld(world * XMMatrixTranslation(col3, row0, 0));
+        debug->Apply(commandList);
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
-    }   
 
-    commandList->IASetVertexBuffers(0, 1, &m_vertexBufferViewCube);
-    commandList->IASetIndexBuffer(&m_indexBufferViewCube);
-    m_pbrCube->SetWorld(world * XMMatrixTranslation(col7, row0, 0));
-    m_pbrCube->Apply(commandList);
-    commandList->DrawIndexedInstanced(m_indexCountCube, 1, 0, 0, 0);
+        debug->SetWorld(world * XMMatrixTranslation(col1, row0, 0));
+        debug->Apply(commandList);
+        commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
-    //--- PBREffect (emissive) -------------------------------------------------------------
-    commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-    commandList->IASetIndexBuffer(&m_indexBufferView);
+        debug->SetAlpha(alphaFade);
+        debug->SetWorld(world * XMMatrixTranslation(col2, row0, 0));
+        debug->Apply(commandList);
+        commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
+        commandList->IASetVertexBuffers(0, 1, &m_vertexBufferViewCube);
+        commandList->IASetIndexBuffer(&m_indexBufferViewCube);
+        debug->SetAlpha(1.f);
+        debug->SetWorld(world * XMMatrixTranslation(col7, row0, 0));
+        debug->Apply(commandList);
+        commandList->DrawIndexedInstanced(m_indexCountCube, 1, 0, 0, 0);
+
+        commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+        commandList->IASetIndexBuffer(&m_indexBufferView);
+
+        debug->SetAlpha(1.f);
+        debug->SetWorld(world * XMMatrixTranslation(col4, row0, 0));
+        debug->Apply(commandList);
+        commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+        debug->SetAlpha(alphaFade);
+        debug->SetWorld(world * XMMatrixTranslation(col5, row0, 0));
+        debug->Apply(commandList);
+        commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+    }
+    else
     {
-        auto rmaTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::RMA2);
-        auto emissiveTex = m_resourceDescriptors->GetGpuHandle(Descriptors::EmissiveTexture2);
+        auto albetoTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::BaseColor1);
+        auto normalTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::NormalMap1);
 
-        m_pbrEmissive->SetAlpha(1.f);
-        m_pbrEmissive->SetWorld(world * XMMatrixTranslation(col4, row0, 0));
-        m_pbrEmissive->SetSurfaceTextures(albetoTex2, normalTex2, rmaTex2, m_states->AnisotropicClamp());
-        m_pbrEmissive->SetEmissiveTexture(emissiveTex);
-        m_pbrEmissive->Apply(commandList);
+        auto albetoTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::BaseColor2);
+        auto normalTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::NormalMap2);
+
+        //--- NormalMap --------------------------------------------------------------------
+        m_normalMapEffect->SetWorld(world * XMMatrixTranslation(col0, row0, 0));
+        m_normalMapEffect->SetTexture(albetoTex1, m_states->AnisotropicClamp());
+        m_normalMapEffect->SetNormalTexture(normalTex1);
+        m_normalMapEffect->Apply(commandList);
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
-        m_pbrEmissive->SetAlpha(alphaFade);
-        m_pbrEmissive->SetWorld(world * XMMatrixTranslation(col5, row0, 0));
-        m_pbrEmissive->Apply(commandList);
+        m_normalMapEffect->SetWorld(world * XMMatrixTranslation(col3, row0, 0));
+        m_normalMapEffect->SetTexture(albetoTex2, m_states->AnisotropicClamp());
+        m_normalMapEffect->SetNormalTexture(normalTex2);
+        m_normalMapEffect->Apply(commandList);
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
-    }   
+
+        //--- PBREffect (basic) ------------------------------------------------------------
+        {
+            auto rmaTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::RMA1);
+
+            m_pbr->SetAlpha(1.f);
+            m_pbr->SetWorld(world * XMMatrixTranslation(col1, row0, 0));
+            m_pbr->SetSurfaceTextures(albetoTex1, normalTex1, rmaTex1, m_states->AnisotropicClamp());
+            m_pbr->Apply(commandList);
+            commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+            m_pbr->SetAlpha(alphaFade);
+            m_pbr->SetWorld(world * XMMatrixTranslation(col2, row0, 0));
+            m_pbr->Apply(commandList);
+            commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+        }
+
+        commandList->IASetVertexBuffers(0, 1, &m_vertexBufferViewCube);
+        commandList->IASetIndexBuffer(&m_indexBufferViewCube);
+        m_pbrCube->SetWorld(world * XMMatrixTranslation(col7, row0, 0));
+        m_pbrCube->Apply(commandList);
+        commandList->DrawIndexedInstanced(m_indexCountCube, 1, 0, 0, 0);
+
+        //--- PBREffect (emissive) ---------------------------------------------------------
+        commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+        commandList->IASetIndexBuffer(&m_indexBufferView);
+
+        {
+            auto rmaTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::RMA2);
+            auto emissiveTex = m_resourceDescriptors->GetGpuHandle(Descriptors::EmissiveTexture2);
+
+            m_pbrEmissive->SetAlpha(1.f);
+            m_pbrEmissive->SetWorld(world * XMMatrixTranslation(col4, row0, 0));
+            m_pbrEmissive->SetSurfaceTextures(albetoTex2, normalTex2, rmaTex2, m_states->AnisotropicClamp());
+            m_pbrEmissive->SetEmissiveTexture(emissiveTex);
+            m_pbrEmissive->Apply(commandList);
+            commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+            m_pbrEmissive->SetAlpha(alphaFade);
+            m_pbrEmissive->SetWorld(world * XMMatrixTranslation(col5, row0, 0));
+            m_pbrEmissive->Apply(commandList);
+            commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+        }
+    }
 
     //--- PBREffect (constant) -------------------------------------------------------------   
     m_pbrConstant->SetAlpha(1.f);
@@ -933,6 +997,11 @@ void Game::CreateDeviceDependentResources()
     m_pbrCube = std::make_unique<PBREffect>(device, EffectFlags::Texture, pipelineDesc, true);
     m_pbrCube->EnableDefaultLighting();
 
+    m_debug = std::make_unique<DebugEffect>(device, EffectFlags::None, pipelineDesc);
+    m_debugN = std::make_unique<DebugEffect>(device, EffectFlags::None, pipelineDesc, DebugEffect::Mode_Normals);
+    m_debugT = std::make_unique<DebugEffect>(device, EffectFlags::None, pipelineDesc, DebugEffect::Mode_Tangents);
+    m_debugB = std::make_unique<DebugEffect>(device, EffectFlags::None, pipelineDesc, DebugEffect::Mode_BiTangents);
+
     RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), DXGI_FORMAT_UNKNOWN);
 #if defined(_XBOX_ONE) && defined(_TITLE)
     rtState.numRenderTargets = 2;
@@ -1188,12 +1257,20 @@ void Game::CreateWindowSizeDependentResources()
     m_pbrConstant->SetView(view);
     m_pbrEmissive->SetView(view);
     m_pbrCube->SetView(view);
+    m_debug->SetView(view);
+    m_debugN->SetView(view);
+    m_debugT->SetView(view);
+    m_debugB->SetView(view);
 
     m_normalMapEffect->SetProjection(projection);
     m_pbr->SetProjection(projection);
     m_pbrConstant->SetProjection(projection);
     m_pbrEmissive->SetProjection(projection);
     m_pbrCube->SetProjection(projection);
+    m_debug->SetProjection(projection);
+    m_debugN->SetProjection(projection);
+    m_debugT->SetProjection(projection);
+    m_debugB->SetProjection(projection);
 
     // Set windows size for HDR.
     m_hdrScene->SetWindow(size);
@@ -1233,6 +1310,10 @@ void Game::OnDeviceLost()
     m_pbr.reset();
     m_pbrConstant.reset();
     m_pbrCube.reset();
+    m_debug.reset();
+    m_debugN.reset();
+    m_debugT.reset();
+    m_debugB.reset();
 
     m_states.reset();
 
@@ -1259,3 +1340,27 @@ void Game::OnDeviceRestored()
 }
 #endif
 #pragma endregion
+
+void Game::CycleDebug()
+{
+    if (!m_showDebug)
+    {
+        m_showDebug = true;
+        m_debugMode = DebugEffect::Mode_Default;
+    }
+    else if (m_debugMode == DebugEffect::Mode_BiTangents)
+    {
+        m_showDebug = false;
+    }
+    else
+    {
+        m_debugMode = static_cast<DebugEffect::Mode>(m_debugMode + 1);
+
+        switch (m_debugMode)
+        {
+        case DebugEffect::Mode_Normals: OutputDebugStringA("INFO: Showing normals\n"); break;
+        case DebugEffect::Mode_Tangents: OutputDebugStringA("INFO: Showing tangents\n"); break;
+        case DebugEffect::Mode_BiTangents: OutputDebugStringA("INFO: Showing bi-tangents\n"); break;
+        }
+    }
+}
