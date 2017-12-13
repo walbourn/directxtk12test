@@ -136,6 +136,10 @@ private:
     std::unique_ptr<DirectX::PBREffect>             m_pbrConstant;
     std::unique_ptr<DirectX::PBREffect>             m_pbrEmissive;
     std::unique_ptr<DirectX::PBREffect>             m_pbrCube;
+    std::unique_ptr<DirectX::DebugEffect>           m_debug;
+    std::unique_ptr<DirectX::DebugEffect>           m_debugN;
+    std::unique_ptr<DirectX::DebugEffect>           m_debugT;
+    std::unique_ptr<DirectX::DebugEffect>           m_debugB;
 
     static const size_t s_nMaterials = 3;
     static const size_t s_nIBL = 3;
@@ -150,6 +154,8 @@ private:
 
     uint32_t m_ibl;
     bool m_spinning;
+    bool m_showDebug;
+    DirectX::DebugEffect::Mode m_debugMode;
     float m_pitch;
     float m_yaw;
 
@@ -182,4 +188,6 @@ private:
         HDRScene,
         RTCount
     };
+
+    void CycleDebug();
 };

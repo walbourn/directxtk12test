@@ -300,7 +300,7 @@ Game::Game() :
 #endif
 
     // Used for PBREffect velocity buffer
-    m_velocityBuffer = std::make_unique<DX::RenderTexture>(DXGI_FORMAT_R10G10B10A2_UNORM);
+    m_velocityBuffer = std::make_unique<DX::RenderTexture>(DXGI_FORMAT_R32_UINT /*DXGI_FORMAT_R10G10B10A2_UNORM*/);
 }
 
 Game::~Game()
@@ -655,6 +655,35 @@ void Game::Render()
         y -= 1.f;
     }
 
+	// DebugEffect
+	{
+		auto it = (m_showCompressed) ? m_debugBn.cbegin() : m_debug.cbegin();
+		auto eit = (m_showCompressed) ? m_debugBn.cend() : m_debug.cend();
+		assert(it != eit);
+
+		for (; y > -ortho_height; y -= 1.f)
+		{
+			for (float x = -ortho_width + 0.5f; x < ortho_width; x += 1.f)
+			{
+				(*it)->SetWorld(world * XMMatrixTranslation(x, y, -1.f));
+				(*it)->Apply(commandList);
+				commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+				++it;
+				if (it == eit)
+					break;
+			}
+
+			if (it == eit)
+				break;
+		}
+
+		// Make sure we drew all the effects
+		assert(it == eit);
+
+		y -= 1.f;
+	}
+
     PIXEndEvent(commandList);
 
     // Show the new frame.
@@ -895,7 +924,15 @@ void Game::CreateDeviceDependentResources()
             CommonStates::CullNone,
             rtState);
 
-        pd.inputLayout = (!j) ? TestVertex::InputLayout : TestCompressedVertex::InputLayout;
+		EffectPipelineStateDescription opaquePd(
+			nullptr,
+			CommonStates::Opaque,
+			CommonStates::DepthDefault,
+			CommonStates::CullNone,
+			rtState);
+
+		pd.inputLayout = (!j) ? TestVertex::InputLayout : TestCompressedVertex::InputLayout;
+		opaquePd.inputLayout = (!j) ? TestVertex::InputLayout : TestCompressedVertex::InputLayout;
 
         unsigned int eflags = (!j) ? EffectFlags::None : EffectFlags::BiasedVertexNormals;
 
@@ -1374,7 +1411,7 @@ void Game::CreateDeviceDependentResources()
             pbr.emplace_back(std::move(effect));
 
             // PBREffect (velocity)
-            effect = std::make_unique<PBREffect>(device, eflags | EffectFlags::Texture, pd, false, true);
+            effect = std::make_unique<PBREffect>(device, eflags | EffectFlags::Texture, opaquePd, false, true);
             effect->EnableDefaultLighting();
             effect->SetIBLTextures(radiance, diffuseDesc.MipLevels, irradiance, m_states->LinearWrap());
             effect->SetSurfaceTextures(albeto, normal, rma, m_states->AnisotropicClamp());
@@ -1382,7 +1419,7 @@ void Game::CreateDeviceDependentResources()
             pbr.emplace_back(std::move(effect));
 
             // PBREffect (velocity + emissive)
-            effect = std::make_unique<PBREffect>(device, eflags | EffectFlags::Texture, pd, true, true);
+            effect = std::make_unique<PBREffect>(device, eflags | EffectFlags::Texture, opaquePd, true, true);
             effect->EnableDefaultLighting();
             effect->SetIBLTextures(radiance, diffuseDesc.MipLevels, irradiance, m_states->LinearWrap());
             effect->SetSurfaceTextures(albeto, normal, rma, m_states->AnisotropicClamp());
@@ -1399,6 +1436,47 @@ void Game::CreateDeviceDependentResources()
                 m_pbrBn.swap(pbr);
             }
         }
+
+		//--- DebugEffect ------------------------------------------------------------------
+
+		{
+			std::vector<std::unique_ptr<DirectX::DebugEffect>> debug;
+
+			// DebugEffect
+			auto effect = std::make_unique<DebugEffect>(device, eflags, pd, DebugEffect::Mode_Default);
+			debug.emplace_back(std::move(effect));
+
+			effect = std::make_unique<DebugEffect>(device, eflags, pd, DebugEffect::Mode_Normals);
+			debug.emplace_back(std::move(effect));
+
+			effect = std::make_unique<DebugEffect>(device, eflags, pd, DebugEffect::Mode_Tangents);
+			debug.emplace_back(std::move(effect));
+
+			effect = std::make_unique<DebugEffect>(device, eflags, pd, DebugEffect::Mode_BiTangents);
+			debug.emplace_back(std::move(effect));
+
+			// DebugEffect (vertex color)
+			effect = std::make_unique<DebugEffect>(device, eflags | EffectFlags::VertexColor, pd, DebugEffect::Mode_Default);
+			debug.emplace_back(std::move(effect));
+
+			effect = std::make_unique<DebugEffect>(device, eflags | EffectFlags::VertexColor, pd, DebugEffect::Mode_Normals);
+			debug.emplace_back(std::move(effect));
+
+			effect = std::make_unique<DebugEffect>(device, eflags | EffectFlags::VertexColor, pd, DebugEffect::Mode_Tangents);
+			debug.emplace_back(std::move(effect));
+
+			effect = std::make_unique<DebugEffect>(device, eflags | EffectFlags::VertexColor, pd, DebugEffect::Mode_BiTangents);
+			debug.emplace_back(std::move(effect));
+
+			if (!j)
+			{
+				m_debug.swap(debug);
+			}
+			else
+			{
+				m_debugBn.swap(debug);
+			}
+		}
     }
 
     EffectPipelineStateDescription pd(
@@ -1553,6 +1631,16 @@ void Game::CreateWindowSizeDependentResources()
     {
         it->SetProjection(projection);
     }
+
+	for (auto& it : m_debug)
+	{
+		it->SetProjection(projection);
+	}
+
+	for (auto& it : m_debugBn)
+	{
+		it->SetProjection(projection);
+	}
 }
 
 #if !defined(_XBOX_ONE) || !defined(_TITLE)
@@ -1570,6 +1658,8 @@ void Game::OnDeviceLost()
     m_normalMapBn.clear();
     m_pbr.clear();
     m_pbrBn.clear();
+	m_debug.clear();
+	m_debugBn.clear();
 
     m_cat.Reset();
     m_cubemap.Reset();
