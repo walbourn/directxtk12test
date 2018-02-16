@@ -7,7 +7,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
-    <ClInclude Include="Game.h" />
     <ClInclude Include="..\Common\d3dx12.h">
       <Filter>Common</Filter>
     </ClInclude>
@@ -17,6 +16,7 @@
     <ClInclude Include="..\Common\DeviceResourcesPC.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="Game.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
