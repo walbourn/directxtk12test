@@ -42,7 +42,7 @@ namespace
     const float row2 = -2.f;
 }
 
-Game::Game() :
+Game::Game() noexcept(false) :
     m_spinning(true),
     m_pitch(0),
     m_yaw(0)
@@ -507,21 +507,22 @@ void Game::CreateDeviceDependentResources()
 
     resourceUpload.Begin();
 
+    m_abstractModelResources = std::make_unique<EffectTextureFactory>(device, resourceUpload, m_resourceDescriptors->Heap());
     m_modelResources = std::make_unique<EffectTextureFactory>(device, resourceUpload, m_resourceDescriptors->Heap());
+
 #ifdef GAMMA_CORRECT_RENDERING
     m_modelResources->EnableForceSRGB(true);
 #endif
-
 #ifdef AUTOGENMIPS
     m_modelResources->EnableAutoGenMips(true);
 #endif
 
+    m_abstractFXFactory = std::make_unique<EffectFactory>(m_resourceDescriptors->Heap(), m_states->Heap());
     m_fxFactory = std::make_unique<EffectFactory>(m_resourceDescriptors->Heap(), m_states->Heap());
 
 #ifndef PERPIXELLIGHTING
     m_fxFactory->EnablePerPixelLighting(false);
 #endif
-
 #ifndef NORMALMAPS
     m_fxFactory->EnableNormalMapEffect(false);
 #endif
@@ -847,8 +848,12 @@ void Game::OnDeviceLost()
     m_defaultTex.Reset();
     m_cubemap.Reset();
 
+    m_abstractModelResources.reset();
     m_modelResources.reset();
+
+    m_abstractFXFactory.reset();
     m_fxFactory.reset();
+
     m_resourceDescriptors.reset();
     m_states.reset();
     m_graphicsMemory.reset();

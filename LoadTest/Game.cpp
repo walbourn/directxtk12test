@@ -41,7 +41,7 @@ using namespace DirectX::SimpleMath;
 using Microsoft::WRL::ComPtr;
 
 // Constructor.
-Game::Game() :
+Game::Game() noexcept(false) :
     m_frame(0)
 {
 #ifdef GAMMA_CORRECT_RENDERING

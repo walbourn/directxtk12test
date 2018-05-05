@@ -144,7 +144,11 @@ namespace
     };
 }  // anonymous namespace
 
-Game::Game() :
+Game::Game() noexcept(false) :
+    m_indexCount(0),
+    m_vertexBufferView{},
+    m_vertexBufferViewBn{},
+    m_indexBufferView{},
     m_showCompressed(false),
     m_delay(0)
 {

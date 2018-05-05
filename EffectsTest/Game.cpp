@@ -142,7 +142,7 @@ namespace
     }
 } // anonymous namespace
 
-Game::Game()
+Game::Game() noexcept(false)
 {
 #ifdef GAMMA_CORRECT_RENDERING
     m_deviceResources = std::make_unique<DX::DeviceResources>(DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
@@ -270,6 +270,8 @@ void Game::Render()
     commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
     commandList->IASetIndexBuffer(&m_indexBufferView);
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    m_abstractEffect->Apply(commandList);
 
     //--- BasicEFfect ----------------------------------------------------------------------
     // Simple unlit teapot.
@@ -781,7 +783,9 @@ void Game::CreateDeviceDependentResources()
 #endif
             rtState);
 
-        //--- BasicEFfect ------------------------------------------------------------------
+        m_abstractEffect = std::make_unique<BasicEffect>(device, EffectFlags::None, pdAlpha);
+
+        //--- BasicEffect ------------------------------------------------------------------
         m_basicEffectUnlit = std::make_unique<BasicEffect>(device, EffectFlags::None, pdAlpha);
         m_basicEffectUnlit->SetDiffuseColor(blue);
 
@@ -1168,6 +1172,8 @@ void Game::CreateWindowSizeDependentResources()
 #if !defined(_XBOX_ONE) || !defined(_TITLE)
 void Game::OnDeviceLost()
 {
+    m_abstractEffect.reset();
+
     m_basicEffectUnlit.reset();
     m_basicEffectUnlitFog.reset();
     m_basicEffectUnlitVc.reset();

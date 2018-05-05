@@ -49,7 +49,7 @@ using namespace DirectX;
 
 using Microsoft::WRL::ComPtr;
 
-Game::Game() :
+Game::Game() noexcept(false) :
     m_spinning(true),
     m_pitch(0),
     m_yaw(0)

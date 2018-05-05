@@ -29,7 +29,7 @@ using namespace DirectX;
 
 using Microsoft::WRL::ComPtr;
 
-Game::Game() :
+Game::Game() noexcept(false) :
     m_frame(0)
 {
     // 2D only rendering
