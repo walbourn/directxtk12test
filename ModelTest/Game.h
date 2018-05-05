@@ -35,7 +35,7 @@ class Game
 {
 public:
 
-    Game();
+    Game() noexcept(false);
     ~Game();
 
     // Initialization and management
@@ -134,7 +134,10 @@ private:
     std::unique_ptr<DirectX::Model>                 m_nmap;
     std::vector<std::shared_ptr<DirectX::IEffect>>  m_nmapNormal;
 
+    std::unique_ptr<DirectX::IEffectTextureFactory> m_abstractModelResources;
     std::unique_ptr<DirectX::EffectTextureFactory>  m_modelResources;
+
+    std::unique_ptr<DirectX::IEffectFactory>        m_abstractFXFactory;
     std::unique_ptr<DirectX::EffectFactory>         m_fxFactory;
 
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_defaultTex;

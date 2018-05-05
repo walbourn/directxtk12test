@@ -33,7 +33,7 @@ class Game
 {
 public:
 
-    Game();
+    Game() noexcept(false);
     ~Game();
 
     // Initialization and management
@@ -126,6 +126,7 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_blur1Tex;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_blur2Tex;
 
+    std::unique_ptr<DirectX::IPostProcess>          m_abstractPostProcess;
     std::unique_ptr<DirectX::BasicPostProcess>      m_basicPostProcess[DirectX::BasicPostProcess::Effect_Max];
     std::unique_ptr<DirectX::DualPostProcess>       m_dualPostProcess[DirectX::DualPostProcess::Effect_Max];
 

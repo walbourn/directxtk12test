@@ -27,7 +27,7 @@ using namespace DirectX::SimpleMath;
 
 using Microsoft::WRL::ComPtr;
 
-Game::Game()
+Game::Game() noexcept(false)
 {
 #ifdef GAMMA_CORRECT_RENDERING
     m_deviceResources = std::make_unique<DX::DeviceResources>(DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);

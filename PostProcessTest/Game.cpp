@@ -31,7 +31,7 @@ namespace
     const DXGI_FORMAT c_hdrFormat = DXGI_FORMAT_R16G16B16A16_FLOAT;
 }
 
-Game::Game() :
+Game::Game() noexcept(false)  :
     m_scene(0)
 {
     m_deviceResources = std::make_unique<DX::DeviceResources>(c_sdrFormat);
@@ -926,6 +926,8 @@ void Game::CreateDeviceDependentResources()
     m_world = Matrix::Identity;
 
     // Setup post processing
+    m_abstractPostProcess = std::make_unique<BasicPostProcess>(device, rtState, BasicPostProcess::Copy);
+
     for (int j = 0; j < static_cast<int>(BasicPostProcess::Effect_Max); ++j)
     {
         m_basicPostProcess[j] = std::make_unique<BasicPostProcess>(device, rtState, static_cast<BasicPostProcess::Effect>(j));
@@ -1057,6 +1059,8 @@ void Game::OnDeviceLost()
     m_sceneTex.Reset();
     m_blur1Tex.Reset();
     m_blur2Tex.Reset();
+
+    m_abstractPostProcess.reset();
 
     for (int j = 0; j < static_cast<int>(BasicPostProcess::Effect_Max); ++j)
     {

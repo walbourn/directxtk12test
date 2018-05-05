@@ -25,20 +25,24 @@ namespace
 };
 
 // Constructor for DeviceResources.
-DeviceResources::DeviceResources(DXGI_FORMAT backBufferFormat, DXGI_FORMAT depthBufferFormat, UINT backBufferCount, unsigned int flags) :
-    m_backBufferIndex(0),
-    m_fenceValues{},
-    m_rtvDescriptorSize(0),
-    m_screenViewport{},
-    m_scissorRect{},
-    m_backBufferFormat((flags & c_EnableHDR) ? DXGI_FORMAT_R10G10B10A2_UNORM : backBufferFormat),
-    m_depthBufferFormat(depthBufferFormat),
-    m_backBufferCount(backBufferCount),
-    m_window(nullptr),
-    m_d3dFeatureLevel(D3D_FEATURE_LEVEL_12_0),
-    m_outputSize{0, 0, 1920, 1080},
-    m_options(flags),
-    m_gameDVRFormat((flags & c_EnableHDR) ? backBufferFormat : DXGI_FORMAT_UNKNOWN)
+DeviceResources::DeviceResources(
+    DXGI_FORMAT backBufferFormat,
+    DXGI_FORMAT depthBufferFormat,
+    UINT backBufferCount,
+    unsigned int flags) noexcept(false) :
+        m_backBufferIndex(0),
+        m_fenceValues{},
+        m_rtvDescriptorSize(0),
+        m_screenViewport{},
+        m_scissorRect{},
+        m_backBufferFormat((flags & c_EnableHDR) ? DXGI_FORMAT_R10G10B10A2_UNORM : backBufferFormat),
+        m_depthBufferFormat(depthBufferFormat),
+        m_backBufferCount(backBufferCount),
+        m_window(nullptr),
+        m_d3dFeatureLevel(D3D_FEATURE_LEVEL_12_0),
+        m_outputSize{0, 0, 1920, 1080},
+        m_options(flags),
+        m_gameDVRFormat((flags & c_EnableHDR) ? backBufferFormat : DXGI_FORMAT_UNKNOWN)
 {
     if (backBufferCount > MAX_BACK_BUFFER_COUNT)
     {

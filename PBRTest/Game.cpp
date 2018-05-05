@@ -102,7 +102,7 @@ namespace
     }
 }
 
-Game::Game() :
+Game::Game() noexcept(false) :
     m_ibl(0),
     m_spinning(true),
     m_showDebug(false),

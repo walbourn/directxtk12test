@@ -32,7 +32,7 @@ using namespace DirectX;
 
 using Microsoft::WRL::ComPtr;
 
-Game::Game()
+Game::Game() noexcept(false)
 {
     // 2D only rendering
 #ifdef GAMMA_CORRECT_RENDERING

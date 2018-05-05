@@ -33,7 +33,7 @@ class Game
 {
 public:
 
-    Game();
+    Game() noexcept(false);
     ~Game();
 
     // Initialization and management
@@ -108,6 +108,8 @@ private:
 
     D3D12_VERTEX_BUFFER_VIEW                        m_vertexBufferView;
     D3D12_INDEX_BUFFER_VIEW                         m_indexBufferView;
+
+    std::unique_ptr<DirectX::IEffect>               m_abstractEffect;
 
     std::unique_ptr<DirectX::BasicEffect>           m_basicEffectUnlit;
     std::unique_ptr<DirectX::BasicEffect>           m_basicEffectUnlitFog;
