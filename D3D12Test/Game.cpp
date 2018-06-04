@@ -98,9 +98,23 @@ static_assert(std::is_move_assignable<VertexPositionNormalColorTexture>::value, 
 Game::Game() noexcept(false)
 {
 #ifdef GAMMA_CORRECT_RENDERING
-    m_deviceResources = std::make_unique<DX::DeviceResources>(DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
+    const DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
 #else
-    m_deviceResources = std::make_unique<DX::DeviceResources>();
+    const DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
+#endif
+
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    m_deviceResources = std::make_unique<DX::DeviceResources>(
+        c_RenderFormat, DXGI_FORMAT_D32_FLOAT, 2,
+        DX::DeviceResources::c_Enable4K_UHD
+        );
+#elif defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+    m_deviceResources = std::make_unique<DX::DeviceResources>(
+        c_RenderFormat, DXGI_FORMAT_D32_FLOAT, 2, D3D_FEATURE_LEVEL_11_0,
+        DX::DeviceResources::c_Enable4K_Xbox
+        );
+#else
+    m_deviceResources = std::make_unique<DX::DeviceResources>(c_RenderFormat);
 #endif
 
 #if !defined(_XBOX_ONE) || !defined(_TITLE)
