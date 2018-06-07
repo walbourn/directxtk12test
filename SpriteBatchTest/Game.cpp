@@ -513,7 +513,27 @@ void Game::CreateWindowSizeDependentResources()
     m_spriteBatchAC->SetViewport(viewport);
     m_spriteBatchAW->SetViewport(viewport);
 
-#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    if (m_deviceResources->GetDeviceOptions() & DX::DeviceResources::c_Enable4K_UHD)
+    {
+        // Scale sprite batch rendering when running 4k
+        static const D3D12_VIEWPORT s_vp1080 = { 0.f, 0.f, 1920.f, 1080.f, D3D12_MIN_DEPTH, D3D12_MAX_DEPTH };
+        m_spriteBatch->SetViewport(s_vp1080);
+        m_spriteBatchPC->SetViewport(s_vp1080);
+        m_spriteBatchAC->SetViewport(s_vp1080);
+        m_spriteBatchAW->SetViewport(s_vp1080);
+    }
+#elif defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+    if (m_deviceResources->GetDeviceOptions() & DX::DeviceResources::c_Enable4K_Xbox)
+    {
+        // Scale sprite batch rendering when running 4k
+        static const D3D12_VIEWPORT s_vp1080 = { 0.f, 0.f, 1920.f, 1080.f, D3D12_MIN_DEPTH, D3D12_MAX_DEPTH };
+        m_spriteBatch->SetViewport(s_vp1080);
+        m_spriteBatchPC->SetViewport(s_vp1080);
+        m_spriteBatchAC->SetViewport(s_vp1080);
+        m_spriteBatchAW->SetViewport(s_vp1080);
+    }
+
     auto rotation = m_deviceResources->GetRotation();
     m_spriteBatch->SetRotation(rotation);
     m_spriteBatchPC->SetRotation(rotation);

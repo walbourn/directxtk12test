@@ -246,8 +246,15 @@ void Game::Render()
             ascii[i++] = static_cast<char>(j + 1);
         }
 
+        int cp = 437;
+    #if defined(_XBOX_ONE) && defined(_TITLE)
+        cp = 1252;
+
+        m_consolasFont->SetDefaultCharacter('-');
+    #endif
+
         wchar_t unicode[256] = {};
-        if (!MultiByteToWideChar(437, MB_PRECOMPOSED, ascii, i, unicode, 256))
+        if (!MultiByteToWideChar(cp, MB_PRECOMPOSED, ascii, i, unicode, 256))
             wcscpy_s(unicode, L"<ERROR!>\n");
 
         m_consolasFont->DrawString(m_spriteBatch.get(), unicode, XMFLOAT2(10, 600), cyan);
@@ -257,6 +264,7 @@ void Game::Render()
 
     m_ctrlOneFont->DrawString(m_spriteBatch.get(), L" !\"\n#$%\n&'()\n*+,-", XMFLOAT2(950, 130), Colors::White, 0.f, XMFLOAT2(0.f, 0.f), 0.5f);
 
+#if !defined(_XBOX_ONE) || !defined(_TITLE)
     {
         UINT w, h;
 
@@ -288,6 +296,7 @@ void Game::Render()
             m_nonproportionalFont->DrawString(m_spriteBatch.get(), tmp, XMFLOAT2(float(w - 100), float(y)), red);
         }
     }
+#endif
 
     m_spriteBatch->End();
 
@@ -464,7 +473,21 @@ void Game::CreateWindowSizeDependentResources()
     auto viewport = m_deviceResources->GetScreenViewport();
     m_spriteBatch->SetViewport(viewport);
 
-#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    if (m_deviceResources->GetDeviceOptions() & DX::DeviceResources::c_Enable4K_UHD)
+    {
+        // Scale sprite batch rendering when running 4k
+        static const D3D12_VIEWPORT s_vp1080 = { 0.f, 0.f, 1920.f, 1080.f, D3D12_MIN_DEPTH, D3D12_MAX_DEPTH };
+        m_spriteBatch->SetViewport(s_vp1080);
+    }
+#elif defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+    if (m_deviceResources->GetDeviceOptions() & DX::DeviceResources::c_Enable4K_Xbox)
+    {
+        // Scale sprite batch rendering when running 4k
+        static const D3D12_VIEWPORT s_vp1080 = { 0.f, 0.f, 1920.f, 1080.f, D3D12_MIN_DEPTH, D3D12_MAX_DEPTH };
+        m_spriteBatch->SetViewport(s_vp1080);
+    }
+
     auto rotation = m_deviceResources->GetRotation();
     m_spriteBatch->SetRotation(rotation);
 #endif
