@@ -36,7 +36,7 @@
         DisplayName="PBRTest (DirectX 12)"
         Square150x150Logo="Logo.png"
         Square44x44Logo="SmallLogo.png"
-        Description="PBRTest"
+        Description="PBRTest for DirectX Tool Kit for DirectX 12 (UWP)"
         BackgroundColor="transparent">
         <uap:DefaultTile Wide310x150Logo="WideLogo.png"/>
         <uap:SplashScreen Image="SplashScreen.png" />
@@ -46,7 +46,6 @@
 
   <Capabilities>
     <Capability Name="internetClient" />
-    <rescap:Capability Name="expandedResources" />
     <rescap:Capability Name="hevcPlayback" />
   </Capabilities>
 </Package>
