@@ -34,7 +34,19 @@ namespace
 Game::Game() noexcept(false)  :
     m_scene(0)
 {
-    m_deviceResources = std::make_unique<DX::DeviceResources>(c_sdrFormat);
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    m_deviceResources = std::make_unique<DX::DeviceResources>(
+        c_sdrFormat, DXGI_FORMAT_D32_FLOAT, 2,
+        DX::DeviceResources::c_Enable4K_UHD | DX::DeviceResources::c_EnableHDR);
+#elif defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+    m_deviceResources = std::make_unique<DX::DeviceResources>(
+        c_sdrFormat, DXGI_FORMAT_D32_FLOAT, 2, D3D_FEATURE_LEVEL_11_0,
+        DX::DeviceResources::c_EnableHDR | DX::DeviceResources::c_Enable4K_Xbox);
+#else
+    m_deviceResources = std::make_unique<DX::DeviceResources>(
+        c_sdrFormat, DXGI_FORMAT_D32_FLOAT, 2, D3D_FEATURE_LEVEL_11_0,
+        DX::DeviceResources::c_EnableHDR);
+#endif
 
 #if !defined(_XBOX_ONE) || !defined(_TITLE)
     m_deviceResources->RegisterDeviceNotify(this);

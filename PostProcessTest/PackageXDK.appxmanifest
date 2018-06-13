@@ -8,7 +8,7 @@
             Version="1.0.0.0" />
 
   <Properties>
-    <DisplayName>PostProcessTest (DirectX 12)</DisplayName>
+    <DisplayName>PostProcessTest (DirectX 12, Xbox)</DisplayName>
     <PublisherDisplayName>Microsoft Corporation</PublisherDisplayName>
     <Logo>StoreLogo.png</Logo>
     <Description>PostProcessTest</Description>
@@ -28,10 +28,10 @@
         Executable="$targetnametoken$.exe"
         EntryPoint="PostProcessTest.App">
       <VisualElements
-          DisplayName="PostProcessTest (DirectX 12)"
+          DisplayName="PostProcessTest (DirectX 12, Xbox)"
           Logo="Logo.png"
           SmallLogo="SmallLogo.png"
-          Description="PostProcessTest"
+          Description="PostProcessTest for DirectX Tool Kit for DirectX 12 (Xbox)"
           ForegroundText="light"
           BackgroundColor="#464646">
         <SplashScreen Image="SplashScreen.png" />
