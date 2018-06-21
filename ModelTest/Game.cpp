@@ -768,9 +768,23 @@ void Game::CreateDeviceDependentResources()
     }
 
     // Optimize some models
-    m_cup->LoadBuffers(device, resourceUpload);
-    m_cupMesh->LoadBuffers(device, resourceUpload);
-    m_vbo->LoadBuffers(device, resourceUpload);
+    assert(!m_cupMesh->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer);
+    assert(!m_cup->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer);
+    m_cup->LoadStaticBuffers(device, resourceUpload);
+    assert(m_cup->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer && !m_cup->meshes[0]->opaqueMeshParts[0]->vertexBuffer);
+    assert(m_cup->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer && !m_cup->meshes[0]->opaqueMeshParts[0]->indexBuffer);
+
+    assert(!m_cupMesh->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer);
+    assert(!m_cupMesh->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer);
+    m_cupMesh->LoadStaticBuffers(device, resourceUpload);
+    assert(m_cupMesh->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer && !m_cupMesh->meshes[0]->opaqueMeshParts[0]->vertexBuffer);
+    assert(m_cupMesh->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer && !m_cupMesh->meshes[0]->opaqueMeshParts[0]->indexBuffer);
+
+    assert(!m_vbo->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer);
+    assert(!m_vbo->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer);
+    m_vbo->LoadStaticBuffers(device, resourceUpload, true);
+    assert(m_vbo->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer && m_vbo->meshes[0]->opaqueMeshParts[0]->vertexBuffer);
+    assert(m_vbo->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer && m_vbo->meshes[0]->opaqueMeshParts[0]->indexBuffer);
 
     auto uploadResourcesFinished = resourceUpload.End(m_deviceResources->GetCommandQueue());
 
