@@ -768,7 +768,7 @@ void Game::CreateDeviceDependentResources()
     }
 
     // Optimize some models
-    assert(!m_cupMesh->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer);
+    assert(!m_cup->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer);
     assert(!m_cup->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer);
     m_cup->LoadStaticBuffers(device, resourceUpload);
     assert(m_cup->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer && !m_cup->meshes[0]->opaqueMeshParts[0]->vertexBuffer);
