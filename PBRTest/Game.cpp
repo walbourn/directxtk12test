@@ -103,6 +103,12 @@ namespace
 }
 
 Game::Game() noexcept(false) :
+    m_indexCount(0),
+    m_vertexBufferView{},
+    m_indexBufferView{},
+    m_indexCountCube(0),
+    m_vertexBufferViewCube{},
+    m_indexBufferViewCube{},
     m_ibl(0),
     m_spinning(true),
     m_showDebug(false),
