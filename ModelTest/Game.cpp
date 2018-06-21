@@ -767,6 +767,11 @@ void Game::CreateDeviceDependentResources()
         CreateShaderResourceView(device, m_cubemap.Get(), m_resourceDescriptors->GetCpuHandle(StaticDescriptors::Cubemap), iscubemap);
     }
 
+    // Optimize some models
+    m_cup->LoadBuffers(device, resourceUpload);
+    m_cupMesh->LoadBuffers(device, resourceUpload);
+    m_vbo->LoadBuffers(device, resourceUpload);
+
     auto uploadResourcesFinished = resourceUpload.End(m_deviceResources->GetCommandQueue());
 
     uploadResourcesFinished.wait();

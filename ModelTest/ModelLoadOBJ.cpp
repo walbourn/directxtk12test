@@ -196,7 +196,9 @@ std::unique_ptr<Model> CreateModelFromOBJ(_In_z_ const wchar_t* szFileName)
             part->startIndex = static_cast<uint32_t>(sindex);
             part->vertexStride = static_cast<uint32_t>(sizeof(VertexPositionNormalTexture));
 
+            part->indexBufferSize = static_cast<uint32_t>(indexSize);
             part->indexBuffer = ib;
+            part->vertexBufferSize = static_cast<uint32_t>(vertSize);
             part->vertexBuffer = vb;
             part->materialIndex = matIndex;
             part->vbDecl = g_vbdecl;
