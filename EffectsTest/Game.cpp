@@ -142,7 +142,10 @@ namespace
     }
 } // anonymous namespace
 
-Game::Game() noexcept(false)
+Game::Game() noexcept(false) :
+    m_indexCount(0),
+    m_vertexBufferView{},
+    m_indexBufferView{}
 {
 #ifdef GAMMA_CORRECT_RENDERING
     const DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
