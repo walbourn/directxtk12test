@@ -330,6 +330,28 @@ void Game::Render()
     Model::UpdateEffectMatrices(m_cupFog, local, m_view, m_projection);
     m_cup->Draw(commandList, m_cupFog.cbegin());
 
+        // Custom drawing
+    local = XMMatrixRotationX(cos(time)) * XMMatrixTranslation(-5.f, row0, cos(time) * 2.f);
+    for (auto mit = m_cup->meshes.cbegin(); mit != m_cup->meshes.cend(); ++mit)
+    {
+        auto mesh = mit->get();
+        assert(mesh != 0);
+
+        for (auto it = mesh->opaqueMeshParts.cbegin(); it != mesh->opaqueMeshParts.cend(); ++it)
+        {
+            auto part = it->get();
+            assert(part != 0);
+
+            auto effect = m_cupNormal.begin()->get();
+
+            auto imatrices = dynamic_cast<IEffectMatrices*>(effect);
+            if (imatrices) imatrices->SetWorld(local);
+
+            effect->Apply(commandList);
+            part->DrawInstanced(commandList, 1);
+        }
+    }
+
     //--- Draw VBO models ------------------------------------------------------------------
     local = XMMatrixMultiply(XMMatrixScaling(0.25f, 0.25f, 0.25f), XMMatrixTranslation(4.5f, row0, 0.f));
     local = XMMatrixMultiply(world, local);
