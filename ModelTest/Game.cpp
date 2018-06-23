@@ -342,7 +342,7 @@ void Game::Render()
             auto part = it->get();
             assert(part != 0);
 
-            auto effect = m_cupNormal.begin()->get();
+            auto effect = m_cupNormal[part->partIndex].get();
 
             auto imatrices = dynamic_cast<IEffectMatrices*>(effect);
             if (imatrices) imatrices->SetWorld(local);
@@ -350,6 +350,9 @@ void Game::Render()
             effect->Apply(commandList);
             part->DrawInstanced(commandList, 1);
         }
+
+        // Skipping alphaMeshParts for this model since we know it's empty...
+        assert(mesh->alphaMeshParts.empty());
     }
 
     //--- Draw VBO models ------------------------------------------------------------------
