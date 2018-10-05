@@ -203,6 +203,13 @@
       <Project>{3e0e8608-cd9b-4c76-af33-29ca38f2c9f0}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="arrow.png" />
+    <Image Include="texture.dds" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="comic.spritefont" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

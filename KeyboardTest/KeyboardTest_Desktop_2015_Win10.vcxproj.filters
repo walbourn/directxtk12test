@@ -37,4 +37,14 @@
       <Filter>Common</Filter>
     </Manifest>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="comic.spritefont">
+      <Filter>Assets</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="texture.dds">
+      <Filter>Assets</Filter>
+    </Image>
+  </ItemGroup>
 </Project>

@@ -37,4 +37,17 @@
       <Filter>Common</Filter>
     </Manifest>
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="arrow.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="texture.dds">
+      <Filter>Assets</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="comic.spritefont">
+      <Filter>Assets</Filter>
+    </None>
+  </ItemGroup>
 </Project>

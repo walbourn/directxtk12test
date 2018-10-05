@@ -88,7 +88,7 @@ void Game::Initialize(
 
     m_gamePad = std::make_unique<GamePad>();
 
-#if 0 // !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
+#if 0 // BUGBUG - !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
     // Singleton test
     {
         bool thrown = false;

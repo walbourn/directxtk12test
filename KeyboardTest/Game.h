@@ -91,10 +91,29 @@ private:
     // Rendering loop timer.
     DX::StepTimer                           m_timer;
 
-    // Input devices.
-    std::unique_ptr<DirectX::GamePad>       m_gamePad;
-    std::unique_ptr<DirectX::Keyboard>      m_keyboard;
-
     // DirectXTK Test Objects
     std::unique_ptr<DirectX::GraphicsMemory>    m_graphicsMemory;
+    std::unique_ptr<DirectX::DescriptorHeap>    m_resourceDescriptors;
+    std::unique_ptr<DirectX::CommonStates>      m_states;
+
+    std::unique_ptr<DirectX::SpriteBatch>               m_spriteBatch;
+    std::unique_ptr<DirectX::SpriteFont>                m_comicFont;
+    std::unique_ptr<DirectX::Keyboard>                  m_keyboard;
+    DirectX::Keyboard::KeyboardStateTracker             m_tracker;
+    DirectX::Keyboard::State                            m_kb;
+    std::unique_ptr<DirectX::GeometricPrimitive>        m_room;
+    std::unique_ptr<DirectX::BasicEffect>               m_roomEffect;
+    Microsoft::WRL::ComPtr<ID3D12Resource>              m_roomTex;
+
+    enum Descriptors
+    {
+        ComicFont,
+        RoomTex,
+        Count
+    };
+
+    DirectX::SimpleMath::Vector3                        m_cameraPos;
+
+    const wchar_t *                                     m_lastStr;
+    wchar_t                                             m_lastStrBuff[128];
 };

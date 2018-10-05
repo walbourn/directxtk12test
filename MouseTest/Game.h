@@ -92,9 +92,39 @@ private:
     DX::StepTimer                           m_timer;
 
     // Input devices.
-    std::unique_ptr<DirectX::GamePad>       m_gamePad;
-    std::unique_ptr<DirectX::Keyboard>      m_keyboard;
+    std::unique_ptr<DirectX::Keyboard>          m_keyboard;
+    std::unique_ptr<DirectX::Mouse>             m_mouse;
+
+    DirectX::Keyboard::KeyboardStateTracker     m_keyboardButtons;
+    DirectX::Mouse::ButtonStateTracker          m_tracker;
 
     // DirectXTK Test Objects
     std::unique_ptr<DirectX::GraphicsMemory>    m_graphicsMemory;
+    std::unique_ptr<DirectX::DescriptorHeap>    m_resourceDescriptors;
+    std::unique_ptr<DirectX::CommonStates>      m_states;
+
+    std::unique_ptr<DirectX::SpriteBatch>               m_spriteBatch;
+    std::unique_ptr<DirectX::SpriteFont>                m_comicFont;
+    DirectX::Mouse::State                               m_ms;
+    DirectX::Mouse::Mode                                m_lastMode;
+    std::unique_ptr<DirectX::GeometricPrimitive>        m_room;
+    std::unique_ptr<DirectX::BasicEffect>               m_roomEffect;
+    Microsoft::WRL::ComPtr<ID3D12Resource>              m_roomTex;
+    Microsoft::WRL::ComPtr<ID3D12Resource>              m_cursor;
+
+    enum Descriptors
+    {
+        ComicFont,
+        RoomTex,
+        ArrowTex,
+        Count
+    };
+
+    float                                               m_pitch;
+    float                                               m_yaw;
+
+    DirectX::SimpleMath::Vector3                        m_cameraPos;
+
+    const wchar_t *                                     m_lastStr;
+    wchar_t                                             m_lastStrBuff[128];
 };

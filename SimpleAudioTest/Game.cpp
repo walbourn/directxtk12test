@@ -747,7 +747,6 @@ void Game::CreateDeviceDependentResources()
     uploadResourcesFinished.wait();
 
     m_deviceResources->WaitForGpu();
-
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
