@@ -86,6 +86,17 @@ public:
                 }
             }
         }
+
+#ifdef AUDIO_WATCHER
+        using namespace Windows::Devices::Enumeration;
+
+        m_audioWatcher = DeviceInformation::CreateWatcher(DeviceClass::AudioRender);
+
+        m_audioWatcher->Added += ref new TypedEventHandler<DeviceWatcher^, DeviceInformation^>(this, &ViewProvider::OnAudioDeviceAdded);
+        m_audioWatcher->Updated += ref new TypedEventHandler<DeviceWatcher^, DeviceInformationUpdate^>(this, &ViewProvider::OnAudioDeviceUpdated);
+
+        m_audioWatcher->Start();
+#endif
     }
 
     virtual void Uninitialize()
@@ -345,6 +356,10 @@ private:
     Windows::Graphics::Display::DisplayOrientations	m_nativeOrientation;
     Windows::Graphics::Display::DisplayOrientations	m_currentOrientation;
 
+#ifdef AUDIO_WATCHER
+    Windows::Devices::Enumeration::DeviceWatcher^ m_audioWatcher;
+#endif
+
     inline int ConvertDipsToPixels(float dips) const
     {
         return int(dips * m_DPI / 96.f + 0.5f);
@@ -421,6 +436,18 @@ private:
 
         m_game->OnWindowSizeChanged(outputWidth, outputHeight, rotation);
     }
+
+#ifdef AUDIO_WATCHER
+    void OnAudioDeviceAdded(Windows::Devices::Enumeration::DeviceWatcher^ sender, Windows::Devices::Enumeration::DeviceInformation^ args)
+    {
+        m_game->OnAudioDeviceChange();
+    }
+
+    void OnAudioDeviceUpdated(Windows::Devices::Enumeration::DeviceWatcher^ sender, Windows::Devices::Enumeration::DeviceInformationUpdate^ args)
+    {
+        m_game->OnAudioDeviceChange();
+    }
+#endif
 };
 
 ref class ViewProviderFactory : IFrameworkViewSource
