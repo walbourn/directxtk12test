@@ -37,4 +37,12 @@
       <Filter>Common</Filter>
     </Manifest>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="comic.spritefont">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="xboxController.spritefont">
+      <Filter>Assets</Filter>
+    </None>
+  </ItemGroup>
 </Project>

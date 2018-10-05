@@ -76,12 +76,19 @@
 #include <stdio.h>
 #include <pix.h>
 
+#include "DescriptorHeap.h"
+#include "DirectXHelpers.h"
 #include "GamePad.h"
 #include "GraphicsMemory.h"
 #include "Keyboard.h"
 #include "Mouse.h"
 #include "RenderTargetState.h"
+#include "ResourceUploadBatch.h"
 #include "SimpleMath.h"
+#include "SpriteBatch.h"
+#include "SpriteFont.h"
+
+#include "PlatformHelpers.h"
 
 namespace DX
 {
