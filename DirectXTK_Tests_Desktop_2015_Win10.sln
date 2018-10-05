@@ -15,7 +15,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PrimitivesTest_Desktop_2015
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LoadTest_Desktop_2015_Win10", "LoadTest\LoadTest_Desktop_2015_Win10.vcxproj", "{3FFD498C-90A1-45FE-8232-DD653D216B03}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{B32E701E-AA5B-4017-93DC-724FC1CE4DD0}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Graphics", "Graphics", "{B32E701E-AA5B-4017-93DC-724FC1CE4DD0}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EffectsTest_Desktop_2015_Win10", "EffectsTest\EffectsTest_Desktop_2015_Win10.vcxproj", "{25A385F0-3EC3-47FC-B582-BDFFC856B580}"
 EndProject
@@ -33,7 +33,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GamePadTest_Desktop_2015_Wi
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Audio", "Audio", "{2C5A5F8A-ABE6-49F5-AE6D-BDB8D3C57C9C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SimpleAudioTest_Desktop_Win10", "SimpleAudioTest\SimpleAudioTest_Desktop_Win10.vcxproj", "{49DD7AE8-FC69-44A5-B71B-ACE58B33442A}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SimpleAudioTest_Desktop_2015_Win10", "SimpleAudioTest\SimpleAudioTest_Desktop_2015_Win10.vcxproj", "{49DD7AE8-FC69-44A5-B71B-ACE58B33442A}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Audio3DTest_Desktop_2015_Win10", "Audio3DTest\Audio3DTest_Desktop_2015_Win10.vcxproj", "{0D1C22A6-35FF-4B5C-A929-F326CF57F66A}"
 EndProject

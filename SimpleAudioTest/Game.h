@@ -1,7 +1,7 @@
 //--------------------------------------------------------------------------------------
 // File: Game.h
 //
-// Developer unit test for DirectXTK ?
+// Developer unit test for DirectXTK - Simple Audio Test (UI-based BasicAudioTest)
 //
 // THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 // ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
