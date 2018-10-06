@@ -15,8 +15,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <RootNamespace>D3D12Test</RootNamespace>
-    <ProjectGuid>{63247f00-1894-4fa7-ba99-4b40ec030e09}</ProjectGuid>
+    <RootNamespace>KeyboardTest</RootNamespace>
+    <ProjectGuid>{4128240d-2ff2-4c62-84d3-d1355c966cd2}</ProjectGuid>
     <DefaultLanguage>en-US</DefaultLanguage>
     <Keyword>Win32Proj</Keyword>
     <ApplicationEnvironment>title</ApplicationEnvironment>
@@ -188,11 +188,19 @@
     <AppxManifest Include="PackageXDK.appxmanifest" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="comic.spritefont">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Durango'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Durango'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Profile|Durango'">true</DeploymentContent>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
     <Image Include="..\Common\Logo.scale-100.png" />
     <Image Include="..\Common\SmallLogo.scale-100.png" />
     <Image Include="..\Common\SplashScreen.scale-100.png" />
     <Image Include="..\Common\StoreLogo.scale-100.png" />
     <Image Include="..\Common\WideLogo.scale-100.png" />
+    <Image Include="texture.dds" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

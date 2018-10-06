@@ -386,10 +386,6 @@ void Game::Render()
     yellow.v = Colors::Yellow;
 #endif
 
-#if defined(_XBOX_ONE) && defined(_TITLE)
-    m_deviceResources->Prepare();
-#endif
-
     auto commandList = m_deviceResources->GetCommandList();
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Render");
 

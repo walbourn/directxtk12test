@@ -1,0 +1,95 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Common">
+      <UniqueIdentifier>2d04a6ac-93a3-4294-8cfa-6e06b479de60</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets">
+      <UniqueIdentifier>f9cfeb7a-63b6-4c5e-98b4-c8a32fc4567d</UniqueIdentifier>
+      <Extensions>bmp;dds;fbx;gif;jpg;jpeg;tga;tiff;tif;png</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="Game.h" />
+    <ClInclude Include="..\Common\DeviceResourcesXDK.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\StepTimer.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\TextConsole.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="..\Common\DeviceResourcesXDK.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\MainXDK.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\TextConsole.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\Common\Logo.scale-100.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="..\Common\SmallLogo.scale-100.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="..\Common\SplashScreen.scale-100.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="..\Common\StoreLogo.scale-100.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="..\Common\WideLogo.scale-100.png">
+      <Filter>Assets</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <AppxManifest Include="PackageXDK.appxmanifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ADPCMdroid.xwb">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="comic.spritefont">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="Courier_16.spritefont">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="droid.xwb">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="xmadroid.xwb">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="xwmadroid.xwb">
+      <Filter>Assets</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="Alarm01.wav">
+      <Filter>Assets</Filter>
+    </Media>
+    <Media Include="Alarm01_adpcm.wav">
+      <Filter>Assets</Filter>
+    </Media>
+    <Media Include="Alarm01_float.wav">
+      <Filter>Assets</Filter>
+    </Media>
+    <Media Include="Alarm01_xma.wav">
+      <Filter>Assets</Filter>
+    </Media>
+    <Media Include="Alarm01_xwma.wav">
+      <Filter>Assets</Filter>
+    </Media>
+  </ItemGroup>
+</Project>

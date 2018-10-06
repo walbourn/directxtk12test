@@ -15,8 +15,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <RootNamespace>D3D12Test</RootNamespace>
-    <ProjectGuid>{63247f00-1894-4fa7-ba99-4b40ec030e09}</ProjectGuid>
+    <RootNamespace>MouseTest</RootNamespace>
+    <ProjectGuid>{71b1bb9c-165f-4700-a66b-577723e27cd0}</ProjectGuid>
     <DefaultLanguage>en-US</DefaultLanguage>
     <Keyword>Win32Proj</Keyword>
     <ApplicationEnvironment>title</ApplicationEnvironment>
@@ -185,14 +185,23 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <AppxManifest Include="PackageXDK.appxmanifest" />
-  </ItemGroup>
-  <ItemGroup>
     <Image Include="..\Common\Logo.scale-100.png" />
     <Image Include="..\Common\SmallLogo.scale-100.png" />
     <Image Include="..\Common\SplashScreen.scale-100.png" />
     <Image Include="..\Common\StoreLogo.scale-100.png" />
     <Image Include="..\Common\WideLogo.scale-100.png" />
+    <Image Include="arrow.png" />
+    <Image Include="texture.dds" />
+  </ItemGroup>
+  <ItemGroup>
+    <AppxManifest Include="PackageXDK.appxmanifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="comic.spritefont">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Durango'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Durango'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Profile|Durango'">true</DeploymentContent>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
