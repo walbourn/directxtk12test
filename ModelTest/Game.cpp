@@ -330,6 +330,31 @@ void Game::Render()
     Model::UpdateEffectMatrices(m_cupFog, local, m_view, m_projection);
     m_cup->Draw(commandList, m_cupFog.cbegin());
 
+        // Custom drawing
+    local = XMMatrixRotationX(cos(time)) * XMMatrixTranslation(-5.f, row0, cos(time) * 2.f);
+    for (auto mit = m_cup->meshes.cbegin(); mit != m_cup->meshes.cend(); ++mit)
+    {
+        auto mesh = mit->get();
+        assert(mesh != 0);
+
+        for (auto it = mesh->opaqueMeshParts.cbegin(); it != mesh->opaqueMeshParts.cend(); ++it)
+        {
+            auto part = it->get();
+            assert(part != 0);
+
+            auto effect = m_cupNormal[part->partIndex].get();
+
+            auto imatrices = dynamic_cast<IEffectMatrices*>(effect);
+            if (imatrices) imatrices->SetWorld(local);
+
+            effect->Apply(commandList);
+            part->DrawInstanced(commandList, 1);
+        }
+
+        // Skipping alphaMeshParts for this model since we know it's empty...
+        assert(mesh->alphaMeshParts.empty());
+    }
+
     //--- Draw VBO models ------------------------------------------------------------------
     local = XMMatrixMultiply(XMMatrixScaling(0.25f, 0.25f, 0.25f), XMMatrixTranslation(4.5f, row0, 0.f));
     local = XMMatrixMultiply(world, local);
@@ -766,6 +791,25 @@ void Game::CreateDeviceDependentResources()
 
         CreateShaderResourceView(device, m_cubemap.Get(), m_resourceDescriptors->GetCpuHandle(StaticDescriptors::Cubemap), iscubemap);
     }
+
+    // Optimize some models
+    assert(!m_cup->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer);
+    assert(!m_cup->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer);
+    m_cup->LoadStaticBuffers(device, resourceUpload);
+    assert(m_cup->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer && !m_cup->meshes[0]->opaqueMeshParts[0]->vertexBuffer);
+    assert(m_cup->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer && !m_cup->meshes[0]->opaqueMeshParts[0]->indexBuffer);
+
+    assert(!m_cupMesh->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer);
+    assert(!m_cupMesh->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer);
+    m_cupMesh->LoadStaticBuffers(device, resourceUpload);
+    assert(m_cupMesh->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer && !m_cupMesh->meshes[0]->opaqueMeshParts[0]->vertexBuffer);
+    assert(m_cupMesh->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer && !m_cupMesh->meshes[0]->opaqueMeshParts[0]->indexBuffer);
+
+    assert(!m_vbo->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer);
+    assert(!m_vbo->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer);
+    m_vbo->LoadStaticBuffers(device, resourceUpload, true);
+    assert(m_vbo->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer && m_vbo->meshes[0]->opaqueMeshParts[0]->vertexBuffer);
+    assert(m_vbo->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer && m_vbo->meshes[0]->opaqueMeshParts[0]->indexBuffer);
 
     auto uploadResourcesFinished = resourceUpload.End(m_deviceResources->GetCommandQueue());
 
