@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package xmlns="http://schemas.microsoft.com/appx/2010/manifest"
+         xmlns:mx="http://schemas.microsoft.com/appx/2013/xbox/manifest"
+         IgnorableNamespaces="mx">
+
+  <Identity Name="4128240d-2ff2-4c62-84d3-d1355c966cd2"
+            Publisher="CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+            Version="1.0.0.0" />
+
+  <Properties>
+    <DisplayName>KeyboardTest (DirectX 12, Xbox)</DisplayName>
+    <PublisherDisplayName>Microsoft Corporation</PublisherDisplayName>
+    <Logo>StoreLogo.png</Logo>
+    <Description>KeyboardTest</Description>
+  </Properties>
+
+  <Prerequisites>
+    <OSMinVersion>6.2</OSMinVersion>
+    <OSMaxVersionTested>6.2</OSMaxVersionTested>
+  </Prerequisites>
+
+  <Resources>
+    <Resource Language="en-us"/>
+  </Resources>
+
+  <Applications>
+    <Application Id="App"
+        Executable="$targetnametoken$.exe"
+        EntryPoint="KeyboardTest.App">
+      <VisualElements
+          DisplayName="KeyboardTest (DirectX 12, Xbox)"
+          Logo="Logo.png"
+          SmallLogo="SmallLogo.png"
+          Description="KeyboardTest for DirectX Tool Kit for DirectX 12 (Xbox)"
+          ForegroundText="light"
+          BackgroundColor="#464646">
+        <SplashScreen Image="SplashScreen.png" />
+        <DefaultTile WideLogo="WideLogo.png" />
+      </VisualElements>
+        <Extensions>
+          <mx:Extension Category="xbox.system.resources">
+            <mx:XboxSystemResources />
+          </mx:Extension>
+        </Extensions>
+    </Application>
+  </Applications>
+  <Capabilities>
+    <Capability Name="internetClientServer" />
+  </Capabilities>
+</Package>

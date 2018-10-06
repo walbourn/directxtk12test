@@ -12,6 +12,10 @@ using namespace DirectX;
 namespace
 {
     std::unique_ptr<Game> g_game;
+
+#ifdef WM_DEVICECHANGE
+    HDEVNOTIFY g_hNewAudio;
+#endif
 };
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -76,11 +80,20 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
         ShowWindow(hwnd, nCmdShow);
 
-        SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(g_game.get()) );
+        SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(g_game.get()));
 
         GetClientRect(hwnd, &rc);
 
         g_game->Initialize(hwnd, rc.right - rc.left, rc.bottom - rc.top, DXGI_MODE_ROTATION_IDENTITY);
+
+#ifdef _DBT_H
+        DEV_BROADCAST_DEVICEINTERFACE filter = {};
+        filter.dbcc_size = sizeof(filter);
+        filter.dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
+        filter.dbcc_classguid = KSCATEGORY_AUDIO;
+
+        g_hNewAudio = RegisterDeviceNotification(hwnd, &filter, DEVICE_NOTIFY_WINDOW_HANDLE);
+#endif
     }
 
     // Main message loop
@@ -99,6 +112,10 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     }
 
     g_game.reset();
+
+#ifdef WM_DEVICECHANGE
+    UnregisterDeviceNotification(g_hNewAudio);
+#endif
 
     CoUninitialize();
 
@@ -281,6 +298,38 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         Mouse::ProcessMessage(message, wParam, lParam);
         break;
 
+#ifdef _DBT_H
+    case WM_DEVICECHANGE:
+        if (wParam == DBT_DEVICEARRIVAL)
+        {
+            auto pDev = reinterpret_cast<PDEV_BROADCAST_HDR>(lParam);
+            if (pDev)
+            {
+                if (pDev->dbch_devicetype == DBT_DEVTYP_DEVICEINTERFACE)
+                {
+                    auto pInter = reinterpret_cast<const PDEV_BROADCAST_DEVICEINTERFACE>(pDev);
+                    if (pInter->dbcc_classguid == KSCATEGORY_AUDIO)
+                    {
+#ifdef _DEBUG
+                        OutputDebugStringA("INFO: New audio device detected: ");
+                        OutputDebugString(pInter->dbcc_name);
+                        OutputDebugStringA("\n");
+#endif
+                        PostMessage(hWnd, WM_USER, 0, 0);
+                    }
+                }
+            }
+        }
+        return 0;
+
+    case WM_USER:
+        if (g_game)
+        {
+            g_game->OnAudioDeviceChange();
+        }
+        break;
+#endif
+
     case WM_MENUCHAR:
         // A menu is active and the user presses a key that does not correspond
         // to any mnemonic or accelerator key. Ignore so we don't produce an error beep.
@@ -326,6 +375,7 @@ void ParseCommandLine(_In_ LPWSTR lpCmdLine)
                     DX::DeviceResources::DebugSetAdapter(_wtoi(pValue));
                 }
             }
+
         }
     }
 

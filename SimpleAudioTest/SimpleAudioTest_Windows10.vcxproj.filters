@@ -1,0 +1,98 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Common">
+      <UniqueIdentifier>1b040d47-2663-4c40-b9a9-5869d1ecb260</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets">
+      <UniqueIdentifier>dd196548-03e9-4645-86d9-d2eb8fb3d63b</UniqueIdentifier>
+      <Extensions>bmp;dds;fbx;gif;jpg;jpeg;tga;tiff;tif;png</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="..\Common\DeviceResourcesUWP.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\MainUWP.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\TextConsole.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="Game.h" />
+    <ClInclude Include="..\Common\d3dx12.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\DeviceResourcesUWP.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\StepTimer.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\TextConsole.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\Common\Logo.scale-100.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="..\Common\SmallLogo.scale-100.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="..\Common\SplashScreen.scale-100.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="..\Common\StoreLogo.scale-100.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="..\Common\WideLogo.scale-100.png">
+      <Filter>Assets</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="xwmadroid.xwb">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="xmadroid.xwb">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="droid.xwb">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="ADPCMdroid.xwb">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="Courier_16.spritefont">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="comic.spritefont">
+      <Filter>Assets</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="Alarm01_xwma.wav">
+      <Filter>Assets</Filter>
+    </Media>
+    <Media Include="Alarm01_xma.wav">
+      <Filter>Assets</Filter>
+    </Media>
+    <Media Include="Alarm01_float.wav">
+      <Filter>Assets</Filter>
+    </Media>
+    <Media Include="Alarm01_adpcm.wav">
+      <Filter>Assets</Filter>
+    </Media>
+    <Media Include="Alarm01.wav">
+      <Filter>Assets</Filter>
+    </Media>
+  </ItemGroup>
+  <ItemGroup>
+    <AppxManifest Include="PackageUWP.appxmanifest" />
+  </ItemGroup>
+</Project>

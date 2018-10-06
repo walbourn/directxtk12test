@@ -28,7 +28,7 @@ using namespace DirectX::SimpleMath;
 
 using Microsoft::WRL::ComPtr;
 
-Game::Game()
+Game::Game() noexcept(false)
 {
 #ifdef GAMMA_CORRECT_RENDERING
     m_deviceResources = std::make_unique<DX::DeviceResources>(DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
@@ -183,10 +183,19 @@ void Game::OnDeactivated()
 
 void Game::OnSuspending()
 {
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    auto queue = m_deviceResources->GetCommandQueue();
+    queue->SuspendX(0);
+#endif
 }
 
 void Game::OnResuming()
 {
+#if defined(_XBOX_ONE) && defined(_TITLE)
+    auto queue = m_deviceResources->GetCommandQueue();
+    queue->ResumeX();
+#endif
+
     m_timer.ResetElapsedTime();
 }
 
