@@ -28,6 +28,7 @@ using namespace DirectX::SimpleMath;
 
 using Microsoft::WRL::ComPtr;
 
+// Constructor.
 Game::Game() noexcept(false)
 {
 #ifdef GAMMA_CORRECT_RENDERING
