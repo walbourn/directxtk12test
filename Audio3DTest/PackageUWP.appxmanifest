@@ -16,7 +16,7 @@
   <Properties>
     <DisplayName>Audio3DTest (DirectX 12)</DisplayName>
     <PublisherDisplayName>Microsoft Corporation</PublisherDisplayName>
-    <Logo>Assets\StoreLogo.png</Logo>
+    <Logo>StoreLogo.png</Logo>
   </Properties>
 
   <Dependencies>
