@@ -16,8 +16,6 @@
 #include "pch.h"
 #include "Game.h"
 
-#pragma warning(disable : 4238)
-
 //#define GAMMA_CORRECT_RENDERING
 
 extern void ExitGame();
@@ -1454,8 +1452,11 @@ void Game::CreateWindowSizeDependentResources()
     XMMATRIX projection = XMMatrixOrthographicRH(ortho_width * 2.f, ortho_height * 2.f, 0.1f, 10.f);
 
 #if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
-    XMMATRIX orient = XMLoadFloat4x4(&m_deviceResources->GetOrientationTransform3D());
-    projection *= orient;
+    {
+        auto orient3d = m_deviceResources->GetOrientationTransform3D();
+        XMMATRIX orient = XMLoadFloat4x4(&orient3d);
+        projection *= orient;
+    }
 #endif
 
     for (auto& it : m_basic)
