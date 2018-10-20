@@ -289,7 +289,7 @@ void Game::Render()
 
         HRESULT hr = SaveWICTextureToFile(m_deviceResources->GetCommandQueue(), m_screenshot.Get(),
             GUID_ContainerFormatPng, sspng,
-            D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT);
+            D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT, &GUID_WICPixelFormat32bppBGRA);
 
         if (FAILED(hr))
         {
@@ -736,6 +736,9 @@ void Game::OnDeviceLost()
     m_test15.Reset();
     m_test16.Reset();
     m_test17.Reset();
+    m_test18.Reset();
+    m_test19.Reset();
+    m_test20.Reset();
 
     m_screenshot.Reset();
 
@@ -1034,6 +1037,54 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             || desc.MipLevels != 9)
         {
             OutputDebugStringA("FAILED: dx5_logo_autogen_srgb.dds (autogen) desc unexpected\n");
+            success = false;
+        }
+    }
+
+    // WIC load without format conversion or resize
+    DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"testpattern.png", m_test18.ReleaseAndGetAddressOf()));
+
+    {
+        auto desc = m_test18->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM_SRGB
+            || desc.Width != 1280
+            || desc.Height != 1024
+            || desc.MipLevels != 1)
+        {
+            OutputDebugStringA("FAILED: testpattern.png desc unexpected\n");
+            success = false;
+        }
+    }
+
+    // WIC load with resize
+    DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"testpattern.png", m_test19.ReleaseAndGetAddressOf(), false, 1024));
+
+    {
+        auto desc = m_test19->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM_SRGB
+            || desc.Width != 1024
+            || desc.Height != 819
+            || desc.MipLevels != 1)
+        {
+            OutputDebugStringA("FAILED: testpattern.png resize desc unexpected\n");
+            success = false;
+        }
+    }
+
+    // WIC load with resize and format conversion
+    DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"cup_small.jpg", m_test20.ReleaseAndGetAddressOf(), false, 256));
+
+    {
+        auto desc = m_test20->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
+            || desc.Width != 191
+            || desc.Height != 256
+            || desc.MipLevels != 1)
+        {
+            OutputDebugStringA("FAILED: cup_small.jpg resize desc unexpected\n");
             success = false;
         }
     }

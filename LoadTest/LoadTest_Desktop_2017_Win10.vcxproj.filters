@@ -77,5 +77,8 @@
     <Image Include="dx5_logo_autogen_srgb.dds">
       <Filter>Assets</Filter>
     </Image>
+    <Image Include="testpattern.png">
+      <Filter>Assets</Filter>
+    </Image>
   </ItemGroup>
 </Project>
