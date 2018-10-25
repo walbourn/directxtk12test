@@ -447,9 +447,8 @@ void Game::CreateDeviceDependentResources()
 // Allocate all memory resources that change on a window SizeChanged event.
 void Game::CreateWindowSizeDependentResources()
 {
-    SetDebugObjectName(m_deviceResources->GetRenderTarget(), L"BackBuffer");
-
-    SetDebugObjectName(m_deviceResources->GetDepthStencil(), L"DepthStencil");
+    SetDebugObjectName(m_deviceResources->GetRenderTarget(), L"RenderTarget");
+    SetDebugObjectName(m_deviceResources->GetDepthStencil(), "DepthStencil");
 }
 
 #if !defined(_XBOX_ONE) || !defined(_TITLE)
