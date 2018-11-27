@@ -76,7 +76,8 @@
 #include <type_traits>
 
 #include <stdio.h>
-#include <pix.h>
+
+#include <pix3.h>
 
 #include "Audio.h"
 #include "CommonStates.h"
