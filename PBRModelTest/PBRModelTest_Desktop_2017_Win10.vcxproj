@@ -205,6 +205,21 @@
   <ItemGroup>
     <Manifest Include="..\Common\settings.manifest" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="BrokenCube.sdkmesh" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\PBRTest\Atrium_diffuseIBL.dds" />
+    <Image Include="..\PBRTest\Atrium_specularIBL.dds" />
+    <Image Include="..\PBRTest\Garage_diffuseIBL.dds" />
+    <Image Include="..\PBRTest\Garage_specularIBL.dds" />
+    <Image Include="..\PBRTest\SunSubMixer_diffuseIBL.dds" />
+    <Image Include="..\PBRTest\SunSubMixer_specularIBL.dds" />
+    <Image Include="BrokenCube_baseColor.DDS" />
+    <Image Include="BrokenCube_emissive.DDS" />
+    <Image Include="BrokenCube_normal.DDS" />
+    <Image Include="BrokenCube_occlusionRoughnessMetallic.DDS" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

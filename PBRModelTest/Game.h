@@ -96,10 +96,26 @@ private:
     std::unique_ptr<DirectX::GamePad>       m_gamePad;
     std::unique_ptr<DirectX::Keyboard>      m_keyboard;
 
+    DirectX::GamePad::ButtonStateTracker    m_gamePadButtons;
+    DirectX::Keyboard::KeyboardStateTracker m_keyboardButtons;
+
     // DirectXTK Test Objects
-    std::unique_ptr<DirectX::GraphicsMemory>    m_graphicsMemory;
-    std::unique_ptr<DirectX::DescriptorHeap>    m_resourceDescriptors;
-    std::unique_ptr<DirectX::DescriptorHeap>    m_renderDescriptors;
+    std::unique_ptr<DirectX::GraphicsMemory>        m_graphicsMemory;
+    std::unique_ptr<DirectX::DescriptorPile>        m_resourceDescriptors;
+    std::unique_ptr<DirectX::DescriptorHeap>        m_renderDescriptors;
+
+    std::unique_ptr<DirectX::CommonStates>          m_states;
+
+    std::unique_ptr<DirectX::Model>                 m_cube;
+    std::vector<std::shared_ptr<DirectX::IEffect>>  m_cubeNormal;
+
+    std::unique_ptr<DirectX::EffectTextureFactory>  m_modelResources;
+    std::unique_ptr<DirectX::PBREffectFactory>      m_fxFactory;
+
+    static const size_t s_nIBL = 3;
+
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_radianceIBL[s_nIBL];
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_irradianceIBL[s_nIBL];
 
     // HDR resources
     std::unique_ptr<DirectX::ToneMapPostProcess>    m_toneMap;
@@ -114,7 +130,17 @@ private:
     enum Descriptors
     {
         SceneTex,
-        Count
+        RadianceIBL1,
+        RadianceIBL2,
+        RadianceIBL3,
+        IrradianceIBL1,
+        IrradianceIBL2,
+        IrradianceIBL3,
+        EmissiveTexture1,
+        EmissiveTexture2,
+        EmissiveTexture3,
+        Reserve,
+        Count = 128,
     };
 
     enum RTDescriptors
@@ -122,4 +148,12 @@ private:
         HDRScene,
         RTCount
     };
+
+    DirectX::SimpleMath::Matrix             m_view;
+    DirectX::SimpleMath::Matrix             m_projection;
+
+    uint32_t m_ibl;
+    bool m_spinning;
+    float m_pitch;
+    float m_yaw;
 };
