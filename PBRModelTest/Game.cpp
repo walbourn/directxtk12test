@@ -306,11 +306,39 @@ void Game::Render()
         }
     }
 
+    for (auto& it : m_sphereNormal)
+    {
+        auto pbr = dynamic_cast<PBREffect*>(it.get());
+        if (pbr)
+        {
+            pbr->SetIBLTextures(radianceTex, diffuseDesc.MipLevels, irradianceTex, m_states->AnisotropicClamp());
+        }
+    }
+
+    for (auto& it : m_sphere2Normal)
+    {
+        auto pbr = dynamic_cast<PBREffect*>(it.get());
+        if (pbr)
+        {
+            pbr->SetIBLTextures(radianceTex, diffuseDesc.MipLevels, irradianceTex, m_states->AnisotropicClamp());
+        }
+    }
+
     //--- Draw SDKMESH models ---
     XMMATRIX local = XMMatrixTranslation(1.5f, row0, 0.f);
     local = XMMatrixMultiply(world, local);
     Model::UpdateEffectMatrices(m_cubeNormal, local, m_view, m_projection);
     m_cube->Draw(commandList, m_cubeNormal.cbegin());
+
+    local = XMMatrixTranslation(-1.5f, row1, 0.f);
+    local = XMMatrixMultiply(world, local);
+    Model::UpdateEffectMatrices(m_sphereNormal, local, m_view, m_projection);
+    m_sphere->Draw(commandList, m_sphereNormal.cbegin());
+
+    local = XMMatrixTranslation(1.5f, row1, 0.f);
+    local = XMMatrixMultiply(world, local);
+    Model::UpdateEffectMatrices(m_sphere2Normal, local, m_view, m_projection);
+    m_sphere2->Draw(commandList, m_sphere2Normal.cbegin());
 
     PIXEndEvent(commandList);
 
@@ -475,6 +503,8 @@ void Game::CreateDeviceDependentResources()
 
     // DirectX SDK Mesh
     m_cube = Model::CreateFromSDKMESH(L"BrokenCube.sdkmesh");
+    m_sphere = Model::CreateFromSDKMESH(L"Sphere.sdkmesh");
+    m_sphere2 = Model::CreateFromSDKMESH(L"Sphere2.sdkmesh");
 
     RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), DXGI_FORMAT_UNKNOWN);
 #if defined(_XBOX_ONE) && defined(_TITLE)
@@ -504,14 +534,6 @@ void Game::CreateDeviceDependentResources()
 
     m_fxFactory = std::make_unique<PBREffectFactory>(m_resourceDescriptors->Heap(), m_states->Heap());
 
-    int txtOffset = 0;
-    {
-        size_t start, end;
-        m_resourceDescriptors->AllocateRange(m_cube->textureNames.size(), start, end);
-        txtOffset = static_cast<int>(start);
-    }
-    m_cube->LoadTextures(*m_modelResources, txtOffset);
-
     RenderTargetState hdrState(m_hdrScene->GetFormat(), m_deviceResources->GetDepthBufferFormat());
 
 #ifdef LH_COORDS
@@ -520,18 +542,45 @@ void Game::CreateDeviceDependentResources()
     auto& ncull = CommonStates::CullClockwise;
 #endif
 
+    EffectPipelineStateDescription pd(
+        nullptr,
+        CommonStates::Opaque,
+        CommonStates::DepthDefault,
+        ncull,
+        hdrState);
+
+    int txtOffset = 0;
     {
-        EffectPipelineStateDescription pd(
-            nullptr,
-            CommonStates::Opaque,
-            CommonStates::DepthDefault,
-            ncull,
-            hdrState);
-
-        m_cubeNormal = m_cube->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
-
-        m_cube->LoadStaticBuffers(device, resourceUpload);
+        size_t start, end;
+        m_resourceDescriptors->AllocateRange(m_cube->textureNames.size(), start, end);
+        txtOffset = static_cast<int>(start);
     }
+    m_cube->LoadTextures(*m_modelResources, txtOffset);
+
+    m_cubeNormal = m_cube->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
+
+    {
+        size_t start, end;
+        m_resourceDescriptors->AllocateRange(m_sphere->textureNames.size(), start, end);
+        txtOffset = static_cast<int>(start);
+    }
+    m_sphere->LoadTextures(*m_modelResources, txtOffset);
+
+    m_sphereNormal = m_sphere->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
+
+    {
+        size_t start, end;
+        m_resourceDescriptors->AllocateRange(m_sphere2->textureNames.size(), start, end);
+        txtOffset = static_cast<int>(start);
+    }
+    m_sphere2->LoadTextures(*m_modelResources, txtOffset);
+
+    m_sphere2Normal = m_sphere2->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
+
+    // Optimize VBs/IBs
+    m_cube->LoadStaticBuffers(device, resourceUpload);
+    m_sphere->LoadStaticBuffers(device, resourceUpload);
+    m_sphere2->LoadStaticBuffers(device, resourceUpload);
 
 #if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
 #define IBL_PATH L"..\\PBRTest\\"
@@ -611,8 +660,12 @@ void Game::CreateWindowSizeDependentResources()
 void Game::OnDeviceLost()
 {
     m_cube.reset();
+    m_sphere.reset();
+    m_sphere2.reset();
 
     m_cubeNormal.clear();
+    m_sphereNormal.clear();
+    m_sphere2Normal.clear();
 
     for (size_t j = 0; j < s_nIBL; ++j)
     {
