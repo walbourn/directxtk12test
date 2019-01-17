@@ -115,6 +115,9 @@ private:
     std::unique_ptr<DirectX::Model>                 m_sphere2;
     std::vector<std::shared_ptr<DirectX::IEffect>>  m_sphere2Normal;
 
+    std::unique_ptr<DirectX::Model>                 m_robot;
+    std::vector<std::shared_ptr<DirectX::IEffect>>  m_robotNormal;
+
     std::unique_ptr<DirectX::EffectTextureFactory>  m_modelResources;
     std::unique_ptr<DirectX::PBREffectFactory>      m_fxFactory;
 

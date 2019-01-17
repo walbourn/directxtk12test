@@ -24,9 +24,9 @@
 
 namespace
 {
-    const float row0 = 2.f;
+    const float row0 = 1.5f;
     const float row1 = 0.f;
-    const float row2 = -2.f;
+    const float row2 = -1.5f;
 }
 
 extern void ExitGame();
@@ -262,22 +262,20 @@ void Game::Render()
     if (alphaFade >= 1)
         alphaFade = 1 - FLT_EPSILON;
 
-    float yaw = time * 0.4f;
-    float pitch = time * 0.7f;
-    float roll = time * 1.1f;
+    float yaw = time * 1.4;
 
     XMMATRIX world;
     XMVECTOR quat;
 
     if (m_spinning)
     {
-        world = XMMatrixRotationRollPitchYaw(pitch, yaw, roll);
-        quat = XMQuaternionRotationRollPitchYaw(pitch, yaw, roll);
+        world = XMMatrixRotationRollPitchYaw(0, yaw, 0);
+        quat = XMQuaternionRotationRollPitchYaw(0, yaw, 0);
     }
     else
     {
         world = XMMatrixRotationRollPitchYaw(m_pitch, m_yaw, 0);
-        quat = XMQuaternionRotationRollPitchYaw(m_pitch, m_yaw, roll);
+        quat = XMQuaternionRotationRollPitchYaw(m_pitch, m_yaw, 0);
     }
 
     auto commandList = m_deviceResources->GetCommandList();
@@ -324,21 +322,47 @@ void Game::Render()
         }
     }
 
+    for (auto& it : m_robotNormal)
+    {
+        auto pbr = dynamic_cast<PBREffect*>(it.get());
+        if (pbr)
+        {
+            pbr->SetIBLTextures(radianceTex, diffuseDesc.MipLevels, irradianceTex, m_states->AnisotropicClamp());
+        }
+    }
+
     //--- Draw SDKMESH models ---
     XMMATRIX local = XMMatrixTranslation(1.5f, row0, 0.f);
     local = XMMatrixMultiply(world, local);
     Model::UpdateEffectMatrices(m_cubeNormal, local, m_view, m_projection);
     m_cube->Draw(commandList, m_cubeNormal.cbegin());
 
-    local = XMMatrixTranslation(-1.5f, row1, 0.f);
-    local = XMMatrixMultiply(world, local);
+    {
+        XMMATRIX scale = XMMatrixScaling(0.75f, 0.75f, 0.75f);
+        XMMATRIX trans = XMMatrixTranslation(-2.5f, row0, 0.f);
+        local = XMMatrixMultiply(scale, trans);
+        local = XMMatrixMultiply(world, local);
+    }
     Model::UpdateEffectMatrices(m_sphereNormal, local, m_view, m_projection);
     m_sphere->Draw(commandList, m_sphereNormal.cbegin());
 
-    local = XMMatrixTranslation(1.5f, row1, 0.f);
-    local = XMMatrixMultiply(world, local);
+    {
+        XMMATRIX scale = XMMatrixScaling(0.75f, 0.75f, 0.75f);
+        XMMATRIX trans = XMMatrixTranslation(-2.5f, row2, 0.f);
+        local = XMMatrixMultiply(scale, trans);
+        local = XMMatrixMultiply(world, local);
+    }
     Model::UpdateEffectMatrices(m_sphere2Normal, local, m_view, m_projection);
     m_sphere2->Draw(commandList, m_sphere2Normal.cbegin());
+
+    {
+        XMMATRIX scale = XMMatrixScaling(0.1f, 0.1f, 0.1f);
+        XMMATRIX trans = XMMatrixTranslation(1.5f, row2, 0.f);
+        local = XMMatrixMultiply(scale, trans);
+        local = XMMatrixMultiply(world, local);
+    }
+    Model::UpdateEffectMatrices(m_robotNormal, local, m_view, m_projection);
+    m_robot->Draw(commandList, m_robotNormal.cbegin());
 
     PIXEndEvent(commandList);
 
@@ -505,6 +529,7 @@ void Game::CreateDeviceDependentResources()
     m_cube = Model::CreateFromSDKMESH(L"BrokenCube.sdkmesh");
     m_sphere = Model::CreateFromSDKMESH(L"Sphere.sdkmesh");
     m_sphere2 = Model::CreateFromSDKMESH(L"Sphere2.sdkmesh");
+    m_robot = Model::CreateFromSDKMESH(L"ToyRobot.sdkmesh");
 
     RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), DXGI_FORMAT_UNKNOWN);
 #if defined(_XBOX_ONE) && defined(_TITLE)
@@ -577,10 +602,20 @@ void Game::CreateDeviceDependentResources()
 
     m_sphere2Normal = m_sphere2->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
 
+    {
+        size_t start, end;
+        m_resourceDescriptors->AllocateRange(m_robot->textureNames.size(), start, end);
+        txtOffset = static_cast<int>(start);
+    }
+    m_robot->LoadTextures(*m_modelResources, txtOffset);
+
+    m_robotNormal = m_robot->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
+
     // Optimize VBs/IBs
     m_cube->LoadStaticBuffers(device, resourceUpload);
     m_sphere->LoadStaticBuffers(device, resourceUpload);
     m_sphere2->LoadStaticBuffers(device, resourceUpload);
+    m_robot->LoadStaticBuffers(device, resourceUpload);
 
 #if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
 #define IBL_PATH L"..\\PBRTest\\"
@@ -662,10 +697,12 @@ void Game::OnDeviceLost()
     m_cube.reset();
     m_sphere.reset();
     m_sphere2.reset();
+    m_robot.reset();
 
     m_cubeNormal.clear();
     m_sphereNormal.clear();
     m_sphere2Normal.clear();
+    m_robotNormal.clear();
 
     for (size_t j = 0; j < s_nIBL; ++j)
     {

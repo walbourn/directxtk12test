@@ -108,6 +108,33 @@
     <Image Include="SphereMat_occlusionRoughnessMetallic.DDS">
       <Filter>Assets</Filter>
     </Image>
+    <Image Include="matFloor_baseColor.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="matFloor_normal.DDS">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="matFloor_occlusionRoughnessMetallic.DDS">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="matToyRobot_baseColor.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="matToyRobot_normal.DDS">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="matToyRobot_occlusionRoughnessMetallic.DDS">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="matWoodBlocks_baseColor.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="matWoodBlocks_normal.DDS">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="matWoodBlocks_occlusionRoughnessMetallic.DDS">
+      <Filter>Assets</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <None Include="BrokenCube.sdkmesh">
@@ -117,6 +144,9 @@
       <Filter>Assets</Filter>
     </None>
     <None Include="Sphere.sdkmesh">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="ToyRobot.sdkmesh">
       <Filter>Assets</Filter>
     </None>
   </ItemGroup>
