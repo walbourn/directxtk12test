@@ -262,7 +262,7 @@ void Game::Render()
     if (alphaFade >= 1)
         alphaFade = 1 - FLT_EPSILON;
 
-    float yaw = time * 1.4;
+    float yaw = time * 1.4f;
 
     XMMATRIX world;
     XMVECTOR quat;
