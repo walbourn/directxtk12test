@@ -30,6 +30,7 @@ using namespace DirectX::SimpleMath;
 using Microsoft::WRL::ComPtr;
 
 Game::Game() noexcept(false) :
+    m_state{},
     m_lastStr(nullptr),
     m_lastStrBuff{}
 {

@@ -151,6 +151,12 @@ namespace DX
             Microsoft::WRL::ComPtr<ID3D12CommandAllocator>          m_commandAllocators[MAX_BACK_BUFFER_COUNT];
             Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>       m_commandList;
             Microsoft::WRL::ComPtr<ID3D12CommandQueue>              m_commandQueue;
+
+            PerAdapter() :
+                m_deviceNotify(nullptr),
+                m_rtvDescriptorSize(0),
+                m_fenceValues{}
+            {}
         };
         PerAdapter*											    m_pAdaptersD3D;
 

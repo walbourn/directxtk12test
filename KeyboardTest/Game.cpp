@@ -34,6 +34,7 @@ namespace
 }
 
 Game::Game() noexcept(false) :
+    m_kb{},
     m_lastStr(nullptr),
     m_lastStrBuff{}
 {

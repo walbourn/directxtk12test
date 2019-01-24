@@ -62,6 +62,7 @@
 #include <dxgidebug.h>
 #endif
 
+#define D3DX12_NO_STATE_OBJECT_HELPERS
 #include "d3dx12.h"
 #endif
 
