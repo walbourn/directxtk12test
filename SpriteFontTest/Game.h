@@ -97,6 +97,9 @@ private:
     std::unique_ptr<DirectX::GamePad>       m_gamePad;
     std::unique_ptr<DirectX::Keyboard>      m_keyboard;
 
+    DirectX::GamePad::ButtonStateTracker    m_gamePadButtons;
+    DirectX::Keyboard::KeyboardStateTracker m_keyboardButtons;
+
     // DirectXTK Test Objects
     std::unique_ptr<DirectX::GraphicsMemory>    m_graphicsMemory;
     std::unique_ptr<DirectX::SpriteBatch>       m_spriteBatch;
@@ -126,5 +129,7 @@ private:
         Count
     };
 
-    uint64_t m_frame;
+    uint64_t    m_frame;
+    bool        m_showUTF8;
+    float       m_delay;
 };
