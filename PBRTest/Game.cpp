@@ -844,7 +844,7 @@ void Game::CreateDeviceDependentResources()
     m_toneMap = std::make_unique<ToneMapPostProcess>(
         device,
         rtState,
-        ToneMapPostProcess::ACESFilmic, (m_deviceResources->GetBackBufferFormat() == DXGI_FORMAT_R16G16B16A16_FLOAT) ? ToneMapPostProcess::Linear : ToneMapPostProcess::SRGB
+        ToneMapPostProcess::Reinhard, (m_deviceResources->GetBackBufferFormat() == DXGI_FORMAT_R16G16B16A16_FLOAT) ? ToneMapPostProcess::Linear : ToneMapPostProcess::SRGB
 #if defined(_XBOX_ONE) && defined(_TITLE)
         , true
 #endif

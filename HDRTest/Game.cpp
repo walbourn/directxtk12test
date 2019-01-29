@@ -272,12 +272,12 @@ void Game::Render()
     const wchar_t* info = nullptr;
 
 #if defined(_XBOX_ONE) && defined(_TITLE)
-    info = (g_HDRMode) ? L"TV in HDR Mode" : L"TV in SDR Mode";
+    info = (g_HDRMode) ? L"HDR10 (GameDVR: Reinhard)" : L"Reinhard";
 #else
     switch (m_deviceResources->GetColorSpace())
     {
     default:
-        info = L"SRGB";
+        info = L"Reinhard";
         break;
 
     case DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020:
@@ -520,7 +520,7 @@ void Game::CreateDeviceDependentResources()
     m_toneMap = std::make_unique<ToneMapPostProcess>(
         device,
         rtState,
-        ToneMapPostProcess::ACESFilmic, (m_deviceResources->GetBackBufferFormat() == DXGI_FORMAT_R16G16B16A16_FLOAT) ? ToneMapPostProcess::Linear : ToneMapPostProcess::SRGB
+        ToneMapPostProcess::Reinhard, (m_deviceResources->GetBackBufferFormat() == DXGI_FORMAT_R16G16B16A16_FLOAT) ? ToneMapPostProcess::Linear : ToneMapPostProcess::SRGB
 #if defined(_XBOX_ONE) && defined(_TITLE)
         , true
 #endif
