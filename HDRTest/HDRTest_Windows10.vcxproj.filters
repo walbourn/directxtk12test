@@ -11,6 +11,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
+    <ClCompile Include="Game.cpp" />
     <ClCompile Include="..\Common\DeviceResourcesUWP.cpp">
       <Filter>Common</Filter>
     </ClCompile>
@@ -18,9 +19,6 @@
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\Common\RenderTexture.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="Game.cpp">
       <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
