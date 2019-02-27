@@ -793,6 +793,13 @@ void Game::CreateDeviceDependentResources()
 
     resourceUpload.Begin();
 
+    // Convert some primitives to using static VB/IBs
+    m_geosphere->LoadStaticBuffers(device, resourceUpload);
+    m_cylinder->LoadStaticBuffers(device, resourceUpload);
+    m_cone->LoadStaticBuffers(device, resourceUpload);
+    m_torus->LoadStaticBuffers(device, resourceUpload);
+    m_teapot->LoadStaticBuffers(device, resourceUpload);
+
 #ifdef GAMMA_CORRECT_RENDERING
     unsigned int loadFlags = DDS_LOADER_FORCE_SRGB;
 #else
