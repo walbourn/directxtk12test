@@ -335,6 +335,82 @@ void DeviceResources::CreateDeviceResources()
     {
         throw std::exception("CreateEvent");
     }
+
+    // Some additional caps information
+#ifdef _DEBUG
+    const char* featLevel = "Unknown";
+    switch (m_d3dFeatureLevel)
+    {
+    case D3D_FEATURE_LEVEL_11_0: featLevel = "11.0"; break;
+    case D3D_FEATURE_LEVEL_11_1: featLevel = "11.1"; break;
+    case D3D_FEATURE_LEVEL_12_0: featLevel = "12.0"; break;
+    case D3D_FEATURE_LEVEL_12_1: featLevel = "12.1"; break;
+    }
+
+    // Determine maximum shader model / root signature
+    D3D12_FEATURE_DATA_ROOT_SIGNATURE rootSig = {};
+    rootSig.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
+    if (FAILED(m_d3dDevice->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &rootSig, sizeof(rootSig))))
+    {
+        rootSig.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
+    }
+
+    const char* rootSigVer = "Unknown";
+    switch (rootSig.HighestVersion)
+    {
+    case D3D_ROOT_SIGNATURE_VERSION_1_0: rootSigVer = "1.0"; break;
+    case D3D_ROOT_SIGNATURE_VERSION_1_1: rootSigVer = "1.1"; break;
+    }
+
+    D3D12_FEATURE_DATA_SHADER_MODEL shaderModel = {};
+#if defined(NTDDI_WIN10_19H1) && (NTDDI_VERSION >= NTDDI_WIN10_19H1)
+    shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_5;
+#elif defined(NTDDI_WIN10_RS5) && (NTDDI_VERSION >= NTDDI_WIN10_RS5)
+    shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_4;
+#elif defined(NTDDI_WIN10_RS4) && (NTDDI_VERSION >= NTDDI_WIN10_RS4)
+    shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_2;
+#else
+    shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_0;
+#endif
+    hr = m_d3dDevice->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel));
+    while (hr == E_INVALIDARG && shaderModel.HighestShaderModel > D3D_SHADER_MODEL_6_0)
+    {
+        shaderModel.HighestShaderModel = static_cast<D3D_SHADER_MODEL>(static_cast<int>(shaderModel.HighestShaderModel) - 1);
+        hr = m_d3dDevice->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel));
+    }
+    if (FAILED(hr))
+    {
+        shaderModel.HighestShaderModel = D3D_SHADER_MODEL_5_1;
+    }
+
+    const char* shaderModelVer = "Unknown";
+    switch (shaderModel.HighestShaderModel)
+    {
+    case D3D_SHADER_MODEL_5_1: shaderModelVer = "5.1"; break;
+    case D3D_SHADER_MODEL_6_0: shaderModelVer = "6.0"; break;
+
+#if defined(NTDDI_WIN10_RS3) && (NTDDI_VERSION >= NTDDI_WIN10_RS3)
+    case D3D_SHADER_MODEL_6_1: shaderModelVer = "6.1"; break;
+#endif
+
+#if defined(NTDDI_WIN10_RS4) && (NTDDI_VERSION >= NTDDI_WIN10_RS4)
+    case D3D_SHADER_MODEL_6_2: shaderModelVer = "6.2"; break;
+#endif
+
+#if defined(NTDDI_WIN10_RS5) && (NTDDI_VERSION >= NTDDI_WIN10_RS5)
+    case D3D_SHADER_MODEL_6_3: shaderModelVer = "6.3"; break;
+    case D3D_SHADER_MODEL_6_4: shaderModelVer = "6.4"; break;
+#endif
+
+#if defined(NTDDI_WIN10_19H1) && (NTDDI_VERSION >= NTDDI_WIN10_19H1)
+    case D3D_SHADER_MODEL_6_5: shaderModelVer = "6.5"; break;
+#endif
+    }
+
+    char buff[128] = {};
+    sprintf_s(buff, "INFO: Direct3D hardware feature level %s (Shader Model %s / Root Signature %s)\n", featLevel, shaderModelVer, rootSigVer);
+    OutputDebugStringA(buff);
+#endif
 }
 
 // These resources need to be recreated every time the window size is changed.
