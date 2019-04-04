@@ -417,6 +417,7 @@
     <Media Include="Alarm01_float.wav" />
     <Media Include="Alarm01_xma.wav" />
     <Media Include="Alarm01_xwma.wav" />
+    <Media Include="tada.wav" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="PackageUWP.appxmanifest" />

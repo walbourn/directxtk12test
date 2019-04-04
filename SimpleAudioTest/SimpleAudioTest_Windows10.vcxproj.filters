@@ -91,6 +91,9 @@
     <Media Include="Alarm01.wav">
       <Filter>Assets</Filter>
     </Media>
+    <Media Include="tada.wav">
+      <Filter>Assets</Filter>
+    </Media>
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="PackageUWP.appxmanifest" />

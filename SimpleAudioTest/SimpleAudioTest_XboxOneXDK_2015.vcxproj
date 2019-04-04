@@ -234,6 +234,7 @@
     <Media Include="Alarm01_float.wav" />
     <Media Include="Alarm01_xma.wav" />
     <Media Include="Alarm01_xwma.wav" />
+    <Media Include="tada.wav" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
