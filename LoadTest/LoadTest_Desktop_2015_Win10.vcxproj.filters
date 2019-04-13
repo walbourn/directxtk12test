@@ -80,5 +80,11 @@
     <Image Include="testpattern.png">
       <Filter>Assets</Filter>
     </Image>
+    <Image Include="dx5_logo_nomips.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="grad4d_a1r5g5b5.bmp">
+      <Filter>Assets</Filter>
+    </Image>
   </ItemGroup>
 </Project>

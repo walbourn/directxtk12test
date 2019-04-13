@@ -739,6 +739,8 @@ void Game::OnDeviceLost()
     m_test18.Reset();
     m_test19.Reset();
     m_test20.Reset();
+    m_test21.Reset();
+    m_test22.Reset();
 
     m_screenshot.Reset();
 
@@ -1085,6 +1087,36 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             || desc.MipLevels != 1)
         {
             OutputDebugStringA("FAILED: cup_small.jpg resize desc unexpected\n");
+            success = false;
+        }
+    }
+
+    // DDS load with auto-gen request ignore (BC1 is not supported for GenerateMips)
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_nomips.dds", m_test21.ReleaseAndGetAddressOf(), true));
+    {
+        auto desc = m_test21->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_BC1_UNORM
+            || desc.Width != 256
+            || desc.Height != 256
+            || desc.MipLevels != 1)
+        {
+            OutputDebugStringA("FAILED: dx5_logo_nomips.dds (ignore autogen) desc unexpected\n");
+            success = false;
+        }
+    }
+
+    // WIC load with auto-gen request ignore (16bpp is not supported for GenerateMips)
+    DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"grad4d_a1r5g5b5.bmp", m_test22.ReleaseAndGetAddressOf(), true));
+    {
+        auto desc = m_test22->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_B5G5R5A1_UNORM
+            || desc.Width != 32
+            || desc.Height != 32
+            || desc.MipLevels != 1)
+        {
+            OutputDebugStringA("FAILED: grad4d_a1r5g5b5.bmp (ignore autogen) desc unexpected\n");
             success = false;
         }
     }
