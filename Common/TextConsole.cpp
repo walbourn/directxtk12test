@@ -16,8 +16,11 @@ using namespace DirectX;
 using namespace DX;
 
 TextConsole::TextConsole()
-    : m_textColor(1.f, 1.f, 1.f, 1.f),
-    m_debugOutput(false)
+    : m_layout{},
+    m_textColor(1.f, 1.f, 1.f, 1.f),
+    m_debugOutput(false),
+    m_columns(0),
+    m_rows(0)
 {
     Clear();
 }
@@ -30,8 +33,11 @@ TextConsole::TextConsole(
     const RenderTargetState& rtState,
     const wchar_t* fontName,
     D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptor, D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor)
-    : m_textColor(1.f, 1.f, 1.f, 1.f),
-    m_debugOutput(false)
+    : m_layout{},
+    m_textColor(1.f, 1.f, 1.f, 1.f),
+    m_debugOutput(false),
+    m_columns(0),
+    m_rows(0)
 {
     RestoreDevice(device, upload, rtState, fontName, cpuDescriptor, gpuDescriptor);
 
