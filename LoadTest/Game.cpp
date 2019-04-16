@@ -104,6 +104,18 @@ void Game::Initialize(
     m_deviceResources->CreateDeviceResources();
     CreateDeviceDependentResources();
 
+    auto device = m_deviceResources->GetD3DDevice();
+    D3D12_FEATURE_DATA_D3D12_OPTIONS options = {};
+    DX::ThrowIfFailed(device->CheckFeatureSupport(
+        D3D12_FEATURE_D3D12_OPTIONS,
+        &options,
+        sizeof(options)));
+
+    if (!options.TypedUAVLoadAdditionalFormats)
+    {
+        OutputDebugStringA("WARNING: This device does not support TypedUAVLoadAdditionalFormats so all autogen mips tests will fail!\n");
+    }
+
     m_deviceResources->CreateWindowSizeDependentResources();
     CreateWindowSizeDependentResources();
 }
