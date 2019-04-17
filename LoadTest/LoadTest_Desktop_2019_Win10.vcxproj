@@ -217,6 +217,7 @@
     <Image Include="testpattern.png" />
     <Image Include="tree02S_pmalpha.dds" />
     <Image Include="win95.bmp" />
+    <Image Include="windowslogo_r32f.dds" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

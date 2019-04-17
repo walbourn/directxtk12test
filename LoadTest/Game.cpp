@@ -102,19 +102,20 @@ void Game::Initialize(
 #endif
 
     m_deviceResources->CreateDeviceResources();
-    CreateDeviceDependentResources();
-
-    auto device = m_deviceResources->GetD3DDevice();
-    D3D12_FEATURE_DATA_D3D12_OPTIONS options = {};
-    DX::ThrowIfFailed(device->CheckFeatureSupport(
-        D3D12_FEATURE_D3D12_OPTIONS,
-        &options,
-        sizeof(options)));
-
-    if (!options.TypedUAVLoadAdditionalFormats)
     {
-        OutputDebugStringA("WARNING: This device does not support TypedUAVLoadAdditionalFormats so all autogen mips tests will fail!\n");
+        auto device = m_deviceResources->GetD3DDevice();
+        D3D12_FEATURE_DATA_D3D12_OPTIONS options = {};
+        DX::ThrowIfFailed(device->CheckFeatureSupport(
+            D3D12_FEATURE_D3D12_OPTIONS,
+            &options,
+            sizeof(options)));
+
+        if (!options.TypedUAVLoadAdditionalFormats)
+        {
+            OutputDebugStringA("WARNING: This device does not support TypedUAVLoadAdditionalFormats so all autogen mips tests will fail except R32F!\n");
+        }
     }
+    CreateDeviceDependentResources();
 
     m_deviceResources->CreateWindowSizeDependentResources();
     CreateWindowSizeDependentResources();
@@ -683,7 +684,7 @@ void Game::CreateDeviceDependentResources()
             || desc.Height != 256
             || desc.MipLevels != 9)
         {
-            OutputDebugStringA("FAILED: win95.bmp (sRGB) desc unexpected\n");
+            OutputDebugStringA("FAILED: win95.bmp (autogen, sRGB) desc unexpected\n");
             success = false;
         }
     }
@@ -760,6 +761,7 @@ void Game::OnDeviceLost()
     m_test21.Reset();
     m_test22.Reset();
     m_test23.Reset();
+    m_test24.Reset();
 
     m_screenshot.Reset();
 
@@ -1162,6 +1164,22 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             || desc.MipLevels != 10)
         {
             OutputDebugStringA("FAILED: earth_A2B10G10R10.dds (force sRGB) desc unexpected\n");
+            success = false;
+        }
+    }
+
+    // DDS load of R32F (autogen)
+    DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, L"windowslogo_r32f.dds",
+        0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_MIP_AUTOGEN, m_test24.ReleaseAndGetAddressOf()));
+    {
+        auto desc = m_test24->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_R32_FLOAT
+            || desc.Width != 256
+            || desc.Height != 256
+            || desc.MipLevels != 9)
+        {
+            OutputDebugStringA("FAILED: windowslogo_r32f.dds (autogen) desc unexpected\n");
             success = false;
         }
     }

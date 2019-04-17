@@ -99,6 +99,9 @@
     <Image Include="earth_A2B10G10R10_autogen.DDS">
       <Filter>Assets</Filter>
     </Image>
+    <Image Include="windowslogo_r32f.dds">
+      <Filter>Assets</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="PackageUWP.appxmanifest" />
