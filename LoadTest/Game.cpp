@@ -594,11 +594,10 @@ void Game::CreateDeviceDependentResources()
 
     CreateShaderResourceView(device, m_earth.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Earth));
 
-    DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, L"earth_A2B10G10R10.dds", 0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_FORCE_SRGB, m_earth2.ReleaseAndGetAddressOf()));
+    DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, L"earth_A2B10G10R10_autogen.dds", 0,
+        D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_MIP_AUTOGEN, m_earth2.ReleaseAndGetAddressOf()));
 
     {
-        // forceSRGB has no effect for 10:10:10:2
-
         auto desc = m_earth2->GetDesc();
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R10G10B10A2_UNORM
@@ -606,8 +605,15 @@ void Game::CreateDeviceDependentResources()
             || desc.Height != 256
             || desc.MipLevels != 10)
         {
-            OutputDebugStringA("FAILED: earth_A2B10G10R10.dds (2) desc unexpected\n");
-            success = false;
+            if (!resourceUpload.IsSupportedForGenerateMips(DXGI_FORMAT_R10G10B10A2_UNORM))
+            {
+                OutputDebugStringA("WARNING: This device doesn't support autogen mips for R10G10B10A2_UNORM\n");
+            }
+            else
+            {
+                OutputDebugStringA("FAILED: earth_A2B10G10R10_autogen.dds desc unexpected\n");
+                success = false;
+            }
         }
     }
 
@@ -753,6 +759,7 @@ void Game::OnDeviceLost()
     m_test20.Reset();
     m_test21.Reset();
     m_test22.Reset();
+    m_test23.Reset();
 
     m_screenshot.Reset();
 
@@ -1118,17 +1125,43 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         }
     }
 
-    // WIC load with auto-gen request ignore (16bpp is not supported for GenerateMips)
+    // WIC load with auto-gen request ignore (16bpp is not usually supported for GenerateMips)
     DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"grad4d_a1r5g5b5.bmp", m_test22.ReleaseAndGetAddressOf(), true));
     {
         auto desc = m_test22->GetDesc();
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_B5G5R5A1_UNORM
             || desc.Width != 32
-            || desc.Height != 32
-            || desc.MipLevels != 1)
+            || desc.Height != 32)
         {
             OutputDebugStringA("FAILED: grad4d_a1r5g5b5.bmp (ignore autogen) desc unexpected\n");
+            success = false;
+        }
+        else if ((desc.MipLevels == 6) && resourceUpload.IsSupportedForGenerateMips(desc.Format))
+        {
+            OutputDebugStringA("NOTE: grad4d_a1r5g5b5.bmp - this device supports 16bpp autogen mips\n");
+        }
+        else if (desc.MipLevels != 1)
+        {
+            OutputDebugStringA("FAILED: grad4d_a1r5g5b5.bmp (ignore autogen) desc unexpected\n");
+            success = false;
+        }
+    }
+
+    // DDS load (force sRGB on 10:10:10:2)
+    DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, L"earth_A2B10G10R10.dds",
+        0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_FORCE_SRGB, m_test23.ReleaseAndGetAddressOf()));
+    {
+        // forceSRGB has no effect for 10:10:10:2
+
+        auto desc = m_test23->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_R10G10B10A2_UNORM
+            || desc.Width != 512
+            || desc.Height != 256
+            || desc.MipLevels != 10)
+        {
+            OutputDebugStringA("FAILED: earth_A2B10G10R10.dds (force sRGB) desc unexpected\n");
             success = false;
         }
     }
