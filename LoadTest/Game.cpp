@@ -112,8 +112,15 @@ void Game::Initialize(
 
         if (!options.TypedUAVLoadAdditionalFormats)
         {
-            OutputDebugStringA("NOTE: This device does not support TypedUAVLoadAdditionalFormats so all autogen mips tests will be ignored except R32F!\n");
+            OutputDebugStringA("NOTE: This device does not support TypedUAVLoadAdditionalFormats so autogen mips is not supported except for R32\n");
         }
+
+#if !defined(_XBOX_ONE) || !defined(_TITLE)
+        if (!options.StandardSwizzle64KBSupported)
+        {
+            OutputDebugStringA("NOTE: This device does not support StandardSwizzle64KBSupported so autogen mips for BGR is not supported\n");
+        }
+#endif
     }
     CreateDeviceDependentResources();
 
@@ -635,7 +642,7 @@ void Game::CreateDeviceDependentResources()
             if (!resourceUpload.IsSupportedForGenerateMips(DXGI_FORMAT_B8G8R8A8_UNORM)
                 && desc.MipLevels == 1)
             {
-                OutputDebugStringA("NOTE: dx5_logo_autogen_bgra.dds - device doesn't support autogen mips for 8:8:8:8\n");
+                OutputDebugStringA("NOTE: dx5_logo_autogen_bgra.dds - device doesn't support autogen mips for 8:8:8:8 and/or lacks standard swizzle\n");
             }
             else
             {
