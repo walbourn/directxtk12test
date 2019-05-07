@@ -28,10 +28,12 @@ using Microsoft::WRL::ComPtr;
 Game::Game() noexcept(false)
 {
 #ifdef GAMMA_CORRECT_RENDERING
-    m_deviceResources = std::make_unique<DX::DeviceResources>(DXGI_FORMAT_B8G8R8A8_UNORM_SRGB, DXGI_FORMAT_D32_FLOAT, 2, D3D_FEATURE_LEVEL_11_0, 0, 3);
+    DXGI_FORMAT s_format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
 #else
-    m_deviceResources = std::make_unique<DX::DeviceResources>(DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_D32_FLOAT, 2, D3D_FEATURE_LEVEL_11_0, 0, 2);
+    DXGI_FORMAT s_format = DXGI_FORMAT_B8G8R8A8_UNORM;
 #endif
+
+    m_deviceResources = std::make_unique<DX::DeviceResources>(s_format, DXGI_FORMAT_D32_FLOAT, 2, D3D_FEATURE_LEVEL_11_0, 0, 2);
 
     m_deviceResources->RegisterDeviceNotify(this);
 }
