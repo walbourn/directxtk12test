@@ -1,4 +1,4 @@
-﻿//
+//
 // DeviceResources.cpp - A wrapper for the Direct3D 12 device and swapchain (mGPU variant)
 //
 
@@ -150,7 +150,8 @@ void DeviceResources::CreateDeviceResources()
             D3D12_MESSAGE_ID hide[] =
             {
                 D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,
-                D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE
+                D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE,
+                D3D12_MESSAGE_ID_EXECUTECOMMANDLISTS_WRONGSWAPCHAINBUFFERREFERENCE
             };
             D3D12_INFO_QUEUE_FILTER filter = {};
             filter.DenyList.NumIDs = _countof(hide);
