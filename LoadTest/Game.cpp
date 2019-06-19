@@ -16,6 +16,8 @@
 #include "pch.h"
 #include "Game.h"
 
+#include "ReadData.h"
+
 #if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
 #include <Windows.ApplicationModel.h>
 #include <Windows.Storage.h>
@@ -794,6 +796,8 @@ void Game::OnDeviceLost()
     m_test22.Reset();
     m_test23.Reset();
     m_test24.Reset();
+    m_test25.Reset();
+    m_test26.Reset();
 
     m_screenshot.Reset();
 
@@ -1245,6 +1249,45 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         {
             OutputDebugStringA("FAILED: windowslogo_r32f.dds (autogen) desc unexpected\n");
             success = false;
+        }
+    }
+
+    // From memory
+    {
+        auto blob = DX::ReadData(L"dx5_logo.dds");
+
+        DX::ThrowIfFailed(CreateDDSTextureFromMemory(device, resourceUpload, blob.data(), blob.size(), m_test25.ReleaseAndGetAddressOf()));
+
+        {
+            auto desc = m_test25->GetDesc();
+            if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+                || desc.Format != DXGI_FORMAT_BC1_UNORM
+                || desc.Width != 256
+                || desc.Height != 256
+                || desc.MipLevels != 9)
+            {
+                OutputDebugStringA("FAILED: dx5_logo.dds (mem) desc unexpected\n");
+                success = false;
+            }
+        }
+    }
+
+    {
+        auto blob = DX::ReadData(L"win95.bmp");
+
+        DX::ThrowIfFailed(CreateWICTextureFromMemory(device, resourceUpload, blob.data(), blob.size(), m_test26.ReleaseAndGetAddressOf(), false));
+
+        {
+            auto desc = m_test26->GetDesc();
+            if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+                || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
+                || desc.Width != 256
+                || desc.Height != 256
+                || desc.MipLevels != 1)
+            {
+                OutputDebugStringA("FAILED: win95.bmp (mem) desc unexpected\n");
+                success = false;
+            }
         }
     }
 
