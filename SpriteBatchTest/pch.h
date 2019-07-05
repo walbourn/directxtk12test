@@ -87,6 +87,7 @@
 #include "Keyboard.h"
 #include "Mouse.h"
 #include "ResourceUploadBatch.h"
+#include "SimpleMath.h"
 #include "SpriteBatch.h"
 
 namespace DX

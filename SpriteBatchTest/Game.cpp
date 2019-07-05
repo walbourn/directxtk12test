@@ -29,6 +29,7 @@ namespace
 extern void ExitGame();
 
 using namespace DirectX;
+using namespace DirectX::SimpleMath;
 
 using Microsoft::WRL::ComPtr;
 
@@ -230,7 +231,7 @@ void Game::Render()
     m_spriteBatch->Draw(cat, catSize, XMFLOAT2(0, 0), nullptr, Colors::White, 0, XMFLOAT2(0, 0), 0.5);
 
     RECT dest1 = { 0, 0, 256, 64 };
-    RECT dest2 = { 0, 0, 64, 256 };
+    Rectangle dest2 = { 0, 0, 64, 256 };
 
     m_spriteBatch->Draw(cat, catSize, dest1);
     m_spriteBatch->Draw(cat, catSize, dest2);
