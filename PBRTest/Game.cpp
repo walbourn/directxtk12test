@@ -393,6 +393,7 @@ void Game::Render()
         case DebugEffect::Mode_Normals: debug = m_debugN.get(); break;
         case DebugEffect::Mode_Tangents: debug = m_debugT.get(); break;
         case DebugEffect::Mode_BiTangents: debug = m_debugB.get(); break;
+        case DebugEffect::Mode_Default: break;
         }
 
         debug->SetAlpha(1.f);
@@ -1165,6 +1166,7 @@ void Game::CycleDebug()
         case DebugEffect::Mode_Normals: OutputDebugStringA("INFO: Showing normals\n"); break;
         case DebugEffect::Mode_Tangents: OutputDebugStringA("INFO: Showing tangents\n"); break;
         case DebugEffect::Mode_BiTangents: OutputDebugStringA("INFO: Showing bi-tangents\n"); break;
+        case DebugEffect::Mode_Default: break;
         }
     }
 }

@@ -181,7 +181,7 @@ void Game::Render()
     commandList->SetDescriptorHeaps(_countof(heaps), heaps);
 
     auto vp = m_deviceResources->GetOutputSize();
-    auto safeRect = Viewport::ComputeTitleSafeArea(vp.right - vp.left, vp.bottom - vp.top);
+    auto safeRect = Viewport::ComputeTitleSafeArea(UINT(vp.right - vp.left), UINT(vp.bottom - vp.top));
 
     long w = safeRect.right - safeRect.left;
     long h = safeRect.bottom - safeRect.top;

@@ -601,9 +601,9 @@ void Game::CreateDeviceDependentResources()
         m_resourceDescriptors->GetGpuHandle(Descriptors::ComicFont));
 
 #ifdef GAMMA_CORRECT_RENDERING
-    int loadFlags = DDS_LOADER_FORCE_SRGB;
+    unsigned int loadFlags = DDS_LOADER_FORCE_SRGB;
 #else
-    int loadFlags = DDS_LOADER_DEFAULT;
+    unsigned int loadFlags = DDS_LOADER_DEFAULT;
 #endif
 
     DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, L"texture.dds", 0, D3D12_RESOURCE_FLAG_NONE, loadFlags,

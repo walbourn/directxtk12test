@@ -227,7 +227,7 @@ std::unique_ptr<Model> CreateModelFromOBJ(_In_z_ const wchar_t* szFileName)
     model->textureNames.resize(textureDictionary.size());
     for (auto texture = std::cbegin(textureDictionary); texture != std::cend(textureDictionary); ++texture)
     {
-        model->textureNames[texture->second] = texture->first;
+        model->textureNames[size_t(texture->second)] = texture->first;
     }
 
     return model;

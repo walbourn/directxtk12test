@@ -818,7 +818,7 @@ void Game::CreateDeviceDependentResources()
 		pd.inputLayout = (!j) ? TestVertex::InputLayout : TestCompressedVertex::InputLayout;
 		opaquePd.inputLayout = (!j) ? TestVertex::InputLayout : TestCompressedVertex::InputLayout;
 
-        unsigned int eflags = (!j) ? EffectFlags::None : EffectFlags::BiasedVertexNormals;
+        int eflags = (!j) ? EffectFlags::None : EffectFlags::BiasedVertexNormals;
 
         //--- BasicEffect ------------------------------------------------------------------
 
