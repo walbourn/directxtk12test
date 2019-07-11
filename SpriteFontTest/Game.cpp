@@ -311,7 +311,7 @@ void Game::Render()
             ascii[i++] = static_cast<char>(j + 1);
         }
 
-        int cp = 437;
+        UINT cp = 437;
     #if defined(_XBOX_ONE) && defined(_TITLE)
         cp = CP_UTF8;
 
