@@ -163,7 +163,21 @@ void DeviceResources::CreateDeviceResources()
         filter.DenyList.pIDList = hide;
         d3dInfoQueue->AddStorageFilterEntries(&filter);
     }
+
+#if defined(NTDDI_WIN10_VB) && (NTDDI_VERSION >= NTDDI_WIN10_VB)
+    ComPtr<ID3D12DebugDevice1> d3dDebugDevice;
+    if (SUCCEEDED(m_d3dDevice.As(&d3dDebugDevice)))
+    {
+        D3D12_DEBUG_FEATURE feat = D3D12_DEBUG_FEATURE_EMULATE_WINDOWS7;
+        if (FAILED(d3dDebugDevice->SetDebugParameter(D3D12_DEBUG_DEVICE_PARAMETER_FEATURE_FLAGS, &feat, sizeof(feat))))
+        {
+#ifdef _DEBUG
+            OutputDebugStringA("WARNING: Windows 7 emulation validation not supported");
 #endif
+        }
+    }
+#endif
+#endif // !NDEBUG
 
     // Determine maximum supported feature level for this device
     static const D3D_FEATURE_LEVEL s_featureLevels[] =
