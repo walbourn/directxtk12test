@@ -23,7 +23,7 @@
 #include <Windows.Storage.h>
 #endif
 
-//#define GAMMA_CORRECT_RENDERING
+#define GAMMA_CORRECT_RENDERING
 
 // Build for LH vs. RH coords
 //#define LH_COORDS
@@ -311,7 +311,7 @@ void Game::Render()
 
         HRESULT hr = SaveWICTextureToFile(m_deviceResources->GetCommandQueue(), m_screenshot.Get(),
             GUID_ContainerFormatPng, sspng,
-            D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT, &GUID_WICPixelFormat32bppBGRA);
+            D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT, &GUID_WICPixelFormat32bppBGRA, nullptr, true);
 
         if (FAILED(hr))
         {
@@ -332,7 +332,7 @@ void Game::Render()
 
         hr = SaveWICTextureToFile(m_deviceResources->GetCommandQueue(), m_screenshot.Get(),
             GUID_ContainerFormatJpeg, ssjpg,
-            D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT);
+            D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT, nullptr, nullptr, true);
 
         if (FAILED(hr))
         {
@@ -391,7 +391,7 @@ void Game::Render()
             varValues[1].bVal = WICTiffCompressionNone;
 
             (void)props->Write(2, options, varValues);
-        });
+        }, true);
 
         if (FAILED(hr))
         {
@@ -416,7 +416,7 @@ void Game::Render()
         if (FAILED(hr))
         {
             char buff[128] = {};
-            sprintf_s(buff, "ERROR: SaveWICTextureToFile (DDS) failed %08X\n", hr);
+            sprintf_s(buff, "ERROR: SaveDDSTextureToFile failed %08X\n", hr);
             OutputDebugStringA(buff);
             success = false;
         }
