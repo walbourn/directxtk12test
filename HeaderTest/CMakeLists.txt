@@ -17,10 +17,11 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/CMake")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/CMake")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/CMake")
 
-# Building for Windows 10 "OneCore"
-set(CMAKE_CXX_STANDARD_LIBRARIES "onecore.lib")
-set(CMAKE_CXX_STANDARD_LIBRARIES_INIT "onecore.lib")
-add_compile_definitions(_UNICODE UNICODE _WIN32_WINNT=0x0A00)
+if(WIN32)
+    # Building for Windows 10 "OneCore"
+    set(CMAKE_CXX_STANDARD_LIBRARIES "onecore.lib")
+    set(CMAKE_CXX_STANDARD_LIBRARIES_INIT "onecore.lib")
+endif()
 
 # Use max Warning Level 
 string(REPLACE "/W3 " "/Wall " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
@@ -68,4 +69,9 @@ if ( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
 
     set(WarningsEXE "/wd4061" "/wd4365" "/wd4514" "/wd4571" "/wd4668" "/wd4710" "/wd4820" "/wd5039" "/wd5045")
     target_compile_options(headertest PRIVATE ${WarningsEXE})
+endif()
+
+if(WIN32)
+    # Building for Windows 10
+    target_compile_definitions(headertest PRIVATE _UNICODE UNICODE _WIN32_WINNT=0x0A00)
 endif()
