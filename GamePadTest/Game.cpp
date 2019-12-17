@@ -507,6 +507,10 @@ void Game::Render()
     PIXBeginEvent(m_deviceResources->GetCommandQueue(), PIX_COLOR_DEFAULT, L"Present");
     m_deviceResources->Present();
     m_graphicsMemory->Commit(m_deviceResources->GetCommandQueue());
+
+    // Sample stats to update peak values
+    (void)m_graphicsMemory->GetStatistics();
+
     PIXEndEvent(m_deviceResources->GetCommandQueue());
 }
 

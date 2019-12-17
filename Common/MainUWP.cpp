@@ -478,5 +478,21 @@ int __cdecl main(Platform::Array<Platform::String^>^ /*argv*/)
 // Exit helper
 void ExitGame()
 {
+#ifndef TEST_MGPU
+    auto& graphicsMemory = GraphicsMemory::Get();
+
+    auto stats = graphicsMemory.GetStatistics();
+
+    char buff[1024] = {};
+    sprintf_s(buff, "GraphicsMemory: committed %zu KB, total %zu KB (%zu pages)\n                peak commited %zu KB, peak total %zu KB (%zu pages)\n",
+        stats.committedMemory / 1024,
+        stats.totalMemory / 1024,
+        stats.totalPages,
+        stats.peakCommitedMemory / 1024,
+        stats.peakTotalMemory / 1024,
+        stats.peakTotalPages);
+    OutputDebugStringA(buff);
+#endif
+
     Windows::ApplicationModel::Core::CoreApplication::Exit();
 }
