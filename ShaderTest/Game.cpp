@@ -81,9 +81,9 @@ namespace
         TestVertex::InputElementCount
     };
     
-    typedef std::vector<TestVertex> VertexCollection;
-    typedef std::vector<uint16_t> IndexCollection;
-       
+    using VertexCollection = std::vector<TestVertex>;
+    using IndexCollection = std::vector<uint16_t>;
+
     struct TestCompressedVertex
     {
         TestCompressedVertex(const TestVertex& bn)
