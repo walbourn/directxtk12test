@@ -61,7 +61,7 @@ namespace
 
     struct find_closer { void operator()(HANDLE h) { assert(h != INVALID_HANDLE_VALUE); if (h) FindClose(h); } };
 
-    usign ScopedFindHandle = std::unique_ptr<void, find_closer>;
+    using ScopedFindHandle = std::unique_ptr<void, find_closer>;
 }
 
 
