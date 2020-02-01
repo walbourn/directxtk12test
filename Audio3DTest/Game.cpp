@@ -36,7 +36,7 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
-    const X3DAUDIO_CONE Listener_DirectionalCone = { X3DAUDIO_PI*5.0f / 6.0f, X3DAUDIO_PI*11.0f / 6.0f, 1.0f, 0.75f, 0.0f, 0.25f, 0.708f, 1.0f };
+    const X3DAUDIO_CONE Listener_DirectionalCone = { X3DAUDIO_PI * 5.0f / 6.0f, X3DAUDIO_PI * 11.0f / 6.0f, 1.0f, 0.75f, 0.0f, 0.25f, 0.708f, 1.0f };
 
     const X3DAUDIO_CONE Emitter_DirectionalCone = { 0.f, 0.f, 0.f, 1.f, 0.f, 1.f, 0.f, 1.f };
 
@@ -92,6 +92,15 @@ Game::Game() noexcept(false) :
 #if !defined(_XBOX_ONE) || !defined(_TITLE)
     m_deviceResources->RegisterDeviceNotify(this);
 #endif
+
+    // Set up 3D positional audio structures
+    m_listener.pCone = const_cast<X3DAUDIO_CONE*>(&Listener_DirectionalCone);
+
+    m_emitter.SetPosition(XMFLOAT3(10.f, 0.f, 0.f));
+    m_emitter.pLFECurve = const_cast<X3DAUDIO_DISTANCE_CURVE*>(&Emitter_LFE_Curve);
+    m_emitter.pReverbCurve = const_cast<X3DAUDIO_DISTANCE_CURVE*>(&Emitter_Reverb_Curve);
+    m_emitter.CurveDistanceScaler = 14.f;
+    m_emitter.pCone = const_cast<X3DAUDIO_CONE*>(&Emitter_DirectionalCone);
 }
 
 Game::~Game()
