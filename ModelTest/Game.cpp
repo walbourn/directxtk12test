@@ -544,7 +544,7 @@ void Game::CreateDeviceDependentResources()
 
     m_cup = CreateModelFromOBJ(L"cup._obj");
 
-    m_vbo = Model::CreateFromVBO(L"player_ship_a.vbo");
+    m_vbo = Model::CreateFromVBO(device, L"player_ship_a.vbo");
 
     // Load textures & effects
     m_resourceDescriptors = std::make_unique<DescriptorPile>(device,
@@ -654,7 +654,7 @@ void Game::CreateDeviceDependentResources()
     }
 
     // SDKMESH Cup
-    m_cupMesh = Model::CreateFromSDKMESH(L"cup.sdkmesh");
+    m_cupMesh = Model::CreateFromSDKMESH(device, L"cup.sdkmesh");
 
     {
         size_t start, end;
@@ -675,7 +675,7 @@ void Game::CreateDeviceDependentResources()
     }
 
     // SDKMESH Tiny
-    m_tiny = Model::CreateFromSDKMESH(L"tiny.sdkmesh");
+    m_tiny = Model::CreateFromSDKMESH(device, L"tiny.sdkmesh");
 
     {
         size_t start, end;
@@ -696,7 +696,7 @@ void Game::CreateDeviceDependentResources()
     }
 
     // SDKMESH Soldier
-    m_soldier = Model::CreateFromSDKMESH(L"soldier.sdkmesh");
+    m_soldier = Model::CreateFromSDKMESH(device, L"soldier.sdkmesh");
 
     {
         size_t start, end;
@@ -717,7 +717,7 @@ void Game::CreateDeviceDependentResources()
     }
 
     // SDKMESH Dwarf
-    m_dwarf = Model::CreateFromSDKMESH(L"dwarf.sdkmesh");
+    m_dwarf = Model::CreateFromSDKMESH(device, L"dwarf.sdkmesh");
 
     {
         size_t start, end;
@@ -738,7 +738,7 @@ void Game::CreateDeviceDependentResources()
     }
 
     // SDKMESH Lightmap
-    m_lmap = Model::CreateFromSDKMESH(L"SimpleLightMap.sdkmesh");
+    m_lmap = Model::CreateFromSDKMESH(device, L"SimpleLightMap.sdkmesh");
 
     {
         size_t start, end;
@@ -759,7 +759,7 @@ void Game::CreateDeviceDependentResources()
     }
 
     // SDKMESH Normalmap
-    m_nmap = Model::CreateFromSDKMESH(L"Helmet.sdkmesh");
+    m_nmap = Model::CreateFromSDKMESH(device, L"Helmet.sdkmesh");
 
     {
         size_t start, end;

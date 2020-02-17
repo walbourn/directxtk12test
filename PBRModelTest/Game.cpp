@@ -530,10 +530,10 @@ void Game::CreateDeviceDependentResources()
         m_renderDescriptors->GetCpuHandle(RTDescriptors::HDRScene));
 
     // DirectX SDK Mesh
-    m_cube = Model::CreateFromSDKMESH(L"BrokenCube.sdkmesh");
-    m_sphere = Model::CreateFromSDKMESH(L"Sphere.sdkmesh");
-    m_sphere2 = Model::CreateFromSDKMESH(L"Sphere2.sdkmesh");
-    m_robot = Model::CreateFromSDKMESH(L"ToyRobot.sdkmesh");
+    m_cube = Model::CreateFromSDKMESH(device, L"BrokenCube.sdkmesh");
+    m_sphere = Model::CreateFromSDKMESH(device, L"Sphere.sdkmesh");
+    m_sphere2 = Model::CreateFromSDKMESH(device, L"Sphere2.sdkmesh");
+    m_robot = Model::CreateFromSDKMESH(device, L"ToyRobot.sdkmesh");
 
     RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), DXGI_FORMAT_UNKNOWN);
 #if defined(_XBOX_ONE) && defined(_TITLE)
