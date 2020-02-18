@@ -31,7 +31,10 @@ using Microsoft::WRL::ComPtr;
 // Build for LH vs. RH coords
 #define LH_COORDS
 
-std::unique_ptr<Model> CreateModelFromOBJ(_In_z_ const wchar_t* szFileName);
+std::unique_ptr<Model> CreateModelFromOBJ(
+    _In_opt_ ID3D12Device* device,
+    _In_z_ const wchar_t* szFileName,
+    ModelLoaderFlags flags = ModelLoader_Default);
 
 namespace
 {
@@ -542,7 +545,11 @@ void Game::CreateDeviceDependentResources()
 
     RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), m_deviceResources->GetDepthBufferFormat());
 
-    m_cup = CreateModelFromOBJ(L"cup._obj");
+#ifdef GAMMA_CORRECT_RENDERING
+    m_cup = CreateModelFromOBJ(device, L"cup._obj", ModelLoader_MaterialColorsSRGB);
+#else
+    m_cup = CreateModelFromOBJ(device, L"cup._obj");
+#endif
 
     m_vbo = Model::CreateFromVBO(device, L"player_ship_a.vbo");
 
