@@ -27,6 +27,23 @@ static_assert(sizeof(VertexPositionNormalTexture) == sizeof(WaveFrontReader<uint
 
 namespace
 {
+    inline XMFLOAT3 GetMaterialColor(float r, float g, float b, bool srgb)
+    {
+        if (srgb)
+        {
+            XMVECTOR v = XMVectorSet(r, g, b, 1.f);
+            v = XMColorSRGBToRGB(v);
+
+            XMFLOAT3 result;
+            XMStoreFloat3(&result, v);
+            return result;
+        }
+        else
+        {
+            return XMFLOAT3(r, g, b);
+        }
+    }
+
     //--------------------------------------------------------------------------------------
     // Shared VB input element description
     INIT_ONCE g_InitOnce = INIT_ONCE_STATIC_INIT;
@@ -64,7 +81,10 @@ namespace
 
 
 //--------------------------------------------------------------------------------------
-std::unique_ptr<Model> CreateModelFromOBJ(_In_z_ const wchar_t* szFileName)
+std::unique_ptr<Model> CreateModelFromOBJ(
+    _In_opt_ ID3D12Device* device,
+    _In_z_ const wchar_t* szFileName,
+    ModelLoaderFlags flags)
 {
     if (!InitOnceExecuteOnce(&g_InitOnce, InitializeDecl, nullptr, nullptr))
         throw std::exception("One-time initialization failed");
@@ -133,11 +153,11 @@ std::unique_ptr<Model> CreateModelFromOBJ(_In_z_ const wchar_t* szFileName)
 
     // Create vertex & index buffer
     size_t vertSize = sizeof(VertexPositionNormalTexture) * obj->vertices.size();
-    SharedGraphicsResource vb = GraphicsMemory::Get().Allocate(vertSize);
+    SharedGraphicsResource vb = GraphicsMemory::Get(device).Allocate(vertSize);
     memcpy(vb.Memory(), obj->vertices.data(), vertSize);
 
     size_t indexSize = sizeof(uint16_t) * obj->indices.size();
-    SharedGraphicsResource ib = GraphicsMemory::Get().Allocate(indexSize);
+    SharedGraphicsResource ib = GraphicsMemory::Get(device).Allocate(indexSize);
     memcpy(ib.Memory(), obj->indices.data(), indexSize);
 
     // Create a subset for each attribute/material
@@ -164,8 +184,8 @@ std::unique_ptr<Model> CreateModelFromOBJ(_In_z_ const wchar_t* szFileName)
             Model::ModelMaterialInfo info;
             info.name = mat.strName;
             info.alphaValue = mat.fAlpha;
-            info.ambientColor = mat.vAmbient;
-            info.diffuseColor = mat.vDiffuse;
+            info.ambientColor = GetMaterialColor(mat.vAmbient.x, mat.vAmbient.y, mat.vAmbient.z, (flags & ModelLoader_MaterialColorsSRGB) != 0);
+            info.diffuseColor = GetMaterialColor(mat.vDiffuse.x, mat.vDiffuse.y, mat.vDiffuse.z, (flags & ModelLoader_MaterialColorsSRGB) != 0);
 
             if (mat.bSpecular)
             {
