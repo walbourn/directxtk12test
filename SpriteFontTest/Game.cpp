@@ -640,7 +640,7 @@ void Game::UnitTests()
             success = false;
         }
 
-     
+
         auto spriteSheet = m_comicFont->GetSpriteSheet();
 
         if (!spriteSheet.ptr)
@@ -737,7 +737,7 @@ void Game::UnitTests()
         auto text6 = L"  ";
         auto testLineHeight = m_comicFont->GetLineSpacing();
 
-        const auto testPos = XMFLOAT2 { 10.0f, 15.0f };
+        const auto testPos = XMFLOAT2{ 10.0f, 15.0f };
 
         // this test makes sure that including whitespace in the measurements
         // for a string that does not include whitespace results in no change
