@@ -280,7 +280,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     HRESULT hr = hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     if (FAILED(hr))
     {
-        wprintf(L"Failed to initialize COM (%08X)\n", hr);
+        wprintf(L"Failed to initialize COM (%08X)\n", static_cast<unsigned int>(hr));
         return 1;
     }
 
@@ -361,7 +361,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
     hr = CreateDevice(device.GetAddressOf());
     if (FAILED(hr))
     {
-        wprintf(L"ERROR: Failed to create required Direct3D device to fuzz: %08X\n", hr);
+        wprintf(L"ERROR: Failed to create required Direct3D device to fuzz: %08X\n", static_cast<unsigned int>(hr));
         return 1;
     }
 
@@ -406,7 +406,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             {
 #ifdef _DEBUG
                 char buff[128] = {};
-                sprintf_s(buff, "DDSTexture failed with %08X\n", hr);
+                sprintf_s(buff, "DDSTexture failed with %08X\n", static_cast<unsigned int>(hr));
                 OutputDebugStringA(buff);
 #endif
                 wprintf(L"!");
@@ -429,7 +429,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             {
 #ifdef _DEBUG
                 char buff[128] = {};
-                sprintf_s(buff, "WICTexture failed with %08X\n", hr);
+                sprintf_s(buff, "WICTexture failed with %08X\n", static_cast<unsigned int>(hr));
                 OutputDebugStringA(buff);
 #endif
                 wprintf(L"!");
