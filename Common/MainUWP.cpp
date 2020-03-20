@@ -476,7 +476,7 @@ int __cdecl main(Platform::Array<Platform::String^>^ /*argv*/)
 
 
 // Exit helper
-void ExitGame()
+void ExitGame() noexcept
 {
 #ifndef TEST_MGPU
     auto& graphicsMemory = GraphicsMemory::Get();

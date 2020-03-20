@@ -29,7 +29,7 @@ namespace
     const float row2 = -1.5f;
 }
 
-extern void ExitGame();
+extern void ExitGame() noexcept;
 
 using namespace DirectX;
 using namespace DirectX::SimpleMath;

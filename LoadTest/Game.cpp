@@ -33,7 +33,7 @@ namespace
     float dist = 10.f;
 };
 
-extern void ExitGame();
+extern void ExitGame() noexcept;
 
 using namespace DirectX;
 using namespace DirectX::SimpleMath;

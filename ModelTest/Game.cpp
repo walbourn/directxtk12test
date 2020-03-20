@@ -16,7 +16,7 @@
 #include "pch.h"
 #include "Game.h"
 
-extern void ExitGame();
+extern void ExitGame() noexcept;
 
 using namespace DirectX;
 using namespace DirectX::SimpleMath;

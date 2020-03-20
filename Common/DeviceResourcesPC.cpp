@@ -12,7 +12,7 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
-    inline DXGI_FORMAT NoSRGB(DXGI_FORMAT fmt)
+    inline DXGI_FORMAT NoSRGB(DXGI_FORMAT fmt) noexcept
     {
         switch (fmt)
         {
@@ -289,7 +289,9 @@ void DeviceResources::CreateDeviceResources()
     }
 
     D3D12_FEATURE_DATA_SHADER_MODEL shaderModel = {};
-#if defined(NTDDI_WIN10_19H1) && (NTDDI_VERSION >= NTDDI_WIN10_19H1)
+#if defined(NTDDI_WIN10_VB) && (NTDDI_VERSION >= NTDDI_WIN10_VB)
+    shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_6;
+#elif defined(NTDDI_WIN10_19H1) && (NTDDI_VERSION >= NTDDI_WIN10_19H1)
     shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_5;
 #elif defined(NTDDI_WIN10_RS5) && (NTDDI_VERSION >= NTDDI_WIN10_RS5)
     shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_4;
@@ -331,6 +333,10 @@ void DeviceResources::CreateDeviceResources()
 #if defined(NTDDI_WIN10_19H1) && (NTDDI_VERSION >= NTDDI_WIN10_19H1)
     case D3D_SHADER_MODEL_6_5: shaderModelVer = "6.5"; break;
 #endif
+
+#if defined(NTDDI_WIN10_VB) && (NTDDI_VERSION >= NTDDI_WIN10_VB)
+    case D3D_SHADER_MODEL_6_6: shaderModelVer = "6.6"; break;
+#endif
     }
 
     char buff[128] = {};
@@ -358,9 +364,9 @@ void DeviceResources::CreateWindowSizeDependentResources()
     }
 
     // Determine the render target size in pixels.
-    UINT backBufferWidth = std::max<UINT>(static_cast<UINT>(m_outputSize.right - m_outputSize.left), 1u);
-    UINT backBufferHeight = std::max<UINT>(static_cast<UINT>(m_outputSize.bottom - m_outputSize.top), 1u);
-    DXGI_FORMAT backBufferFormat = NoSRGB(m_backBufferFormat);
+    const UINT backBufferWidth = std::max<UINT>(static_cast<UINT>(m_outputSize.right - m_outputSize.left), 1u);
+    const UINT backBufferHeight = std::max<UINT>(static_cast<UINT>(m_outputSize.bottom - m_outputSize.top), 1u);
+    const DXGI_FORMAT backBufferFormat = NoSRGB(m_backBufferFormat);
 
     // If the swap chain already exists, resize it, otherwise create one.
     if (m_swapChain)
@@ -378,7 +384,8 @@ void DeviceResources::CreateWindowSizeDependentResources()
         {
 #ifdef _DEBUG
             char buff[64] = {};
-            sprintf_s(buff, "Device Lost on ResizeBuffers: Reason code 0x%08X\n", (hr == DXGI_ERROR_DEVICE_REMOVED) ? m_d3dDevice->GetDeviceRemovedReason() : hr);
+            sprintf_s(buff, "Device Lost on ResizeBuffers: Reason code 0x%08X\n",
+                static_cast<unsigned int>((hr == DXGI_ERROR_DEVICE_REMOVED) ? m_d3dDevice->GetDeviceRemovedReason() : hr));
             OutputDebugStringA(buff);
 #endif
             // If the device was removed for any reason, a new device and swap chain will need to be created.
@@ -506,7 +513,7 @@ void DeviceResources::CreateWindowSizeDependentResources()
 }
 
 // This method is called when the Win32 window is created (or re-created).
-void DeviceResources::SetWindow(HWND window, int width, int height)
+void DeviceResources::SetWindow(HWND window, int width, int height) noexcept
 {
     m_window = window;
 
@@ -631,7 +638,8 @@ void DeviceResources::Present(D3D12_RESOURCE_STATES beforeState)
     {
 #ifdef _DEBUG
         char buff[64] = {};
-        sprintf_s(buff, "Device Lost on Present: Reason code 0x%08X\n", (hr == DXGI_ERROR_DEVICE_REMOVED) ? m_d3dDevice->GetDeviceRemovedReason() : hr);
+        sprintf_s(buff, "Device Lost on Present: Reason code 0x%08X\n",
+            static_cast<unsigned int>((hr == DXGI_ERROR_DEVICE_REMOVED) ? m_d3dDevice->GetDeviceRemovedReason() : hr));
         OutputDebugStringA(buff);
 #endif
         HandleDeviceLost();
@@ -737,32 +745,34 @@ void DeviceResources::GetAdapter(IDXGIAdapter1** ppAdapter)
                 }
             }
         }
-        else
 #endif
-        for (UINT adapterIndex = 0;
-            SUCCEEDED(m_dxgiFactory->EnumAdapters1(
-                adapterIndex,
-                adapter.ReleaseAndGetAddressOf()));
-            ++adapterIndex)
+        if (!adapter)
         {
-            DXGI_ADAPTER_DESC1 desc;
-            ThrowIfFailed(adapter->GetDesc1(&desc));
-
-            if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+            for (UINT adapterIndex = 0;
+                SUCCEEDED(m_dxgiFactory->EnumAdapters1(
+                    adapterIndex,
+                    adapter.ReleaseAndGetAddressOf()));
+                ++adapterIndex)
             {
-                // Don't select the Basic Render Driver adapter.
-                continue;
-            }
+                DXGI_ADAPTER_DESC1 desc;
+                ThrowIfFailed(adapter->GetDesc1(&desc));
 
-            // Check to see if the adapter supports Direct3D 12, but don't create the actual device yet.
-            if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), m_d3dMinFeatureLevel, _uuidof(ID3D12Device), nullptr)))
-            {
-                if (s_debugAdapterOrdinal == -1 || (s_debugAdapterOrdinal == int(adapterIndex)))
+                if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
                 {
-                    wchar_t buff[256] = {};
-                    swprintf_s(buff, L"Direct3D Adapter (%u): VID:%04X, PID:%04X - %ls\n", adapterIndex, desc.VendorId, desc.DeviceId, desc.Description);
-                    OutputDebugStringW(buff);
-                    break;
+                    // Don't select the Basic Render Driver adapter.
+                    continue;
+                }
+
+                // Check to see if the adapter supports Direct3D 12, but don't create the actual device yet.
+                if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), m_d3dMinFeatureLevel, _uuidof(ID3D12Device), nullptr)))
+                {
+                    if (s_debugAdapterOrdinal == -1 || (s_debugAdapterOrdinal == int(adapterIndex)))
+                    {
+                        wchar_t buff[256] = {};
+                        swprintf_s(buff, L"Direct3D Adapter (%u): VID:%04X, PID:%04X - %ls\n", adapterIndex, desc.VendorId, desc.DeviceId, desc.Description);
+                        OutputDebugStringW(buff);
+                        break;
+                    }
                 }
             }
         }

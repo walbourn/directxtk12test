@@ -41,7 +41,7 @@ namespace
     const float col10 = 7.5f;
 }
 
-extern void ExitGame();
+extern void ExitGame() noexcept;
 
 using namespace DirectX;
 
