@@ -37,6 +37,7 @@
 #endif
 
 #include <wrl/client.h>
+#include <wrl/event.h>
 
 #if defined(_XBOX_ONE) && defined(_TITLE)
 #include <d3d12_x.h>
