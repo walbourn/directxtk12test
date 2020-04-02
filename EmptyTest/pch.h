@@ -44,7 +44,7 @@
 #include <windows.h>
 #endif
 
-#include <wrl.h>
+#include <wrl/client.h>
 
 #if defined(_XBOX_ONE) && defined(_TITLE)
 #include <d3d12_x.h>
