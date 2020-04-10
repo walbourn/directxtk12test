@@ -165,18 +165,24 @@ void DeviceResources::CreateDeviceResources()
     }
 
 #if defined(NTDDI_WIN10_VB) && (NTDDI_VERSION >= NTDDI_WIN10_VB)
-    ComPtr<ID3D12DebugDevice1> d3dDebugDevice;
-    if (SUCCEEDED(m_d3dDevice.As(&d3dDebugDevice)))
+    // Only want to enable this on the Windows 10 OS (Build 19041) or later due to some bugs before that.
+    ComPtr<ID3D12Device7> device7;
+    if (SUCCEEDED(m_d3dDevice.As(&device7)))
     {
-        D3D12_DEBUG_FEATURE feat = D3D12_DEBUG_FEATURE_EMULATE_WINDOWS7;
-        if (FAILED(d3dDebugDevice->SetDebugParameter(D3D12_DEBUG_DEVICE_PARAMETER_FEATURE_FLAGS, &feat, sizeof(feat))))
+        ComPtr<ID3D12DebugDevice1> d3dDebugDevice;
+        if (SUCCEEDED(m_d3dDevice.As(&d3dDebugDevice)))
         {
+            D3D12_DEBUG_FEATURE feat = D3D12_DEBUG_FEATURE_EMULATE_WINDOWS7;
+            if (SUCCEEDED(d3dDebugDevice->SetDebugParameter(
+                D3D12_DEBUG_DEVICE_PARAMETER_FEATURE_FLAGS, &feat, sizeof(feat))))
+            {
 #ifdef _DEBUG
-            OutputDebugStringA("WARNING: Windows 7 emulation validation not supported");
+                OutputDebugStringA("NOTE: Windows 7 emulation DX12 validation enabled\n");
 #endif
+            }
         }
-    }
 #endif
+    }
 #endif // !NDEBUG
 
     // Determine maximum supported feature level for this device
