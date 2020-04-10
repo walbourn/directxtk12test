@@ -570,170 +570,248 @@ void Game::CreateDeviceDependentResources()
         m_effect = std::make_unique<BasicEffect>(device, EffectFlags::Texture, pd);
     }
 
-    ResourceUploadBatch resourceUpload(device);
-
-    resourceUpload.Begin();
-
-    // View textures
     bool success = true;
-    OutputDebugStringA("*********** UINT TESTS BEGIN ***************\n");
-
-    m_resourceDescriptors = std::make_unique<DescriptorHeap>(device,
-        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
-        D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
-        Descriptors::Count);
-
-    // Earth
-    DDS_ALPHA_MODE alphaMode = DDS_ALPHA_MODE_UNKNOWN;
-    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"earth_A2B10G10R10.dds", m_earth.ReleaseAndGetAddressOf(), false, 0, &alphaMode));
 
     {
-        if (alphaMode != DDS_ALPHA_MODE_UNKNOWN)
+        ResourceUploadBatch resourceUpload(device);
+
+        resourceUpload.Begin();
+
+        // View textures
+        OutputDebugStringA("*********** UINT TESTS BEGIN ***************\n");
+
+        m_resourceDescriptors = std::make_unique<DescriptorHeap>(device,
+            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+            D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+            Descriptors::Count);
+
+        // Earth
+        // m_earth / m_earth2 is loaded in the copy queue test
+
+        // DirectX Logo
+        DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen_bgra.dds", m_dxlogo.ReleaseAndGetAddressOf(), true));
+
         {
-            OutputDebugStringA("FAILED: earth_A2B10G10R10.dds alpha mode value unexpected\n");
-            success = false;
-        }
-
-        auto desc = m_earth->GetDesc();
-        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
-            || desc.Format != DXGI_FORMAT_R10G10B10A2_UNORM
-            || desc.Width != 512
-            || desc.Height != 256
-            || desc.MipLevels != 10)
-        {
-            OutputDebugStringA("FAILED: earth_A2B10G10R10.dds desc unexpected\n");
-            success = false;
-        }
-    }
-
-    CreateShaderResourceView(device, m_earth.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Earth));
-
-    DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, L"earth_A2B10G10R10_autogen.dds", 0,
-        D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_MIP_AUTOGEN, m_earth2.ReleaseAndGetAddressOf()));
-
-    {
-        auto desc = m_earth2->GetDesc();
-        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
-            || desc.Format != DXGI_FORMAT_R10G10B10A2_UNORM
-            || desc.Width != 512
-            || desc.Height != 256
-            || desc.MipLevels != 10)
-        {
-            if (!resourceUpload.IsSupportedForGenerateMips(DXGI_FORMAT_R10G10B10A2_UNORM)
-                && desc.MipLevels == 1)
+            auto desc = m_dxlogo->GetDesc();
+            if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+                || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM
+                || desc.Width != 256
+                || desc.Height != 256
+                || desc.MipLevels != 9)
             {
-                OutputDebugStringA("NOTE: earth_A2B10G10R10_autogen.dds - device doesn't support autogen mips for 10:10:10:2\n");
+                if (!resourceUpload.IsSupportedForGenerateMips(DXGI_FORMAT_B8G8R8A8_UNORM)
+                    && desc.MipLevels == 1)
+                {
+                    OutputDebugStringA("NOTE: dx5_logo_autogen_bgra.dds - device doesn't support autogen mips for 8:8:8:8 and/or lacks standard swizzle\n");
+                }
+                else
+                {
+                    OutputDebugStringA("FAILED: dx5_logo_autogen_bgra.dds (autogen) desc unexpected\n");
+                    success = false;
+                }
             }
-            else
+        }
+
+        CreateShaderResourceView(device, m_dxlogo.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::DirectXLogo));
+
+        DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, L"dx5_logo.dds", 0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_FORCE_SRGB, m_dxlogo2.ReleaseAndGetAddressOf()));
+
+        {
+            auto desc = m_dxlogo2->GetDesc();
+            if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+                || desc.Format != DXGI_FORMAT_BC1_UNORM_SRGB
+                || desc.Width != 256
+                || desc.Height != 256
+                || desc.MipLevels != 9)
             {
-                OutputDebugStringA("FAILED: earth_A2B10G10R10_autogen.dds desc unexpected\n");
+                OutputDebugStringA("FAILED: dx5_logo.dds (BC1 sRGB) desc unexpected\n");
                 success = false;
             }
         }
+
+        CreateShaderResourceView(device, m_dxlogo2.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::DirectXLogo_BC1));
+
+        // Windows 95 logo
+        DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"win95.bmp", m_win95.ReleaseAndGetAddressOf(), true));
+
+        {
+            auto desc = m_win95->GetDesc();
+            if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+                || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
+                || desc.Width != 256
+                || desc.Height != 256
+                || desc.MipLevels != 9)
+            {
+                if (!resourceUpload.IsSupportedForGenerateMips(DXGI_FORMAT_R8G8B8A8_UNORM)
+                    && desc.MipLevels == 1)
+                {
+                    OutputDebugStringA("NOTE: win95.bmp - device doesn't support autogen mips for 8:8:8:8\n");
+                }
+                else
+                {
+                    OutputDebugStringA("FAILED: win95.bmp (autogen) desc unexpected\n");
+                    success = false;
+                }
+            }
+        }
+
+        CreateShaderResourceView(device, m_win95.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Windows95));
+
+        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"win95.bmp", 0, D3D12_RESOURCE_FLAG_NONE,
+            WIC_LOADER_FORCE_SRGB | WIC_LOADER_MIP_AUTOGEN, m_win95_2.ReleaseAndGetAddressOf()));
+
+        {
+            auto desc = m_win95_2->GetDesc();
+            if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+                || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
+                || desc.Width != 256
+                || desc.Height != 256
+                || desc.MipLevels != 9)
+            {
+                if (!resourceUpload.IsSupportedForGenerateMips(DXGI_FORMAT_R8G8B8A8_UNORM_SRGB)
+                    && desc.MipLevels == 1)
+                {
+                    OutputDebugStringA("NOTE: win95.bmp - device doesn't support autogen mips for 8:8:8:8\n");
+                }
+                else
+                {
+                    OutputDebugStringA("FAILED: win95.bmp (autogen, sRGB) desc unexpected\n");
+                    success = false;
+                }
+            }
+        }
+
+        CreateShaderResourceView(device, m_win95_2.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Windows95_sRGB));
+
+        UnitTests(resourceUpload, success);
+
+        auto uploadResourcesFinished = resourceUpload.End(m_deviceResources->GetCommandQueue());
+        uploadResourcesFinished.wait();
     }
 
-    CreateShaderResourceView(device, m_earth2.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Earth_Imm));
-
-    // DirectX Logo
-    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen_bgra.dds", m_dxlogo.ReleaseAndGetAddressOf(), true));
-
+    // Copy Queue test
     {
-        auto desc = m_dxlogo->GetDesc();
-        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
-            || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM
-            || desc.Width != 256
-            || desc.Height != 256
-            || desc.MipLevels != 9)
+        ResourceUploadBatch resourceUpload(device);
+
+        D3D12_COMMAND_QUEUE_DESC queueDesc = {};
+        queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+        queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
+
+        resourceUpload.Begin(queueDesc.Type);
+
+        DX::ThrowIfFailed(device->CreateCommandQueue(&queueDesc, IID_GRAPHICS_PPV_ARGS(m_copyQueue.ReleaseAndGetAddressOf())));
+
+        m_copyQueue->SetName(L"CopyTest");
+
+        DDS_ALPHA_MODE alphaMode = DDS_ALPHA_MODE_UNKNOWN;
+        DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"earth_A2B10G10R10.dds", m_earth.ReleaseAndGetAddressOf(), false, 0, &alphaMode));
+
         {
-            if (!resourceUpload.IsSupportedForGenerateMips(DXGI_FORMAT_B8G8R8A8_UNORM)
-                && desc.MipLevels == 1)
+            if (alphaMode != DDS_ALPHA_MODE_UNKNOWN)
             {
-                OutputDebugStringA("NOTE: dx5_logo_autogen_bgra.dds - device doesn't support autogen mips for 8:8:8:8 and/or lacks standard swizzle\n");
+                OutputDebugStringA("FAILED: earth_A2B10G10R10.dds alpha mode value unexpected\n");
+                success = false;
             }
-            else
+
+            auto desc = m_earth->GetDesc();
+            if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+                || desc.Format != DXGI_FORMAT_R10G10B10A2_UNORM
+                || desc.Width != 512
+                || desc.Height != 256
+                || desc.MipLevels != 10)
             {
-                OutputDebugStringA("FAILED: dx5_logo_autogen_bgra.dds (autogen) desc unexpected\n");
+                OutputDebugStringA("FAILED: earth_A2B10G10R10.dds desc unexpected\n");
                 success = false;
             }
         }
-    }
 
-    CreateShaderResourceView(device, m_dxlogo.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::DirectXLogo));
+        CreateShaderResourceView(device, m_earth.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Earth));
 
-    DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, L"dx5_logo.dds", 0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_FORCE_SRGB, m_dxlogo2.ReleaseAndGetAddressOf()));
+        DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"win95.bmp", m_copyTest.ReleaseAndGetAddressOf(), false));
 
-    {
-        auto desc = m_dxlogo2->GetDesc();
-        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
-            || desc.Format != DXGI_FORMAT_BC1_UNORM_SRGB
-            || desc.Width != 256
-            || desc.Height != 256
-            || desc.MipLevels != 9)
         {
-            OutputDebugStringA("FAILED: dx5_logo.dds (BC1 sRGB) desc unexpected\n");
-            success = false;
-        }
-    }
-
-    CreateShaderResourceView(device, m_dxlogo2.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::DirectXLogo_BC1));
-    
-    // Windows 95 logo
-    DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"win95.bmp", m_win95.ReleaseAndGetAddressOf(), true));
-
-    {
-        auto desc = m_win95->GetDesc();
-        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
-            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
-            || desc.Width != 256
-            || desc.Height != 256
-            || desc.MipLevels != 9)
-        {
-            if (!resourceUpload.IsSupportedForGenerateMips(DXGI_FORMAT_R8G8B8A8_UNORM)
-                && desc.MipLevels == 1)
+            auto desc = m_copyTest->GetDesc();
+            if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+                || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
+                || desc.Width != 256
+                || desc.Height != 256
+                || desc.MipLevels != 1)
             {
-                OutputDebugStringA("NOTE: win95.bmp - device doesn't support autogen mips for 8:8:8:8\n");
-            }
-            else
-            {
-                OutputDebugStringA("FAILED: win95.bmp (autogen) desc unexpected\n");
+                OutputDebugStringA("FAILED: win95.bmp copy command list desc unexpected\n");
                 success = false;
             }
         }
+
+        auto uploadResourcesFinished = resourceUpload.End(m_copyQueue.Get());
+        uploadResourcesFinished.wait();
     }
 
-    CreateShaderResourceView(device, m_win95.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Windows95));
-
-    DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"win95.bmp", 0, D3D12_RESOURCE_FLAG_NONE,
-        WIC_LOADER_FORCE_SRGB | WIC_LOADER_MIP_AUTOGEN, m_win95_2.ReleaseAndGetAddressOf()));
-
+    // Compute Queue test
     {
-        auto desc = m_win95_2->GetDesc();
-        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
-            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
-            || desc.Width != 256
-            || desc.Height != 256
-            || desc.MipLevels != 9)
+        ResourceUploadBatch resourceUpload(device);
+
+        D3D12_COMMAND_QUEUE_DESC queueDesc = {};
+        queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+        queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
+
+        resourceUpload.Begin(queueDesc.Type);
+
+        DX::ThrowIfFailed(device->CreateCommandQueue(&queueDesc, IID_GRAPHICS_PPV_ARGS(m_computeQueue.ReleaseAndGetAddressOf())));
+
+        m_computeQueue->SetName(L"ComputeTest");
+
+        DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, L"earth_A2B10G10R10_autogen.dds", 0,
+            D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_MIP_AUTOGEN, m_earth2.ReleaseAndGetAddressOf()));
+
         {
-            if (!resourceUpload.IsSupportedForGenerateMips(DXGI_FORMAT_R8G8B8A8_UNORM_SRGB)
-                && desc.MipLevels == 1)
+            auto desc = m_earth2->GetDesc();
+            if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+                || desc.Format != DXGI_FORMAT_R10G10B10A2_UNORM
+                || desc.Width != 512
+                || desc.Height != 256
+                || desc.MipLevels != 10)
             {
-                OutputDebugStringA("NOTE: win95.bmp - device doesn't support autogen mips for 8:8:8:8\n");
-            }
-            else
-            {
-                OutputDebugStringA("FAILED: win95.bmp (autogen, sRGB) desc unexpected\n");
-                success = false;
+                if (!resourceUpload.IsSupportedForGenerateMips(DXGI_FORMAT_R10G10B10A2_UNORM)
+                    && desc.MipLevels == 1)
+                {
+                    OutputDebugStringA("NOTE: earth_A2B10G10R10_autogen.dds - device doesn't support autogen mips for 10:10:10:2\n");
+                }
+                else
+                {
+                    OutputDebugStringA("FAILED: earth_A2B10G10R10_autogen.dds compute queue desc unexpected\n");
+                    success = false;
+                }
             }
         }
+
+        CreateShaderResourceView(device, m_earth2.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Earth_Imm));
+
+        DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"win95.bmp", m_computeTest.ReleaseAndGetAddressOf(), true));
+
+        {
+            auto desc = m_computeTest->GetDesc();
+            if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+                || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
+                || desc.Width != 256
+                || desc.Height != 256
+                || desc.MipLevels != 9)
+            {
+                if (!resourceUpload.IsSupportedForGenerateMips(DXGI_FORMAT_R8G8B8A8_UNORM)
+                    && desc.MipLevels == 1)
+                {
+                    // Message was already output above
+                }
+                else
+                {
+                    OutputDebugStringA("FAILED: win95.bmp (autogen) compute queu desc unexpected\n");
+                    success = false;
+                }
+            }
+        }
+
+        auto uploadResourcesFinished = resourceUpload.End(m_computeQueue.Get());
+        uploadResourcesFinished.wait();
     }
-
-    CreateShaderResourceView(device, m_win95_2.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Windows95_sRGB));
-
-    UnitTests(resourceUpload, success);
-
-    auto uploadResourcesFinished = resourceUpload.End(m_deviceResources->GetCommandQueue());
-
-    uploadResourcesFinished.wait();
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
@@ -803,6 +881,9 @@ void Game::OnDeviceLost()
     m_test25.Reset();
     m_test26.Reset();
 
+    m_copyTest.Reset();
+    m_computeTest.Reset();
+
     m_screenshot.Reset();
 
     m_cube.reset();
@@ -810,6 +891,9 @@ void Game::OnDeviceLost()
     m_resourceDescriptors.reset();
     m_states.reset();
     m_graphicsMemory.reset();
+
+    m_copyQueue.Reset();
+    m_computeQueue.Reset();
 }
 
 void Game::OnDeviceRestored()

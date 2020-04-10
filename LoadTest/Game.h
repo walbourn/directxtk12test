@@ -138,6 +138,12 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_test25;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_test26;
 
+    Microsoft::WRL::ComPtr<ID3D12CommandQueue>      m_copyQueue;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_copyTest;
+
+    Microsoft::WRL::ComPtr<ID3D12CommandQueue>      m_computeQueue;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_computeTest;
+
     enum Descriptors
     {
         Earth,
