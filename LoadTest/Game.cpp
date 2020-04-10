@@ -42,7 +42,8 @@ using Microsoft::WRL::ComPtr;
 
 // Constructor.
 Game::Game() noexcept(false) :
-    m_frame(0)
+    m_frame(0),
+    m_firstFrame(false)
 {
 #ifdef GAMMA_CORRECT_RENDERING
     const DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
@@ -179,6 +180,23 @@ void Game::Render()
 
     auto commandList = m_deviceResources->GetCommandList();
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Render");
+
+    if (m_firstFrame)
+    {
+        //
+        // This is not strictly needed on Windows due to common state promotion, but this behavior is optional on Xbox
+        //
+
+        // Copy queue resources are left in D3D12_RESOURCE_STATE_COPY_DEST state
+        TransitionResource(commandList, m_earth.Get(),
+            D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+        // Compute queue resources are left in the D3D12_RESOURCE_STATE_NON_PIXEL_RESOURCE state
+        TransitionResource(commandList, m_earth2.Get(),
+            D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+        m_firstFrame = false;
+    }
 
     // Set the descriptor heaps
     ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap(), m_states->Heap() };
@@ -812,6 +830,10 @@ void Game::CreateDeviceDependentResources()
         auto uploadResourcesFinished = resourceUpload.End(m_computeQueue.Get());
         uploadResourcesFinished.wait();
     }
+
+    m_deviceResources->WaitForGpu();
+
+    m_firstFrame = true;
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
