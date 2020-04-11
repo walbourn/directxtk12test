@@ -149,8 +149,12 @@ private:
     std::unique_ptr<DirectX::XMMATRIX[], DirectX::aligned_deleter> m_bones;
 
     bool m_spinning;
+    bool m_firstFrame;
     float m_pitch;
     float m_yaw;
+
+    Microsoft::WRL::ComPtr<ID3D12CommandQueue>      m_copyQueue;
+    Microsoft::WRL::ComPtr<ID3D12CommandQueue>      m_computeQueue;
 
     enum StaticDescriptors
     {
