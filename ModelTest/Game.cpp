@@ -27,6 +27,8 @@ using Microsoft::WRL::ComPtr;
 #define AUTOGENMIPS
 #define PERPIXELLIGHTING
 #define NORMALMAPS
+#define USE_COPY_QUEUE
+#define USE_COMPUTE_QUEUE
 
 // Build for LH vs. RH coords
 #define LH_COORDS
@@ -273,6 +275,7 @@ void Game::Render()
         //
 
         // Copy queue resources are left in D3D12_RESOURCE_STATE_COPY_DEST state
+        #ifdef USE_COPY_QUEUE
         for (auto& mit : m_cupMesh->meshes)
         {
             for (auto& pit : mit->opaqueMeshParts)
@@ -283,8 +286,10 @@ void Game::Render()
                     D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
             }
         }
+        #endif
 
         // Compute queue IBs are in D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE state
+        #ifdef USE_COMPUTE_QUEUE
         for (auto& mit : m_vbo->meshes)
         {
             for (auto& pit : mit->opaqueMeshParts)
@@ -293,6 +298,7 @@ void Game::Render()
                     D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_INDEX_BUFFER);
             }
         }
+        #endif
 
         m_firstFrame = false;
     }
@@ -850,11 +856,28 @@ void Game::CreateDeviceDependentResources()
         assert(m_cup->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer && !m_cup->meshes[0]->opaqueMeshParts[0]->vertexBuffer);
         assert(m_cup->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer && !m_cup->meshes[0]->opaqueMeshParts[0]->indexBuffer);
 
+#ifndef USE_COPY_QUEUE
+        assert(!m_cupMesh->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer);
+        assert(!m_cupMesh->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer);
+        m_cupMesh->LoadStaticBuffers(device, resourceUpload);
+        assert(m_cupMesh->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer && !m_cupMesh->meshes[0]->opaqueMeshParts[0]->vertexBuffer);
+        assert(m_cupMesh->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer && !m_cupMesh->meshes[0]->opaqueMeshParts[0]->indexBuffer);
+#endif
+
+#ifndef USE_COMPUTE_QUEUE
+        assert(!m_vbo->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer);
+        assert(!m_vbo->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer);
+        m_vbo->LoadStaticBuffers(device, resourceUpload, true);
+        assert(m_vbo->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer&& m_vbo->meshes[0]->opaqueMeshParts[0]->vertexBuffer);
+        assert(m_vbo->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer&& m_vbo->meshes[0]->opaqueMeshParts[0]->indexBuffer);
+#endif
+
         auto uploadResourcesFinished = resourceUpload.End(m_deviceResources->GetCommandQueue());
         uploadResourcesFinished.wait();
     }
 
     // Copy Queue test
+#ifdef USE_COPY_QUEUE
     {
         ResourceUploadBatch resourceUpload(device);
 
@@ -876,9 +899,13 @@ void Game::CreateDeviceDependentResources()
 
         auto uploadResourcesFinished = resourceUpload.End(m_copyQueue.Get());
         uploadResourcesFinished.wait();
+
+        m_firstFrame = true;
     }
+#endif // USE_COPY_QUEUE
 
     // Compute Queue test
+#ifdef USE_COMPUTE_QUEUE
     {
         ResourceUploadBatch resourceUpload(device);
 
@@ -900,11 +927,12 @@ void Game::CreateDeviceDependentResources()
 
         auto uploadResourcesFinished = resourceUpload.End(m_computeQueue.Get());
         uploadResourcesFinished.wait();
+
+        m_firstFrame = true;
     }
+#endif // USE_COMPUTE_QUEUE
 
     m_deviceResources->WaitForGpu();
-
-    m_firstFrame = true;
 
     // Set textures
     m_vboEnvMap->SetTexture(m_resourceDescriptors->GetGpuHandle(StaticDescriptors::DefaultTex), m_states->AnisotropicWrap());

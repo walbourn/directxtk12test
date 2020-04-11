@@ -24,6 +24,8 @@
 #endif
 
 #define GAMMA_CORRECT_RENDERING
+#define USE_COPY_QUEUE
+#define USE_COMPUTE_QUEUE
 
 // Build for LH vs. RH coords
 //#define LH_COORDS
@@ -188,12 +190,16 @@ void Game::Render()
         //
 
         // Copy queue resources are left in D3D12_RESOURCE_STATE_COPY_DEST state
+        #ifdef USE_COPY_QUEUE
         TransitionResource(commandList, m_earth.Get(),
             D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        #endif
 
         // Compute queue resources are left in the D3D12_RESOURCE_STATE_NON_PIXEL_RESOURCE state
+        #ifdef USE_COMPUTE_QUEUE
         TransitionResource(commandList, m_earth2.Get(),
             D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        #endif
 
         m_firstFrame = false;
     }
@@ -604,7 +610,59 @@ void Game::CreateDeviceDependentResources()
             Descriptors::Count);
 
         // Earth
-        // m_earth / m_earth2 is loaded in the copy queue test
+#ifndef USE_COPY_QUEUE
+        DDS_ALPHA_MODE alphaMode = DDS_ALPHA_MODE_UNKNOWN;
+        DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"earth_A2B10G10R10.dds", m_earth.ReleaseAndGetAddressOf(), false, 0, &alphaMode));
+
+        {
+            if (alphaMode != DDS_ALPHA_MODE_UNKNOWN)
+            {
+                OutputDebugStringA("FAILED: earth_A2B10G10R10.dds alpha mode value unexpected\n");
+                success = false;
+            }
+
+            auto desc = m_earth->GetDesc();
+            if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+                || desc.Format != DXGI_FORMAT_R10G10B10A2_UNORM
+                || desc.Width != 512
+                || desc.Height != 256
+                || desc.MipLevels != 10)
+            {
+                OutputDebugStringA("FAILED: earth_A2B10G10R10.dds desc unexpected\n");
+                success = false;
+            }
+        }
+
+        CreateShaderResourceView(device, m_earth.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Earth));
+#endif // !USE_COPY_QUEUE
+
+#ifndef USE_COMPUTE_QUEUE
+        DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, L"earth_A2B10G10R10_autogen.dds", 0,
+            D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_MIP_AUTOGEN, m_earth2.ReleaseAndGetAddressOf()));
+
+        {
+            auto desc = m_earth2->GetDesc();
+            if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+                || desc.Format != DXGI_FORMAT_R10G10B10A2_UNORM
+                || desc.Width != 512
+                || desc.Height != 256
+                || desc.MipLevels != 10)
+            {
+                if (!resourceUpload.IsSupportedForGenerateMips(DXGI_FORMAT_R10G10B10A2_UNORM)
+                    && desc.MipLevels == 1)
+                {
+                    OutputDebugStringA("NOTE: earth_A2B10G10R10_autogen.dds - device doesn't support autogen mips for 10:10:10:2\n");
+                }
+                else
+                {
+                    OutputDebugStringA("FAILED: earth_A2B10G10R10_autogen.dds desc unexpected\n");
+                    success = false;
+                }
+            }
+        }
+
+        CreateShaderResourceView(device, m_earth2.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Earth_Imm));
+#endif // !USE_COMPUTE_QUEUE
 
         // DirectX Logo
         DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen_bgra.dds", m_dxlogo.ReleaseAndGetAddressOf(), true));
@@ -708,6 +766,7 @@ void Game::CreateDeviceDependentResources()
     }
 
     // Copy Queue test
+#ifdef USE_COPY_QUEUE
     {
         ResourceUploadBatch resourceUpload(device);
 
@@ -762,9 +821,13 @@ void Game::CreateDeviceDependentResources()
 
         auto uploadResourcesFinished = resourceUpload.End(m_copyQueue.Get());
         uploadResourcesFinished.wait();
+
+        m_firstFrame = true;
     }
+#endif // USE_COPY_QUEUE
 
     // Compute Queue test
+#ifdef USE_COMPUTE_QUEUE
     {
         ResourceUploadBatch resourceUpload(device);
 
@@ -829,11 +892,12 @@ void Game::CreateDeviceDependentResources()
 
         auto uploadResourcesFinished = resourceUpload.End(m_computeQueue.Get());
         uploadResourcesFinished.wait();
+
+        m_firstFrame = true;
     }
+#endif // USE_COMPUTE_QUEUE
 
     m_deviceResources->WaitForGpu();
-
-    m_firstFrame = true;
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
