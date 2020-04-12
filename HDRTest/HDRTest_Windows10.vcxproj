@@ -177,6 +177,7 @@
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FloatingPointModel>Fast</FloatingPointModel>
+      <DisableSpecificWarnings>26812</DisableSpecificWarnings>
     </ClCompile>
     <FXCompile>
       <ShaderModel>5.1</ShaderModel>
@@ -195,6 +196,7 @@
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FloatingPointModel>Fast</FloatingPointModel>
+      <DisableSpecificWarnings>26812</DisableSpecificWarnings>
     </ClCompile>
     <FXCompile>
       <ShaderModel>5.1</ShaderModel>
@@ -213,6 +215,7 @@
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FloatingPointModel>Fast</FloatingPointModel>
+      <DisableSpecificWarnings>26812</DisableSpecificWarnings>
     </ClCompile>
     <FXCompile>
       <ShaderModel>5.1</ShaderModel>
@@ -231,6 +234,7 @@
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FloatingPointModel>Fast</FloatingPointModel>
+      <DisableSpecificWarnings>26812</DisableSpecificWarnings>
     </ClCompile>
     <FXCompile>
       <ShaderModel>5.1</ShaderModel>
@@ -250,6 +254,7 @@
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FloatingPointModel>Fast</FloatingPointModel>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <DisableSpecificWarnings>26812</DisableSpecificWarnings>
     </ClCompile>
     <FXCompile>
       <ShaderModel>5.1</ShaderModel>
@@ -269,6 +274,7 @@
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FloatingPointModel>Fast</FloatingPointModel>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <DisableSpecificWarnings>26812</DisableSpecificWarnings>
     </ClCompile>
     <FXCompile>
       <ShaderModel>5.1</ShaderModel>
@@ -287,6 +293,7 @@
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FloatingPointModel>Fast</FloatingPointModel>
+      <DisableSpecificWarnings>26812</DisableSpecificWarnings>
     </ClCompile>
     <FXCompile>
       <ShaderModel>5.1</ShaderModel>
@@ -305,6 +312,7 @@
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FloatingPointModel>Fast</FloatingPointModel>
+      <DisableSpecificWarnings>26812</DisableSpecificWarnings>
     </ClCompile>
     <FXCompile>
       <ShaderModel>5.1</ShaderModel>
