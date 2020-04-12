@@ -17,6 +17,8 @@
 #include "Game.h"
 
 #define GAMMA_CORRECT_RENDERING
+#define USE_COPY_QUEUE
+#define USE_COMPUTE_QUEUE
 
 // Build for LH vs. RH coords
 //#define LH_COORDS
@@ -49,6 +51,7 @@ using Microsoft::WRL::ComPtr;
 
 Game::Game() noexcept(false) :
     m_spinning(true),
+    m_firstFrame(false),
     m_pitch(0),
     m_yaw(0)
 {
@@ -248,6 +251,29 @@ void Game::Render()
 
     auto commandList = m_deviceResources->GetCommandList();
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Render");
+
+    if (m_firstFrame)
+    {
+        //
+        // This is not strictly needed on Windows due to common state promotion, but this behavior is optional on Xbox
+        //
+
+        // Copy queue resources are left in D3D12_RESOURCE_STATE_COPY_DEST state
+        #ifdef USE_COPY_QUEUE
+        m_torus->Transition(commandList,
+            D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+            D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+        #endif
+
+        // Compute queue IBs are in D3D12_RESOURCE_STATE_COPY_DEST state
+        #ifdef USE_COMPUTE_QUEUE
+        m_teapot->Transition(commandList,
+            D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+            D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+        #endif
+
+        m_firstFrame = false;
+    }
 
     // Set the descriptor heaps
     ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap(), m_states->Heap() };
@@ -793,47 +819,105 @@ void Game::CreateDeviceDependentResources()
         D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
         Descriptors::Count);
 
-    ResourceUploadBatch resourceUpload(device);
+    {
+        ResourceUploadBatch resourceUpload(device);
 
-    resourceUpload.Begin();
+        resourceUpload.Begin();
 
-    // Convert some primitives to using static VB/IBs
-    m_geosphere->LoadStaticBuffers(device, resourceUpload);
-    m_cylinder->LoadStaticBuffers(device, resourceUpload);
-    m_cone->LoadStaticBuffers(device, resourceUpload);
-    m_torus->LoadStaticBuffers(device, resourceUpload);
-    m_teapot->LoadStaticBuffers(device, resourceUpload);
+        // Convert some primitives to using static VB/IBs
+        m_geosphere->LoadStaticBuffers(device, resourceUpload);
+        m_cylinder->LoadStaticBuffers(device, resourceUpload);
+        m_cone->LoadStaticBuffers(device, resourceUpload);
 
-#ifdef GAMMA_CORRECT_RENDERING
-    unsigned int loadFlags = DDS_LOADER_FORCE_SRGB;
-#else
-    unsigned int loadFlags = DDS_LOADER_DEFAULT;
+#ifndef USE_COPY_QUEUE
+        m_torus->LoadStaticBuffers(device, resourceUpload);
 #endif
 
-    DX::ThrowIfFailed(
-        CreateDDSTextureFromFileEx(device, resourceUpload, L"cat.dds",
-            0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
-            m_cat.ReleaseAndGetAddressOf()));
+#ifndef USE_COMPUTE_QUEUE
+        m_teapot->LoadStaticBuffers(device, resourceUpload);
+#endif
 
-    CreateShaderResourceView(device, m_cat.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Cat));
+#ifdef GAMMA_CORRECT_RENDERING
+        unsigned int loadFlags = DDS_LOADER_FORCE_SRGB;
+#else
+        unsigned int loadFlags = DDS_LOADER_DEFAULT;
+#endif
 
-    DX::ThrowIfFailed(
-        CreateDDSTextureFromFileEx(device, resourceUpload, L"dx5_logo.dds",
-            0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
-            m_dxLogo.ReleaseAndGetAddressOf()));
+        DX::ThrowIfFailed(
+            CreateDDSTextureFromFileEx(device, resourceUpload, L"cat.dds",
+                0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
+                m_cat.ReleaseAndGetAddressOf()));
 
-    CreateShaderResourceView(device, m_dxLogo.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::DirectXLogo));
+        CreateShaderResourceView(device, m_cat.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Cat));
 
-    DX::ThrowIfFailed(
-        CreateDDSTextureFromFileEx(device, resourceUpload, L"reftexture.dds",
-            0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
-            m_refTexture.ReleaseAndGetAddressOf()));
+        DX::ThrowIfFailed(
+            CreateDDSTextureFromFileEx(device, resourceUpload, L"dx5_logo.dds",
+                0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
+                m_dxLogo.ReleaseAndGetAddressOf()));
 
-    CreateShaderResourceView(device, m_refTexture.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::RefTexture));
+        CreateShaderResourceView(device, m_dxLogo.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::DirectXLogo));
 
-    auto uploadResourcesFinished = resourceUpload.End(m_deviceResources->GetCommandQueue());
+        DX::ThrowIfFailed(
+            CreateDDSTextureFromFileEx(device, resourceUpload, L"reftexture.dds",
+                0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
+                m_refTexture.ReleaseAndGetAddressOf()));
 
-    uploadResourcesFinished.wait();
+        CreateShaderResourceView(device, m_refTexture.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::RefTexture));
+
+        auto uploadResourcesFinished = resourceUpload.End(m_deviceResources->GetCommandQueue());
+
+        uploadResourcesFinished.wait();
+    }
+
+    // Copy Queue test
+#ifdef USE_COPY_QUEUE
+    {
+        ResourceUploadBatch resourceUpload(device);
+
+        D3D12_COMMAND_QUEUE_DESC queueDesc = {};
+        queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+        queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
+
+        resourceUpload.Begin(queueDesc.Type);
+
+        DX::ThrowIfFailed(device->CreateCommandQueue(&queueDesc, IID_GRAPHICS_PPV_ARGS(m_copyQueue.ReleaseAndGetAddressOf())));
+
+        m_copyQueue->SetName(L"CopyTest");
+
+        m_torus->LoadStaticBuffers(device, resourceUpload);
+
+        auto uploadResourcesFinished = resourceUpload.End(m_copyQueue.Get());
+        uploadResourcesFinished.wait();
+
+        m_firstFrame = true;
+    }
+#endif // USE_COPY_QUEUE
+
+    // Compute Queue test
+#ifdef USE_COMPUTE_QUEUE
+    {
+        ResourceUploadBatch resourceUpload(device);
+
+        D3D12_COMMAND_QUEUE_DESC queueDesc = {};
+        queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+        queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
+
+        resourceUpload.Begin(queueDesc.Type);
+
+        DX::ThrowIfFailed(device->CreateCommandQueue(&queueDesc, IID_GRAPHICS_PPV_ARGS(m_computeQueue.ReleaseAndGetAddressOf())));
+
+        m_computeQueue->SetName(L"ComputeTest");
+
+        m_teapot->LoadStaticBuffers(device, resourceUpload);
+
+        auto uploadResourcesFinished = resourceUpload.End(m_computeQueue.Get());
+        uploadResourcesFinished.wait();
+
+        m_firstFrame = true;
+    }
+#endif // USE_COMPUTE_QUEUE
+
+    m_deviceResources->WaitForGpu();
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
@@ -913,6 +997,9 @@ void Game::OnDeviceLost()
     m_resourceDescriptors.reset();
     m_states.reset();
     m_graphicsMemory.reset();
+
+    m_copyQueue.Reset();
+    m_computeQueue.Reset();
 }
 
 void Game::OnDeviceRestored()

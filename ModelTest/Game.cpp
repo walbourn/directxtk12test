@@ -27,6 +27,8 @@ using Microsoft::WRL::ComPtr;
 #define AUTOGENMIPS
 #define PERPIXELLIGHTING
 #define NORMALMAPS
+#define USE_COPY_QUEUE
+#define USE_COMPUTE_QUEUE
 
 // Build for LH vs. RH coords
 #define LH_COORDS
@@ -45,6 +47,7 @@ namespace
 
 Game::Game() noexcept(false) :
     m_spinning(true),
+    m_firstFrame(false),
     m_pitch(0),
     m_yaw(0)
 {
@@ -264,6 +267,41 @@ void Game::Render()
 
     auto commandList = m_deviceResources->GetCommandList();
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Render");
+
+    if (m_firstFrame)
+    {
+        //
+        // This is not strictly needed on Windows due to common state promotion, but this behavior is optional on Xbox
+        //
+
+        // Copy queue resources are left in D3D12_RESOURCE_STATE_COPY_DEST state
+        #ifdef USE_COPY_QUEUE
+        for (auto& mit : m_cupMesh->meshes)
+        {
+            for (auto& pit : mit->opaqueMeshParts)
+            {
+                TransitionResource(commandList, pit->staticIndexBuffer.Get(),
+                    D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+                TransitionResource(commandList, pit->staticVertexBuffer.Get(),
+                    D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+            }
+        }
+        #endif
+
+        // Compute queue IBs are in D3D12_RESOURCE_STATE_COPY_DEST state
+        #ifdef USE_COMPUTE_QUEUE
+        for (auto& mit : m_vbo->meshes)
+        {
+            for (auto& pit : mit->opaqueMeshParts)
+            {
+                TransitionResource(commandList, pit->staticIndexBuffer.Get(),
+                    D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+            }
+        }
+        #endif
+
+        m_firstFrame = false;
+    }
 
     // Set the descriptor heaps
     ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap(), m_states->Heap() };
@@ -560,278 +598,341 @@ void Game::CreateDeviceDependentResources()
         128,
         StaticDescriptors::Reserve);
 
-    ResourceUploadBatch resourceUpload(device);
+    {
+        ResourceUploadBatch resourceUpload(device);
 
-    resourceUpload.Begin();
+        resourceUpload.Begin();
 
-    m_abstractModelResources = std::make_unique<EffectTextureFactory>(device, resourceUpload, m_resourceDescriptors->Heap());
-    m_modelResources = std::make_unique<EffectTextureFactory>(device, resourceUpload, m_resourceDescriptors->Heap());
+        m_abstractModelResources = std::make_unique<EffectTextureFactory>(device, resourceUpload, m_resourceDescriptors->Heap());
+        m_modelResources = std::make_unique<EffectTextureFactory>(device, resourceUpload, m_resourceDescriptors->Heap());
 
 #ifdef GAMMA_CORRECT_RENDERING
-    m_modelResources->EnableForceSRGB(true);
+        m_modelResources->EnableForceSRGB(true);
 #endif
 #ifdef AUTOGENMIPS
-    m_modelResources->EnableAutoGenMips(true);
+        m_modelResources->EnableAutoGenMips(true);
 #endif
 
-    m_abstractFXFactory = std::make_unique<EffectFactory>(m_resourceDescriptors->Heap(), m_states->Heap());
-    m_fxFactory = std::make_unique<EffectFactory>(m_resourceDescriptors->Heap(), m_states->Heap());
+        m_abstractFXFactory = std::make_unique<EffectFactory>(m_resourceDescriptors->Heap(), m_states->Heap());
+        m_fxFactory = std::make_unique<EffectFactory>(m_resourceDescriptors->Heap(), m_states->Heap());
 
 #ifndef PERPIXELLIGHTING
-    m_fxFactory->EnablePerPixelLighting(false);
+        m_fxFactory->EnablePerPixelLighting(false);
 #endif
 #ifndef NORMALMAPS
-    m_fxFactory->EnableNormalMapEffect(false);
+        m_fxFactory->EnableNormalMapEffect(false);
 #endif
 
-    // Create cup materials & effects
-    int txtOffset = 0;
-    {
-        size_t start, end;
-        m_resourceDescriptors->AllocateRange(m_cup->textureNames.size(), start, end);
-        txtOffset = static_cast<int>(start);
-    }
-    m_cup->LoadTextures(*m_modelResources, txtOffset);
+        // Create cup materials & effects
+        int txtOffset = 0;
+        {
+            size_t start, end;
+            m_resourceDescriptors->AllocateRange(m_cup->textureNames.size(), start, end);
+            txtOffset = static_cast<int>(start);
+        }
+        m_cup->LoadTextures(*m_modelResources, txtOffset);
 
 #ifdef LH_COORDS
-    auto& ncull = CommonStates::CullCounterClockwise;
-    
+        auto& ncull = CommonStates::CullCounterClockwise;
+
 #else
-    auto& ncull = CommonStates::CullClockwise;
+        auto& ncull = CommonStates::CullClockwise;
 #endif
 
-    {
-        EffectPipelineStateDescription pd(
-            nullptr,
-            CommonStates::Opaque,
-            CommonStates::DepthDefault,
-            ncull,
-            rtState);
-
-        EffectPipelineStateDescription wireframe(
-            nullptr,
-            CommonStates::Opaque,
-            CommonStates::DepthDefault,
-            CommonStates::Wireframe,
-            rtState);
-
-        m_cupNormal = m_cup->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
-
-        m_fxFactory->SetSharing(false);
-        m_cupCustom = m_cup->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
         {
-            auto basic = dynamic_cast<BasicEffect*>(m_cupCustom[1].get());
-            if (basic)
+            EffectPipelineStateDescription pd(
+                nullptr,
+                CommonStates::Opaque,
+                CommonStates::DepthDefault,
+                ncull,
+                rtState);
+
+            EffectPipelineStateDescription wireframe(
+                nullptr,
+                CommonStates::Opaque,
+                CommonStates::DepthDefault,
+                CommonStates::Wireframe,
+                rtState);
+
+            m_cupNormal = m_cup->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
+
+            m_fxFactory->SetSharing(false);
+            m_cupCustom = m_cup->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
             {
-                basic->SetTexture(m_resourceDescriptors->GetGpuHandle(StaticDescriptors::DefaultTex), m_states->AnisotropicWrap());
+                auto basic = dynamic_cast<BasicEffect*>(m_cupCustom[1].get());
+                if (basic)
+                {
+                    basic->SetTexture(m_resourceDescriptors->GetGpuHandle(StaticDescriptors::DefaultTex), m_states->AnisotropicWrap());
+                }
             }
+            m_fxFactory->SetSharing(true);
+
+            m_cupWireframe = m_cup->CreateEffects(*m_fxFactory, wireframe, wireframe, txtOffset);
+
+            m_fxFactory->EnableFogging(true);
+
+            m_cupFog = m_cup->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
+
+            m_fxFactory->EnableFogging(false);
+
+            m_fxFactory->EnablePerPixelLighting(false);
+
+            m_cupVertexLighting = m_cup->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
+
+            m_fxFactory->EnablePerPixelLighting(true);
         }
-        m_fxFactory->SetSharing(true);
 
-        m_cupWireframe = m_cup->CreateEffects(*m_fxFactory, wireframe, wireframe, txtOffset);
+        // Create VBO effects (no textures)
 
-        m_fxFactory->EnableFogging(true);
+        {
+            EffectPipelineStateDescription pd(
+                &VertexPositionNormalTexture::InputLayout,
+                CommonStates::Opaque,
+                CommonStates::DepthDefault,
+                ncull,
+                rtState);
 
-        m_cupFog = m_cup->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
+            m_vboNormal = std::make_unique<BasicEffect>(device, EffectFlags::Lighting, pd);
+            m_vboNormal->EnableDefaultLighting();
 
-        m_fxFactory->EnableFogging(false);
+            m_vboEnvMap = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::None, pd);
+            m_vboEnvMap->EnableDefaultLighting();
+        }
 
-        m_fxFactory->EnablePerPixelLighting(false);
+        // SDKMESH Cup
+        m_cupMesh = Model::CreateFromSDKMESH(device, L"cup.sdkmesh");
 
-        m_cupVertexLighting = m_cup->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
+        {
+            size_t start, end;
+            m_resourceDescriptors->AllocateRange(m_cupMesh->textureNames.size(), start, end);
+            txtOffset = static_cast<int>(start);
+        }
+        m_cupMesh->LoadTextures(*m_modelResources, txtOffset);
 
-        m_fxFactory->EnablePerPixelLighting(true);
-    }
+        {
+            EffectPipelineStateDescription pd(
+                nullptr,
+                CommonStates::Opaque,
+                CommonStates::DepthDefault,
+                ncull,
+                rtState);
 
-    // Create VBO effects (no textures)
+            m_cupMeshNormal = m_cupMesh->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
+        }
 
-    {
-        EffectPipelineStateDescription pd(
-            &VertexPositionNormalTexture::InputLayout,
-            CommonStates::Opaque,
-            CommonStates::DepthDefault,
-            ncull,
-            rtState);
+        // SDKMESH Tiny
+        m_tiny = Model::CreateFromSDKMESH(device, L"tiny.sdkmesh");
 
-        m_vboNormal = std::make_unique<BasicEffect>(device, EffectFlags::Lighting, pd);
-        m_vboNormal->EnableDefaultLighting();
+        {
+            size_t start, end;
+            m_resourceDescriptors->AllocateRange(m_tiny->textureNames.size(), start, end);
+            txtOffset = static_cast<int>(start);
+        }
+        m_tiny->LoadTextures(*m_modelResources, txtOffset);
 
-        m_vboEnvMap = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::None, pd);
-        m_vboEnvMap->EnableDefaultLighting();
-    }
+        {
+            EffectPipelineStateDescription pd(
+                nullptr,
+                CommonStates::Opaque,
+                CommonStates::DepthDefault,
+                ncull,
+                rtState);
 
-    // SDKMESH Cup
-    m_cupMesh = Model::CreateFromSDKMESH(device, L"cup.sdkmesh");
+            m_tinyNormal = m_tiny->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
+        }
 
-    {
-        size_t start, end;
-        m_resourceDescriptors->AllocateRange(m_cupMesh->textureNames.size(), start, end);
-        txtOffset = static_cast<int>(start);
-    }
-    m_cupMesh->LoadTextures(*m_modelResources, txtOffset);
+        // SDKMESH Soldier
+        m_soldier = Model::CreateFromSDKMESH(device, L"soldier.sdkmesh");
 
-    {
-        EffectPipelineStateDescription pd(
-            nullptr,
-            CommonStates::Opaque,
-            CommonStates::DepthDefault,
-            ncull,
-            rtState);
+        {
+            size_t start, end;
+            m_resourceDescriptors->AllocateRange(m_soldier->textureNames.size(), start, end);
+            txtOffset = static_cast<int>(start);
+        }
+        m_soldier->LoadTextures(*m_modelResources, txtOffset);
 
-        m_cupMeshNormal = m_cupMesh->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
-    }
+        {
+            EffectPipelineStateDescription pd(
+                nullptr,
+                CommonStates::Opaque,
+                CommonStates::DepthDefault,
+                ncull,
+                rtState);
 
-    // SDKMESH Tiny
-    m_tiny = Model::CreateFromSDKMESH(device, L"tiny.sdkmesh");
+            m_soldierNormal = m_soldier->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
+        }
 
-    {
-        size_t start, end;
-        m_resourceDescriptors->AllocateRange(m_tiny->textureNames.size(), start, end);
-        txtOffset = static_cast<int>(start);
-    }
-    m_tiny->LoadTextures(*m_modelResources, txtOffset);
+        // SDKMESH Dwarf
+        m_dwarf = Model::CreateFromSDKMESH(device, L"dwarf.sdkmesh");
 
-    {
-        EffectPipelineStateDescription pd(
-            nullptr,
-            CommonStates::Opaque,
-            CommonStates::DepthDefault,
-            ncull,
-            rtState);
+        {
+            size_t start, end;
+            m_resourceDescriptors->AllocateRange(m_dwarf->textureNames.size(), start, end);
+            txtOffset = static_cast<int>(start);
+        }
+        m_dwarf->LoadTextures(*m_modelResources, txtOffset);
 
-        m_tinyNormal = m_tiny->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
-    }
+        {
+            EffectPipelineStateDescription pd(
+                nullptr,
+                CommonStates::Opaque,
+                CommonStates::DepthDefault,
+                ncull,
+                rtState);
 
-    // SDKMESH Soldier
-    m_soldier = Model::CreateFromSDKMESH(device, L"soldier.sdkmesh");
+            m_dwarfNormal = m_dwarf->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
+        }
 
-    {
-        size_t start, end;
-        m_resourceDescriptors->AllocateRange(m_soldier->textureNames.size(), start, end);
-        txtOffset = static_cast<int>(start);
-    }
-    m_soldier->LoadTextures(*m_modelResources, txtOffset);
+        // SDKMESH Lightmap
+        m_lmap = Model::CreateFromSDKMESH(device, L"SimpleLightMap.sdkmesh");
 
-    {
-        EffectPipelineStateDescription pd(
-            nullptr,
-            CommonStates::Opaque,
-            CommonStates::DepthDefault,
-            ncull,
-            rtState);
+        {
+            size_t start, end;
+            m_resourceDescriptors->AllocateRange(m_lmap->textureNames.size(), start, end);
+            txtOffset = static_cast<int>(start);
+        }
+        m_lmap->LoadTextures(*m_modelResources, txtOffset);
 
-        m_soldierNormal = m_soldier->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
-    }
+        {
+            EffectPipelineStateDescription pd(
+                nullptr,
+                CommonStates::Opaque,
+                CommonStates::DepthDefault,
+                ncull,
+                rtState);
 
-    // SDKMESH Dwarf
-    m_dwarf = Model::CreateFromSDKMESH(device, L"dwarf.sdkmesh");
+            m_lmapNormal = m_lmap->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
+        }
 
-    {
-        size_t start, end;
-        m_resourceDescriptors->AllocateRange(m_dwarf->textureNames.size(), start, end);
-        txtOffset = static_cast<int>(start);
-    }
-    m_dwarf->LoadTextures(*m_modelResources, txtOffset);
+        // SDKMESH Normalmap
+        m_nmap = Model::CreateFromSDKMESH(device, L"Helmet.sdkmesh");
 
-    {
-        EffectPipelineStateDescription pd(
-            nullptr,
-            CommonStates::Opaque,
-            CommonStates::DepthDefault,
-            ncull,
-            rtState);
+        {
+            size_t start, end;
+            m_resourceDescriptors->AllocateRange(m_nmap->textureNames.size(), start, end);
+            txtOffset = static_cast<int>(start);
+        }
+        m_nmap->LoadTextures(*m_modelResources, txtOffset);
 
-        m_dwarfNormal = m_dwarf->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
-    }
+        {
+            EffectPipelineStateDescription pd(
+                nullptr,
+                CommonStates::Opaque,
+                CommonStates::DepthDefault,
+                ncull,
+                rtState);
 
-    // SDKMESH Lightmap
-    m_lmap = Model::CreateFromSDKMESH(device, L"SimpleLightMap.sdkmesh");
-
-    {
-        size_t start, end;
-        m_resourceDescriptors->AllocateRange(m_lmap->textureNames.size(), start, end);
-        txtOffset = static_cast<int>(start);
-    }
-    m_lmap->LoadTextures(*m_modelResources, txtOffset);
-
-    {
-        EffectPipelineStateDescription pd(
-            nullptr,
-            CommonStates::Opaque,
-            CommonStates::DepthDefault,
-            ncull,
-            rtState);
-
-        m_lmapNormal = m_lmap->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
-    }
-
-    // SDKMESH Normalmap
-    m_nmap = Model::CreateFromSDKMESH(device, L"Helmet.sdkmesh");
-
-    {
-        size_t start, end;
-        m_resourceDescriptors->AllocateRange(m_nmap->textureNames.size(), start, end);
-        txtOffset = static_cast<int>(start);
-    }
-    m_nmap->LoadTextures(*m_modelResources, txtOffset);
-
-    {
-        EffectPipelineStateDescription pd(
-            nullptr,
-            CommonStates::Opaque,
-            CommonStates::DepthDefault,
-            ncull,
-            rtState);
-
-        m_nmapNormal = m_nmap->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
-    }
+            m_nmapNormal = m_nmap->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
+        }
 
 #ifdef GAMMA_CORRECT_RENDERING
-    unsigned int loadFlags = DDS_LOADER_FORCE_SRGB;
+        unsigned int loadFlags = DDS_LOADER_FORCE_SRGB;
 #else
-    unsigned int loadFlags = DDS_LOADER_DEFAULT;
+        unsigned int loadFlags = DDS_LOADER_DEFAULT;
 #endif
 
-    // Load test textures
-    {
-        DX::ThrowIfFailed(
-            CreateDDSTextureFromFileEx(device, resourceUpload, L"default.dds",
-                0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
-                m_defaultTex.ReleaseAndGetAddressOf()));
+        // Load test textures
+        {
+            DX::ThrowIfFailed(
+                CreateDDSTextureFromFileEx(device, resourceUpload, L"default.dds",
+                    0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
+                    m_defaultTex.ReleaseAndGetAddressOf()));
 
-        CreateShaderResourceView(device, m_defaultTex.Get(), m_resourceDescriptors->GetCpuHandle(StaticDescriptors::DefaultTex));
+            CreateShaderResourceView(device, m_defaultTex.Get(), m_resourceDescriptors->GetCpuHandle(StaticDescriptors::DefaultTex));
 
-        bool iscubemap;
-        DX::ThrowIfFailed(
-            CreateDDSTextureFromFileEx(device, resourceUpload, L"cubemap.dds",
-                0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
-                m_cubemap.ReleaseAndGetAddressOf(), nullptr, &iscubemap));
+            bool iscubemap;
+            DX::ThrowIfFailed(
+                CreateDDSTextureFromFileEx(device, resourceUpload, L"cubemap.dds",
+                    0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
+                    m_cubemap.ReleaseAndGetAddressOf(), nullptr, &iscubemap));
 
-        CreateShaderResourceView(device, m_cubemap.Get(), m_resourceDescriptors->GetCpuHandle(StaticDescriptors::Cubemap), iscubemap);
+            CreateShaderResourceView(device, m_cubemap.Get(), m_resourceDescriptors->GetCpuHandle(StaticDescriptors::Cubemap), iscubemap);
+        }
+
+        // Optimize some models
+        assert(!m_cup->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer);
+        assert(!m_cup->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer);
+        m_cup->LoadStaticBuffers(device, resourceUpload);
+        assert(m_cup->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer && !m_cup->meshes[0]->opaqueMeshParts[0]->vertexBuffer);
+        assert(m_cup->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer && !m_cup->meshes[0]->opaqueMeshParts[0]->indexBuffer);
+
+#ifndef USE_COPY_QUEUE
+        assert(!m_cupMesh->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer);
+        assert(!m_cupMesh->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer);
+        m_cupMesh->LoadStaticBuffers(device, resourceUpload);
+        assert(m_cupMesh->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer && !m_cupMesh->meshes[0]->opaqueMeshParts[0]->vertexBuffer);
+        assert(m_cupMesh->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer && !m_cupMesh->meshes[0]->opaqueMeshParts[0]->indexBuffer);
+#endif
+
+#ifndef USE_COMPUTE_QUEUE
+        assert(!m_vbo->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer);
+        assert(!m_vbo->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer);
+        m_vbo->LoadStaticBuffers(device, resourceUpload, true);
+        assert(m_vbo->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer&& m_vbo->meshes[0]->opaqueMeshParts[0]->vertexBuffer);
+        assert(m_vbo->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer&& m_vbo->meshes[0]->opaqueMeshParts[0]->indexBuffer);
+#endif
+
+        auto uploadResourcesFinished = resourceUpload.End(m_deviceResources->GetCommandQueue());
+        uploadResourcesFinished.wait();
     }
 
-    // Optimize some models
-    assert(!m_cup->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer);
-    assert(!m_cup->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer);
-    m_cup->LoadStaticBuffers(device, resourceUpload);
-    assert(m_cup->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer && !m_cup->meshes[0]->opaqueMeshParts[0]->vertexBuffer);
-    assert(m_cup->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer && !m_cup->meshes[0]->opaqueMeshParts[0]->indexBuffer);
+    // Copy Queue test
+#ifdef USE_COPY_QUEUE
+    {
+        ResourceUploadBatch resourceUpload(device);
 
-    assert(!m_cupMesh->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer);
-    assert(!m_cupMesh->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer);
-    m_cupMesh->LoadStaticBuffers(device, resourceUpload);
-    assert(m_cupMesh->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer && !m_cupMesh->meshes[0]->opaqueMeshParts[0]->vertexBuffer);
-    assert(m_cupMesh->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer && !m_cupMesh->meshes[0]->opaqueMeshParts[0]->indexBuffer);
+        D3D12_COMMAND_QUEUE_DESC queueDesc = {};
+        queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+        queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
 
-    assert(!m_vbo->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer);
-    assert(!m_vbo->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer);
-    m_vbo->LoadStaticBuffers(device, resourceUpload, true);
-    assert(m_vbo->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer && m_vbo->meshes[0]->opaqueMeshParts[0]->vertexBuffer);
-    assert(m_vbo->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer && m_vbo->meshes[0]->opaqueMeshParts[0]->indexBuffer);
+        resourceUpload.Begin(queueDesc.Type);
 
-    auto uploadResourcesFinished = resourceUpload.End(m_deviceResources->GetCommandQueue());
+        DX::ThrowIfFailed(device->CreateCommandQueue(&queueDesc, IID_GRAPHICS_PPV_ARGS(m_copyQueue.ReleaseAndGetAddressOf())));
 
-    uploadResourcesFinished.wait();
+        m_copyQueue->SetName(L"CopyTest");
+
+        assert(!m_cupMesh->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer);
+        assert(!m_cupMesh->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer);
+        m_cupMesh->LoadStaticBuffers(device, resourceUpload);
+        assert(m_cupMesh->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer && !m_cupMesh->meshes[0]->opaqueMeshParts[0]->vertexBuffer);
+        assert(m_cupMesh->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer && !m_cupMesh->meshes[0]->opaqueMeshParts[0]->indexBuffer);
+
+        auto uploadResourcesFinished = resourceUpload.End(m_copyQueue.Get());
+        uploadResourcesFinished.wait();
+
+        m_firstFrame = true;
+    }
+#endif // USE_COPY_QUEUE
+
+    // Compute Queue test
+#ifdef USE_COMPUTE_QUEUE
+    {
+        ResourceUploadBatch resourceUpload(device);
+
+        D3D12_COMMAND_QUEUE_DESC queueDesc = {};
+        queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+        queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
+
+        resourceUpload.Begin(queueDesc.Type);
+
+        DX::ThrowIfFailed(device->CreateCommandQueue(&queueDesc, IID_GRAPHICS_PPV_ARGS(m_computeQueue.ReleaseAndGetAddressOf())));
+
+        m_computeQueue->SetName(L"ComputeTest");
+
+        assert(!m_vbo->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer);
+        assert(!m_vbo->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer);
+        m_vbo->LoadStaticBuffers(device, resourceUpload, true);
+        assert(m_vbo->meshes[0]->opaqueMeshParts[0]->staticVertexBuffer&& m_vbo->meshes[0]->opaqueMeshParts[0]->vertexBuffer);
+        assert(m_vbo->meshes[0]->opaqueMeshParts[0]->staticIndexBuffer&& m_vbo->meshes[0]->opaqueMeshParts[0]->indexBuffer);
+
+        auto uploadResourcesFinished = resourceUpload.End(m_computeQueue.Get());
+        uploadResourcesFinished.wait();
+
+        m_firstFrame = true;
+    }
+#endif // USE_COMPUTE_QUEUE
+
+    m_deviceResources->WaitForGpu();
 
     // Set textures
     m_vboEnvMap->SetTexture(m_resourceDescriptors->GetGpuHandle(StaticDescriptors::DefaultTex), m_states->AnisotropicWrap());
@@ -936,6 +1037,9 @@ void Game::OnDeviceLost()
     m_resourceDescriptors.reset();
     m_states.reset();
     m_graphicsMemory.reset();
+
+    m_copyQueue.Reset();
+    m_computeQueue.Reset();
 }
 
 void Game::OnDeviceRestored()

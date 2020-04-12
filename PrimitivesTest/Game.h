@@ -131,8 +131,12 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_refTexture;
 
     bool m_spinning;
+    bool m_firstFrame;
     float m_pitch;
     float m_yaw;
+
+    Microsoft::WRL::ComPtr<ID3D12CommandQueue>      m_copyQueue;
+    Microsoft::WRL::ComPtr<ID3D12CommandQueue>      m_computeQueue;
 
     enum Descriptors
     {
