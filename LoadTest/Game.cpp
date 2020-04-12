@@ -195,10 +195,10 @@ void Game::Render()
             D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         #endif
 
-        // Compute queue resources are left in the D3D12_RESOURCE_STATE_NON_PIXEL_RESOURCE state
+        // Compute queue resources are left in the D3D12_RESOURCE_STATE_COPY_DEST state
         #ifdef USE_COMPUTE_QUEUE
         TransitionResource(commandList, m_earth2.Get(),
-            D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+            D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         #endif
 
         m_firstFrame = false;

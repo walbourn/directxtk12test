@@ -288,14 +288,14 @@ void Game::Render()
         }
         #endif
 
-        // Compute queue IBs are in D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE state
+        // Compute queue IBs are in D3D12_RESOURCE_STATE_COPY_DEST state
         #ifdef USE_COMPUTE_QUEUE
         for (auto& mit : m_vbo->meshes)
         {
             for (auto& pit : mit->opaqueMeshParts)
             {
                 TransitionResource(commandList, pit->staticIndexBuffer.Get(),
-                    D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+                    D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
             }
         }
         #endif
