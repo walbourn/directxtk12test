@@ -276,28 +276,16 @@ void Game::Render()
 
         // Copy queue resources are left in D3D12_RESOURCE_STATE_COPY_DEST state
         #ifdef USE_COPY_QUEUE
-        for (auto& mit : m_cupMesh->meshes)
-        {
-            for (auto& pit : mit->opaqueMeshParts)
-            {
-                TransitionResource(commandList, pit->staticIndexBuffer.Get(),
-                    D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
-                TransitionResource(commandList, pit->staticVertexBuffer.Get(),
-                    D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-            }
-        }
+        m_cupMesh->Transition(commandList,
+            D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+            D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
         #endif
 
         // Compute queue IBs are in D3D12_RESOURCE_STATE_COPY_DEST state
         #ifdef USE_COMPUTE_QUEUE
-        for (auto& mit : m_vbo->meshes)
-        {
-            for (auto& pit : mit->opaqueMeshParts)
-            {
-                TransitionResource(commandList, pit->staticIndexBuffer.Get(),
-                    D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
-            }
-        }
+        m_vbo->Transition(commandList,
+            D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+            D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
         #endif
 
         m_firstFrame = false;
