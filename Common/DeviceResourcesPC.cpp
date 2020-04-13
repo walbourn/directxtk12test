@@ -181,8 +181,8 @@ void DeviceResources::CreateDeviceResources()
 #endif
             }
         }
-#endif
     }
+#endif
 #endif // !NDEBUG
 
     // Determine maximum supported feature level for this device
