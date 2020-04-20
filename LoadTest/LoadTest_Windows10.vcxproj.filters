@@ -102,6 +102,9 @@
     <Image Include="windowslogo_r32f.dds">
       <Filter>Assets</Filter>
     </Image>
+    <Image Include="pentagon.tiff">
+      <Filter>Assets</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="PackageUWP.appxmanifest" />

@@ -966,6 +966,8 @@ void Game::OnDeviceLost()
     m_test24.Reset();
     m_test25.Reset();
     m_test26.Reset();
+    m_test27.Reset();
+    m_test28.Reset();
 
     m_copyTest.Reset();
     m_computeTest.Reset();
@@ -1462,6 +1464,39 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
                 OutputDebugStringA("FAILED: win95.bmp (mem) desc unexpected\n");
                 success = false;
             }
+        }
+    }
+
+    // WIC force RGBA32
+    {
+        DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"pentagon.tiff", m_test27.GetAddressOf()));
+
+        auto desc = m_test27->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_R8_UNORM
+            || desc.Width != 1024
+            || desc.Height != 1024
+            || desc.MipLevels != 1)
+        {
+            OutputDebugStringA("FAILED: pentagon.tiff res desc unexpected\n");
+            success = false;
+        }
+
+        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"pentagon.tiff",
+            0,
+            D3D12_RESOURCE_FLAG_NONE,
+            WIC_LOADER_FORCE_RGBA32,
+            m_test28.GetAddressOf()));
+
+        desc = m_test28->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
+            || desc.Width != 1024
+            || desc.Height != 1024
+            || desc.MipLevels != 1)
+        {
+            OutputDebugStringA("FAILED: pentagon.tiff res desc rgba32 unexpected\n");
+            success = false;
         }
     }
 

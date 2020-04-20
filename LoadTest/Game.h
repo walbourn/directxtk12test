@@ -137,6 +137,8 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_test24;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_test25;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_test26;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_test27;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_test28;
 
     Microsoft::WRL::ComPtr<ID3D12CommandQueue>      m_copyQueue;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_copyTest;
