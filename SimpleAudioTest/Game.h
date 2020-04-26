@@ -122,6 +122,10 @@ private:
     std::unique_ptr<DirectX::SoundEffect>   m_alarmXWMA;
     std::unique_ptr<DirectX::WaveBank>      m_wbXWMA;
 
+    std::unique_ptr<DirectX::SoundStreamInstance>   m_streamADPCM;
+    std::unique_ptr<DirectX::SoundStreamInstance>   m_streamXWMA;
+
+
 #if defined(_XBOX_ONE) && defined(_TITLE)
     std::unique_ptr<DirectX::SoundEffect>   m_alarmXMA;
     std::unique_ptr<DirectX::WaveBank>      m_wbXMA;
@@ -129,8 +133,12 @@ private:
 
     std::unique_ptr<DirectX::WaveBank>      m_wbPCM;
     std::unique_ptr<DirectX::WaveBank>      m_wbADPCM;
+    std::unique_ptr<DirectX::WaveBank>      m_wbstreamADPCM;
+    std::unique_ptr<DirectX::WaveBank>      m_wbstreamXWMA;
 
     std::unique_ptr<DX::TextConsole>        m_console;
+
+    unsigned int m_currentStream;
 
     bool m_critError;
     bool m_retrydefault;
@@ -139,4 +147,8 @@ private:
     wchar_t m_deviceStr[256];
 
     bool m_gamepadPresent;
+
+    DirectX::SoundStreamInstance* GetCurrentStream(unsigned int);
+    void UpdateCurrentStream(bool isplay);
+    void CycleCurrentStream(bool increment);
 };

@@ -76,5 +76,11 @@
     <None Include="comic.spritefont">
       <Filter>Assets</Filter>
     </None>
+    <None Include="WaveBankxWMA.xwb">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="WaveBankADPCM.xwb">
+      <Filter>Assets</Filter>
+    </None>
   </ItemGroup>
 </Project>

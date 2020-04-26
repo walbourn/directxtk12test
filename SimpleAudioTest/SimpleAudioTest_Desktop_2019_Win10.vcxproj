@@ -306,6 +306,8 @@
     <None Include="comic.spritefont" />
     <None Include="Courier_16.spritefont" />
     <None Include="droid.xwb" />
+    <None Include="WaveBankADPCM.xwb" />
+    <None Include="WaveBankxWMA.xwb" />
     <None Include="xwmadroid.xwb" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
