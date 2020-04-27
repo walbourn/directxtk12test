@@ -35,6 +35,9 @@ namespace
     {
         L"ADPCM",
         L"xWMA",
+#ifdef TEST_XMA2
+        L"XMA2",
+#endif
     };
 }
 
@@ -48,7 +51,19 @@ SoundStreamInstance* Game::GetCurrentStream(unsigned int index)
         }
         return m_streamXWMA.get();
     }
-    else if (!m_streamADPCM)
+    else
+#ifdef TEST_XMA2
+    if (index == 2)
+    {
+        if (!m_streamXMA)
+        {
+            m_streamXMA = m_wbstreamXMA->CreateStreamInstance(WB_STREAM_ENTRY);
+        }
+        return m_streamXMA.get();
+    }
+    else
+#endif
+    if (!m_streamADPCM)
     {
         m_streamADPCM = m_wbstreamADPCM->CreateStreamInstance(WB_STREAM_ENTRY);
     }
@@ -189,6 +204,10 @@ Game::~Game()
 
     m_streamADPCM.reset();
     m_streamXWMA.reset();
+
+#ifdef TEST_XMA2
+    m_streamXMA.reset();
+#endif
 
     if (m_audEngine)
     {
@@ -368,7 +387,20 @@ void Game::Initialize(
         auto wfx = reinterpret_cast<WAVEFORMATEX*>(&buff);
         dump_wfx(m_console.get(), m_wbXMA->GetFormat(WB_INMEMORY_ENTRY, wfx, 64));
     }
-#endif
+
+    m_wbstreamXMA = std::make_unique<WaveBank>(m_audEngine.get(), L"WaveBankXMA2.xwb");
+    m_console->WriteLine(L"WaveBankXMA2.xwb");
+    m_console->Format(L"    Index #%u (%zu bytes, %zu samples, %zu ms)\n",
+        WB_STREAM_ENTRY,
+        m_wbstreamXMA->GetSampleSizeInBytes(WB_STREAM_ENTRY),
+        m_wbstreamXMA->GetSampleDuration(WB_STREAM_ENTRY),
+        m_wbstreamXMA->GetSampleDurationMS(WB_STREAM_ENTRY));
+    {
+        char buff[64] = {};
+        auto wfx = reinterpret_cast<WAVEFORMATEX*>(&buff);
+        dump_wfx(m_console.get(), m_wbstreamXMA->GetFormat(WB_STREAM_ENTRY, wfx, 64));
+    }
+#endif // XMA2
 }
 
 #pragma region Frame Update
