@@ -24,6 +24,10 @@
 #include "StepTimer.h"
 #include "TextConsole.h"
 
+#if defined(_XBOX_ONE) && defined(_TITLE)
+#define TEST_XMA2
+#endif
+
 // A basic game implementation that creates a D3D12 device and
 // provides a game loop.
 class Game
@@ -125,8 +129,7 @@ private:
     std::unique_ptr<DirectX::SoundStreamInstance>   m_streamADPCM;
     std::unique_ptr<DirectX::SoundStreamInstance>   m_streamXWMA;
 
-
-#if defined(_XBOX_ONE) && defined(_TITLE)
+#ifdef TEST_XMA2
     std::unique_ptr<DirectX::SoundEffect>   m_alarmXMA;
     std::unique_ptr<DirectX::WaveBank>      m_wbXMA;
 #endif

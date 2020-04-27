@@ -25,6 +25,7 @@ using namespace DirectX::SimpleMath;
 
 using Microsoft::WRL::ComPtr;
 
+
 namespace
 {
     const unsigned int WB_INMEMORY_ENTRY = 8;
@@ -282,7 +283,7 @@ void Game::Initialize(
     m_console->Write(L"Alarm01_xwma.wav:  ");
     dump_wfx(m_console.get(), m_alarmXWMA->GetFormat());
 
-#if defined(_XBOX_ONE) && defined(_TITLE)
+#ifdef TEST_XMA2
     m_alarmXMA = std::make_unique<SoundEffect>(m_audEngine.get(), L"Alarm01_xma.wav");
     m_console->Write(L"Alarm01_xma.wav:   ");
     dump_wfx(m_console.get(), m_alarmXMA->GetFormat());
@@ -354,7 +355,7 @@ void Game::Initialize(
         dump_wfx(m_console.get(), m_wbstreamXWMA->GetFormat(WB_STREAM_ENTRY, wfx, 64));
     }
 
-#if defined(_XBOX_ONE) && defined(_TITLE)
+#ifdef TEST_XMA2
     m_wbXMA = std::make_unique<WaveBank>(m_audEngine.get(), L"xmadroid.xwb");
     m_console->WriteLine(L"xmadroid.xwb");
     m_console->Format(L"    Index #%u (%zu bytes, %zu samples, %zu ms)\n",
@@ -367,7 +368,7 @@ void Game::Initialize(
         auto wfx = reinterpret_cast<WAVEFORMATEX*>(&buff);
         dump_wfx(m_console.get(), m_wbXMA->GetFormat(WB_INMEMORY_ENTRY, wfx, 64));
     }
-#endif // XMA2
+#endif
 }
 
 #pragma region Frame Update
@@ -451,7 +452,7 @@ void Game::Update(DX::StepTimer const&)
             m_wbXWMA->Play(WB_INMEMORY_ENTRY);
         }
 
-#if defined(_XBOX_ONE) && defined(_TITLE)
+#ifdef TEST_XMA2
         if (m_gamepadButtons.rightStick == ButtonState::PRESSED)
         {
             m_console->WriteLine(L"XMA2 alarm started");
@@ -462,7 +463,7 @@ void Game::Update(DX::StepTimer const&)
             m_console->WriteLine(L"XMA2 Wavebank started");
             m_wbXMA->Play(WB_INMEMORY_ENTRY);
         }
-#endif // XMA2
+#endif
 
         if (m_gamepadButtons.leftShoulder == ButtonState::PRESSED || m_gamepadButtons.rightShoulder == ButtonState::PRESSED)
         {
@@ -612,7 +613,7 @@ void Game::CycleCurrentStream(bool increment)
     }
     else
     {
-        m_currentStream = (m_currentStream - 1) % _countof(STREAM_NAMES);
+        m_currentStream = (m_currentStream + _countof(STREAM_NAMES) - 1) % _countof(STREAM_NAMES);
     }
 
     if (wasplaying)
@@ -700,7 +701,7 @@ void Game::Render()
 
     if (m_gamepadPresent)
     {
-#if defined(_XBOX_ONE) && defined(_TITLE)
+#ifdef TEST_XMA2
         help1 = L"Press A, B, X, Y, or RThumb to trigger Alarm.wav; LTrigger+A for Tada.wav";
 #else
         help1 = L"Press A, B, X, or Y to trigger Alarm.wav; LTrigger+A for Tada.wav";
