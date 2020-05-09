@@ -968,6 +968,9 @@ void Game::OnDeviceLost()
     m_test26.Reset();
     m_test27.Reset();
     m_test28.Reset();
+    m_test29.Reset();
+    m_test30.Reset();
+    m_test31.Reset();
 
     m_copyTest.Reset();
     m_computeTest.Reset();
@@ -1496,6 +1499,66 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             || desc.MipLevels != 1)
         {
             OutputDebugStringA("FAILED: pentagon.tiff res desc rgba32 unexpected\n");
+            success = false;
+        }
+    }
+
+    // WIC SQUARE flags
+    {
+        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"cup_small.jpg",
+            0,
+            D3D12_RESOURCE_FLAG_NONE,
+            WIC_LOADER_MAKE_SQUARE,
+            m_test29.GetAddressOf()));
+
+        auto desc = m_test29->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
+            || desc.Width != 683
+            || desc.Height != 683
+            || desc.MipLevels != 1)
+        {
+            OutputDebugStringA("FAILED: cup_small.jpg square res desc unexpected\n");
+            success = false;
+        }
+    }
+
+    // WIC POW2 flags
+    {
+        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"cup_small.jpg",
+            0,
+            D3D12_RESOURCE_FLAG_NONE,
+            WIC_LOADER_FIT_POW2,
+            m_test30.GetAddressOf()));
+
+        auto desc = m_test30->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
+            || desc.Width != 256
+            || desc.Height != 512
+            || desc.MipLevels != 1)
+        {
+            OutputDebugStringA("FAILED: cup_small.jpg pow2 res desc unexpected\n");
+            success = false;
+        }
+    }
+
+    // WIC POW2 + SQUARE flags
+    {
+        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"cup_small.jpg",
+            0,
+            D3D12_RESOURCE_FLAG_NONE,
+            WIC_LOADER_FIT_POW2 | WIC_LOADER_MAKE_SQUARE,
+            m_test31.GetAddressOf()));
+
+        auto desc = m_test31->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
+            || desc.Width != 512
+            || desc.Height != 512
+            || desc.MipLevels != 1)
+        {
+            OutputDebugStringA("FAILED: cup_small.jpg pow2+square res desc unexpected\n");
             success = false;
         }
     }
