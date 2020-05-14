@@ -99,9 +99,7 @@ private:
     std::unique_ptr<DirectX::GraphicsMemory>    m_graphicsMemory;
     std::unique_ptr<DirectX::CommonStates>      m_states;
     std::unique_ptr<DirectX::SpriteBatch>       m_spriteBatch;
-    std::unique_ptr<DirectX::SpriteBatch>       m_spriteBatchPC;
-    std::unique_ptr<DirectX::SpriteBatch>       m_spriteBatchAC;
-    std::unique_ptr<DirectX::SpriteBatch>       m_spriteBatchAW;
+    std::unique_ptr<DirectX::SpriteBatch>       m_spriteBatchSampler;
 
     std::unique_ptr<DirectX::DescriptorHeap>    m_resourceDescriptors;
 

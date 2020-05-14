@@ -134,36 +134,28 @@ void Game::Update(DX::StepTimer const& timer)
         m_spriteBatch->SetRotation(DXGI_MODE_ROTATION_ROTATE270);
         assert(m_spriteBatch->GetRotation() == DXGI_MODE_ROTATION_ROTATE270);
 
-        m_spriteBatchPC->SetRotation(DXGI_MODE_ROTATION_ROTATE270);
-        m_spriteBatchAC->SetRotation(DXGI_MODE_ROTATION_ROTATE270);
-        m_spriteBatchAW->SetRotation(DXGI_MODE_ROTATION_ROTATE270);
+        m_spriteBatchSampler->SetRotation(DXGI_MODE_ROTATION_ROTATE270);
     }
     else if (kb.Right || (pad.IsConnected() && pad.dpad.right))
     {
         m_spriteBatch->SetRotation(DXGI_MODE_ROTATION_ROTATE90);
         assert(m_spriteBatch->GetRotation() == DXGI_MODE_ROTATION_ROTATE90);
 
-        m_spriteBatchPC->SetRotation(DXGI_MODE_ROTATION_ROTATE90);
-        m_spriteBatchAC->SetRotation(DXGI_MODE_ROTATION_ROTATE90);
-        m_spriteBatchAW->SetRotation(DXGI_MODE_ROTATION_ROTATE90);
+        m_spriteBatchSampler->SetRotation(DXGI_MODE_ROTATION_ROTATE90);
     }
     else if (kb.Up || (pad.IsConnected() && pad.dpad.up))
     {
         m_spriteBatch->SetRotation(DXGI_MODE_ROTATION_IDENTITY);
         assert(m_spriteBatch->GetRotation() == DXGI_MODE_ROTATION_IDENTITY);
 
-        m_spriteBatchPC->SetRotation(DXGI_MODE_ROTATION_IDENTITY);
-        m_spriteBatchAC->SetRotation(DXGI_MODE_ROTATION_IDENTITY);
-        m_spriteBatchAW->SetRotation(DXGI_MODE_ROTATION_IDENTITY);
+        m_spriteBatchSampler->SetRotation(DXGI_MODE_ROTATION_IDENTITY);
     }
     else if (kb.Down || (pad.IsConnected() && pad.dpad.down))
     {
         m_spriteBatch->SetRotation(DXGI_MODE_ROTATION_ROTATE180);
         assert(m_spriteBatch->GetRotation() == DXGI_MODE_ROTATION_ROTATE180);
 
-        m_spriteBatchPC->SetRotation(DXGI_MODE_ROTATION_ROTATE180);
-        m_spriteBatchAC->SetRotation(DXGI_MODE_ROTATION_ROTATE180);
-        m_spriteBatchAW->SetRotation(DXGI_MODE_ROTATION_ROTATE180);
+        m_spriteBatchSampler->SetRotation(DXGI_MODE_ROTATION_ROTATE180);
     }
 
     PIXEndEvent();
@@ -296,17 +288,17 @@ void Game::Render()
 
     RECT tileRect = { long(catSize.x), long(catSize.y), long(catSize.x * 3), long(catSize.y * 3) };
 
-    m_spriteBatchPC->Begin(commandList);
-    m_spriteBatchPC->Draw(cat, catSize, XMFLOAT2(1100.f, 100.f), nullptr, Colors::White, time / 50, XMFLOAT2(128, 128));
-    m_spriteBatchPC->End();
+    m_spriteBatchSampler->Begin(commandList, m_states->PointClamp());
+    m_spriteBatchSampler->Draw(cat, catSize, XMFLOAT2(1100.f, 100.f), nullptr, Colors::White, time / 50, XMFLOAT2(128, 128));
+    m_spriteBatchSampler->End();
 
-    m_spriteBatchAC->Begin(commandList);
-    m_spriteBatchAC->Draw(cat, catSize, XMFLOAT2(1100.f, 350.f), &tileRect, Colors::White, time / 50, XMFLOAT2(256, 256));
-    m_spriteBatchAC->End();
+    m_spriteBatchSampler->Begin(commandList, m_states->AnisotropicClamp());
+    m_spriteBatchSampler->Draw(cat, catSize, XMFLOAT2(1100.f, 350.f), &tileRect, Colors::White, time / 50, XMFLOAT2(256, 256));
+    m_spriteBatchSampler->End();
 
-    m_spriteBatchAW->Begin(commandList);
-    m_spriteBatchAW->Draw(cat, catSize, XMFLOAT2(1100.f, 600.f), &tileRect, Colors::White, time / 50, XMFLOAT2(256, 256));
-    m_spriteBatchAW->End();
+    m_spriteBatchSampler->Begin(commandList, m_states->AnisotropicWrap());
+    m_spriteBatchSampler->Draw(cat, catSize, XMFLOAT2(1100.f, 600.f), &tileRect, Colors::White, time / 50, XMFLOAT2(256, 256));
+    m_spriteBatchSampler->End();
 
     PIXEndEvent(commandList);
 
@@ -453,29 +445,7 @@ void Game::CreateDeviceDependentResources()
             &CommonStates::NonPremultiplied,
             nullptr, nullptr, &sampler);
 
-        m_spriteBatchPC = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
-    }
-
-    {
-        auto sampler = m_states->AnisotropicClamp();
-
-        SpriteBatchPipelineStateDescription pd(
-            rtState,
-            &CommonStates::NonPremultiplied,
-            nullptr, nullptr, &sampler);
-
-        m_spriteBatchAC = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
-    }
-
-    {
-        auto sampler = m_states->AnisotropicWrap();
-
-        SpriteBatchPipelineStateDescription pd(
-            rtState,
-            &CommonStates::NonPremultiplied,
-            nullptr, nullptr, &sampler);
-
-        m_spriteBatchAW = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
+        m_spriteBatchSampler = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
     }
 
 #ifdef GAMMA_CORRECT_RENDERING
@@ -523,9 +493,7 @@ void Game::CreateWindowSizeDependentResources()
     auto viewport = m_deviceResources->GetScreenViewport();
 
     m_spriteBatch->SetViewport(viewport);
-    m_spriteBatchPC->SetViewport(viewport);
-    m_spriteBatchAC->SetViewport(viewport);
-    m_spriteBatchAW->SetViewport(viewport);
+    m_spriteBatchSampler->SetViewport(viewport);
 
 #if defined(_XBOX_ONE) && defined(_TITLE)
     if (m_deviceResources->GetDeviceOptions() & DX::DeviceResources::c_Enable4K_UHD)
@@ -533,9 +501,7 @@ void Game::CreateWindowSizeDependentResources()
         // Scale sprite batch rendering when running 4k
         static const D3D12_VIEWPORT s_vp1080 = { 0.f, 0.f, 1920.f, 1080.f, D3D12_MIN_DEPTH, D3D12_MAX_DEPTH };
         m_spriteBatch->SetViewport(s_vp1080);
-        m_spriteBatchPC->SetViewport(s_vp1080);
-        m_spriteBatchAC->SetViewport(s_vp1080);
-        m_spriteBatchAW->SetViewport(s_vp1080);
+        m_spriteBatchSampler->SetViewport(s_vp1080);
     }
 #elif defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
     if (m_deviceResources->GetDeviceOptions() & DX::DeviceResources::c_Enable4K_Xbox)
@@ -543,16 +509,12 @@ void Game::CreateWindowSizeDependentResources()
         // Scale sprite batch rendering when running 4k
         static const D3D12_VIEWPORT s_vp1080 = { 0.f, 0.f, 1920.f, 1080.f, D3D12_MIN_DEPTH, D3D12_MAX_DEPTH };
         m_spriteBatch->SetViewport(s_vp1080);
-        m_spriteBatchPC->SetViewport(s_vp1080);
-        m_spriteBatchAC->SetViewport(s_vp1080);
-        m_spriteBatchAW->SetViewport(s_vp1080);
+        m_spriteBatchSampler->SetViewport(s_vp1080);
     }
 
     auto rotation = m_deviceResources->GetRotation();
     m_spriteBatch->SetRotation(rotation);
-    m_spriteBatchPC->SetRotation(rotation);
-    m_spriteBatchAC->SetViewport(viewport);
-    m_spriteBatchAW->SetViewport(viewport);
+    m_spriteBatchSampler->SetRotation(rotation);
 #endif
 }
 
@@ -566,9 +528,7 @@ void Game::OnDeviceLost()
     m_resourceDescriptors.reset();
     
     m_spriteBatch.reset();
-    m_spriteBatchPC.reset();
-    m_spriteBatchAC.reset();
-    m_spriteBatchAW.reset();
+    m_spriteBatchSampler.reset();
 
     m_states.reset();
     m_graphicsMemory.reset();
