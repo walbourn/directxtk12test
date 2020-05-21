@@ -9,12 +9,16 @@
 
 #pragma once
 
+#include <wrl/client.h>
+
+#include <DirectXMath.h>
+
 namespace DX
 {
     class RenderTexture
     {
     public:
-        RenderTexture(DXGI_FORMAT format);
+        RenderTexture(DXGI_FORMAT format) noexcept;
 
         RenderTexture(RenderTexture&&) = default;
         RenderTexture& operator= (RenderTexture&&) = default;
@@ -26,7 +30,7 @@ namespace DX
 
         void SizeResources(size_t width, size_t height);
 
-        void ReleaseDevice();
+        void ReleaseDevice() noexcept;
 
         void TransitionTo(_In_ ID3D12GraphicsCommandList* commandList, D3D12_RESOURCE_STATES afterState);
 
@@ -45,9 +49,12 @@ namespace DX
             DirectX::XMStoreFloat4(reinterpret_cast<DirectX::XMFLOAT4*>(m_clearColor), color);
         }
 
+        ID3D12Resource* GetResource() const noexcept { return m_resource.Get(); }
+        D3D12_RESOURCE_STATES GetCurrentState() const noexcept { return m_state; }
+
         void SetWindow(const RECT& rect);
 
-        DXGI_FORMAT GetFormat() const { return m_format; }
+        DXGI_FORMAT GetFormat() const noexcept { return m_format; }
 
     private:
         Microsoft::WRL::ComPtr<ID3D12Device>                m_device;

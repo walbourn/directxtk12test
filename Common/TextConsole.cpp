@@ -10,12 +10,14 @@
 
 #include <assert.h>
 
+#include <algorithm>
+
 using Microsoft::WRL::ComPtr;
 
 using namespace DirectX;
 using namespace DX;
 
-TextConsole::TextConsole()
+TextConsole::TextConsole() noexcept
     : m_layout{},
     m_textColor(1.f, 1.f, 1.f, 1.f),
     m_debugOutput(false),
@@ -32,7 +34,7 @@ TextConsole::TextConsole(
     ResourceUploadBatch& upload,
     const RenderTargetState& rtState,
     const wchar_t* fontName,
-    D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptor, D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor)
+    D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptor, D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor) noexcept(false)
     : m_layout{},
     m_textColor(1.f, 1.f, 1.f, 1.f),
     m_debugOutput(false),
@@ -56,13 +58,13 @@ void TextConsole::Render(_In_ ID3D12GraphicsCommandList* commandList)
 
     float x = float(m_layout.left);
     float y = float(m_layout.top);
-    
+
     XMVECTOR color = XMLoadFloat4(&m_textColor);
 
     m_batch->Begin(commandList);
 
-    unsigned int textLine = unsigned int(m_currentLine + 1) % m_rows;
-    
+    auto textLine = static_cast<unsigned int>(m_currentLine + 1) % m_rows;
+
     for (unsigned int line = 0; line < m_rows; ++line)
     {
         XMFLOAT2 pos(x, y + lineSpacing * float(line));
@@ -72,14 +74,14 @@ void TextConsole::Render(_In_ ID3D12GraphicsCommandList* commandList)
             m_font->DrawString(m_batch.get(), m_lines[textLine], pos, color);
         }
 
-        textLine = unsigned int(textLine + 1) % m_rows;
+        textLine = static_cast<unsigned int>(textLine + 1) % m_rows;
     }
 
     m_batch->End();
 }
 
 
-void TextConsole::Clear()
+void TextConsole::Clear() noexcept
 {
     std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -93,7 +95,7 @@ void TextConsole::Clear()
 
 
 _Use_decl_annotations_
-void TextConsole::Write(const wchar_t *str)
+void TextConsole::Write(const wchar_t* str)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -109,7 +111,7 @@ void TextConsole::Write(const wchar_t *str)
 
 
 _Use_decl_annotations_
-void TextConsole::WriteLine(const wchar_t *str)
+void TextConsole::WriteLine(const wchar_t* str)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -162,12 +164,12 @@ void TextConsole::SetWindow(const RECT& layout)
 
     m_layout = layout;
 
-    assert(m_font != 0);
+    assert(m_font != nullptr);
 
     float lineSpacing = m_font->GetLineSpacing();
     unsigned int rows = std::max<unsigned int>(1, static_cast<unsigned int>(float(layout.bottom - layout.top) / lineSpacing));
 
-    RECT fontLayout = m_font->MeasureDrawBounds(L"X", XMFLOAT2(0,0));
+    RECT fontLayout = m_font->MeasureDrawBounds(L"X", XMFLOAT2(0, 0));
     unsigned int columns = std::max<unsigned int>(1, static_cast<unsigned int>(float(layout.right - layout.left) / float(fontLayout.right - fontLayout.left)));
 
     auto buffer = std::make_unique<wchar_t[]>((columns + 1) * rows);
@@ -202,7 +204,7 @@ void TextConsole::SetWindow(const RECT& layout)
 }
 
 
-void TextConsole::ReleaseDevice()
+void TextConsole::ReleaseDevice() noexcept
 {
     m_batch.reset();
     m_font.reset();

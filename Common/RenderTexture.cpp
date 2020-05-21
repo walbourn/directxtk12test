@@ -16,14 +16,12 @@
 #include <stdio.h>
 #include <stdexcept>
 
-#include <wrl/client.h>
-
 using namespace DirectX;
 using namespace DX;
 
 using Microsoft::WRL::ComPtr;
 
-RenderTexture::RenderTexture(DXGI_FORMAT format) :
+RenderTexture::RenderTexture(DXGI_FORMAT format) noexcept :
     m_state(D3D12_RESOURCE_STATE_COMMON),
     m_srvDescriptor{},
     m_rtvDescriptor{},
@@ -98,7 +96,7 @@ void RenderTexture::SizeResources(size_t width, size_t height)
         static_cast<UINT>(height),
         1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
 
-    D3D12_CLEAR_VALUE clearValue = { m_format, { 0 } };
+    D3D12_CLEAR_VALUE clearValue = { m_format, {} };
     memcpy(clearValue.Color, m_clearColor, sizeof(clearValue.Color));
 
     m_state = D3D12_RESOURCE_STATE_RENDER_TARGET;
@@ -123,7 +121,7 @@ void RenderTexture::SizeResources(size_t width, size_t height)
     m_height = height;
 }
 
-void RenderTexture::ReleaseDevice()
+void RenderTexture::ReleaseDevice() noexcept
 {
     m_resource.Reset();
     m_device.Reset();

@@ -28,17 +28,23 @@ namespace DX
     class TextConsole
     {
     public:
-        TextConsole();
+        TextConsole() noexcept;
         TextConsole(
             _In_ ID3D12Device* device,
             DirectX::ResourceUploadBatch& upload,
             const DirectX::RenderTargetState& rtState,
             _In_z_ const wchar_t* fontName,
-            D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptor, D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor);
+            D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptor, D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor) noexcept(false);
+
+        TextConsole(TextConsole&&) = delete;
+        TextConsole& operator= (TextConsole&&) = delete;
+
+        TextConsole(TextConsole const&) = delete;
+        TextConsole& operator= (TextConsole const&) = delete;
 
         void Render(_In_ ID3D12GraphicsCommandList* commandList);
 
-        void Clear();
+        void Clear() noexcept;
 
         void Write(_In_z_ const wchar_t *str);
         void WriteLine(_In_z_ const wchar_t *str);
@@ -50,7 +56,7 @@ namespace DX
 
         void SetDebugOutput(bool debug) { m_debugOutput = debug; }
 
-        void ReleaseDevice();
+        void ReleaseDevice() noexcept;
         void RestoreDevice(
             _In_ ID3D12Device* device,
             DirectX::ResourceUploadBatch& upload,
