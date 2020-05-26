@@ -972,6 +972,13 @@ void Game::OnDeviceLost()
     m_test30.Reset();
     m_test31.Reset();
 
+    m_testA.Reset();
+    m_testB.Reset();
+    m_testC.Reset();
+    m_testD.Reset();
+    m_testE.Reset();
+    m_testF.Reset();
+
     m_copyTest.Reset();
     m_computeTest.Reset();
 
@@ -999,6 +1006,137 @@ void Game::OnDeviceRestored()
 void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
 {
     auto device = m_deviceResources->GetD3DDevice();
+
+    //----------------------------------------------------------------------------------
+    // CreateStaticTexture 1D
+    {
+        static const uint32_t s_pixels[4] = { 0xff0000ff, 0xff00ff00, 0xffff0000, 0xffffffff };
+
+        D3D12_SUBRESOURCE_DATA initData = { s_pixels, 0, 0 };
+
+        DX::ThrowIfFailed(CreateTextureFromMemory(device, resourceUpload, 4u, DXGI_FORMAT_B8G8R8A8_UNORM, initData,
+            m_testA.GetAddressOf()));
+
+        auto desc = m_testA->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE1D
+            || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM
+            || desc.Width != 4
+            || desc.MipLevels != 1)
+        {
+            OutputDebugStringA("FAILED: CreateStaticTexture 1D res desc unexpected\n");
+            success = false;
+        }
+    }
+
+    // CreateStaticTexture 2D
+    {
+        static const uint32_t s_pixels[16] = {
+            0xff0000ff, 0xff00ff00, 0xffff0000, 0xffffff, 0xff0000ff, 0xff00ff00, 0xffff0000, 0xffffffff,
+            0xff0000ff, 0xff00ff00, 0xffff0000, 0xffffff, 0xff0000ff, 0xff00ff00, 0xffff0000, 0xffffffff,
+        };
+
+        D3D12_SUBRESOURCE_DATA initData = { s_pixels, sizeof(uint32_t) * 8, 0 };
+
+        DX::ThrowIfFailed(CreateTextureFromMemory(device, resourceUpload, 8u, 2u, DXGI_FORMAT_B8G8R8A8_UNORM, initData,
+            m_testB.GetAddressOf()));
+
+        auto desc = m_testB->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM
+            || desc.Width != 8
+            || desc.Height != 2
+            || desc.MipLevels != 1)
+        {
+            OutputDebugStringA("FAILED: CreateStaticTexture 2D res desc unexpected\n");
+            success = false;
+        }
+
+        initData = { s_pixels, sizeof(uint32_t) * 4, 0 };
+
+        DX::ThrowIfFailed(CreateTextureFromMemory(device, resourceUpload, 4u, 4u, DXGI_FORMAT_R8G8B8A8_UNORM, initData,
+            m_testC.ReleaseAndGetAddressOf()));
+
+        desc = m_testC->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
+            || desc.Width != 4
+            || desc.Height != 4
+            || desc.MipLevels != 1)
+        {
+            OutputDebugStringA("FAILED: CreateStaticTexture 2Db res desc unexpected\n");
+            success = false;
+        }
+    }
+
+    // CreateStaticTexture 2D (autogen)
+    {
+        auto pixels = std::make_unique<uint32_t[]>(256 * 256 * sizeof(uint32_t));
+        memset(pixels.get(), 0xff, 256 * 256 * sizeof(uint32_t));
+
+        D3D12_SUBRESOURCE_DATA initData = { pixels.get(), sizeof(uint32_t) * 256, 0 };
+
+        DX::ThrowIfFailed(CreateTextureFromMemory(device, resourceUpload, 256u, 256u, DXGI_FORMAT_R8G8B8A8_UNORM, initData,
+            m_testD.GetAddressOf(), true));
+
+        auto desc = m_testD->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
+            || desc.Width != 256
+            || desc.Height != 256
+            || desc.MipLevels != 9)
+        {
+            OutputDebugStringA("FAILED: CreateStaticTexture 2D autogen res desc unexpected\n");
+            success = false;
+        }
+    }
+
+    // CreateStaticTexture 3D
+    {
+        static const uint32_t s_pixels[16] = {
+            0xff0000ff, 0xff0000ff,
+            0xff0000ff, 0xff0000ff,
+            0xff00ff00, 0xff00ff00,
+            0xff00ff00, 0xff00ff00,
+            0xffff0000, 0xffff0000,
+            0xffff0000, 0xffff0000,
+            0xffffffff, 0xffffffff,
+            0xffffffff, 0xffffffff,
+        };
+
+        D3D12_SUBRESOURCE_DATA initData = { s_pixels, sizeof(uint32_t) * 2, sizeof(uint32_t) * 4 };
+
+        DX::ThrowIfFailed(CreateTextureFromMemory(device, resourceUpload, 2u, 2u, 4, DXGI_FORMAT_B8G8R8A8_UNORM, initData,
+            m_testE.GetAddressOf()));
+
+        auto desc = m_testE->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE3D
+            || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM
+            || desc.Width != 2
+            || desc.Height != 2
+            || desc.DepthOrArraySize != 4
+            || desc.MipLevels != 1)
+        {
+            OutputDebugStringA("FAILED: CreateStaticTexture 3D res desc unexpected\n");
+            success = false;
+        }
+
+        initData = { s_pixels, sizeof(uint32_t) * 4, sizeof(uint32_t) * 8 };
+
+        DX::ThrowIfFailed(CreateTextureFromMemory(device, resourceUpload, 4u, 2u, 2u, DXGI_FORMAT_R8G8B8A8_UNORM, initData,
+            m_testF.ReleaseAndGetAddressOf()));
+
+        desc = m_testF->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE3D
+            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
+            || desc.Width != 4
+            || desc.Height != 2
+            || desc.DepthOrArraySize != 2
+            || desc.MipLevels != 1)
+        {
+            OutputDebugStringA("FAILED: CreateStaticTexture 3Db res desc unexpected\n");
+            success = false;
+        }
+    }
 
     // DirectX Logo (verify DDS for autogen has no mipmaps)
     DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen_bgra.dds", m_test1.ReleaseAndGetAddressOf(), false));

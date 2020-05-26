@@ -467,6 +467,10 @@ void Game::CreateWindowSizeDependentResources()
 #if !defined(_XBOX_ONE) || !defined(_TITLE)
 void Game::OnDeviceLost()
 {
+    m_test1.Reset();
+    m_test2.Reset();
+    m_test3.Reset();
+
     m_batch.reset();
     m_effectTri.reset();
     m_effectPoint.reset();
@@ -639,7 +643,6 @@ void Game::UnitTests()
         }
     }
 
-
 #if defined(__cplusplus_winrt)
     // SimpleMath interop tests for Windows Runtime types
     Rectangle test1(10, 20, 50, 100);
@@ -654,6 +657,54 @@ void Game::UnitTests()
         success = false;
     }
 #endif
+
+    auto device = m_deviceResources->GetD3DDevice();
+
+    ResourceUploadBatch resourceUpload(device);
+
+    resourceUpload.Begin();
+
+    // CreateStaticBuffer (BufferHelpers.h)
+    {
+        static const VertexPositionColor s_vertexData[3] =
+        {
+            { XMFLOAT3{ 0.0f,   0.5f,  0.5f }, XMFLOAT4{ 1.0f, 0.0f, 0.0f, 1.0f } },  // Top / Red
+            { XMFLOAT3{ 0.5f,  -0.5f,  0.5f }, XMFLOAT4{ 0.0f, 1.0f, 0.0f, 1.0f } },  // Right / Green
+            { XMFLOAT3{ -0.5f, -0.5f,  0.5f }, XMFLOAT4{ 0.0f, 0.0f, 1.0f, 1.0f } }   // Left / Blue
+        };
+
+        if (FAILED(CreateStaticBuffer(device, resourceUpload,
+            s_vertexData, _countof(s_vertexData), sizeof(VertexPositionColor),
+            D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+            m_test1.ReleaseAndGetAddressOf())))
+        {
+            OutputDebugStringA("ERROR: Failed CreateStaticBuffer(1) test\n");
+            success = false;
+        }
+
+        if (FAILED(CreateStaticBuffer(device, resourceUpload,
+            s_vertexData, _countof(s_vertexData),
+            D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+            m_test2.ReleaseAndGetAddressOf())))
+        {
+            OutputDebugStringA("ERROR: Failed CreateStaticBuffer(2) test\n");
+            success = false;
+        }
+
+        std::vector<VertexPositionColor> verts(s_vertexData, s_vertexData + _countof(s_vertexData));
+
+        if (FAILED(CreateStaticBuffer(device, resourceUpload,
+            verts,
+            D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+            m_test3.ReleaseAndGetAddressOf())))
+        {
+            OutputDebugStringA("ERROR: Failed CreateStaticBuffer(3) test\n");
+            success = false;
+        }
+    }
+
+    auto uploadResourcesFinished = resourceUpload.End(m_deviceResources->GetCommandQueue());
+    uploadResourcesFinished.wait();
 
     OutputDebugStringA(success ? "Passed\n" : "Failed\n");
     OutputDebugStringA("***********  UNIT TESTS END  ***************\n");
