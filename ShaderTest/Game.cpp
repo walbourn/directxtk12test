@@ -60,7 +60,7 @@ namespace
         static const D3D12_INPUT_LAYOUT_DESC InputLayout;
 
     private:
-        static const int InputElementCount = 7;
+        static constexpr unsigned int InputElementCount = 7;
         static const D3D12_INPUT_ELEMENT_DESC InputElements[InputElementCount];
     };
 
@@ -120,7 +120,7 @@ namespace
         static const D3D12_INPUT_LAYOUT_DESC InputLayout;
 
     private:
-        static const int InputElementCount = 7;
+        static constexpr int InputElementCount = 7;
         static const D3D12_INPUT_ELEMENT_DESC InputElements[InputElementCount];
     };
 
@@ -1594,7 +1594,7 @@ void Game::CreateCube()
     IndexCollection indices;
 
     // A box has six faces, each one pointing in a different direction.
-    const int FaceCount = 6;
+    constexpr int FaceCount = 6;
 
     static const XMVECTORF32 faceNormals[FaceCount] =
     {

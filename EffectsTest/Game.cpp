@@ -87,7 +87,7 @@ namespace
         static const D3D12_INPUT_LAYOUT_DESC InputLayout;
 
     private:
-        static const int InputElementCount = 7;
+        static constexpr unsigned int InputElementCount = 7;
         static const D3D12_INPUT_ELEMENT_DESC InputElements[InputElementCount];
     };
 
@@ -116,7 +116,7 @@ namespace
     // Tessellates the specified bezier patch.
     void TessellatePatch(VertexCollection& vertices, IndexCollection& indices, TeapotPatch const& patch, FXMVECTOR scale, bool isMirrored)
     {
-        const int tessellation = 16;
+        constexpr int tessellation = 16;
 
         // Look up the 16 control points for this patch.
         XMVECTOR controlPoints[16];
