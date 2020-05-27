@@ -1008,7 +1008,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     auto device = m_deviceResources->GetD3DDevice();
 
     //----------------------------------------------------------------------------------
-    // CreateStaticTexture 1D
+    // CreateTextureFromMemory 1D
     {
         static const uint32_t s_pixels[4] = { 0xff0000ff, 0xff00ff00, 0xffff0000, 0xffffffff };
 
@@ -1023,12 +1023,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             || desc.Width != 4
             || desc.MipLevels != 1)
         {
-            OutputDebugStringA("FAILED: CreateStaticTexture 1D res desc unexpected\n");
+            OutputDebugStringA("FAILED: CreateTextureFromMemory 1D res desc unexpected\n");
             success = false;
         }
     }
 
-    // CreateStaticTexture 2D
+    // CreateTextureFromMemory 2D
     {
         static const uint32_t s_pixels[16] = {
             0xff0000ff, 0xff00ff00, 0xffff0000, 0xffffff, 0xff0000ff, 0xff00ff00, 0xffff0000, 0xffffffff,
@@ -1047,7 +1047,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             || desc.Height != 2
             || desc.MipLevels != 1)
         {
-            OutputDebugStringA("FAILED: CreateStaticTexture 2D res desc unexpected\n");
+            OutputDebugStringA("FAILED: CreateTextureFromMemory 2D res desc unexpected\n");
             success = false;
         }
 
@@ -1063,12 +1063,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             || desc.Height != 4
             || desc.MipLevels != 1)
         {
-            OutputDebugStringA("FAILED: CreateStaticTexture 2Db res desc unexpected\n");
+            OutputDebugStringA("FAILED: CreateTextureFromMemory 2Db res desc unexpected\n");
             success = false;
         }
     }
 
-    // CreateStaticTexture 2D (autogen)
+    // CreateTextureFromMemory 2D (autogen)
     {
         auto pixels = std::make_unique<uint32_t[]>(256 * 256 * sizeof(uint32_t));
         memset(pixels.get(), 0xff, 256 * 256 * sizeof(uint32_t));
@@ -1085,12 +1085,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             || desc.Height != 256
             || desc.MipLevels != 9)
         {
-            OutputDebugStringA("FAILED: CreateStaticTexture 2D autogen res desc unexpected\n");
+            OutputDebugStringA("FAILED: CreateTextureFromMemory 2D autogen res desc unexpected\n");
             success = false;
         }
     }
 
-    // CreateStaticTexture 3D
+    // CreateTextureFromMemory 3D
     {
         static const uint32_t s_pixels[16] = {
             0xff0000ff, 0xff0000ff,
@@ -1116,7 +1116,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             || desc.DepthOrArraySize != 4
             || desc.MipLevels != 1)
         {
-            OutputDebugStringA("FAILED: CreateStaticTexture 3D res desc unexpected\n");
+            OutputDebugStringA("FAILED: CreateTextureFromMemory 3D res desc unexpected\n");
             success = false;
         }
 
@@ -1133,7 +1133,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             || desc.DepthOrArraySize != 2
             || desc.MipLevels != 1)
         {
-            OutputDebugStringA("FAILED: CreateStaticTexture 3Db res desc unexpected\n");
+            OutputDebugStringA("FAILED: CreateTextureFromMemory 3Db res desc unexpected\n");
             success = false;
         }
     }
