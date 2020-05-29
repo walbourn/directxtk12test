@@ -814,9 +814,9 @@ void Game::CreateDeviceDependentResources()
         }
 
 #ifdef GAMMA_CORRECT_RENDERING
-        unsigned int loadFlags = DDS_LOADER_FORCE_SRGB;
+        constexpr DDS_LOADER_FLAGS loadFlags = DDS_LOADER_FORCE_SRGB;
 #else
-        unsigned int loadFlags = DDS_LOADER_DEFAULT;
+        constexpr DDS_LOADER_FLAGS loadFlags = DDS_LOADER_DEFAULT;
 #endif
 
         // Load test textures
