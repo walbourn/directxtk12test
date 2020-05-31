@@ -470,6 +470,7 @@ void Game::OnDeviceLost()
     m_test1.Reset();
     m_test2.Reset();
     m_test3.Reset();
+    m_test4.Reset();
 
     m_batch.reset();
     m_effectTri.reset();
@@ -699,6 +700,16 @@ void Game::UnitTests()
             m_test3.ReleaseAndGetAddressOf())))
         {
             OutputDebugStringA("ERROR: Failed CreateStaticBuffer(3) test\n");
+            success = false;
+        }
+
+        if (FAILED(CreateStaticBuffer(device, resourceUpload,
+            verts,
+            D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+            m_test4.ReleaseAndGetAddressOf(),
+            D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS)))
+        {
+            OutputDebugStringA("ERROR: Failed CreateStaticBuffer(4) test\n");
             success = false;
         }
     }
