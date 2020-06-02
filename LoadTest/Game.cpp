@@ -971,6 +971,7 @@ void Game::OnDeviceLost()
     m_test29.Reset();
     m_test30.Reset();
     m_test31.Reset();
+    m_test32.Reset();
 
     m_testA.Reset();
     m_testB.Reset();
@@ -1697,6 +1698,26 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             || desc.MipLevels != 1)
         {
             OutputDebugStringA("FAILED: cup_small.jpg pow2+square res desc unexpected\n");
+            success = false;
+        }
+    }
+
+    // WIC SRGB_DEFAULT + WIC RGBA32
+    {
+        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"pentagon.tiff",
+            0,
+            D3D12_RESOURCE_FLAG_NONE,
+            WIC_LOADER_FORCE_RGBA32 | WIC_LOADER_SRGB_DEFAULT,
+            m_test32.GetAddressOf()));
+
+        auto desc = m_test32->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
+            || desc.Width != 1024
+            || desc.Height != 1024
+            || desc.MipLevels != 1)
+        {
+            OutputDebugStringA("FAILED: pentagon.tiff res desc default srgb / rgba32 unexpected\n");
             success = false;
         }
     }
