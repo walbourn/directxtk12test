@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-// Supress addditional off-by-default warnings from <future>
+// Suppress additional off-by-default warnings from <future>
 #pragma warning(push)
-#pragma warning(disable : 4355 4626 4625 5026 5027)
+#pragma warning(disable : 4355 4626 4625 5026 5027 5204)
 #include <future>
 #pragma warning(pop)
 
