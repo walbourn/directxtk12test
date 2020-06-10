@@ -27,12 +27,16 @@ namespace
 {
     constexpr int MaxScene = 27;
 
+    constexpr float ADVANCE_TIME = 1.f;
+    constexpr float INTERACTIVE_TIME = 10.f;
+
     const DXGI_FORMAT c_sdrFormat = DXGI_FORMAT_R10G10B10A2_UNORM;
     const DXGI_FORMAT c_hdrFormat = DXGI_FORMAT_R16G16B16A16_FLOAT;
 }
 
 Game::Game() noexcept(false)  :
-    m_scene(0)
+    m_scene(0),
+    m_delay(0)
 {
 #if defined(_XBOX_ONE) && defined(_TITLE)
     m_deviceResources = std::make_unique<DX::DeviceResources>(
@@ -91,6 +95,8 @@ void Game::Initialize(
 
     m_deviceResources->CreateWindowSizeDependentResources();
     CreateWindowSizeDependentResources();
+
+    m_delay = ADVANCE_TIME;
 }
 
 #pragma region Frame Update
@@ -124,6 +130,8 @@ void Game::Update(DX::StepTimer const& timer)
         if (m_gamePadButtons.a == GamePad::ButtonStateTracker::PRESSED
             || m_gamePadButtons.dpadRight == GamePad::ButtonStateTracker::PRESSED)
         {
+            m_delay = INTERACTIVE_TIME;
+
             ++m_scene;
             if (m_scene >= MaxScene)
                 m_scene = 0;
@@ -131,6 +139,8 @@ void Game::Update(DX::StepTimer const& timer)
         else if (m_gamePadButtons.b == GamePad::ButtonStateTracker::PRESSED
             || m_gamePadButtons.dpadLeft == GamePad::ButtonStateTracker::PRESSED)
         {
+            m_delay = INTERACTIVE_TIME;
+
             --m_scene;
             if (m_scene < 0)
                 m_scene = MaxScene - 1;
@@ -145,18 +155,33 @@ void Game::Update(DX::StepTimer const& timer)
 
     if (m_keyboardButtons.IsKeyPressed(Keyboard::Space))
     {
+        m_delay = INTERACTIVE_TIME;
+
         ++m_scene;
         if (m_scene >= MaxScene)
             m_scene = 0;
     }
     else if (m_keyboardButtons.IsKeyPressed(Keyboard::Back))
     {
+        m_delay = INTERACTIVE_TIME;
+
         --m_scene;
         if (m_scene < 0)
             m_scene = MaxScene - 1;
     }
 
     float time = float(timer.GetTotalSeconds());
+
+    m_delay -= static_cast<float>(timer.GetElapsedSeconds());
+
+    if (m_delay <= 0.f)
+    {
+        m_delay = ADVANCE_TIME;
+
+        ++m_scene;
+        if (m_scene >= MaxScene)
+            m_scene = 0;
+    }
 
     m_world = Matrix::CreateRotationY(time);
 
@@ -878,10 +903,7 @@ void Game::CreateDeviceDependentResources()
 
     RenderTargetState rtState(c_sdrFormat, m_deviceResources->GetDepthBufferFormat());
 
-    m_resourceDescriptors = std::make_unique<DescriptorHeap>(device,
-        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
-        D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
-        Descriptors::Count);
+    m_resourceDescriptors = std::make_unique<DescriptorHeap>(device, Descriptors::Count);
 
     m_rtvDescriptors = std::make_unique<DescriptorHeap>(device,
         D3D12_DESCRIPTOR_HEAP_TYPE_RTV,

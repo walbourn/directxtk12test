@@ -158,4 +158,6 @@ private:
         Blur2RT,
         RTCount
     };
+
+    float                                           m_delay;
 };

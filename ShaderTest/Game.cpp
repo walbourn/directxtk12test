@@ -28,7 +28,8 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
-    const float SWAP_TIME = 10.f;
+    constexpr float SWAP_TIME = 1.f;
+    constexpr float INTERACTIVE_TIME = 10.f;
 
     const float ortho_width = 6.f;
     const float ortho_height = 6.f;
@@ -262,7 +263,7 @@ void Game::Update(DX::StepTimer const& timer)
     if (m_keyboardButtons.IsKeyPressed(Keyboard::Space) || (m_gamePadButtons.y == GamePad::ButtonStateTracker::PRESSED))
     {
         m_showCompressed = !m_showCompressed;
-        m_delay = SWAP_TIME;
+        m_delay = INTERACTIVE_TIME;
     }
     else if (!kb.Space && !(pad.IsConnected() && pad.IsYPressed()))
     {
@@ -688,10 +689,7 @@ void Game::CreateDeviceDependentResources()
     CreateCube();
 
     // Load textures.
-    m_resourceDescriptors = std::make_unique<DescriptorHeap>(device,
-        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
-        D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
-        Descriptors::Count);
+    m_resourceDescriptors = std::make_unique<DescriptorHeap>(device, Descriptors::Count);
 
     m_renderDescriptors = std::make_unique<DescriptorHeap>(device,
         D3D12_DESCRIPTOR_HEAP_TYPE_RTV,

@@ -241,16 +241,12 @@ void Game::Update(DX::StepTimer const&)
     {
         if (m_tracker.IsKeyPressed(static_cast<DirectX::Keyboard::Keys>(vk)))
         {
-            wchar_t buff[5];
-            swprintf_s(buff, L"F%d", vk - VK_F1 + 1);
-            swprintf_s(m_lastStrBuff, L"%s was pressed", buff);
+            swprintf_s(m_lastStrBuff, L"F%d was pressed", vk - VK_F1 + 1);
             m_lastStr = m_lastStrBuff;
         }
         else if (m_tracker.IsKeyReleased(static_cast<DirectX::Keyboard::Keys>(vk)))
         {
-            wchar_t buff[5];
-            swprintf_s(buff, L"F%d", vk - VK_F1 + 1);
-            swprintf_s(m_lastStrBuff, L"%s was released", buff);
+            swprintf_s(m_lastStrBuff, L"F%d was released", vk - VK_F1 + 1);
             m_lastStr = m_lastStrBuff;
         }
     }
@@ -259,16 +255,26 @@ void Game::Update(DX::StepTimer const&)
     {
         if (m_tracker.IsKeyPressed(static_cast<DirectX::Keyboard::Keys>(vk)))
         {
-            wchar_t buff[3];
-            swprintf_s(buff, L"%d", vk - 0x30);
-            swprintf_s(m_lastStrBuff, L"%s was pressed", buff);
+            swprintf_s(m_lastStrBuff, L"%d was pressed", vk - 0x30);
             m_lastStr = m_lastStrBuff;
         }
         else if (m_tracker.IsKeyReleased(static_cast<DirectX::Keyboard::Keys>(vk)))
         {
-            wchar_t buff[3];
-            swprintf_s(buff, L"%d", vk - 0x30);
-            swprintf_s(m_lastStrBuff, L"%s was released", buff);
+            swprintf_s(m_lastStrBuff, L"%d was released", vk - 0x30);
+            m_lastStr = m_lastStrBuff;
+        }
+    }
+
+    for (int vk = 0x60; vk <= 0x69; ++vk)
+    {
+        if (m_tracker.IsKeyPressed(static_cast<DirectX::Keyboard::Keys>(vk)))
+        {
+            swprintf_s(m_lastStrBuff, L"Numkey %d was pressed", vk - 0x60);
+            m_lastStr = m_lastStrBuff;
+        }
+        else if (m_tracker.IsKeyReleased(static_cast<DirectX::Keyboard::Keys>(vk)))
+        {
+            swprintf_s(m_lastStrBuff, L"Numkey %d was released", vk - 0x60);
             m_lastStr = m_lastStrBuff;
         }
     }
@@ -415,6 +421,17 @@ void Game::Render()
 
     m_comicFont->DrawString(m_spriteBatch.get(), L"RightShift", pos, m_kb.RightShift ? red : lightGray);
 
+    pos.x += width * 15;
+
+    for (int vk = 0x67; vk <= 0x69; ++vk)
+    {
+        wchar_t buff[3] = {};
+        swprintf_s(buff, L"%d", vk - 0x60);
+        m_comicFont->DrawString(m_spriteBatch.get(), buff, pos, m_kb.IsKeyDown(static_cast<DirectX::Keyboard::Keys>(vk)) ? red : lightGray);
+
+        pos.x += width * 2;
+    }
+
     // Row 4
     pos.x = 50;
     pos.y += height * 2;
@@ -424,6 +441,17 @@ void Game::Render()
     pos.x += width * 10;
 
     m_comicFont->DrawString(m_spriteBatch.get(), L"RightCtrl", pos, m_kb.RightControl ? red : lightGray);
+
+    pos.x += width * 15;
+
+    for (int vk = 0x64; vk <= 0x66; ++vk)
+    {
+        wchar_t buff[3] = {};
+        swprintf_s(buff, L"%d", vk - 0x60);
+        m_comicFont->DrawString(m_spriteBatch.get(), buff, pos, m_kb.IsKeyDown(static_cast<DirectX::Keyboard::Keys>(vk)) ? red : lightGray);
+
+        pos.x += width * 2;
+    }
 
     // Row 5
     pos.x = 50;
@@ -435,11 +463,26 @@ void Game::Render()
 
     m_comicFont->DrawString(m_spriteBatch.get(), L"RightAlt", pos, m_kb.RightAlt ? red : lightGray);
 
+    pos.x += width * 15;
+
+    for (int vk = 0x61; vk <= 0x63; ++vk)
+    {
+        wchar_t buff[3] = {};
+        swprintf_s(buff, L"%d", vk - 0x60);
+        m_comicFont->DrawString(m_spriteBatch.get(), buff, pos, m_kb.IsKeyDown(static_cast<DirectX::Keyboard::Keys>(vk)) ? red : lightGray);
+
+        pos.x += width * 2;
+    }
+
     // Row 6
     pos.x = 50;
     pos.y += height * 2;
 
     m_comicFont->DrawString(m_spriteBatch.get(), L"Space", pos, m_kb.Space ? red : lightGray);
+
+    pos.x += width * 25;
+
+    m_comicFont->DrawString(m_spriteBatch.get(), "0", pos, m_kb.IsKeyDown(DirectX::Keyboard::Keys::NumPad0) ? red : lightGray);
 
     if (m_lastStr)
     {
@@ -567,10 +610,7 @@ void Game::CreateDeviceDependentResources()
 
     m_graphicsMemory = std::make_unique<GraphicsMemory>(device);
 
-    m_resourceDescriptors = std::make_unique<DescriptorHeap>(device,
-        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
-        D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
-        Descriptors::Count);
+    m_resourceDescriptors = std::make_unique<DescriptorHeap>(device, Descriptors::Count);
 
     m_states = std::make_unique<CommonStates>(device);
 
