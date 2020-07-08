@@ -817,7 +817,7 @@ void Game::CreateDeviceDependentResources()
 #endif
         hdrState);
 
-    m_normalMapEffect = std::make_unique<NormalMapEffect>(device, EffectFlags::Texture, pipelineDesc, false);
+    m_normalMapEffect = std::make_unique<NormalMapEffect>(device, EffectFlags::Texture, pipelineDesc);
     m_normalMapEffect->EnableDefaultLighting();
 
     m_pbrConstant = std::make_unique<PBREffect>(device, EffectFlags::None, pipelineDesc);
@@ -826,10 +826,10 @@ void Game::CreateDeviceDependentResources()
     m_pbr = std::make_unique<PBREffect>(device, EffectFlags::Texture, pipelineDesc);
     m_pbr->EnableDefaultLighting();
 
-    m_pbrEmissive = std::make_unique<PBREffect>(device, EffectFlags::Texture, pipelineDesc, true);
+    m_pbrEmissive = std::make_unique<PBREffect>(device, EffectFlags::Texture | EffectFlags::Emissive, pipelineDesc);
     m_pbrEmissive->EnableDefaultLighting();
 
-    m_pbrCube = std::make_unique<PBREffect>(device, EffectFlags::Texture, pipelineDesc, true);
+    m_pbrCube = std::make_unique<PBREffect>(device, EffectFlags::Texture | EffectFlags::Emissive, pipelineDesc);
     m_pbrCube->EnableDefaultLighting();
 
     m_debug = std::make_unique<DebugEffect>(device, EffectFlags::None, pipelineDesc);
