@@ -1134,12 +1134,14 @@ void Game::CreateDeviceDependentResources()
             // EnvironmentMapEffect (per pixel lighting)
             effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Fresnel, pd, EnvironmentMapEffect::Mapping_Cube);
             effect->EnableDefaultLighting();
+            effect->SetEnvironmentMapSpecular(Colors::Blue);
             effect->SetTexture(defaultTex, sampler);
             effect->SetEnvironmentMap(envmap, sampler);
             envmaps.emplace_back(std::move(effect));
 
             effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Fresnel | EffectFlags::Fog, pd, EnvironmentMapEffect::Mapping_Cube);
             effect->EnableDefaultLighting();
+            effect->SetEnvironmentMapSpecular(Colors::Blue);
             effect->SetTexture(defaultTex, sampler);
             effect->SetEnvironmentMap(envmap, sampler);
             effect->SetFogColor(Colors::Black);
@@ -1147,12 +1149,14 @@ void Game::CreateDeviceDependentResources()
 
             effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting, pd, EnvironmentMapEffect::Mapping_Cube);
             effect->EnableDefaultLighting();
+            effect->SetEnvironmentMapSpecular(Colors::Blue);
             effect->SetTexture(defaultTex, sampler);
             effect->SetEnvironmentMap(envmap, sampler);
             envmaps.emplace_back(std::move(effect));
 
             effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Fog, pd, EnvironmentMapEffect::Mapping_Cube);
             effect->EnableDefaultLighting();
+            effect->SetEnvironmentMapSpecular(Colors::Blue);
             effect->SetTexture(defaultTex, sampler);
             effect->SetEnvironmentMap(envmap, sampler);
             effect->SetFogColor(Colors::Black);
