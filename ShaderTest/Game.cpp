@@ -706,8 +706,10 @@ void Game::CreateDeviceDependentResources()
 
 #ifdef GAMMA_CORRECT_RENDERING
     constexpr DDS_LOADER_FLAGS loadFlags = DDS_LOADER_FORCE_SRGB;
+    constexpr WIC_LOADER_FLAGS wicLoadFlags = WIC_LOADER_FORCE_SRGB;
 #else
     constexpr DDS_LOADER_FLAGS loadFlags = DDS_LOADER_DEFAULT;
+    constexpr WIC_LOADER_FLAGS wicLoadFlags = WIC_LOADER_DEFAULT;
 #endif
 
     DX::ThrowIfFailed(
@@ -724,6 +726,20 @@ void Game::CreateDeviceDependentResources()
             m_cubemap.ReleaseAndGetAddressOf(), nullptr, &iscubemap));
 
     CreateShaderResourceView(device, m_cubemap.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Cubemap), iscubemap);
+
+    DX::ThrowIfFailed(
+        CreateWICTextureFromFileEx(device, resourceUpload, L"spheremap.bmp",
+            0, D3D12_RESOURCE_FLAG_NONE, wicLoadFlags,
+            m_envball.ReleaseAndGetAddressOf()));
+
+    CreateShaderResourceView(device, m_envball.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::SphereMap));
+
+    DX::ThrowIfFailed(
+        CreateDDSTextureFromFileEx(device, resourceUpload, L"dualparabola.dds",
+            0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
+            m_envdual.ReleaseAndGetAddressOf(), nullptr));
+
+    CreateShaderResourceView(device, m_envdual.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::DualParabolaMap));
 
     DX::ThrowIfFailed(
         CreateDDSTextureFromFileEx(device, resourceUpload, L"overlay.dds",
@@ -1056,7 +1072,21 @@ void Game::CreateDeviceDependentResources()
             std::vector<std::unique_ptr<DirectX::EnvironmentMapEffect>> envmaps;
 
             // EnvironmentMapEffect (fresnel)
-            auto effect = std::make_unique<EnvironmentMapEffect>(device, eflags, pd);
+            auto effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::Fresnel, pd);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetEnvironmentMap(envmap, sampler);
+            envmaps.emplace_back(std::move(effect));
+
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::Fog | EffectFlags::Fresnel, pd);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetEnvironmentMap(envmap, sampler);
+            effect->SetFogColor(Colors::Black);
+            envmaps.emplace_back(std::move(effect));
+
+            // EnvironmentMapEffect (no fresnel)
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags, pd);
             effect->EnableDefaultLighting();
             effect->SetTexture(defaultTex, sampler);
             effect->SetEnvironmentMap(envmap, sampler);
@@ -1069,29 +1099,15 @@ void Game::CreateDeviceDependentResources()
             effect->SetFogColor(Colors::Black);
             envmaps.emplace_back(std::move(effect));
 
-            // EnvironmentMapEffect (no fresnel)
-            effect = std::make_unique<EnvironmentMapEffect>(device, eflags, pd, false);
-            effect->EnableDefaultLighting();
-            effect->SetTexture(defaultTex, sampler);
-            effect->SetEnvironmentMap(envmap, sampler);
-            envmaps.emplace_back(std::move(effect));
-
-            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::Fog, pd, false);
-            effect->EnableDefaultLighting();
-            effect->SetTexture(defaultTex, sampler);
-            effect->SetEnvironmentMap(envmap, sampler);
-            effect->SetFogColor(Colors::Black);
-            envmaps.emplace_back(std::move(effect));
-
             // EnvironmentMapEffect (specular)
-            effect = std::make_unique<EnvironmentMapEffect>(device, eflags, pd, false, true);
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::Specular, pd);
             effect->EnableDefaultLighting();
             effect->SetEnvironmentMapSpecular(Colors::Blue);
             effect->SetTexture(defaultTex, sampler);
             effect->SetEnvironmentMap(envmap, sampler);
             envmaps.emplace_back(std::move(effect));
 
-            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::Fog, pd, false, true);
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::Specular | EffectFlags::Fog, pd);
             effect->EnableDefaultLighting();
             effect->SetEnvironmentMapSpecular(Colors::Blue);
             effect->SetTexture(defaultTex, sampler);
@@ -1100,14 +1116,14 @@ void Game::CreateDeviceDependentResources()
             envmaps.emplace_back(std::move(effect));
 
             // EnvironmentMapEffect (fresnel + specular)
-            effect = std::make_unique<EnvironmentMapEffect>(device, eflags, pd, true, true);
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::Fresnel | EffectFlags::Specular, pd);
             effect->EnableDefaultLighting();
             effect->SetEnvironmentMapSpecular(Colors::Blue);
             effect->SetTexture(defaultTex, sampler);
             effect->SetEnvironmentMap(envmap, sampler);
             envmaps.emplace_back(std::move(effect));
 
-            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::Fog, pd, true, true);
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::Fresnel | EffectFlags::Specular | EffectFlags::Fog, pd);
             effect->EnableDefaultLighting();
             effect->SetEnvironmentMapSpecular(Colors::Blue);
             effect->SetTexture(defaultTex, sampler);
@@ -1116,40 +1132,14 @@ void Game::CreateDeviceDependentResources()
             envmaps.emplace_back(std::move(effect));
 
             // EnvironmentMapEffect (per pixel lighting)
-            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting, pd);
-            effect->EnableDefaultLighting();
-            effect->SetTexture(defaultTex, sampler);
-            effect->SetEnvironmentMap(envmap, sampler);
-            envmaps.emplace_back(std::move(effect));
-
-            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Fog, pd);
-            effect->EnableDefaultLighting();
-            effect->SetTexture(defaultTex, sampler);
-            effect->SetEnvironmentMap(envmap, sampler);
-            effect->SetFogColor(Colors::Black);
-            envmaps.emplace_back(std::move(effect));
-
-            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting, pd, false);
-            effect->EnableDefaultLighting();
-            effect->SetTexture(defaultTex, sampler);
-            effect->SetEnvironmentMap(envmap, sampler);
-            envmaps.emplace_back(std::move(effect));
-
-            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Fog, pd, false);
-            effect->EnableDefaultLighting();
-            effect->SetTexture(defaultTex, sampler);
-            effect->SetEnvironmentMap(envmap, sampler);
-            effect->SetFogColor(Colors::Black);
-            envmaps.emplace_back(std::move(effect));
-
-            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting, pd, false, true);
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Fresnel, pd, EnvironmentMapEffect::Mapping_Cube);
             effect->EnableDefaultLighting();
             effect->SetEnvironmentMapSpecular(Colors::Blue);
             effect->SetTexture(defaultTex, sampler);
             effect->SetEnvironmentMap(envmap, sampler);
             envmaps.emplace_back(std::move(effect));
 
-            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Fog, pd, false, true);
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Fresnel | EffectFlags::Fog, pd, EnvironmentMapEffect::Mapping_Cube);
             effect->EnableDefaultLighting();
             effect->SetEnvironmentMapSpecular(Colors::Blue);
             effect->SetTexture(defaultTex, sampler);
@@ -1157,18 +1147,84 @@ void Game::CreateDeviceDependentResources()
             effect->SetFogColor(Colors::Black);
             envmaps.emplace_back(std::move(effect));
 
-            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting, pd, true, true);
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting, pd, EnvironmentMapEffect::Mapping_Cube);
             effect->EnableDefaultLighting();
             effect->SetEnvironmentMapSpecular(Colors::Blue);
             effect->SetTexture(defaultTex, sampler);
             effect->SetEnvironmentMap(envmap, sampler);
             envmaps.emplace_back(std::move(effect));
 
-            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Fog, pd, true, true);
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Fog, pd, EnvironmentMapEffect::Mapping_Cube);
             effect->EnableDefaultLighting();
             effect->SetEnvironmentMapSpecular(Colors::Blue);
             effect->SetTexture(defaultTex, sampler);
             effect->SetEnvironmentMap(envmap, sampler);
+            effect->SetFogColor(Colors::Black);
+            envmaps.emplace_back(std::move(effect));
+
+            // EnvironmentMapEffect sphere mapping (per pixel lighting only)
+            auto spheremap = m_resourceDescriptors->GetGpuHandle(Descriptors::SphereMap);
+
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Fresnel, pd, EnvironmentMapEffect::Mapping_Sphere);
+            effect->EnableDefaultLighting();
+            effect->SetEnvironmentMapSpecular(Colors::Green);
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetEnvironmentMap(spheremap, sampler);
+            envmaps.emplace_back(std::move(effect));
+
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Fresnel | EffectFlags::Fog, pd, EnvironmentMapEffect::Mapping_Sphere);
+            effect->EnableDefaultLighting();
+            effect->SetEnvironmentMapSpecular(Colors::Green);
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetEnvironmentMap(spheremap, sampler);
+            effect->SetFogColor(Colors::Black);
+            envmaps.emplace_back(std::move(effect));
+
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting, pd, EnvironmentMapEffect::Mapping_Sphere);
+            effect->EnableDefaultLighting();
+            effect->SetEnvironmentMapSpecular(Colors::Green);
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetEnvironmentMap(spheremap, sampler);
+            envmaps.emplace_back(std::move(effect));
+
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Fog, pd, EnvironmentMapEffect::Mapping_Sphere);
+            effect->EnableDefaultLighting();
+            effect->SetEnvironmentMapSpecular(Colors::Green);
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetEnvironmentMap(spheremap, sampler);
+            effect->SetFogColor(Colors::Black);
+            envmaps.emplace_back(std::move(effect));
+
+            // EnvironmentMapEffect dual parabolic mapping (per pixel lighting only)
+            auto dualmap = m_resourceDescriptors->GetGpuHandle(Descriptors::DualParabolaMap);
+
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Fresnel, pd, EnvironmentMapEffect::Mapping_DualParabola);
+            effect->EnableDefaultLighting();
+            effect->SetEnvironmentMapSpecular(Colors::Red);
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetEnvironmentMap(dualmap, sampler);
+            envmaps.emplace_back(std::move(effect));
+
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Fresnel | EffectFlags::Fog, pd, EnvironmentMapEffect::Mapping_DualParabola);
+            effect->EnableDefaultLighting();
+            effect->SetEnvironmentMapSpecular(Colors::Red);
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetEnvironmentMap(dualmap, sampler);
+            effect->SetFogColor(Colors::Black);
+            envmaps.emplace_back(std::move(effect));
+
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting, pd, EnvironmentMapEffect::Mapping_DualParabola);
+            effect->EnableDefaultLighting();
+            effect->SetEnvironmentMapSpecular(Colors::Red);
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetEnvironmentMap(dualmap, sampler);
+            envmaps.emplace_back(std::move(effect));
+
+            effect = std::make_unique<EnvironmentMapEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Fog, pd, EnvironmentMapEffect::Mapping_DualParabola);
+            effect->EnableDefaultLighting();
+            effect->SetEnvironmentMapSpecular(Colors::Red);
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetEnvironmentMap(dualmap, sampler);
             effect->SetFogColor(Colors::Black);
             envmaps.emplace_back(std::move(effect));
 
@@ -1192,13 +1248,13 @@ void Game::CreateDeviceDependentResources()
             std::vector<std::unique_ptr<DirectX::NormalMapEffect>> normalMap;
 
             // NormalMapEffect (no specular)
-            auto effect = std::make_unique<NormalMapEffect>(device, eflags, pd, false);
+            auto effect = std::make_unique<NormalMapEffect>(device, eflags, pd);
             effect->EnableDefaultLighting();
             effect->SetTexture(diffuse, sampler);
             effect->SetNormalTexture(normal);
             normalMap.emplace_back(std::move(effect));
 
-            effect = std::make_unique<NormalMapEffect>(device, eflags | EffectFlags::Fog, pd, false);
+            effect = std::make_unique<NormalMapEffect>(device, eflags | EffectFlags::Fog, pd);
             effect->EnableDefaultLighting();
             effect->SetTexture(diffuse, sampler);
             effect->SetNormalTexture(normal);
@@ -1206,14 +1262,14 @@ void Game::CreateDeviceDependentResources()
             normalMap.emplace_back(std::move(effect));
 
             // NormalMapEffect (specular)
-            effect = std::make_unique<NormalMapEffect>(device, eflags, pd);
+            effect = std::make_unique<NormalMapEffect>(device, eflags | EffectFlags::Specular, pd);
             effect->EnableDefaultLighting();
             effect->SetTexture(diffuse, sampler);
             effect->SetNormalTexture(normal);
             effect->SetSpecularTexture(specular);
             normalMap.emplace_back(std::move(effect));
 
-            effect = std::make_unique<NormalMapEffect>(device, eflags | EffectFlags::Fog, pd);
+            effect = std::make_unique<NormalMapEffect>(device, eflags | EffectFlags::Specular | EffectFlags::Fog, pd);
             effect->EnableDefaultLighting();
             effect->SetTexture(diffuse, sampler);
             effect->SetNormalTexture(normal);
@@ -1222,27 +1278,27 @@ void Game::CreateDeviceDependentResources()
             normalMap.emplace_back(std::move(effect));
 
             // NormalMapEffect (vertex color)
-            effect = std::make_unique<NormalMapEffect>(device, eflags | EffectFlags::VertexColor, pd, false);
+            effect = std::make_unique<NormalMapEffect>(device, eflags | EffectFlags::VertexColor, pd);
             effect->EnableDefaultLighting();
             effect->SetTexture(diffuse, sampler);
             effect->SetNormalTexture(normal);
             normalMap.emplace_back(std::move(effect));
 
-            effect = std::make_unique<NormalMapEffect>(device, eflags | EffectFlags::VertexColor | EffectFlags::Fog, pd, false);
+            effect = std::make_unique<NormalMapEffect>(device, eflags | EffectFlags::VertexColor | EffectFlags::Fog, pd);
             effect->EnableDefaultLighting();
             effect->SetTexture(diffuse, sampler);
             effect->SetNormalTexture(normal);
             effect->SetFogColor(Colors::Black);
             normalMap.emplace_back(std::move(effect));
 
-            effect = std::make_unique<NormalMapEffect>(device, eflags | EffectFlags::VertexColor, pd);
+            effect = std::make_unique<NormalMapEffect>(device, eflags | EffectFlags::VertexColor | EffectFlags::Specular, pd);
             effect->EnableDefaultLighting();
             effect->SetTexture(diffuse, sampler);
             effect->SetNormalTexture(normal);
             effect->SetSpecularTexture(specular);
             normalMap.emplace_back(std::move(effect));
 
-            effect = std::make_unique<NormalMapEffect>(device, eflags | EffectFlags::VertexColor | EffectFlags::Fog, pd);
+            effect = std::make_unique<NormalMapEffect>(device, eflags | EffectFlags::VertexColor | EffectFlags::Specular | EffectFlags::Fog, pd);
             effect->EnableDefaultLighting();
             effect->SetTexture(diffuse, sampler);
             effect->SetNormalTexture(normal);
@@ -1270,7 +1326,7 @@ void Game::CreateDeviceDependentResources()
             std::vector<std::unique_ptr<DirectX::PBREffect>> pbr;
 
             // PBREffect
-            auto effect = std::make_unique<PBREffect>(device, eflags, pd, false, false);
+            auto effect = std::make_unique<PBREffect>(device, eflags, pd);
             effect->EnableDefaultLighting();
             effect->SetIBLTextures(radiance, diffuseDesc.MipLevels, irradiance, m_states->LinearWrap());
             pbr.emplace_back(std::move(effect));
@@ -1280,7 +1336,7 @@ void Game::CreateDeviceDependentResources()
             auto normal = m_resourceDescriptors->GetGpuHandle(Descriptors::PBRNormal);
             auto rma = m_resourceDescriptors->GetGpuHandle(Descriptors::PBR_RMA);
 
-            effect = std::make_unique<PBREffect>(device, eflags | EffectFlags::Texture, pd, false, false);
+            effect = std::make_unique<PBREffect>(device, eflags | EffectFlags::Texture, pd);
             effect->EnableDefaultLighting();
             effect->SetIBLTextures(radiance, diffuseDesc.MipLevels, irradiance, m_states->LinearWrap());
             effect->SetSurfaceTextures(albeto, normal, rma, m_states->AnisotropicClamp());
@@ -1289,7 +1345,7 @@ void Game::CreateDeviceDependentResources()
             // PBREffect (emissive)
             auto emissive = m_resourceDescriptors->GetGpuHandle(Descriptors::PBREmissive);
 
-            effect = std::make_unique<PBREffect>(device, eflags | EffectFlags::Texture, pd, true, false);
+            effect = std::make_unique<PBREffect>(device, eflags | EffectFlags::Texture | EffectFlags::Emissive, pd);
             effect->EnableDefaultLighting();
             effect->SetIBLTextures(radiance, diffuseDesc.MipLevels, irradiance, m_states->LinearWrap());
             effect->SetSurfaceTextures(albeto, normal, rma, m_states->AnisotropicClamp());
@@ -1297,7 +1353,7 @@ void Game::CreateDeviceDependentResources()
             pbr.emplace_back(std::move(effect));
 
             // PBREffect (velocity)
-            effect = std::make_unique<PBREffect>(device, eflags | EffectFlags::Texture, opaquePd, false, true);
+            effect = std::make_unique<PBREffect>(device, eflags | EffectFlags::Texture | EffectFlags::Velocity, opaquePd);
             effect->EnableDefaultLighting();
             effect->SetIBLTextures(radiance, diffuseDesc.MipLevels, irradiance, m_states->LinearWrap());
             effect->SetSurfaceTextures(albeto, normal, rma, m_states->AnisotropicClamp());
@@ -1305,7 +1361,7 @@ void Game::CreateDeviceDependentResources()
             pbr.emplace_back(std::move(effect));
 
             // PBREffect (velocity + emissive)
-            effect = std::make_unique<PBREffect>(device, eflags | EffectFlags::Texture, opaquePd, true, true);
+            effect = std::make_unique<PBREffect>(device, eflags | EffectFlags::Texture | EffectFlags::Emissive | EffectFlags::Velocity, opaquePd);
             effect->EnableDefaultLighting();
             effect->SetIBLTextures(radiance, diffuseDesc.MipLevels, irradiance, m_states->LinearWrap());
             effect->SetSurfaceTextures(albeto, normal, rma, m_states->AnisotropicClamp());
@@ -1552,6 +1608,8 @@ void Game::OnDeviceLost()
 
     m_cat.Reset();
     m_cubemap.Reset();
+    m_envball.Reset();
+    m_envdual.Reset();
     m_overlay.Reset();
     m_defaultTex.Reset();
     m_brickDiffuse.Reset();

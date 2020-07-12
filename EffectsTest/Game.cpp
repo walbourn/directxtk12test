@@ -561,6 +561,14 @@ void Game::Render()
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
     }
 
+    m_spheremap->SetWorld(world * XMMatrixTranslation(col4, row5, 0));
+    m_spheremap->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_dparabolamap->SetWorld(world * XMMatrixTranslation(col4, row6, 0));
+    m_dparabolamap->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
     //--- DualTextureEFfect ----------------------------------------------------------------
     m_dualTexture->SetAlpha(1.f);
     m_dualTexture->SetWorld(world *  XMMatrixTranslation(col7, row0, 0));
@@ -874,35 +882,42 @@ void Game::CreateDeviceDependentResources()
         m_skinnedEffectFogPPL->SetFogEnd(fogend);
 
         //--- EnvironmentMapEffect ---------------------------------------------------------
-        m_envmap = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::None, pdAlpha);
+        m_envmap = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::Fresnel, pdAlpha);
         m_envmap->EnableDefaultLighting();
 
-        m_envmapSpec = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::None, pdAlpha, true, true);
+        m_envmapSpec = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::Fresnel | EffectFlags::Specular, pdAlpha);
         m_envmapSpec->EnableDefaultLighting();
 
-        m_envmapFog = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::Fog, pdAlpha);
+        m_envmapFog = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::Fresnel | EffectFlags::Fog, pdAlpha);
         m_envmapFog->EnableDefaultLighting();
         m_envmapFog->SetFogColor(gray);
         m_envmapFog->SetFogStart(fogstart);
         m_envmapFog->SetFogEnd(fogend);
 
-        m_envmapNoFresnel = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::None, pdAlpha, false);
+        m_envmapNoFresnel = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::None, pdAlpha);
         m_envmapNoFresnel->EnableDefaultLighting();
 
-        m_envmapPPL = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::PerPixelLighting, pdAlpha);
+        m_envmapPPL = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::PerPixelLighting | EffectFlags::Fresnel, pdAlpha);
         m_envmapPPL->EnableDefaultLighting();
 
-        m_envmapSpecPPL = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::PerPixelLighting, pdAlpha, true, true);
+        m_envmapSpecPPL = std::make_unique<EnvironmentMapEffect>(device,
+            EffectFlags::PerPixelLighting | EffectFlags::Fresnel | EffectFlags::Specular, pdAlpha);
         m_envmapSpecPPL->EnableDefaultLighting();
 
-        m_envmapFogPPL = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::Fog | EffectFlags::PerPixelLighting, pdAlpha);
+        m_envmapFogPPL = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::PerPixelLighting | EffectFlags::Fresnel | EffectFlags::Fog, pdAlpha);
         m_envmapFogPPL->EnableDefaultLighting();
         m_envmapFogPPL->SetFogColor(gray);
         m_envmapFogPPL->SetFogStart(fogstart);
         m_envmapFogPPL->SetFogEnd(fogend);
 
-        m_envmapNoFresnelPPL = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::PerPixelLighting, pdAlpha, false);
+        m_envmapNoFresnelPPL = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::PerPixelLighting, pdAlpha);
         m_envmapNoFresnelPPL->EnableDefaultLighting();
+
+        m_spheremap = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::None, pdAlpha, EnvironmentMapEffect::Mapping_Sphere);
+        m_spheremap->EnableDefaultLighting();
+
+        m_dparabolamap = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::None, pdAlpha, EnvironmentMapEffect::Mapping_DualParabola);
+        m_dparabolamap->EnableDefaultLighting();
 
         //--- DualTextureEFfect ------------------------------------------------------------
         m_dualTexture = std::make_unique<DualTextureEffect>(device, EffectFlags::None, pdAlpha);
@@ -927,27 +942,27 @@ void Game::CreateDeviceDependentResources()
         m_alphaTestNotEqual = std::make_unique<AlphaTestEffect>(device, EffectFlags::None, pdOpaque, D3D12_COMPARISON_FUNC_NOT_EQUAL);
 
         //--- NormalMapEffect --------------------------------------------------------------
-        m_normalMapEffect = std::make_unique<NormalMapEffect>(device, EffectFlags::None, pdOpaque);
+        m_normalMapEffect = std::make_unique<NormalMapEffect>(device, EffectFlags::Specular, pdOpaque);
         m_normalMapEffect->EnableDefaultLighting();
         m_normalMapEffect->SetDiffuseColor(Colors::White);
 
-        m_normalMapEffectFog = std::make_unique<NormalMapEffect>(device, EffectFlags::Fog, pdOpaque);
+        m_normalMapEffectFog = std::make_unique<NormalMapEffect>(device, EffectFlags::Specular | EffectFlags::Fog, pdOpaque);
         m_normalMapEffectFog->SetFogColor(gray);
         m_normalMapEffectFog->SetFogStart(fogstart);
         m_normalMapEffectFog->SetFogEnd(fogend);
         m_normalMapEffectFog->SetDiffuseColor(Colors::White);
         m_normalMapEffectFog->EnableDefaultLighting();
 
-        m_normalMapEffectNoDiffuse = std::make_unique<NormalMapEffect>(device, EffectFlags::None, pdOpaque);
+        m_normalMapEffectNoDiffuse = std::make_unique<NormalMapEffect>(device, EffectFlags::Specular, pdOpaque);
         m_normalMapEffectNoDiffuse->SetDiffuseColor(Colors::White);
         m_normalMapEffectNoDiffuse->EnableDefaultLighting();
 
-        m_normalMapEffectNormalsOnly = std::make_unique<NormalMapEffect>(device, EffectFlags::None, pdOpaque, false);
+        m_normalMapEffectNormalsOnly = std::make_unique<NormalMapEffect>(device, EffectFlags::None, pdOpaque);
         m_normalMapEffectNormalsOnly->SetDiffuseColor(Colors::White);
         m_normalMapEffectNormalsOnly->EnableDefaultLighting();
         m_normalMapEffectNormalsOnly->DisableSpecular();
 
-        m_normalMapEffectNoSpecular = std::make_unique<NormalMapEffect>(device, EffectFlags::None, pdOpaque, false);
+        m_normalMapEffectNoSpecular = std::make_unique<NormalMapEffect>(device, EffectFlags::None, pdOpaque);
         m_normalMapEffectNoSpecular->SetDiffuseColor(Colors::White);
         m_normalMapEffectNoSpecular->EnableDefaultLighting();
         m_normalMapEffectNoSpecular->DisableSpecular();
@@ -962,8 +977,10 @@ void Game::CreateDeviceDependentResources()
 
 #ifdef GAMMA_CORRECT_RENDERING
     constexpr DDS_LOADER_FLAGS loadFlags = DDS_LOADER_FORCE_SRGB;
+    constexpr WIC_LOADER_FLAGS wicLoadFlags = WIC_LOADER_FORCE_SRGB;
 #else
     constexpr DDS_LOADER_FLAGS loadFlags = DDS_LOADER_DEFAULT;
+    constexpr WIC_LOADER_FLAGS wicLoadFlags = WIC_LOADER_DEFAULT;
 #endif
 
     DX::ThrowIfFailed(
@@ -987,6 +1004,20 @@ void Game::CreateDeviceDependentResources()
             m_cubemap.ReleaseAndGetAddressOf(), nullptr, &iscubemap));
 
     CreateShaderResourceView(device, m_cubemap.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Cubemap), iscubemap);
+
+    DX::ThrowIfFailed(
+        CreateWICTextureFromFileEx(device, resourceUpload, L"spheremap.bmp",
+            0, D3D12_RESOURCE_FLAG_NONE, wicLoadFlags,
+            m_envball.ReleaseAndGetAddressOf()));
+
+    CreateShaderResourceView(device, m_envball.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::SphereMap));
+
+    DX::ThrowIfFailed(
+        CreateDDSTextureFromFileEx(device, resourceUpload, L"dualparabola.dds",
+            0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
+            m_envdual.ReleaseAndGetAddressOf(), nullptr));
+
+    CreateShaderResourceView(device, m_envdual.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::DualParabolaMap));
 
     DX::ThrowIfFailed(
         CreateDDSTextureFromFileEx(device, resourceUpload, L"overlay.dds",
@@ -1026,53 +1057,64 @@ void Game::CreateDeviceDependentResources()
     // Set textures.
     auto opaqueCat = m_resourceDescriptors->GetGpuHandle(Descriptors::OpaqueCat);
 
-    m_skinnedEffect->SetTexture(opaqueCat, m_states->LinearWrap());
-    m_skinnedEffectFog->SetTexture(opaqueCat, m_states->LinearWrap());
-    m_skinnedEffectNoSpecular->SetTexture(opaqueCat, m_states->LinearWrap());
-    m_skinnedEffectPPL->SetTexture(opaqueCat, m_states->LinearWrap());
-    m_skinnedEffectFogPPL->SetTexture(opaqueCat, m_states->LinearWrap());
+    auto sampler = m_states->LinearWrap();
+
+    m_skinnedEffect->SetTexture(opaqueCat, sampler);
+    m_skinnedEffectFog->SetTexture(opaqueCat, sampler);
+    m_skinnedEffectNoSpecular->SetTexture(opaqueCat, sampler);
+    m_skinnedEffectPPL->SetTexture(opaqueCat, sampler);
+    m_skinnedEffectFogPPL->SetTexture(opaqueCat, sampler);
 
     auto cubemap = m_resourceDescriptors->GetGpuHandle(Descriptors::Cubemap);
 
-    m_envmap->SetTexture(opaqueCat, m_states->LinearWrap());
-    m_envmap->SetEnvironmentMap(cubemap, m_states->AnisotropicWrap());
-    m_envmapSpec->SetTexture(opaqueCat, m_states->LinearWrap());
-    m_envmapSpec->SetEnvironmentMap(cubemap, m_states->AnisotropicWrap());
-    m_envmapFog->SetTexture(opaqueCat, m_states->LinearWrap());
-    m_envmapFog->SetEnvironmentMap(cubemap, m_states->AnisotropicWrap());
-    m_envmapNoFresnel->SetTexture(opaqueCat, m_states->LinearWrap());
-    m_envmapNoFresnel->SetEnvironmentMap(cubemap, m_states->AnisotropicWrap());
-    m_envmapPPL->SetTexture(opaqueCat, m_states->LinearWrap());
-    m_envmapPPL->SetEnvironmentMap(cubemap, m_states->AnisotropicWrap());
-    m_envmapSpecPPL->SetTexture(opaqueCat, m_states->LinearWrap());
-    m_envmapSpecPPL->SetEnvironmentMap(cubemap, m_states->AnisotropicWrap());
-    m_envmapFogPPL->SetTexture(opaqueCat, m_states->LinearWrap());
-    m_envmapFogPPL->SetEnvironmentMap(cubemap, m_states->AnisotropicWrap());
-    m_envmapNoFresnelPPL->SetTexture(opaqueCat, m_states->LinearWrap());
-    m_envmapNoFresnelPPL->SetEnvironmentMap(cubemap, m_states->AnisotropicWrap());
+    auto ansitropic = m_states->AnisotropicWrap();
+
+    m_envmap->SetTexture(opaqueCat, sampler);
+    m_envmap->SetEnvironmentMap(cubemap, ansitropic);
+    m_envmapSpec->SetTexture(opaqueCat, sampler);
+    m_envmapSpec->SetEnvironmentMap(cubemap, ansitropic);
+    m_envmapFog->SetTexture(opaqueCat, sampler);
+    m_envmapFog->SetEnvironmentMap(cubemap, ansitropic);
+    m_envmapNoFresnel->SetTexture(opaqueCat, sampler);
+    m_envmapNoFresnel->SetEnvironmentMap(cubemap, ansitropic);
+    m_envmapPPL->SetTexture(opaqueCat, sampler);
+    m_envmapPPL->SetEnvironmentMap(cubemap, ansitropic);
+    m_envmapSpecPPL->SetTexture(opaqueCat, sampler);
+    m_envmapSpecPPL->SetEnvironmentMap(cubemap, ansitropic);
+    m_envmapFogPPL->SetTexture(opaqueCat, sampler);
+    m_envmapFogPPL->SetEnvironmentMap(cubemap, ansitropic);
+    m_envmapNoFresnelPPL->SetTexture(opaqueCat, sampler);
+    m_envmapNoFresnelPPL->SetEnvironmentMap(cubemap, ansitropic);
+
+    auto defaultTex = m_resourceDescriptors->GetGpuHandle(Descriptors::DefaultTex);
+    m_spheremap->SetTexture(defaultTex, sampler);
+    m_dparabolamap->SetTexture(defaultTex, sampler);
+
+    auto spheremap = m_resourceDescriptors->GetGpuHandle(Descriptors::SphereMap);
+    m_spheremap->SetEnvironmentMap(spheremap, ansitropic);
+
+    auto dualmap = m_resourceDescriptors->GetGpuHandle(Descriptors::DualParabolaMap);
+    m_dparabolamap->SetEnvironmentMap(dualmap, ansitropic);
 
     auto overlay = m_resourceDescriptors->GetGpuHandle(Descriptors::Overlay);
 
-    m_dualTexture->SetTexture(opaqueCat, m_states->LinearWrap());
-    m_dualTexture->SetTexture2(overlay, m_states->LinearWrap());
-    m_dualTextureFog->SetTexture(opaqueCat, m_states->LinearWrap());
-    m_dualTextureFog->SetTexture2(overlay, m_states->LinearWrap());
+    m_dualTexture->SetTexture(opaqueCat, sampler);
+    m_dualTexture->SetTexture2(overlay, sampler);
+    m_dualTextureFog->SetTexture(opaqueCat, sampler);
+    m_dualTextureFog->SetTexture2(overlay, sampler);
 
     auto cat = m_resourceDescriptors->GetGpuHandle(Descriptors::Cat);
 
-    m_alphaTest->SetTexture(cat, m_states->LinearWrap());
-    m_alphaTestFog->SetTexture(cat, m_states->LinearWrap());
-    m_alphaTestLess->SetTexture(cat, m_states->LinearWrap());
-    m_alphaTestEqual->SetTexture(cat, m_states->LinearWrap());
-    m_alphaTestNotEqual->SetTexture(cat, m_states->LinearWrap());
+    m_alphaTest->SetTexture(cat, sampler);
+    m_alphaTestFog->SetTexture(cat, sampler);
+    m_alphaTestLess->SetTexture(cat, sampler);
+    m_alphaTestEqual->SetTexture(cat, sampler);
+    m_alphaTestNotEqual->SetTexture(cat, sampler);
 
     {
         auto albeto = m_resourceDescriptors->GetGpuHandle(Descriptors::BrickDiffuse);
         auto normal = m_resourceDescriptors->GetGpuHandle(Descriptors::BrickNormal);
         auto specular = m_resourceDescriptors->GetGpuHandle(Descriptors::BrickSpecular);
-        auto defaultTex = m_resourceDescriptors->GetGpuHandle(Descriptors::DefaultTex);
-
-        auto sampler = m_states->LinearWrap();
 
         m_normalMapEffect->SetTexture(albeto, sampler);
         m_normalMapEffect->SetNormalTexture(normal);
@@ -1142,6 +1184,9 @@ void Game::CreateWindowSizeDependentResources()
     m_envmapFogPPL->SetView(view);
     m_envmapNoFresnelPPL->SetView(view);
 
+    m_spheremap->SetView(view);
+    m_dparabolamap->SetView(view);
+
     m_dualTexture->SetView(view);
     m_dualTextureFog->SetView(view);
 
@@ -1180,6 +1225,9 @@ void Game::CreateWindowSizeDependentResources()
     m_envmapSpecPPL->SetProjection(projection);
     m_envmapFogPPL->SetProjection(projection);
     m_envmapNoFresnelPPL->SetProjection(projection);
+
+    m_spheremap->SetProjection(projection);
+    m_dparabolamap->SetProjection(projection);
 
     m_dualTexture->SetProjection(projection);
     m_dualTextureFog->SetProjection(projection);
@@ -1225,6 +1273,8 @@ void Game::OnDeviceLost()
     m_envmapSpecPPL.reset();
     m_envmapFogPPL.reset();
     m_envmapNoFresnelPPL.reset();
+    m_spheremap.reset();
+    m_dparabolamap.reset();
 
     m_dualTexture.reset();
     m_dualTextureFog.reset();
@@ -1244,6 +1294,8 @@ void Game::OnDeviceLost()
     m_cat.Reset();
     m_opaqueCat.Reset();
     m_cubemap.Reset();
+    m_envball.Reset();
+    m_envdual.Reset();
     m_overlay.Reset();
     m_defaultTex.Reset();
     m_brickDiffuse.Reset();

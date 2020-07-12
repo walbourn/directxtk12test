@@ -134,6 +134,8 @@ private:
     std::unique_ptr<DirectX::EnvironmentMapEffect>  m_envmapSpecPPL;
     std::unique_ptr<DirectX::EnvironmentMapEffect>  m_envmapFogPPL;
     std::unique_ptr<DirectX::EnvironmentMapEffect>  m_envmapNoFresnelPPL;
+    std::unique_ptr<DirectX::EnvironmentMapEffect>  m_spheremap;
+    std::unique_ptr<DirectX::EnvironmentMapEffect>  m_dparabolamap;
 
     std::unique_ptr<DirectX::DualTextureEffect>     m_dualTexture;
     std::unique_ptr<DirectX::DualTextureEffect>     m_dualTextureFog;
@@ -153,6 +155,8 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_cat;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_opaqueCat;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_cubemap;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_envball;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_envdual;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_overlay;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_defaultTex;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_brickDiffuse;
@@ -164,6 +168,8 @@ private:
         Cat,
         OpaqueCat,
         Cubemap,
+        SphereMap,
+        DualParabolaMap,
         Overlay,
         DefaultTex,
         BrickDiffuse,

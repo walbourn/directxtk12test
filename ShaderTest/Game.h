@@ -136,6 +136,8 @@ private:
 
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_cat;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_cubemap;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_envball;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_envdual;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_overlay;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_defaultTex;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_brickDiffuse;
@@ -156,6 +158,8 @@ private:
     {
         Cat,
         Cubemap,
+        SphereMap,
+        DualParabolaMap,
         Overlay,
         DefaultTex,
         BrickDiffuse,
