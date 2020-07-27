@@ -994,28 +994,6 @@ void Game::CreateDeviceDependentResources()
                 effect->SetTexture(defaultTex, sampler);
                 effect->SetFogColor(Colors::Black);
                 skinning.emplace_back(std::move(effect));
-
-                effect = std::make_unique<SkinnedEffect>(device, eflags, pd, 2);
-                effect->EnableDefaultLighting();
-                effect->SetTexture(defaultTex, sampler);
-                skinning.emplace_back(std::move(effect));
-
-                effect = std::make_unique<SkinnedEffect>(device, eflags | EffectFlags::Fog, pd, 2);
-                effect->EnableDefaultLighting();
-                effect->SetTexture(defaultTex, sampler);
-                effect->SetFogColor(Colors::Black);
-                skinning.emplace_back(std::move(effect));
-
-                effect = std::make_unique<SkinnedEffect>(device, eflags, pd, 1);
-                effect->EnableDefaultLighting();
-                effect->SetTexture(defaultTex, sampler);
-                skinning.emplace_back(std::move(effect));
-
-                effect = std::make_unique<SkinnedEffect>(device, eflags | EffectFlags::Fog, pd, 1);
-                effect->EnableDefaultLighting();
-                effect->SetTexture(defaultTex, sampler);
-                effect->SetFogColor(Colors::Black);
-                skinning.emplace_back(std::move(effect));
             }
 
             // SkinnedEFfect (per pixel lighting)
@@ -1026,28 +1004,6 @@ void Game::CreateDeviceDependentResources()
                 skinning.emplace_back(std::move(effect));
 
                 effect = std::make_unique<SkinnedEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Fog, pd);
-                effect->EnableDefaultLighting();
-                effect->SetTexture(defaultTex, sampler);
-                effect->SetFogColor(Colors::Black);
-                skinning.emplace_back(std::move(effect));
-
-                effect = std::make_unique<SkinnedEffect>(device, eflags | EffectFlags::PerPixelLighting, pd, 2);
-                effect->EnableDefaultLighting();
-                effect->SetTexture(defaultTex, sampler);
-                skinning.emplace_back(std::move(effect));
-
-                effect = std::make_unique<SkinnedEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Fog, pd, 2);
-                effect->EnableDefaultLighting();
-                effect->SetTexture(defaultTex, sampler);
-                effect->SetFogColor(Colors::Black);
-                skinning.emplace_back(std::move(effect));
-
-                effect = std::make_unique<SkinnedEffect>(device, eflags | EffectFlags::PerPixelLighting, pd, 1);
-                effect->EnableDefaultLighting();
-                effect->SetTexture(defaultTex, sampler);
-                skinning.emplace_back(std::move(effect));
-
-                effect = std::make_unique<SkinnedEffect>(device, eflags | EffectFlags::PerPixelLighting | EffectFlags::Fog, pd, 1);
                 effect->EnableDefaultLighting();
                 effect->SetTexture(defaultTex, sampler);
                 effect->SetFogColor(Colors::Black);
