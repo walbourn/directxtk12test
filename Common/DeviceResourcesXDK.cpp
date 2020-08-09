@@ -441,6 +441,23 @@ void DeviceResources::Present(D3D12_RESOURCE_STATES beforeState)
     MoveToNextFrame();
 }
 
+// Handle GPU suspend/resume
+void DeviceResources::Suspend() noexcept
+{
+    if (m_commandQueue)
+    {
+        m_commandQueue->SuspendX(0);
+    }
+}
+
+void DeviceResources::Resume() noexcept
+{
+    if (m_commandQueue)
+    {
+        m_commandQueue->ResumeX();
+    }
+}
+
 // Wait for pending GPU work to complete.
 void DeviceResources::WaitForGpu() noexcept
 {

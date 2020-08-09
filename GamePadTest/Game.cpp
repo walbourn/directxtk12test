@@ -554,18 +554,12 @@ void Game::OnDeactivated()
 
 void Game::OnSuspending()
 {
-#if defined(_XBOX_ONE) && defined(_TITLE)
-    auto queue = m_deviceResources->GetCommandQueue();
-    queue->SuspendX(0);
-#endif
+    m_deviceResources->Suspend();
 }
 
 void Game::OnResuming()
 {
-#if defined(_XBOX_ONE) && defined(_TITLE)
-    auto queue = m_deviceResources->GetCommandQueue();
-    queue->ResumeX();
-#endif
+    m_deviceResources->Resume();
 
     m_timer.ResetElapsedTime();
 }
