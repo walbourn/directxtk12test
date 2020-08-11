@@ -322,6 +322,7 @@
   <ItemGroup>
     <ClInclude Include="..\Common\d3dx12.h" />
     <ClInclude Include="..\Common\DeviceResourcesUWP.h" />
+    <ClInclude Include="..\Common\DirectXTKTest.h" />
     <ClInclude Include="..\Common\RenderTexture.h" />
     <ClInclude Include="..\Common\StepTimer.h" />
     <ClInclude Include="Game.h" />

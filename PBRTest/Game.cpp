@@ -3,12 +3,8 @@
 //
 // Developer unit test for DirectXTK PBREffect
 //
-// THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
-// ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
-// THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
-// PARTICULAR PURPOSE.
-//
 // Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
 //
 // http://go.microsoft.com/fwlink/?LinkID=615561
 //--------------------------------------------------------------------------------------
@@ -120,11 +116,11 @@ Game::Game() noexcept(false) :
     const DXGI_FORMAT c_DisplayFormat = DXGI_FORMAT_R10G10B10A2_UNORM;
 #endif
 
-#if defined(_XBOX_ONE) && defined(_TITLE)
+#ifdef XBOX
     m_deviceResources = std::make_unique<DX::DeviceResources>(
         DXGI_FORMAT_R10G10B10A2_UNORM, DXGI_FORMAT_D32_FLOAT, 2,
         DX::DeviceResources::c_Enable4K_UHD | DX::DeviceResources::c_EnableHDR);
-#elif defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+#elif defined(UWP)
     m_deviceResources = std::make_unique<DX::DeviceResources>(
         c_DisplayFormat, DXGI_FORMAT_D32_FLOAT, 2, D3D_FEATURE_LEVEL_11_0,
         DX::DeviceResources::c_EnableHDR | DX::DeviceResources::c_Enable4K_Xbox);
@@ -134,7 +130,7 @@ Game::Game() noexcept(false) :
         DX::DeviceResources::c_EnableHDR);
 #endif
 
-#if !defined(_XBOX_ONE) || !defined(_TITLE)
+#ifdef LOSTDEVICE
     m_deviceResources->RegisterDeviceNotify(this);
 #endif
 
@@ -156,23 +152,25 @@ Game::~Game()
 
 // Initialize the Direct3D resources required to run.
 void Game::Initialize(
-#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) 
-    HWND window,
-#else
+#ifdef COREWINDOW
     IUnknown* window,
+#else
+    HWND window,
 #endif
     int width, int height, DXGI_MODE_ROTATION rotation)
 {
     m_gamePad = std::make_unique<GamePad>();
     m_keyboard = std::make_unique<Keyboard>();
 
-#if defined(_XBOX_ONE) && defined(_TITLE)
+#ifdef XBOX
     UNREFERENCED_PARAMETER(rotation);
     UNREFERENCED_PARAMETER(width);
     UNREFERENCED_PARAMETER(height);
     m_deviceResources->SetWindow(window);
+#ifdef COREWINDOW
     m_keyboard->SetWindow(reinterpret_cast<ABI::Windows::UI::Core::ICoreWindow*>(window));
-#elif defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+#endif
+#elif defined(UWP)
     m_deviceResources->SetWindow(window, width, height, rotation);
     m_keyboard->SetWindow(reinterpret_cast<ABI::Windows::UI::Core::ICoreWindow*>(window));
 #else
@@ -650,7 +648,7 @@ void Game::Render()
 
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Tonemap");
 
-#if defined(_XBOX_ONE) && defined(_TITLE)
+#ifdef XBOX
     D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptors[2] = { m_deviceResources->GetRenderTargetView(), m_deviceResources->GetGameDVRRenderTargetView() };
     commandList->OMSetRenderTargets(2, rtvDescriptors, FALSE, nullptr);
 
@@ -738,7 +736,7 @@ void Game::OnResuming()
     m_keyboardButtons.Reset();
 }
 
-#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) 
+#ifdef PC
 void Game::OnWindowMoved()
 {
     auto r = m_deviceResources->GetOutputSize();
@@ -746,10 +744,10 @@ void Game::OnWindowMoved()
 }
 #endif
 
-#if !defined(_XBOX_ONE) || !defined(_TITLE)
+#ifndef XBOX
 void Game::OnWindowSizeChanged(int width, int height, DXGI_MODE_ROTATION rotation)
 {
-#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+#ifdef UWP
     if (!m_deviceResources->WindowSizeChanged(width, height, rotation))
         return;
 #else
@@ -762,7 +760,7 @@ void Game::OnWindowSizeChanged(int width, int height, DXGI_MODE_ROTATION rotatio
 }
 #endif
 
-#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+#ifdef UWP
 void Game::ValidateDevice()
 {
     m_deviceResources->ValidateDevice();
@@ -832,7 +830,7 @@ void Game::CreateDeviceDependentResources()
     m_debugB = std::make_unique<DebugEffect>(device, EffectFlags::None, pipelineDesc, DebugEffect::Mode_BiTangents);
 
     RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), DXGI_FORMAT_UNKNOWN);
-#if defined(_XBOX_ONE) && defined(_TITLE)
+#ifdef XBOX
     rtState.numRenderTargets = 2;
     rtState.rtvFormats[1] = m_deviceResources->GetGameDVRFormat();
 #endif
@@ -841,12 +839,12 @@ void Game::CreateDeviceDependentResources()
         device,
         rtState,
         ToneMapPostProcess::Reinhard, (m_deviceResources->GetBackBufferFormat() == DXGI_FORMAT_R16G16B16A16_FLOAT) ? ToneMapPostProcess::Linear : ToneMapPostProcess::SRGB
-#if defined(_XBOX_ONE) && defined(_TITLE)
+#ifdef XBOX
         , true
 #endif
         );
 
-#if !defined(_XBOX_ONE) || !defined(_TITLE)
+#ifndef XBOX
     m_toneMapLinear = std::make_unique<ToneMapPostProcess>(device, rtState, ToneMapPostProcess::None, ToneMapPostProcess::Linear);
     m_toneMapHDR10 = std::make_unique<ToneMapPostProcess>(device, rtState, ToneMapPostProcess::None, ToneMapPostProcess::ST2084);
 #endif
@@ -1044,7 +1042,7 @@ void Game::CreateWindowSizeDependentResources()
     XMMATRIX projection = XMMatrixPerspectiveFovRH(1, aspect, 1, 15);
 #endif
 
-#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+#ifdef UWP
     {
         auto orient3d = m_deviceResources->GetOrientationTransform3D();
         XMMATRIX orient = XMLoadFloat4x4(&orient3d);
@@ -1077,13 +1075,13 @@ void Game::CreateWindowSizeDependentResources()
 
     m_toneMap->SetHDRSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex));
 
-#if !defined(_XBOX_ONE) || !defined(_TITLE)
+#ifndef XBOX
     m_toneMapLinear->SetHDRSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex));
     m_toneMapHDR10->SetHDRSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex));
 #endif
 }
 
-#if !defined(_XBOX_ONE) || !defined(_TITLE)
+#ifdef LOSTDEVICE
 void Game::OnDeviceLost()
 {
     for (size_t j = 0; j < s_nMaterials; ++j)
@@ -1118,11 +1116,8 @@ void Game::OnDeviceLost()
     m_states.reset();
 
     m_toneMap.reset();
-
-#if !defined(_XBOX_ONE) || !defined(_TITLE)
     m_toneMapLinear.reset();
     m_toneMapHDR10.reset();
-#endif
 
     m_hdrScene->ReleaseDevice();
 

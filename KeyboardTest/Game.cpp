@@ -3,12 +3,8 @@
 //
 // Developer unit test for DirectXTK Keyboard
 //
-// THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
-// ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
-// THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
-// PARTICULAR PURPOSE.
-//
 // Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
 //
 // http://go.microsoft.com/fwlink/?LinkID=615561
 //--------------------------------------------------------------------------------------
@@ -46,11 +42,11 @@ Game::Game() noexcept(false) :
     const DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
 #endif
 
-#if defined(_XBOX_ONE) && defined(_TITLE)
+#ifdef XBOX
     m_deviceResources = std::make_unique<DX::DeviceResources>(
         c_RenderFormat, DXGI_FORMAT_D32_FLOAT, 2,
         DX::DeviceResources::c_Enable4K_UHD);
-#elif defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+#elif defined(UWP)
     m_deviceResources = std::make_unique<DX::DeviceResources>(
         c_RenderFormat, DXGI_FORMAT_D24_UNORM_S8_UINT, 2, D3D_FEATURE_LEVEL_11_0,
         DX::DeviceResources::c_Enable4K_Xbox);
@@ -58,7 +54,7 @@ Game::Game() noexcept(false) :
     m_deviceResources = std::make_unique<DX::DeviceResources>(c_RenderFormat);
 #endif
 
-#if !defined(_XBOX_ONE) || !defined(_TITLE)
+#ifdef LOSTDEVICE
     m_deviceResources->RegisterDeviceNotify(this);
 #endif
 }
@@ -73,22 +69,24 @@ Game::~Game()
 
 // Initialize the Direct3D resources required to run.
 void Game::Initialize(
-#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) 
-    HWND window,
-#else
+#ifdef COREWINDOW
     IUnknown* window,
+#else
+    HWND window,
 #endif
     int width, int height, DXGI_MODE_ROTATION rotation)
 {
     m_keyboard = std::make_unique<Keyboard>();
 
-#if defined(_XBOX_ONE) && defined(_TITLE)
+#ifdef XBOX
     UNREFERENCED_PARAMETER(rotation);
     UNREFERENCED_PARAMETER(width);
     UNREFERENCED_PARAMETER(height);
     m_deviceResources->SetWindow(window);
+#ifdef COREWINDOW
     m_keyboard->SetWindow(reinterpret_cast<ABI::Windows::UI::Core::ICoreWindow*>(window));
-#elif defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+#endif
+#elif defined(UWP)
     m_deviceResources->SetWindow(window, width, height, rotation);
     m_keyboard->SetWindow(reinterpret_cast<ABI::Windows::UI::Core::ICoreWindow*>(window));
 #else
@@ -111,7 +109,7 @@ void Game::Initialize(
 
         if (!thrown)
         {
-#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
+#ifdef PC
             MessageBoxW(window, L"Keyboard not acting like a singleton", L"KeyboardTest", MB_ICONERROR);
 #else
             throw std::exception("Keyboard not acting like a singleton");
@@ -557,7 +555,7 @@ void Game::OnResuming()
     m_timer.ResetElapsedTime();
 }
 
-#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) 
+#ifdef PC
 void Game::OnWindowMoved()
 {
     auto r = m_deviceResources->GetOutputSize();
@@ -565,10 +563,10 @@ void Game::OnWindowMoved()
 }
 #endif
 
-#if !defined(_XBOX_ONE) || !defined(_TITLE)
+#ifndef XBOX
 void Game::OnWindowSizeChanged(int width, int height, DXGI_MODE_ROTATION rotation)
 {
-#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+#ifdef UWP
     if (!m_deviceResources->WindowSizeChanged(width, height, rotation))
         return;
 #else
@@ -581,7 +579,7 @@ void Game::OnWindowSizeChanged(int width, int height, DXGI_MODE_ROTATION rotatio
 }
 #endif
 
-#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+#ifdef UWP
 void Game::ValidateDevice()
 {
     m_deviceResources->ValidateDevice();
@@ -669,12 +667,12 @@ void Game::CreateWindowSizeDependentResources()
     auto viewPort = m_deviceResources->GetScreenViewport();
     m_spriteBatch->SetViewport(viewPort);
 
-#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP) 
+#ifdef UWP
     m_spriteBatch->SetRotation(m_deviceResources->GetRotation());
 #endif
 }
 
-#if !defined(_XBOX_ONE) || !defined(_TITLE)
+#ifdef LOSTDEVICE
 void Game::OnDeviceLost()
 {
     m_roomEffect.reset();
