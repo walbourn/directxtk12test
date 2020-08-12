@@ -12,6 +12,10 @@
 #include "pch.h"
 #include "Game.h"
 
+#ifdef GAMEINPUT
+#include <GameInput.h>
+#endif
+
 #define GAMMA_CORRECT_RENDERING
 
 #if defined(COREWINDOW) || defined(WGI)
@@ -110,7 +114,17 @@ void Game::Initialize(
     }
 #endif
 
-#if defined(COREWINDOW)
+#ifdef GAMEINPUT
+
+    m_ctrlChanged.Attach(CreateEvent(nullptr, FALSE, FALSE, nullptr));
+    if (!m_ctrlChanged.IsValid())
+    {
+        throw std::exception("CreateEvent");
+    }
+
+    m_gamePad->RegisterEvents(m_ctrlChanged.Get());
+
+#elif defined(COREWINDOW)
 
     m_ctrlChanged.Attach(CreateEvent(nullptr, FALSE, FALSE, nullptr));
     m_userChanged.Attach(CreateEvent(nullptr, FALSE, FALSE, nullptr));
@@ -152,7 +166,14 @@ void Game::Update(DX::StepTimer const&)
 
     m_state.connected = false;
 
-#if defined(COREWINDOW)
+#ifdef GAMEINPUT
+
+    if (WaitForSingleObject(m_ctrlChanged.Get(), 0) == WAIT_OBJECT_0)
+    {
+        OutputDebugStringA("EVENT: Controller changed\n");
+    }
+
+#elif defined(COREWINDOW)
 
     HANDLE events[2] = { m_ctrlChanged.Get(), m_userChanged.Get() };
     switch (WaitForMultipleObjects(_countof(events), events, FALSE, 0))
@@ -182,7 +203,39 @@ void Game::Update(DX::StepTimer const&)
 
                 if (caps.IsConnected())
                 {
-#ifdef WGI
+#ifdef GAMEINPUT
+                    char idstr[128] = {};
+                    for (size_t l = 0; l < APP_LOCAL_DEVICE_ID_SIZE; ++l)
+                    {
+                        sprintf_s(idstr + l * 2, 128 - l*2, "%02x", caps.id.value[l]);
+                    }
+                    char buff[128] = {};
+                    sprintf_s(buff, "Player %d -> connected (type %u, %04X/%04X, id %s)\n", j, caps.gamepadType, caps.vid, caps.pid, idstr);
+                    OutputDebugStringA(buff);
+
+                    {
+                        ComPtr<IGameInputDevice> idevice;
+                        m_gamePad->GetDevice(j, idevice.GetAddressOf());
+
+                        if (!idevice)
+                        {
+                            OutputDebugStringA("             **ERROR** GetDevice failed unexpectedly\n");
+                        }
+                        else
+                        {
+                            GameInputBatteryState battery;
+                            idevice->GetBatteryState(&battery);
+                            switch (battery.status)
+                            {
+                            case GameInputBatteryUnknown:       break;
+                            case GameInputBatteryNotPresent:    OutputDebugStringA("             Battery not present\n"); break;
+                            case GameInputBatteryDischarging:   OutputDebugStringA("             Battery discharging\n"); break;
+                            case GameInputBatteryIdle:          OutputDebugStringA("             Battery idle\n"); break;
+                            case GameInputBatteryCharging:      OutputDebugStringA("             Battery charging\n"); break;
+                            }
+                        }
+                    }
+#elif defined(WGI)
                     if (!caps.id.empty())
                     {
                         using namespace Microsoft::WRL;
