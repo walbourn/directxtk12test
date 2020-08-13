@@ -108,6 +108,28 @@ namespace DX
         D3D12_VIEWPORT                                      m_screenViewport;
         D3D12_RECT                                          m_scissorRect;
 
+        // Direct3D properties.
+        DXGI_FORMAT                                         m_backBufferFormat;
+        DXGI_FORMAT                                         m_depthBufferFormat;
+        UINT                                                m_backBufferCount;
+        D3D_FEATURE_LEVEL                                   m_d3dMinFeatureLevel;
+
+        // Cached device properties.
+        IUnknown*                                           m_window;
+        D3D_FEATURE_LEVEL                                   m_d3dFeatureLevel;
+        DXGI_MODE_ROTATION                                  m_rotation;
+        DWORD                                               m_dxgiFactoryFlags;
+        RECT                                                m_outputSize;
+
+        // HDR Support
+        DXGI_COLOR_SPACE_TYPE                               m_colorSpace;
+
+        // DeviceResources options (see flags above)
+        unsigned int                                        m_options;
+
+        // Transforms used for display orientation.
+        DirectX::XMFLOAT4X4                                 m_orientationTransform3D;
+
         // Hold features that are per device in a multi GPU setup.
         struct PerAdapter
         {
@@ -135,28 +157,6 @@ namespace DX
             Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>   m_commandList;
             Microsoft::WRL::ComPtr<ID3D12CommandAllocator>      m_commandAllocators[MAX_BACK_BUFFER_COUNT];
         };
-        PerAdapter*										    m_pAdaptersD3D;
-
-        // Direct3D properties.
-        DXGI_FORMAT                                         m_backBufferFormat;
-        DXGI_FORMAT                                         m_depthBufferFormat;
-        UINT                                                m_backBufferCount;
-        D3D_FEATURE_LEVEL                                   m_d3dMinFeatureLevel;
-
-        // Cached device properties.
-        IUnknown*                                           m_window;
-        D3D_FEATURE_LEVEL                                   m_d3dFeatureLevel;
-        DXGI_MODE_ROTATION                                  m_rotation;
-        DWORD                                               m_dxgiFactoryFlags;
-        RECT                                                m_outputSize;
-
-        // HDR Support
-        DXGI_COLOR_SPACE_TYPE                               m_colorSpace;
-
-        // DeviceResources options (see flags above)
-        unsigned int                                        m_options;
-
-        // Transforms used for display orientation.
-        DirectX::XMFLOAT4X4                                 m_orientationTransform3D;
+        PerAdapter* m_pAdaptersD3D;
     };
 }

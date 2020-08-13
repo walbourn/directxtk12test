@@ -95,9 +95,10 @@ DeviceResources::DeviceResources(
         m_rotation(DXGI_MODE_ROTATION_IDENTITY),
         m_dxgiFactoryFlags(0),
         m_outputSize{0, 0, 1, 1},
-        m_orientationTransform3D(ScreenRotation::Rotation0),
         m_colorSpace(DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709),
-        m_options(flags)
+        m_options(flags),
+        m_orientationTransform3D(ScreenRotation::Rotation0),
+        m_pAdaptersD3D(nullptr)
 {
     if (backBufferCount < 2 || backBufferCount > MAX_BACK_BUFFER_COUNT)
     {
@@ -127,6 +128,7 @@ DeviceResources::DeviceResources(
             case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_S: OutputDebugStringA("INFO: Running on Xbox One S\n"); break;
             case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X: OutputDebugStringA("INFO: Running on Xbox One X\n"); break;
             case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X_DEVKIT: OutputDebugStringA("INFO: Running on Xbox One X (DevKit)\n"); break;
+            default: break;
             }
 #endif
 
@@ -513,7 +515,9 @@ void DeviceResources::CreateWindowSizeDependentResources()
             rtvDesc.Format = m_backBufferFormat;
             rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 
-            CD3DX12_CPU_DESCRIPTOR_HANDLE rtvDescriptor(m_pAdaptersD3D[adapterIdx].m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), n, m_pAdaptersD3D[adapterIdx].m_rtvDescriptorSize);
+            CD3DX12_CPU_DESCRIPTOR_HANDLE rtvDescriptor(
+                m_pAdaptersD3D[adapterIdx].m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
+                static_cast<INT>(n), m_pAdaptersD3D[adapterIdx].m_rtvDescriptorSize);
             m_pAdaptersD3D[adapterIdx].m_d3dDevice->CreateRenderTargetView(m_pAdaptersD3D[adapterIdx].m_renderTargets[n].Get(), &rtvDesc, rtvDescriptor);
         }
     }

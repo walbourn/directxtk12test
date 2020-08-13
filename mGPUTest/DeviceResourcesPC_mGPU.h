@@ -74,14 +74,14 @@ namespace DX
         ID3D12CommandAllocator*                 GetCommandAllocator(unsigned int idx = 0) const noexcept { return m_pAdaptersD3D[idx].m_commandAllocators[m_backBufferIndex].Get(); }
         ID3D12GraphicsCommandList*              GetCommandList(unsigned int idx = 0) const noexcept      { return m_pAdaptersD3D[idx].m_commandList.Get(); }
 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE GetRenderTargetView(int idx = 0) const noexcept
+        CD3DX12_CPU_DESCRIPTOR_HANDLE GetRenderTargetView(unsigned int idx = 0) const noexcept
         {
             return CD3DX12_CPU_DESCRIPTOR_HANDLE(
                 m_pAdaptersD3D[idx].m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
                 static_cast<INT>(m_backBufferIndex), m_pAdaptersD3D[idx].m_rtvDescriptorSize);
         }
         
-        CD3DX12_CPU_DESCRIPTOR_HANDLE GetDepthStencilView(int idx = 0) const noexcept
+        CD3DX12_CPU_DESCRIPTOR_HANDLE GetDepthStencilView(unsigned int idx = 0) const noexcept
         {
             return CD3DX12_CPU_DESCRIPTOR_HANDLE(m_pAdaptersD3D[idx].m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
         }
@@ -170,7 +170,7 @@ namespace DX
                 m_fenceValues{}
             {}
         };
-        PerAdapter*											    m_pAdaptersD3D;
+        PerAdapter* m_pAdaptersD3D;
 
         // Debugging options
         static bool s_debugForceWarp;
