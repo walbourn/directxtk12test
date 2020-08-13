@@ -18,6 +18,13 @@
 // For UWP/PC, this tests using a linear F16 swapchain intead of HDR10
 //#define TEST_HDR_LINEAR
 
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wcovered-switch-default"
+#pragma clang diagnostic ignored "-Wswitch-enum"
+#endif
+
+#pragma warning(disable : 4061)
+
 namespace
 {
     const float row0 = 1.5f;

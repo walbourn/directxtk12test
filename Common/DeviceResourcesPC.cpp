@@ -10,6 +10,13 @@ using namespace DX;
 
 using Microsoft::WRL::ComPtr;
 
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wcovered-switch-default"
+#pragma clang diagnostic ignored "-Wswitch-enum"
+#endif
+
+#pragma warning(disable : 4061)
+
 namespace
 {
     inline DXGI_FORMAT NoSRGB(DXGI_FORMAT fmt) noexcept
@@ -22,7 +29,7 @@ namespace
         default:                                return fmt;
         }
     }
-};
+}
 
 bool DeviceResources::s_debugForceWarp = false;
 bool DeviceResources::s_debugPreferMinPower = false;
@@ -71,7 +78,7 @@ DeviceResources::~DeviceResources()
 }
 
 // Configures the Direct3D device, and stores handles to it and the device context.
-void DeviceResources::CreateDeviceResources() 
+void DeviceResources::CreateDeviceResources()
 {
 #if defined(_DEBUG)
     // Enable the debug layer (requires the Graphics Tools "optional feature").
@@ -135,11 +142,12 @@ void DeviceResources::CreateDeviceResources()
     GetAdapter(adapter.GetAddressOf());
 
     // Create the DX12 API device object.
-    ThrowIfFailed(D3D12CreateDevice(
+    HRESULT hr = D3D12CreateDevice(
         adapter.Get(),
         m_d3dMinFeatureLevel,
         IID_PPV_ARGS(m_d3dDevice.ReleaseAndGetAddressOf())
-        ));
+        );
+    ThrowIfFailed(hr);
 
     m_d3dDevice->SetName(L"DeviceResources");
 
@@ -199,7 +207,7 @@ void DeviceResources::CreateDeviceResources()
         _countof(s_featureLevels), s_featureLevels, D3D_FEATURE_LEVEL_11_0
     };
 
-    HRESULT hr = m_d3dDevice->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &featLevels, sizeof(featLevels));
+    hr = m_d3dDevice->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &featLevels, sizeof(featLevels));
     if (SUCCEEDED(hr))
     {
         m_d3dFeatureLevel = featLevels.MaxSupportedFeatureLevel;
@@ -277,6 +285,7 @@ void DeviceResources::CreateDeviceResources()
     case D3D_FEATURE_LEVEL_11_1: featLevel = "11.1"; break;
     case D3D_FEATURE_LEVEL_12_0: featLevel = "12.0"; break;
     case D3D_FEATURE_LEVEL_12_1: featLevel = "12.1"; break;
+    default: break;
     }
 
     // Determine maximum shader model / root signature
@@ -352,7 +361,7 @@ void DeviceResources::CreateDeviceResources()
 }
 
 // These resources need to be recreated every time the window size is changed.
-void DeviceResources::CreateWindowSizeDependentResources() 
+void DeviceResources::CreateWindowSizeDependentResources()
 {
     if (!m_window)
     {
@@ -397,7 +406,7 @@ void DeviceResources::CreateWindowSizeDependentResources()
             // If the device was removed for any reason, a new device and swap chain will need to be created.
             HandleDeviceLost();
 
-            // Everything is set up now. Do not continue execution of this method. HandleDeviceLost will reenter this method 
+            // Everything is set up now. Do not continue execution of this method. HandleDeviceLost will reenter this method
             // and correctly set up the new device.
             return;
         }

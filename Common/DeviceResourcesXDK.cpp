@@ -10,6 +10,13 @@ using namespace DX;
 
 using Microsoft::WRL::ComPtr;
 
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wcovered-switch-default"
+#pragma clang diagnostic ignored "-Wswitch-enum"
+#endif
+
+#pragma warning(disable : 4061)
+
 namespace
 {
     inline DXGI_FORMAT NoSRGB(DXGI_FORMAT fmt) noexcept

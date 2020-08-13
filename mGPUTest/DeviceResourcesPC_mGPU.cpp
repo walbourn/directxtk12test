@@ -10,9 +10,16 @@ using namespace DX;
 
 using Microsoft::WRL::ComPtr;
 
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wcovered-switch-default"
+#pragma clang diagnostic ignored "-Wswitch-enum"
+#endif
+
+#pragma warning(disable : 4061)
+
 namespace
 {
-    inline DXGI_FORMAT NoSRGB(DXGI_FORMAT fmt)
+    inline DXGI_FORMAT NoSRGB(DXGI_FORMAT fmt) noexcept
     {
         switch (fmt)
         {
@@ -22,7 +29,7 @@ namespace
         default:                                return fmt;
         }
     }
-};
+}
 
 bool DeviceResources::s_debugForceWarp = false;
 bool DeviceResources::s_debugPreferMinPower = false;
@@ -35,8 +42,9 @@ DeviceResources::DeviceResources(
     UINT backBufferCount,
     D3D_FEATURE_LEVEL minFeatureLevel,
     unsigned int flags,
-    unsigned int deviceCount ) noexcept(false) :
+    unsigned int deviceCount) noexcept(false) :
         m_backBufferIndex(0),
+        m_deviceCount(deviceCount),
         m_screenViewport{},
         m_scissorRect{},
         m_backBufferFormat(backBufferFormat),
@@ -48,8 +56,7 @@ DeviceResources::DeviceResources(
         m_dxgiFactoryFlags(0),
         m_outputSize{0, 0, 1, 1},
         m_colorSpace(DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709),
-        m_options(flags),
-        m_deviceCount(deviceCount)
+        m_options(flags)
 {
     if (backBufferCount < 2 || backBufferCount > MAX_BACK_BUFFER_COUNT)
     {
@@ -77,7 +84,7 @@ DeviceResources::~DeviceResources()
 }
 
 // Configures the Direct3D device, and stores handles to it and the device context.
-void DeviceResources::CreateDeviceResources() 
+void DeviceResources::CreateDeviceResources()
 {
 #if defined(_DEBUG)
     // Enable the debug layer (requires the Graphics Tools "optional feature").
@@ -247,7 +254,7 @@ void DeviceResources::CreateDeviceResources()
 }
 
 // These resources need to be recreated every time the window size is changed.
-void DeviceResources::CreateWindowSizeDependentResources() 
+void DeviceResources::CreateWindowSizeDependentResources()
 {
     if (!m_window)
     {
@@ -268,9 +275,9 @@ void DeviceResources::CreateWindowSizeDependentResources()
     }
 
     // Determine the render target size in pixels.
-    UINT backBufferWidth = std::max<UINT>(m_outputSize.right - m_outputSize.left, 1);
-    UINT backBufferHeight = std::max<UINT>(m_outputSize.bottom - m_outputSize.top, 1);
-    DXGI_FORMAT backBufferFormat = NoSRGB(m_backBufferFormat);
+    const UINT backBufferWidth = std::max<UINT>(static_cast<UINT>(m_outputSize.right - m_outputSize.left), 1u);
+    const UINT backBufferHeight = std::max<UINT>(static_cast<UINT>(m_outputSize.bottom - m_outputSize.top), 1u);
+    const DXGI_FORMAT backBufferFormat = NoSRGB(m_backBufferFormat);
 
     // If the swap chain already exists, resize it, otherwise create one.
     if (m_swapChain)
@@ -288,13 +295,14 @@ void DeviceResources::CreateWindowSizeDependentResources()
         {
 #ifdef _DEBUG
             char buff[64] = {};
-            sprintf_s(buff, "Device Lost on ResizeBuffers: Reason code 0x%08X\n", (hr == DXGI_ERROR_DEVICE_REMOVED) ? m_pAdaptersD3D[DT_Primary].m_d3dDevice->GetDeviceRemovedReason() : hr);
+            sprintf_s(buff, "Device Lost on ResizeBuffers: Reason code 0x%08X\n",
+                static_cast<unsigned int>((hr == DXGI_ERROR_DEVICE_REMOVED) ? m_pAdaptersD3D[DT_Primary].m_d3dDevice->GetDeviceRemovedReason() : hr));
             OutputDebugStringA(buff);
 #endif
             // If the device was removed for any reason, a new device and swap chain will need to be created.
             HandleDeviceLost();
 
-            // Everything is set up now. Do not continue execution of this method. HandleDeviceLost will reenter this method 
+            // Everything is set up now. Do not continue execution of this method. HandleDeviceLost will reenter this method
             // and correctly set up the new device.
             return;
         }
@@ -356,7 +364,9 @@ void DeviceResources::CreateWindowSizeDependentResources()
         rtvDesc.Format = m_backBufferFormat;
         rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvDescriptor(m_pAdaptersD3D[DT_Primary].m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), n, m_pAdaptersD3D[DT_Primary].m_rtvDescriptorSize);
+        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvDescriptor(
+            m_pAdaptersD3D[DT_Primary].m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
+            static_cast<INT>(n), m_pAdaptersD3D[DT_Primary].m_rtvDescriptorSize);
         m_pAdaptersD3D[DT_Primary].m_d3dDevice->CreateRenderTargetView(m_pAdaptersD3D[DT_Primary].m_renderTargets[n].Get(), &rtvDesc, rtvDescriptor);
     }
 
@@ -392,7 +402,8 @@ void DeviceResources::CreateWindowSizeDependentResources()
             rtvDesc.Format = m_backBufferFormat;
             rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 
-            CD3DX12_CPU_DESCRIPTOR_HANDLE rtvDescriptor(m_pAdaptersD3D[adapterIdx].m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), n, m_pAdaptersD3D[adapterIdx].m_rtvDescriptorSize);
+            CD3DX12_CPU_DESCRIPTOR_HANDLE rtvDescriptor(m_pAdaptersD3D[adapterIdx].m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
+                static_cast<INT>(n), m_pAdaptersD3D[adapterIdx].m_rtvDescriptorSize);
             m_pAdaptersD3D[adapterIdx].m_d3dDevice->CreateRenderTargetView(m_pAdaptersD3D[adapterIdx].m_renderTargets[n].Get(), &rtvDesc, rtvDescriptor);
         }
     }
@@ -447,12 +458,12 @@ void DeviceResources::CreateWindowSizeDependentResources()
     m_screenViewport.MaxDepth = D3D12_MAX_DEPTH;
 
     m_scissorRect.left = m_scissorRect.top = 0;
-    m_scissorRect.right = backBufferWidth;
-    m_scissorRect.bottom = backBufferHeight;
+    m_scissorRect.right = static_cast<LONG>(backBufferWidth);
+    m_scissorRect.bottom = static_cast<LONG>(backBufferHeight);
 }
 
 // This method is called when the Win32 window is created (or re-created).
-void DeviceResources::SetWindow(HWND window, int width, int height)
+void DeviceResources::SetWindow(HWND window, int width, int height) noexcept
 {
     m_window = window;
 
@@ -532,7 +543,7 @@ void DeviceResources::HandleDeviceLost()
 }
 
 // Prepare the command list and render target for rendering.
-void DeviceResources::Prepare(D3D12_RESOURCE_STATES beforeState)
+void DeviceResources::Prepare(D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState)
 {
     for (unsigned int adapterIdx = 0; adapterIdx != m_deviceCount; ++adapterIdx)
     {
@@ -540,10 +551,11 @@ void DeviceResources::Prepare(D3D12_RESOURCE_STATES beforeState)
         ThrowIfFailed(m_pAdaptersD3D[adapterIdx].m_commandAllocators[m_backBufferIndex]->Reset());
         ThrowIfFailed(m_pAdaptersD3D[adapterIdx].m_commandList->Reset(m_pAdaptersD3D[adapterIdx].m_commandAllocators[m_backBufferIndex].Get(), nullptr));
 
-        if (beforeState != D3D12_RESOURCE_STATE_RENDER_TARGET)
+        if (beforeState != afterState)
         {
             // Transition the render target into the correct state to allow for drawing into it.
-            D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_pAdaptersD3D[adapterIdx].m_renderTargets[m_backBufferIndex].Get(), beforeState, D3D12_RESOURCE_STATE_RENDER_TARGET);
+            D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_pAdaptersD3D[adapterIdx].m_renderTargets[m_backBufferIndex].Get(),
+                beforeState, afterState);
             m_pAdaptersD3D[adapterIdx].m_commandList->ResourceBarrier(1, &barrier);
         }
     }
@@ -586,7 +598,8 @@ void DeviceResources::Present(D3D12_RESOURCE_STATES beforeState)
     {
 #ifdef _DEBUG
         char buff[64] = {};
-        sprintf_s(buff, "Device Lost on Present: Reason code 0x%08X\n", (hr == DXGI_ERROR_DEVICE_REMOVED) ? m_pAdaptersD3D[DT_Primary].m_d3dDevice->GetDeviceRemovedReason() : hr);
+        sprintf_s(buff, "Device Lost on Present: Reason code 0x%08X\n",
+            static_cast<unsigned int>((hr == DXGI_ERROR_DEVICE_REMOVED) ? m_pAdaptersD3D[DT_Primary].m_d3dDevice->GetDeviceRemovedReason() : hr));
         OutputDebugStringA(buff);
 #endif
         HandleDeviceLost();

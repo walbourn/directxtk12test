@@ -17,6 +17,13 @@ using Microsoft::WRL::ComPtr;
 extern "C" IMAGE_DOS_HEADER __ImageBase;
 #endif
 
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wcovered-switch-default"
+#pragma clang diagnostic ignored "-Wswitch-enum"
+#endif
+
+#pragma warning(disable : 4061)
+
 // Constants used to calculate screen rotations
 namespace ScreenRotation
 {
@@ -88,9 +95,9 @@ DeviceResources::DeviceResources(
         m_rotation(DXGI_MODE_ROTATION_IDENTITY),
         m_dxgiFactoryFlags(0),
         m_outputSize{0, 0, 1, 1},
-        m_orientationTransform3D(ScreenRotation::Rotation0),
         m_colorSpace(DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709),
         m_options(flags),
+        m_orientationTransform3D(ScreenRotation::Rotation0),
         m_deviceNotify(nullptr)
 {
     if (backBufferCount < 2 || backBufferCount > MAX_BACK_BUFFER_COUNT)
@@ -121,6 +128,7 @@ DeviceResources::DeviceResources(
             case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_S: OutputDebugStringA("INFO: Running on Xbox One S\n"); break;
             case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X: OutputDebugStringA("INFO: Running on Xbox One X\n"); break;
             case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X_DEVKIT: OutputDebugStringA("INFO: Running on Xbox One X (DevKit)\n"); break;
+            default: break;
             }
 #endif
 
@@ -169,7 +177,7 @@ DeviceResources::~DeviceResources()
 }
 
 // Configures the Direct3D device, and stores handles to it and the device context.
-void DeviceResources::CreateDeviceResources() 
+void DeviceResources::CreateDeviceResources()
 {
 #if defined(_DEBUG)
     // Enable the debug layer (requires the Graphics Tools "optional feature").
@@ -355,6 +363,7 @@ void DeviceResources::CreateDeviceResources()
     case D3D_FEATURE_LEVEL_11_1: featLevel = "11.1"; break;
     case D3D_FEATURE_LEVEL_12_0: featLevel = "12.0"; break;
     case D3D_FEATURE_LEVEL_12_1: featLevel = "12.1"; break;
+    default: break;
     }
 
     // Determine maximum shader model / root signature
@@ -430,7 +439,7 @@ void DeviceResources::CreateDeviceResources()
 }
 
 // These resources need to be recreated every time the window size is changed.
-void DeviceResources::CreateWindowSizeDependentResources() 
+void DeviceResources::CreateWindowSizeDependentResources()
 {
     if (!m_window)
     {
@@ -475,7 +484,7 @@ void DeviceResources::CreateWindowSizeDependentResources()
             // If the device was removed for any reason, a new device and swap chain will need to be created.
             HandleDeviceLost();
 
-            // Everything is set up now. Do not continue execution of this method. HandleDeviceLost will reenter this method 
+            // Everything is set up now. Do not continue execution of this method. HandleDeviceLost will reenter this method
             // and correctly set up the new device.
             return;
         }
