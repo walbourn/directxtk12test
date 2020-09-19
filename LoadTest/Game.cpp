@@ -962,6 +962,9 @@ void Game::OnDeviceLost()
     m_test30.Reset();
     m_test31.Reset();
     m_test32.Reset();
+    m_test33.Reset();
+    m_test34.Reset();
+    m_test35.Reset();
 
     m_testA.Reset();
     m_testB.Reset();
@@ -1708,6 +1711,60 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             || desc.MipLevels != 1)
         {
             OutputDebugStringA("FAILED: pentagon.tiff res desc default srgb / rgba32 unexpected\n");
+            success = false;
+        }
+    }
+
+    // WIC RGBA32 + POW2 + SQUARE
+    {
+        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"text.tif",
+            0,
+            D3D12_RESOURCE_FLAG_NONE,
+            WIC_LOADER_DEFAULT,
+            m_test33.GetAddressOf()));
+
+        auto desc = m_test33->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_R8_UNORM
+            || desc.Width != 1512
+            || desc.Height != 359
+            || desc.MipLevels != 1)
+        {
+            OutputDebugStringA("FAILED: text.tif res desc unexpected\n");
+            success = false;
+        }
+
+        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"text.tif",
+            0,
+            D3D12_RESOURCE_FLAG_NONE,
+            WIC_LOADER_FORCE_RGBA32 | WIC_LOADER_FIT_POW2,
+            m_test34.GetAddressOf()));
+
+        desc = m_test34->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
+            || desc.Width != 1024
+            || desc.Height != 256
+            || desc.MipLevels != 1)
+        {
+            OutputDebugStringA("FAILED: text.tif res rgba32+pow2 unexpected\n");
+            success = false;
+        }
+
+        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"text.tif",
+            0,
+            D3D12_RESOURCE_FLAG_NONE,
+            WIC_LOADER_FORCE_RGBA32 | WIC_LOADER_FIT_POW2 | WIC_LOADER_MAKE_SQUARE,
+            m_test35.GetAddressOf()));
+
+        desc = m_test35->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
+            || desc.Width != 1024
+            || desc.Height != 1024
+            || desc.MipLevels != 1)
+        {
+            OutputDebugStringA("FAILED: text.tif res rgba32+pow2+square unexpected\n");
             success = false;
         }
     }
