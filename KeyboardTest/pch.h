@@ -20,7 +20,7 @@
 
 #if defined(_XBOX_ONE) && defined(_TITLE)
 #include <xdk.h>
-#elif !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) 
+#elif !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) || (WINAPI_FAMILY == WINAPI_FAMILY_GAMES)
 #include <WinSDKVer.h>
 #define _WIN32_WINNT 0x0A00
 #include <SDKDDKVer.h>
@@ -47,7 +47,10 @@
 #include <wrl/client.h>
 #include <wrl/event.h>
 
-#if defined(_XBOX_ONE) && defined(_TITLE)
+#ifdef _GAMING_XBOX_SCARLETT
+#include <d3d12_xs.h>
+#include <d3dx12_xs.h>
+#elif (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
 #include <d3d12_x.h>
 #include <d3dx12_x.h>
 #else
@@ -128,7 +131,6 @@ namespace DX
         }
     }
 }
-
 
 // Enable off by default warnings to improve code conformance
 #pragma warning(default : 4061 4062 4191 4242 4263 4264 4265 4266 4289 4302 4365 4746 4826 4841 4987 5029 5038 5042)

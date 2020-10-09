@@ -11,7 +11,12 @@
 
 #pragma once
 
-#if defined(_XBOX_ONE) && defined(_TITLE)
+#ifdef _GAMING_XBOX
+#define XBOX
+#define GAMEINPUT
+#include "DeviceResourcesGXDK.h"
+
+#elif defined(_XBOX_ONE) && defined(_TITLE)
 #define XBOX
 #define COREWINDOW
 #include "DeviceResourcesXDK.h"
