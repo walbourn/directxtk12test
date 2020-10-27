@@ -21,22 +21,22 @@
 
 namespace
 {
-    const float row0 = 2.7f;
-    const float row1 = 1.f;
-    const float row2 = -0.7f;
-    const float row3 = -2.5f;
+    constexpr float row0 = 2.7f;
+    constexpr float row1 = 1.f;
+    constexpr float row2 = -0.7f;
+    constexpr float row3 = -2.5f;
 
-    const float col0 = -7.5f;
-    const float col1 = -5.75f;
-    const float col2 = -4.25f;
-    const float col3 = -2.7f;
-    const float col4 = -1.25f;
-    const float col5 = 0.f;
-    const float col6 = 1.25f;
-    const float col7 = 2.5f;
-    const float col8 = 4.25f;
-    const float col9 = 5.75f;
-    const float col10 = 7.5f;
+    constexpr float col0 = -7.5f;
+    constexpr float col1 = -5.75f;
+    constexpr float col2 = -4.25f;
+    constexpr float col3 = -2.7f;
+    constexpr float col4 = -1.25f;
+    constexpr float col5 = 0.f;
+    constexpr float col6 = 1.25f;
+    constexpr float col7 = 2.5f;
+    constexpr float col8 = 4.25f;
+    constexpr float col9 = 5.75f;
+    constexpr float col10 = 7.5f;
 }
 
 extern void ExitGame() noexcept;
@@ -299,6 +299,7 @@ void Game::Render()
     lime.v = Colors::Lime;
     gray.v = Colors::Gray;
 #endif
+    SimpleMath::Vector4 white = Colors::White.v;
 
     // Draw shapes.
     m_effect->SetWorld(world * XMMatrixTranslation(col0, row0, 0));
@@ -480,21 +481,21 @@ void Game::Render()
 
     // Draw shapes with alpha blending.
     m_effectAlpha->SetWorld(world * XMMatrixTranslation(col0, row3, 0));
-    m_effectAlpha->SetDiffuseColor(Colors::White * alphaFade);
+    m_effectAlpha->SetDiffuseColor(white * alphaFade);
     m_effectAlpha->SetAlpha(alphaFade);
     m_effectAlpha->Apply(commandList);
     m_cube->Draw(commandList);
 
     m_effectPMAlphaTexture->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Cat), m_states->AnisotropicWrap());
     m_effectPMAlphaTexture->SetWorld(world * XMMatrixTranslation(col1, row3, 0));
-    m_effectPMAlphaTexture->SetDiffuseColor(Colors::White * alphaFade);
+    m_effectPMAlphaTexture->SetDiffuseColor(white * alphaFade);
     m_effectPMAlphaTexture->SetAlpha(alphaFade);
     m_effectPMAlphaTexture->Apply(commandList);
     m_cube->Draw(commandList);
 
     m_effectAlphaTexture->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Cat), m_states->AnisotropicWrap());
     m_effectAlphaTexture->SetWorld(world * XMMatrixTranslation(col2, row3, 0));
-    m_effectAlphaTexture->SetDiffuseColor(Colors::White * alphaFade);
+    m_effectAlphaTexture->SetDiffuseColor(white * alphaFade);
     m_effectAlphaTexture->SetAlpha(alphaFade);
     m_effectAlphaTexture->Apply(commandList);
     m_cube->Draw(commandList);
@@ -912,7 +913,7 @@ void Game::CreateDeviceDependentResources()
 // Allocate all memory resources that change on a window SizeChanged event.
 void Game::CreateWindowSizeDependentResources()
 {
-    static const XMVECTORF32 cameraPosition = { 0, 0, 9 };
+    static const XMVECTORF32 cameraPosition = { { { 0.f, 0.f, 9.f, 0.f } } };
 
     auto size = m_deviceResources->GetOutputSize();
     float aspect = (float)size.right / (float)size.bottom;

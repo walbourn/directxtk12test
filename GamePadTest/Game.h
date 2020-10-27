@@ -107,5 +107,4 @@ private:
     Microsoft::WRL::Wrappers::Event                 m_userChanged;
 
     const wchar_t *                                 m_lastStr;
-    wchar_t                                         m_lastStrBuff[128];
 };

@@ -23,10 +23,10 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
-    const XMVECTORF32 START_POSITION = { 0.f, -1.5f, 0.f, 0.f };
-    const XMVECTORF32 ROOM_BOUNDS = { 8.f, 6.f, 12.f, 0.f };
+    constexpr XMVECTORF32 START_POSITION = { { { 0.f, -1.5f, 0.f, 0.f } } };
+    constexpr XMVECTORF32 ROOM_BOUNDS = { { { 8.f, 6.f, 12.f, 0.f } } };
 
-    const float MOVEMENT_GAIN = 0.07f;
+    constexpr float MOVEMENT_GAIN = 0.07f;
 }
 
 Game::Game() noexcept(false) :
@@ -115,9 +115,6 @@ void Game::Initialize(
             throw std::exception("Keyboard not acting like a singleton");
 #endif
         }
-
-        auto state = Keyboard::Get().GetState();
-        state;
     }
 
     OutputDebugStringA(m_keyboard->IsConnected() ? "INFO: Keyboard is connected\n" : "INFO: No keyboard found\n");

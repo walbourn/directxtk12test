@@ -28,26 +28,26 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
-    const float rowA = -2.f;
-    const float row0 = 2.5f;
-    const float row1 = 1.5f;
-    const float row2 = 0.5f;
-    const float row3 = 0.f;
-    const float row4 = -0.5f;
-    const float row5 = -1.5f;
-    const float row6 = -2.5f;
+    constexpr float rowA = -2.f;
+    constexpr float row0 = 2.5f;
+    constexpr float row1 = 1.5f;
+    constexpr float row2 = 0.5f;
+    constexpr float row3 = 0.f;
+    constexpr float row4 = -0.5f;
+    constexpr float row5 = -1.5f;
+    constexpr float row6 = -2.5f;
 
-    const float colA = -5.f;
-    const float col0 = -4.f;
-    const float col1 = -3.f;
-    const float col2 = -2.f;
-    const float col3 = -1.f;
-    const float col4 = 0.f;
-    const float col5 = 1.f;
-    const float col6 = 2.f;
-    const float col7 = 3.f;
-    const float col8 = 4.f;
-    const float col9 = 5.f;
+    constexpr float colA = -5.f;
+    constexpr float col0 = -4.f;
+    constexpr float col1 = -3.f;
+    constexpr float col2 = -2.f;
+    constexpr float col3 = -1.f;
+    constexpr float col4 = 0.f;
+    constexpr float col5 = 1.f;
+    constexpr float col6 = 2.f;
+    constexpr float col7 = 3.f;
+    constexpr float col8 = 4.f;
+    constexpr float col9 = 5.f;
 
     struct TestVertex
     {
@@ -119,7 +119,7 @@ namespace
 
         for (int i = 0; i < 16; i++)
         {
-            controlPoints[i] = TeapotControlPoints[patch.indices[i]] * scale;
+            controlPoints[i] = XMVectorMultiply(TeapotControlPoints[patch.indices[i]], scale);
         }
 
         // Create the index data.
@@ -270,11 +270,11 @@ void Game::Render()
     float pitch = time * 0.7f;
     float roll = time * 1.1f;
 
-    XMVECTORF32 blue;
+    SimpleMath:: Vector4 blue;
 #ifdef GAMMA_CORRECT_RENDERING
-    blue.v = XMColorSRGBToRGB(Colors::Blue);
+    blue = XMColorSRGBToRGB(Colors::Blue);
 #else
-    blue.v = Colors::Blue;
+    blue = Colors::Blue;
 #endif
 
     XMMATRIX world = XMMatrixRotationRollPitchYaw(pitch, yaw, roll);
@@ -1131,7 +1131,7 @@ void Game::CreateDeviceDependentResources()
 // Allocate all memory resources that change on a window SizeChanged event.
 void Game::CreateWindowSizeDependentResources()
 {
-    static const XMVECTORF32 cameraPosition = { 0, 0, 6 };
+    static const XMVECTORF32 cameraPosition = { { { 0.f, 0.f, 6.f, 0.f } } };
 
     auto size = m_deviceResources->GetOutputSize();
     float aspect = (float)size.right / (float)size.bottom;
@@ -1317,7 +1317,9 @@ void Game::CreateTeapot()
     VertexCollection vertices;
     IndexCollection indices;
 
-    for (int i = 0; i < sizeof(TeapotPatches) / sizeof(TeapotPatches[0]); i++)
+    XMVECTOR negateXZ = XMVectorMultiply(g_XMNegateX, g_XMNegateZ);
+
+    for (size_t i = 0; i < sizeof(TeapotPatches) / sizeof(TeapotPatches[0]); i++)
     {
         TeapotPatch const& patch = TeapotPatches[i];
 
@@ -1332,7 +1334,7 @@ void Game::CreateTeapot()
             // handle or spout) are also symmetrical from front to back, so
             // we tessellate them four times, mirroring in Z as well as X.
             TessellatePatch(vertices, indices, patch, g_XMNegateZ, true);
-            TessellatePatch(vertices, indices, patch, g_XMNegateX * g_XMNegateZ, false);
+            TessellatePatch(vertices, indices, patch, negateXZ, false);
         }
     }
 

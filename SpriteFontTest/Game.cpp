@@ -23,9 +23,9 @@
 
 namespace
 {
-    const float SWAP_TIME = 3.f;
+    constexpr float SWAP_TIME = 3.f;
 
-    const float EPSILON = 0.000001f;
+    constexpr float EPSILON = 0.000001f;
 }
 
 extern void ExitGame() noexcept;
@@ -243,7 +243,7 @@ void Game::Render()
         SpriteEffects flip = (SpriteEffects)((int)(time / 100) & 3);
         m_multicoloredFont->DrawString(m_spriteBatch.get(), "OMG it's full of stars!", XMFLOAT2(610, 130), Colors::White, XM_PIDIV2, XMFLOAT2(0, 0), 1, flip);
 
-        m_comicFont->DrawString(m_spriteBatch.get(), u8"This is a larger block\nof text using a\nfont scaled to a\nsmaller size.\nSome c\x1234ha\x1543rac\x2453te\x1634r\x1563s are not in the font, but should show up as hyphens.", XMFLOAT2(10, 90), Colors::Black, 0, XMFLOAT2(0, 0), 0.5f);
+        m_comicFont->DrawString(m_spriteBatch.get(), u8"This is a larger block\nof text using a\nfont scaled to a\nsmaller size.\nSome c\xffha\xferac\xfdte\xffr\xfas are not in the font, but should show up as hyphens.", XMFLOAT2(10, 90), Colors::Black, 0, XMFLOAT2(0, 0), 0.5f);
 
         char tmp[256] = {};
         sprintf_s(tmp, "%llu frames", m_frame);
@@ -264,7 +264,7 @@ void Game::Render()
         m_comicFont->DrawString(m_spriteBatch.get(), mirrorText, XMVectorSet(400, 400, 0, 0), gray, 0, mirrorSize * XMVectorSet(0, 0, 0, 0), 1, SpriteEffects_FlipVertically);
         m_comicFont->DrawString(m_spriteBatch.get(), mirrorText, XMVectorSet(400, 400, 0, 0), dgray, 0, mirrorSize * XMVectorSet(1, 0, 0, 0), 1, SpriteEffects_FlipBoth);
 
-        m_japaneseFont->DrawString(m_spriteBatch.get(), u8"\x79C1\x306F\x65E5\x672C\x8A9E\x304C\x8A71\x305B\x306A\x3044\x306E\x3067\x3001\n\x79C1\x306F\x3053\x308C\x304C\x4F55\x3092\x610F\x5473\x3059\x308B\x306E\x304B\x308F\x304B\x308A\x307E\x305B\x3093", XMFLOAT2(10, 512));
+        m_japaneseFont->DrawString(m_spriteBatch.get(), L"\x79C1\x306F\x65E5\x672C\x8A9E\x304C\x8A71\x305B\x306A\x3044\x306E\x3067\x3001\n\x79C1\x306F\x3053\x308C\x304C\x4F55\x3092\x610F\x5473\x3059\x308B\x306E\x304B\x308F\x304B\x308A\x307E\x305B\x3093", XMFLOAT2(10, 512));
     }
     else
     {
