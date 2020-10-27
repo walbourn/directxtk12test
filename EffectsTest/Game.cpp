@@ -56,7 +56,7 @@ namespace
             XMStoreFloat3(&this->position, position);
             XMStoreFloat3(&this->normal, normal);
             XMStoreFloat2(&this->textureCoordinate, textureCoordinate);
-            XMStoreFloat2(&this->textureCoordinate2, textureCoordinate * 3);
+            XMStoreFloat2(&this->textureCoordinate2, XMVectorScale(textureCoordinate, 3.f));
             XMStoreUByte4(&this->blendIndices, XMVectorSet(0, 1, 2, 3));
 
             float u = XMVectorGetX(textureCoordinate) - 0.5f;

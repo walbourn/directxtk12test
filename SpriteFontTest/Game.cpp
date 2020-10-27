@@ -254,11 +254,11 @@ void Game::Render()
 
         float scale = sin(time / 100) + 1;
         auto spinText = "Spinning\nlike a cat";
-        auto size = m_comicFont->MeasureString(spinText);
+        SimpleMath::Vector2 size = m_comicFont->MeasureString(spinText);
         m_comicFont->DrawString(m_spriteBatch.get(), spinText, XMVectorSet(150, 350, 0, 0), blue, time / 60, size / 2, scale);
 
         auto mirrorText = "It's a\nmirror...";
-        auto mirrorSize = m_comicFont->MeasureString(mirrorText);
+        SimpleMath::Vector2 mirrorSize = m_comicFont->MeasureString(mirrorText);
         m_comicFont->DrawString(m_spriteBatch.get(), mirrorText, XMVectorSet(400, 400, 0, 0), Colors::Black, 0, mirrorSize * XMVectorSet(0, 1, 0, 0), 1, SpriteEffects_None);
         m_comicFont->DrawString(m_spriteBatch.get(), mirrorText, XMVectorSet(400, 400, 0, 0), gray, 0, mirrorSize * XMVectorSet(1, 1, 0, 0), 1, SpriteEffects_FlipHorizontally);
         m_comicFont->DrawString(m_spriteBatch.get(), mirrorText, XMVectorSet(400, 400, 0, 0), gray, 0, mirrorSize * XMVectorSet(0, 0, 0, 0), 1, SpriteEffects_FlipVertically);
@@ -286,11 +286,11 @@ void Game::Render()
 
         float scale = sin(time / 100) + 1;
         auto spinText = L"Spinning\nlike a cat";
-        auto size = m_comicFont->MeasureString(spinText);
+        SimpleMath::Vector2 size = m_comicFont->MeasureString(spinText);
         m_comicFont->DrawString(m_spriteBatch.get(), spinText, XMVectorSet(150, 350, 0, 0), blue, time / 60, size / 2, scale);
 
         auto mirrorText = L"It's a\nmirror...";
-        auto mirrorSize = m_comicFont->MeasureString(mirrorText);
+        SimpleMath::Vector2 mirrorSize = m_comicFont->MeasureString(mirrorText);
         m_comicFont->DrawString(m_spriteBatch.get(), mirrorText, XMVectorSet(400, 400, 0, 0), Colors::Black, 0, mirrorSize * XMVectorSet(0, 1, 0, 0), 1, SpriteEffects_None);
         m_comicFont->DrawString(m_spriteBatch.get(), mirrorText, XMVectorSet(400, 400, 0, 0), gray, 0, mirrorSize * XMVectorSet(1, 1, 0, 0), 1, SpriteEffects_FlipHorizontally);
         m_comicFont->DrawString(m_spriteBatch.get(), mirrorText, XMVectorSet(400, 400, 0, 0), gray, 0, mirrorSize * XMVectorSet(0, 0, 0, 0), 1, SpriteEffects_FlipVertically);
