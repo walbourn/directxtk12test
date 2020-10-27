@@ -1627,7 +1627,7 @@ void Game::CreateCube()
     const Vector4 tsize(0.25f, 0.25f, 0.25f, 0.f);
 
     // Create each face in turn.
-    for (int i = 0; i < FaceCount; i++)
+    for (size_t i = 0; i < FaceCount; i++)
     {
         Vector4 normal = faceNormals[i].v;
 
