@@ -27,6 +27,12 @@
 
 #pragma warning(push)
 #pragma warning(disable : 4005)
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmacro-redefined"
+#endif
+
 #define NOMINMAX
 #define NODRAWTEXT
 #define NOGDI
@@ -70,6 +76,7 @@
 #include "d3dx12.h"
 #endif
 
+#define _XM_NO_XMVECTOR_OVERLOADS_
 #include <DirectXMath.h>
 #include <DirectXColors.h>
 

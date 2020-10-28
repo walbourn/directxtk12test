@@ -26,8 +26,8 @@ namespace
     constexpr float ADVANCE_TIME = 1.f;
     constexpr float INTERACTIVE_TIME = 10.f;
 
-    const DXGI_FORMAT c_sdrFormat = DXGI_FORMAT_R10G10B10A2_UNORM;
-    const DXGI_FORMAT c_hdrFormat = DXGI_FORMAT_R16G16B16A16_FLOAT;
+    constexpr DXGI_FORMAT c_sdrFormat = DXGI_FORMAT_R10G10B10A2_UNORM;
+    constexpr DXGI_FORMAT c_hdrFormat = DXGI_FORMAT_R16G16B16A16_FLOAT;
 }
 
 Game::Game() noexcept(false)  :
@@ -976,7 +976,7 @@ void Game::CreateDeviceDependentResources()
         m_dualPostProcess[j] = std::make_unique<DualPostProcess>(device, rtState, static_cast<DualPostProcess::Effect>(j));
     }
 
-    int j = 0;
+    size_t j = 0;
 #ifdef XBOX
     for (int m = 0; m < 2; ++m)
 #else
@@ -1020,7 +1020,7 @@ void Game::CreateWindowSizeDependentResources()
             width, height,
             1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
 
-        D3D12_CLEAR_VALUE clearValue = { c_hdrFormat };
+        D3D12_CLEAR_VALUE clearValue = { c_hdrFormat, {} };
         memcpy(clearValue.Color, Colors::CornflowerBlue.f, sizeof(clearValue.Color));
 
         DX::ThrowIfFailed(
@@ -1041,7 +1041,7 @@ void Game::CreateWindowSizeDependentResources()
             width, height,
             1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
 
-        D3D12_CLEAR_VALUE clearValue = { c_sdrFormat };
+        D3D12_CLEAR_VALUE clearValue = { c_sdrFormat, {} };
         memcpy(clearValue.Color, Colors::CornflowerBlue.f, sizeof(clearValue.Color));
 
         DX::ThrowIfFailed(

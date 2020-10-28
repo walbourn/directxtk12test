@@ -116,5 +116,4 @@ private:
     DirectX::SimpleMath::Vector3                        m_cameraPos;
 
     const wchar_t *                                     m_lastStr;
-    wchar_t                                             m_lastStrBuff[128];
 };

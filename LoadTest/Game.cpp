@@ -28,7 +28,7 @@
 
 namespace
 {
-    float dist = 10.f;
+    constexpr float dist = 10.f;
 };
 
 extern void ExitGame() noexcept;
@@ -146,12 +146,9 @@ void Game::Tick()
 }
 
 // Updates the world.
-void Game::Update(DX::StepTimer const& timer)
+void Game::Update(DX::StepTimer const&)
 {
     PIXBeginEvent(PIX_COLOR_DEFAULT, L"Update");
-
-    float elapsedTime = float(timer.GetElapsedSeconds());
-    elapsedTime;
 
     auto pad = m_gamePad->GetState(0);
     auto kb = m_keyboard->GetState();
@@ -405,7 +402,7 @@ void Game::Render()
             nullptr,
             [&](IPropertyBag2* props)
         {
-            PROPBAG2 options[2] = { 0, 0 };
+            PROPBAG2 options[2] = {};
             options[0].pstrName = const_cast<wchar_t*>(L"CompressionQuality");
             options[1].pstrName = const_cast<wchar_t*>(L"TiffCompressionMethod");
 
@@ -893,9 +890,9 @@ void Game::CreateDeviceDependentResources()
 // Allocate all memory resources that change on a window SizeChanged event.
 void Game::CreateWindowSizeDependentResources()
 {
-    static const XMVECTORF32 eyePosition = { 0.0f, 3.0f, -6.0f, 0.0f };
-    static const XMVECTORF32 At = { 0.0f, 1.0f, 0.0f, 0.0f };
-    static const XMVECTORF32 Up = { 0.0f, 1.0f, 0.0f, 0.0f };
+    static const XMVECTORF32 eyePosition = { { { 0.0f, 3.0f, -6.0f, 0.0f } } };
+    static const XMVECTORF32 At = { { { 0.0f, 1.0f, 0.0f, 0.0f } } };
+    static const XMVECTORF32 Up = { { { 0.0f, 1.0f, 0.0f, 0.0f } } };
 
     auto size = m_deviceResources->GetOutputSize();
     float aspect = (float)size.right / (float)size.bottom;

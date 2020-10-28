@@ -27,8 +27,8 @@ namespace
     constexpr float SWAP_TIME = 1.f;
     constexpr float INTERACTIVE_TIME = 10.f;
 
-    const float ortho_width = 6.f;
-    const float ortho_height = 6.f;
+    constexpr float ortho_width = 6.f;
+    constexpr float ortho_height = 6.f;
 
     struct TestVertex
     {
@@ -37,7 +37,7 @@ namespace
             XMStoreFloat3(&this->position, position);
             XMStoreFloat3(&this->normal, normal);
             XMStoreFloat2(&this->textureCoordinate, textureCoordinate);
-            XMStoreFloat2(&this->textureCoordinate2, textureCoordinate * 3);
+            XMStoreFloat2(&this->textureCoordinate2, XMVectorScale(textureCoordinate, 3.f));
             XMStoreUByte4(&this->blendIndices, XMVectorSet(0, 0, 0, 0));
 
             XMStoreFloat4(&this->blendWeight, XMVectorSet(1.f, 0.f, 0.f, 0.f));
@@ -89,8 +89,7 @@ namespace
             blendIndices = bn.blendIndices;
 
             XMVECTOR v = XMLoadFloat3(&bn.normal);
-            v = v * g_XMOneHalf;
-            v += g_XMOneHalf;
+            v = XMVectorMultiplyAdd(v, g_XMOneHalf, g_XMOneHalf);
             XMStoreFloat3PK(&this->normal, v);
 
             v = XMLoadFloat2(&bn.textureCoordinate);
@@ -236,9 +235,6 @@ void Game::Tick()
 void Game::Update(DX::StepTimer const& timer)
 {
     PIXBeginEvent(PIX_COLOR_DEFAULT, L"Update");
-
-    float elapsedTime = float(timer.GetElapsedSeconds());
-    elapsedTime;
 
     auto pad = m_gamePad->GetState(0);
     auto kb = m_keyboard->GetState();
@@ -1602,20 +1598,20 @@ void Game::CreateCube()
 
     static const XMVECTORF32 faceNormals[FaceCount] =
     {
-        { 0,  0,  1 },
-        { 0,  0, -1 },
-        { 1,  0,  0 },
-        { -1,  0,  0 },
-        { 0,  1,  0 },
-        { 0, -1,  0 },
+        { { { 0,  0,  1, 0 } } },
+        { { { 0,  0, -1, 0 } } },
+        { { { 1,  0,  0, 0 } } },
+        { { { -1,  0,  0, 0 } } },
+        { { { 0,  1,  0, 0 } } },
+        { { { 0, -1,  0, 0 } } },
     };
 
     static const XMVECTORF32 textureCoordinates[4] =
     {
-        { 1, 0 },
-        { 1, 1 },
-        { 0, 1 },
-        { 0, 0 },
+        { { { 1, 0, 0, 0 } } },
+        { { { 1, 1, 0, 0 } } },
+        { { { 0, 1, 0, 0 } } },
+        { { { 0, 0, 0, 0 } } },
     };
 
     static uint32_t colors[FaceCount]
@@ -1628,18 +1624,18 @@ void Game::CreateCube()
         0xFF00FFFF,
     };
 
-    static const XMVECTORF32 tsize = { 0.25f, 0.25f, 0.25f, 0.f };
+    const Vector4 tsize(0.25f, 0.25f, 0.25f, 0.f);
 
     // Create each face in turn.
-    for (int i = 0; i < FaceCount; i++)
+    for (size_t i = 0; i < FaceCount; i++)
     {
-        XMVECTOR normal = faceNormals[i];
+        Vector4 normal = faceNormals[i].v;
 
         // Get two vectors perpendicular both to the face normal and to each other.
         XMVECTOR basis = (i >= 4) ? g_XMIdentityR2 : g_XMIdentityR1;
 
-        XMVECTOR side1 = XMVector3Cross(normal, basis);
-        XMVECTOR side2 = XMVector3Cross(normal, side1);
+        Vector4 side1 = XMVector3Cross(normal, basis);
+        Vector4 side2 = XMVector3Cross(normal, side1);
 
         // Six indices (two triangles) per face.
         size_t vbase = vertices.size();
