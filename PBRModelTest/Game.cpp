@@ -293,11 +293,11 @@ void Game::Render()
     commandList->SetDescriptorHeaps(_countof(heaps), heaps);
 
     //--- Set PBR lighting sources ---
-    auto radianceTex = m_resourceDescriptors->GetGpuHandle(Descriptors::RadianceIBL1 + m_ibl);
+    auto radianceTex = m_resourceDescriptors->GetGpuHandle(Descriptors::RadianceIBL1 + size_t(m_ibl));
 
     auto diffuseDesc = m_radianceIBL[0]->GetDesc();
 
-    auto irradianceTex = m_resourceDescriptors->GetGpuHandle(Descriptors::IrradianceIBL1 + m_ibl);
+    auto irradianceTex = m_resourceDescriptors->GetGpuHandle(Descriptors::IrradianceIBL1 + size_t(m_ibl));
 
     for (auto& it : m_cubeNormal)
     {

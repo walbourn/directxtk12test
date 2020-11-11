@@ -177,7 +177,7 @@ std::unique_ptr<Model> CreateModelFromOBJ(
     {
         if (*it != curmaterial)
         {
-            auto mat = obj->materials[*it];
+            auto& mat = obj->materials[*it];
 
             isAlpha = (mat.fAlpha < 1.f) ? true : false;
 
