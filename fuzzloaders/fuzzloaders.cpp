@@ -25,7 +25,7 @@
 #define NOHELP
 #pragma warning(pop)
 
-#include <windows.h>
+#include <Windows.h>
 
 #include <d3d12.h>
 

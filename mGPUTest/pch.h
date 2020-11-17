@@ -19,9 +19,9 @@
 #include <winapifamily.h>
 
 #if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) 
-#include <WinSDKVer.h>
+#include <winsdkver.h>
 #define _WIN32_WINNT 0x0A00
-#include <SDKDDKVer.h>
+#include <sdkddkver.h>
 
 #pragma warning(push)
 #pragma warning(disable : 4005)
@@ -49,7 +49,7 @@
 #include <stdlib.h>
 #include <crtdbg.h>
 
-#include <windows.h>
+#include <Windows.h>
 #endif
 
 #include <wrl/client.h>
