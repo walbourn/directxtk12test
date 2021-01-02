@@ -290,7 +290,7 @@ void Game::Render()
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Render");
 
     ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap(), m_states->Heap() };
-    commandList->SetDescriptorHeaps(_countof(heaps), heaps);
+    commandList->SetDescriptorHeaps(static_cast<UINT>(std::size(heaps)), heaps);
 
     //--- Set PBR lighting sources ---
     auto radianceTex = m_resourceDescriptors->GetGpuHandle(Descriptors::RadianceIBL1 + size_t(m_ibl));
@@ -636,7 +636,7 @@ void Game::CreateDeviceDependentResources()
         IBL_PATH L"SunSubMixer_specularIBL.dds",
     };
 
-    static_assert(_countof(s_radianceIBL) == _countof(s_irradianceIBL), "IBL array mismatch");
+    static_assert(std::size(s_radianceIBL) == std::size(s_irradianceIBL), "IBL array mismatch");
 
     for (size_t j = 0; j < s_nIBL; ++j)
     {

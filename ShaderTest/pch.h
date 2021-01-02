@@ -82,12 +82,12 @@
 #include <DirectXColors.h>
 
 #include <algorithm>
+#include <cstdio>
 #include <exception>
+#include <iterator>
 #include <memory>
 #include <stdexcept>
-#include <vector>
 
-#include <stdio.h>
 #include <pix.h>
 
 #include "CommonStates.h"

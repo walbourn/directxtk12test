@@ -253,7 +253,7 @@ void Game::Render()
                 { Vector3(-0.75f,  0.75f, 0.5f), Colors::White },
             };
 
-            m_batch->Draw(D3D_PRIMITIVE_TOPOLOGY_POINTLIST, points, _countof(points));
+            m_batch->Draw(D3D_PRIMITIVE_TOPOLOGY_POINTLIST, points, static_cast<UINT>(std::size(points)));
         }
 
         m_batch->End();
@@ -665,7 +665,7 @@ void Game::UnitTests()
         };
 
         if (FAILED(CreateStaticBuffer(device, resourceUpload,
-            s_vertexData, _countof(s_vertexData), sizeof(VertexPositionColor),
+            s_vertexData, std::size(s_vertexData), sizeof(VertexPositionColor),
             D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
             m_test1.ReleaseAndGetAddressOf())))
         {
@@ -674,7 +674,7 @@ void Game::UnitTests()
         }
 
         if (FAILED(CreateStaticBuffer(device, resourceUpload,
-            s_vertexData, _countof(s_vertexData),
+            s_vertexData, std::size(s_vertexData),
             D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
             m_test2.ReleaseAndGetAddressOf())))
         {
@@ -682,7 +682,7 @@ void Game::UnitTests()
             success = false;
         }
 
-        std::vector<VertexPositionColor> verts(s_vertexData, s_vertexData + _countof(s_vertexData));
+        std::vector<VertexPositionColor> verts(s_vertexData, s_vertexData + std::size(s_vertexData));
 
         if (FAILED(CreateStaticBuffer(device, resourceUpload,
             verts,

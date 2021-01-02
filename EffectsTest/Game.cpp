@@ -256,7 +256,7 @@ void Game::Render()
 
     // Set the descriptor heaps
     ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap(), m_states->Heap() };
-    commandList->SetDescriptorHeaps(_countof(heaps), heaps);
+    commandList->SetDescriptorHeaps(static_cast<UINT>(std::size(heaps)), heaps);
 
     // Time-based animation
     float time = static_cast<float>(m_timer.GetTotalSeconds());

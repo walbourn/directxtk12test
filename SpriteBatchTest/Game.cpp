@@ -279,7 +279,7 @@ void Game::Render()
     m_spriteBatch->End();
 
     // Test alt samplers
-    commandList->SetDescriptorHeaps(_countof(heaps), heaps);
+    commandList->SetDescriptorHeaps(static_cast<UINT>(std::size(heaps)), heaps);
 
     RECT tileRect = { long(catSize.x), long(catSize.y), long(catSize.x * 3), long(catSize.y * 3) };
 

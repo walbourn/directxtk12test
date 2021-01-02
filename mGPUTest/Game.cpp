@@ -156,7 +156,7 @@ void Game::Render()
                                             { Vector3(-0.75f,  0.25f, 0.5f), magenta },		{ Vector3(-0.75f,  0.5f,  0.5f), cyan },
                                             { Vector3(-0.75f,  0.75f, 0.5f), Colors::White} };
 
-            m_batch[adapterIdx]->Draw(D3D_PRIMITIVE_TOPOLOGY_POINTLIST, points, _countof(points));
+            m_batch[adapterIdx]->Draw(D3D_PRIMITIVE_TOPOLOGY_POINTLIST, points, static_cast<UINT>(std::size(points)));
         }
 
         m_batch[adapterIdx]->End();

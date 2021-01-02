@@ -85,13 +85,13 @@
 #include <DirectXColors.h>
 
 #include <algorithm>
+#include <cstdio>
 #include <exception>
+#include <iterator>
 #include <memory>
 #include <random>
 #include <stdexcept>
 #include <type_traits>
-
-#include <stdio.h>
 
 #include <pix3.h>
 

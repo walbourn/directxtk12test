@@ -388,7 +388,7 @@ void DeviceResources::Prepare(D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_
                 CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargetsGameDVR[m_backBufferIndex].Get(),
                     beforeState, afterState),
             };
-            m_commandList->ResourceBarrier(_countof(barriers), barriers);
+            m_commandList->ResourceBarrier(static_cast<UINT>(std::size(barriers)), barriers);
         }
         else
         {
@@ -412,7 +412,7 @@ void DeviceResources::Present(D3D12_RESOURCE_STATES beforeState)
                 CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_backBufferIndex].Get(), beforeState, D3D12_RESOURCE_STATE_PRESENT),
                 CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargetsGameDVR[m_backBufferIndex].Get(), beforeState, D3D12_RESOURCE_STATE_PRESENT),
             };
-            m_commandList->ResourceBarrier(_countof(barriers), barriers);
+            m_commandList->ResourceBarrier(static_cast<UINT>(std::size(barriers)), barriers);
         }
         else
         {
@@ -436,7 +436,7 @@ void DeviceResources::Present(D3D12_RESOURCE_STATES beforeState)
 
         presentParameterSets[1] = presentParameterSets[0];
 
-        DXGIXPresentArray(1, 0, 0, _countof(presentParameterSets), ppSwapChains, presentParameterSets);
+        DXGIXPresentArray(1, 0, 0, static_cast<UINT>(std::size(presentParameterSets)), ppSwapChains, presentParameterSets);
     }
     else
     {

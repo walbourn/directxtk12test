@@ -291,7 +291,7 @@ void Game::Render()
 
     // Set the descriptor heaps
     ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap(), m_states->Heap() };
-    commandList->SetDescriptorHeaps(_countof(heaps), heaps);
+    commandList->SetDescriptorHeaps(static_cast<UINT>(std::size(heaps)), heaps);
 
     //--- Draw Wavefront OBJ models --------------------------------------------------------
     for (auto& it : m_cupNormal)
