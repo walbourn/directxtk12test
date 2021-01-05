@@ -146,15 +146,15 @@ void DeviceResources::CreateDeviceResources()
         ThrowIfFailed(D3D12CreateDevice(ppAdapter[adapterIdx], m_d3dMinFeatureLevel, IID_PPV_ARGS(m_pAdaptersD3D[adapterIdx].m_d3dDevice.ReleaseAndGetAddressOf())));
         m_pAdaptersD3D[adapterIdx].m_d3dDevice->SetName(L"DeviceResources");
 
-    #ifndef NDEBUG
+#ifndef NDEBUG
         // Configure debug device (if active).
         ComPtr<ID3D12InfoQueue> d3dInfoQueue;
         if (SUCCEEDED(m_pAdaptersD3D[adapterIdx].m_d3dDevice.As(&d3dInfoQueue)))
         {
-    #ifdef _DEBUG
+#ifdef _DEBUG
             d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
             d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
-    #endif
+#endif
             D3D12_MESSAGE_ID hide[] =
             {
                 D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,
@@ -166,7 +166,7 @@ void DeviceResources::CreateDeviceResources()
             filter.DenyList.pIDList = hide;
             d3dInfoQueue->AddStorageFilterEntries(&filter);
         }
-    #endif
+#endif
 
         // Determine maximum supported feature level for this device
         static const D3D_FEATURE_LEVEL s_featureLevels[] =
@@ -246,7 +246,7 @@ void DeviceResources::CreateDeviceResources()
         m_pAdaptersD3D[adapterIdx].m_fenceEvent.Attach(CreateEvent(nullptr, FALSE, FALSE, nullptr));
         if (!m_pAdaptersD3D[adapterIdx].m_fenceEvent.IsValid())
         {
-            throw std::exception("CreateEvent");
+            throw std::system_error(std::error_code(static_cast<int>(GetLastError()), std::system_category()), "CreateEventEx");
         }
     }//End of # adapters loop
 
@@ -259,7 +259,7 @@ void DeviceResources::CreateWindowSizeDependentResources()
 {
     if (!m_window)
     {
-        throw std::exception("Call SetWindow with a valid Win32 window handle");
+        throw std::logic_error("Call SetWindow with a valid Win32 window handle");
     }
 
     // Wait until all previous GPU work is complete.
@@ -763,7 +763,7 @@ void DeviceResources::GetAdapter(IDXGIAdapter1* ppAdapters[], unsigned int numAd
             // Try WARP12 instead
             if (FAILED(m_dxgiFactory->EnumWarpAdapter(IID_PPV_ARGS(&(ppAdapters[starting])))))
             {
-                throw std::exception("WARP12 not available. Enable the 'Graphics Tools' optional feature");
+                throw std::runtime_error("WARP12 not available. Enable the 'Graphics Tools' optional feature");
             }
             ++numFoundAdapters;
             OutputDebugStringA("Adding Direct3D Adapter - WARP12\n");

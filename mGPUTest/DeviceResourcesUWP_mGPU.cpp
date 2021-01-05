@@ -245,114 +245,114 @@ void DeviceResources::CreateDeviceResources()
             ppAdapter[adapterIdx],
             m_d3dMinFeatureLevel,
             IID_PPV_ARGS(m_pAdaptersD3D[adapterIdx].m_d3dDevice.ReleaseAndGetAddressOf())
-            ));
+        ));
 
         m_pAdaptersD3D[adapterIdx].m_d3dDevice->SetName(L"DeviceResources");
 
 #ifndef NDEBUG
-    // Configure debug device (if active).
-    ComPtr<ID3D12InfoQueue> d3dInfoQueue;
-    if (SUCCEEDED(m_pAdaptersD3D[adapterIdx].m_d3dDevice.As(&d3dInfoQueue)))
-    {
-#ifdef _DEBUG
-        d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
-        d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
-#endif
-        D3D12_MESSAGE_ID hide[] =
+        // Configure debug device (if active).
+        ComPtr<ID3D12InfoQueue> d3dInfoQueue;
+        if (SUCCEEDED(m_pAdaptersD3D[adapterIdx].m_d3dDevice.As(&d3dInfoQueue)))
         {
-            D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,
-            D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE,
-            D3D12_MESSAGE_ID_EXECUTECOMMANDLISTS_WRONGSWAPCHAINBUFFERREFERENCE
-        };
-        D3D12_INFO_QUEUE_FILTER filter = {};
-        filter.DenyList.NumIDs = static_cast<UINT>(std::size(hide));
-        filter.DenyList.pIDList = hide;
-        d3dInfoQueue->AddStorageFilterEntries(&filter);
-    }
+#ifdef _DEBUG
+            d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
+            d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
+#endif
+            D3D12_MESSAGE_ID hide[] =
+            {
+                D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,
+                D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE,
+                D3D12_MESSAGE_ID_EXECUTECOMMANDLISTS_WRONGSWAPCHAINBUFFERREFERENCE
+            };
+            D3D12_INFO_QUEUE_FILTER filter = {};
+            filter.DenyList.NumIDs = static_cast<UINT>(std::size(hide));
+            filter.DenyList.pIDList = hide;
+            d3dInfoQueue->AddStorageFilterEntries(&filter);
+        }
 #endif
 
-    // Determine maximum supported feature level for this device
-    static const D3D_FEATURE_LEVEL s_featureLevels[] =
-    {
-        D3D_FEATURE_LEVEL_12_1,
-        D3D_FEATURE_LEVEL_12_0,
-        D3D_FEATURE_LEVEL_11_1,
-        D3D_FEATURE_LEVEL_11_0,
-    };
+        // Determine maximum supported feature level for this device
+        static const D3D_FEATURE_LEVEL s_featureLevels[] =
+        {
+            D3D_FEATURE_LEVEL_12_1,
+            D3D_FEATURE_LEVEL_12_0,
+            D3D_FEATURE_LEVEL_11_1,
+            D3D_FEATURE_LEVEL_11_0,
+        };
 
-    D3D12_FEATURE_DATA_FEATURE_LEVELS featLevels =
-    {
-        static_cast<UINT>(std::size(s_featureLevels)), s_featureLevels, D3D_FEATURE_LEVEL_11_0
-    };
+        D3D12_FEATURE_DATA_FEATURE_LEVELS featLevels =
+        {
+            static_cast<UINT>(std::size(s_featureLevels)), s_featureLevels, D3D_FEATURE_LEVEL_11_0
+        };
 
-    HRESULT hr = m_pAdaptersD3D[adapterIdx].m_d3dDevice->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &featLevels, sizeof(featLevels));
-    if (SUCCEEDED(hr))
-    {
-        m_d3dFeatureLevel = featLevels.MaxSupportedFeatureLevel;
-    }
-    else
-    {
-        m_d3dFeatureLevel = m_d3dMinFeatureLevel;
-    }
+        HRESULT hr = m_pAdaptersD3D[adapterIdx].m_d3dDevice->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &featLevels, sizeof(featLevels));
+        if (SUCCEEDED(hr))
+        {
+            m_d3dFeatureLevel = featLevels.MaxSupportedFeatureLevel;
+        }
+        else
+        {
+            m_d3dFeatureLevel = m_d3dMinFeatureLevel;
+        }
 
-    // Create the command queue.
-    D3D12_COMMAND_QUEUE_DESC queueDesc = {};
-    queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-    queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+        // Create the command queue.
+        D3D12_COMMAND_QUEUE_DESC queueDesc = {};
+        queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+        queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 
-    ThrowIfFailed(m_pAdaptersD3D[adapterIdx].m_d3dDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(m_pAdaptersD3D[adapterIdx].m_commandQueue.ReleaseAndGetAddressOf())));
+        ThrowIfFailed(m_pAdaptersD3D[adapterIdx].m_d3dDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(m_pAdaptersD3D[adapterIdx].m_commandQueue.ReleaseAndGetAddressOf())));
 
-    m_pAdaptersD3D[adapterIdx].m_commandQueue->SetName(L"DeviceResources");
+        m_pAdaptersD3D[adapterIdx].m_commandQueue->SetName(L"DeviceResources");
 
-    // Create descriptor heaps for render target views and depth stencil views.
-    D3D12_DESCRIPTOR_HEAP_DESC rtvDescriptorHeapDesc = {};
-    rtvDescriptorHeapDesc.NumDescriptors = m_backBufferCount;
-    rtvDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+        // Create descriptor heaps for render target views and depth stencil views.
+        D3D12_DESCRIPTOR_HEAP_DESC rtvDescriptorHeapDesc = {};
+        rtvDescriptorHeapDesc.NumDescriptors = m_backBufferCount;
+        rtvDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 
-    ThrowIfFailed(m_pAdaptersD3D[adapterIdx].m_d3dDevice->CreateDescriptorHeap(&rtvDescriptorHeapDesc, IID_PPV_ARGS(m_pAdaptersD3D[adapterIdx].m_rtvDescriptorHeap.ReleaseAndGetAddressOf())));
+        ThrowIfFailed(m_pAdaptersD3D[adapterIdx].m_d3dDevice->CreateDescriptorHeap(&rtvDescriptorHeapDesc, IID_PPV_ARGS(m_pAdaptersD3D[adapterIdx].m_rtvDescriptorHeap.ReleaseAndGetAddressOf())));
 
-    m_pAdaptersD3D[adapterIdx].m_rtvDescriptorHeap->SetName(L"DeviceResources");
+        m_pAdaptersD3D[adapterIdx].m_rtvDescriptorHeap->SetName(L"DeviceResources");
 
-    m_pAdaptersD3D[adapterIdx].m_rtvDescriptorSize = m_pAdaptersD3D[adapterIdx].m_d3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+        m_pAdaptersD3D[adapterIdx].m_rtvDescriptorSize = m_pAdaptersD3D[adapterIdx].m_d3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
-    if (m_depthBufferFormat != DXGI_FORMAT_UNKNOWN)
-    {
-        D3D12_DESCRIPTOR_HEAP_DESC dsvDescriptorHeapDesc = {};
-        dsvDescriptorHeapDesc.NumDescriptors = 1;
-        dsvDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+        if (m_depthBufferFormat != DXGI_FORMAT_UNKNOWN)
+        {
+            D3D12_DESCRIPTOR_HEAP_DESC dsvDescriptorHeapDesc = {};
+            dsvDescriptorHeapDesc.NumDescriptors = 1;
+            dsvDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
 
-        ThrowIfFailed(m_pAdaptersD3D[adapterIdx].m_d3dDevice->CreateDescriptorHeap(&dsvDescriptorHeapDesc, IID_PPV_ARGS(m_pAdaptersD3D[adapterIdx].m_dsvDescriptorHeap.ReleaseAndGetAddressOf())));
+            ThrowIfFailed(m_pAdaptersD3D[adapterIdx].m_d3dDevice->CreateDescriptorHeap(&dsvDescriptorHeapDesc, IID_PPV_ARGS(m_pAdaptersD3D[adapterIdx].m_dsvDescriptorHeap.ReleaseAndGetAddressOf())));
 
-        m_pAdaptersD3D[adapterIdx].m_dsvDescriptorHeap->SetName(L"DeviceResources");
-    }
+            m_pAdaptersD3D[adapterIdx].m_dsvDescriptorHeap->SetName(L"DeviceResources");
+        }
 
-    // Create a command allocator for each back buffer that will be rendered to.
-    for (UINT n = 0; n < m_backBufferCount; n++)
-    {
-       ThrowIfFailed(m_pAdaptersD3D[adapterIdx].m_d3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(m_pAdaptersD3D[adapterIdx].m_commandAllocators[n].ReleaseAndGetAddressOf())));
+        // Create a command allocator for each back buffer that will be rendered to.
+        for (UINT n = 0; n < m_backBufferCount; n++)
+        {
+            ThrowIfFailed(m_pAdaptersD3D[adapterIdx].m_d3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(m_pAdaptersD3D[adapterIdx].m_commandAllocators[n].ReleaseAndGetAddressOf())));
 
-        wchar_t name[25] = {};
-        swprintf_s(name, L"Render target %u", n);
-        m_pAdaptersD3D[adapterIdx].m_commandAllocators[n]->SetName(name);
-    }
+            wchar_t name[25] = {};
+            swprintf_s(name, L"Render target %u", n);
+            m_pAdaptersD3D[adapterIdx].m_commandAllocators[n]->SetName(name);
+        }
 
-     // Create a command list for recording graphics commands.
-     ThrowIfFailed(m_pAdaptersD3D[adapterIdx].m_d3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_pAdaptersD3D[adapterIdx].m_commandAllocators[0].Get(), nullptr, IID_PPV_ARGS(m_pAdaptersD3D[adapterIdx].m_commandList.ReleaseAndGetAddressOf())));
-     ThrowIfFailed(m_pAdaptersD3D[adapterIdx].m_commandList->Close());
+        // Create a command list for recording graphics commands.
+        ThrowIfFailed(m_pAdaptersD3D[adapterIdx].m_d3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_pAdaptersD3D[adapterIdx].m_commandAllocators[0].Get(), nullptr, IID_PPV_ARGS(m_pAdaptersD3D[adapterIdx].m_commandList.ReleaseAndGetAddressOf())));
+        ThrowIfFailed(m_pAdaptersD3D[adapterIdx].m_commandList->Close());
 
-     m_pAdaptersD3D[adapterIdx].m_commandList->SetName(L"DeviceResources");
+        m_pAdaptersD3D[adapterIdx].m_commandList->SetName(L"DeviceResources");
 
-     // Create a fence for tracking GPU execution progress.
-     ThrowIfFailed(m_pAdaptersD3D[adapterIdx].m_d3dDevice->CreateFence(m_pAdaptersD3D[adapterIdx].m_fenceValues[m_backBufferIndex], D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(m_pAdaptersD3D[adapterIdx].m_fence.ReleaseAndGetAddressOf())));
-     m_pAdaptersD3D[adapterIdx].m_fenceValues[m_backBufferIndex]++;
+        // Create a fence for tracking GPU execution progress.
+        ThrowIfFailed(m_pAdaptersD3D[adapterIdx].m_d3dDevice->CreateFence(m_pAdaptersD3D[adapterIdx].m_fenceValues[m_backBufferIndex], D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(m_pAdaptersD3D[adapterIdx].m_fence.ReleaseAndGetAddressOf())));
+        m_pAdaptersD3D[adapterIdx].m_fenceValues[m_backBufferIndex]++;
 
-     m_pAdaptersD3D[adapterIdx].m_fence->SetName(L"DeviceResources");
+        m_pAdaptersD3D[adapterIdx].m_fence->SetName(L"DeviceResources");
 
-     m_pAdaptersD3D[adapterIdx].m_fenceEvent.Attach(CreateEvent(nullptr, FALSE, FALSE, nullptr));
-     if (!m_pAdaptersD3D[adapterIdx].m_fenceEvent.IsValid())
-     {
-         throw std::exception("CreateEvent");
-     }
+        m_pAdaptersD3D[adapterIdx].m_fenceEvent.Attach(CreateEvent(nullptr, FALSE, FALSE, nullptr));
+        if (!m_pAdaptersD3D[adapterIdx].m_fenceEvent.IsValid())
+        {
+            throw std::system_error(std::error_code(static_cast<int>(GetLastError()), std::system_category()), "CreateEventEx");
+        }
     }
 
     delete [] ppAdapter;
@@ -364,7 +364,7 @@ void DeviceResources::CreateWindowSizeDependentResources()
 {
     if (!m_window)
     {
-        throw std::exception("Call SetWindow with a valid CoreWindow pointer");
+        throw std::logic_error("Call SetWindow with a valid CoreWindow pointer");
     }
 
     // Wait until all previous GPU work is complete.
@@ -921,7 +921,7 @@ void DeviceResources::GetAdapter(IDXGIAdapter1** ppAdapters, unsigned int numAda
             // Try WARP12 instead
             if (FAILED(m_dxgiFactory->EnumWarpAdapter(IID_PPV_ARGS(&(ppAdapters[starting])))))
             {
-                throw std::exception("WARP12 not available. Enable the 'Graphics Tools' optional feature");
+                throw std::runtime_error("WARP12 not available. Enable the 'Graphics Tools' optional feature");
             }
             ++numFoundAdapters;
             OutputDebugStringA("Adding Direct3D Adapter - WARP12\n");

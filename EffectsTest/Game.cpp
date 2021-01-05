@@ -1340,7 +1340,7 @@ void Game::CreateTeapot()
 
     // Create the D3D buffers.
     if (vertices.size() >= USHRT_MAX)
-        throw std::exception("Too many vertices for 16-bit index buffer");
+        throw std::runtime_error("Too many vertices for 16-bit index buffer");
 
     // Vertex data
     auto verts = reinterpret_cast<const uint8_t*>(vertices.data());

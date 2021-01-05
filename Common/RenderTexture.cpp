@@ -13,7 +13,7 @@
 #include "DirectXHelpers.h"
 
 #include <algorithm>
-#include <stdio.h>
+#include <cstdio>
 #include <stdexcept>
 
 using namespace DirectX;
@@ -48,7 +48,7 @@ void RenderTexture::SetDevice(_In_ ID3D12Device* device, D3D12_CPU_DESCRIPTOR_HA
         D3D12_FEATURE_DATA_FORMAT_SUPPORT formatSupport = { m_format, D3D12_FORMAT_SUPPORT1_NONE, D3D12_FORMAT_SUPPORT2_NONE };
         if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &formatSupport, sizeof(formatSupport))))
         {
-            throw std::exception("CheckFeatureSupport");
+            throw std::runtime_error("CheckFeatureSupport");
         }
 
         UINT required = D3D12_FORMAT_SUPPORT1_TEXTURE2D | D3D12_FORMAT_SUPPORT1_RENDER_TARGET;
@@ -59,13 +59,13 @@ void RenderTexture::SetDevice(_In_ ID3D12Device* device, D3D12_CPU_DESCRIPTOR_HA
             sprintf_s(buff, "RenderTexture: Device does not support the requested format (%u)!\n", m_format);
             OutputDebugStringA(buff);
 #endif
-            throw std::exception("RenderTexture");
+            throw std::runtime_error("RenderTexture");
         }
     }
 
     if (!srvDescriptor.ptr || !rtvDescriptor.ptr)
     {
-        throw std::exception("Invalid descriptors");
+        throw std::runtime_error("Invalid descriptors");
     }
 
     m_device = device;

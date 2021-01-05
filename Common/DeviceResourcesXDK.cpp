@@ -147,7 +147,7 @@ void DeviceResources::CreateDeviceResources()
     m_fenceEvent.Attach(CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE));
     if (!m_fenceEvent.IsValid())
     {
-        throw std::exception("CreateEvent");
+        throw std::system_error(std::error_code(static_cast<int>(GetLastError()), std::system_category()), "CreateEventEx");
     }
 
     if (m_options & c_Enable4K_UHD)
@@ -183,7 +183,7 @@ void DeviceResources::CreateWindowSizeDependentResources()
 {
     if (!m_window)
     {
-        throw std::exception("Call SetWindow with a valid CoreWindow pointer");
+        throw std::logic_error("Call SetWindow with a valid CoreWindow pointer");
     }
 
     // Wait until all previous GPU work is complete.

@@ -323,6 +323,7 @@
     <ClInclude Include="..\Common\d3dx12.h" />
     <ClInclude Include="..\Common\DeviceResourcesUWP.h" />
     <ClInclude Include="..\Common\DirectXTKTest.h" />
+    <ClInclude Include="..\Common\ReadData.h" />
     <ClInclude Include="..\Common\StepTimer.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="pch.h" />
