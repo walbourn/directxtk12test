@@ -94,7 +94,10 @@
 #include <system_error>
 #include <type_traits>
 
+#pragma warning(push)
+#pragma warning(disable : 4100)
 #include <pix3.h>
+#pragma warning(pop)
 
 #include "Audio.h"
 #include "BufferHelpers.h"
