@@ -35,11 +35,11 @@
 #include <dxgi1_5.h>
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-
 #include <algorithm>
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+#include <cwchar>
 #include <list>
 #include <memory>
 #include <vector>

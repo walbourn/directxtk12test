@@ -46,7 +46,6 @@
 #pragma warning(pop)
 
 #define _CRTDBG_MAP_ALLOC
-#include <stdlib.h>
 #include <crtdbg.h>
 
 #include <Windows.h>
@@ -76,6 +75,8 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <cstdlib>
+#include <cwchar>
 #include <exception>
 #include <iterator>
 #include <memory>
