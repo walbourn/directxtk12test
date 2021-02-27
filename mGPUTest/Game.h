@@ -3,7 +3,7 @@
 //
 // Developer unit test for mGPU Direct3D 12 support
 //
-// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 //
 // http://go.microsoft.com/fwlink/?LinkID=615561
