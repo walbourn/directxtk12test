@@ -274,6 +274,9 @@ void DeviceResources::CreateDeviceResources()
     // Determine maximum supported feature level for this device
     static const D3D_FEATURE_LEVEL s_featureLevels[] =
     {
+#if defined(NTDDI_WIN10_FE) && (NTDDI_VERSION >= NTDDI_WIN10_FE)
+        D3D_FEATURE_LEVEL_12_2,
+#endif
         D3D_FEATURE_LEVEL_12_1,
         D3D_FEATURE_LEVEL_12_0,
         D3D_FEATURE_LEVEL_11_1,
@@ -363,6 +366,9 @@ void DeviceResources::CreateDeviceResources()
     case D3D_FEATURE_LEVEL_11_1: featLevel = "11.1"; break;
     case D3D_FEATURE_LEVEL_12_0: featLevel = "12.0"; break;
     case D3D_FEATURE_LEVEL_12_1: featLevel = "12.1"; break;
+#if defined(NTDDI_WIN10_FE) && (NTDDI_VERSION >= NTDDI_WIN10_FE)
+    case D3D_FEATURE_LEVEL_12_2: featLevel = "12.2"; break;
+#endif
     default: break;
     }
 
@@ -382,7 +388,9 @@ void DeviceResources::CreateDeviceResources()
     }
 
     D3D12_FEATURE_DATA_SHADER_MODEL shaderModel = {};
-#if defined(NTDDI_WIN10_VB) && (NTDDI_VERSION >= NTDDI_WIN10_VB)
+#if defined(NTDDI_WIN10_FE) && (NTDDI_VERSION >= NTDDI_WIN10_FE)
+    shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_7;
+#elif defined(NTDDI_WIN10_VB) && (NTDDI_VERSION >= NTDDI_WIN10_VB)
     shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_6;
 #elif defined(NTDDI_WIN10_19H1) && (NTDDI_VERSION >= NTDDI_WIN10_19H1)
     shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_5;
@@ -429,6 +437,10 @@ void DeviceResources::CreateDeviceResources()
 
 #if defined(NTDDI_WIN10_VB) && (NTDDI_VERSION >= NTDDI_WIN10_VB)
     case D3D_SHADER_MODEL_6_6: shaderModelVer = "6.6"; break;
+#endif
+
+#if defined(NTDDI_WIN10_FE) && (NTDDI_VERSION >= NTDDI_WIN10_FE)
+    case D3D_SHADER_MODEL_6_7: shaderModelVer = "6.7"; break;
 #endif
     }
 
