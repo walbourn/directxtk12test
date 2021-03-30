@@ -8,6 +8,9 @@
       <UniqueIdentifier>8581221f-08c2-4c32-a3c1-813e617d4fd2</UniqueIdentifier>
       <Extensions>bmp;dds;fbx;gif;jpg;jpeg;tga;tiff;tif;png</Extensions>
     </Filter>
+    <Filter Include="Assets\Logos">
+      <UniqueIdentifier>{509687ea-702a-4fb5-89b1-5f5c7d2549a7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -31,20 +34,6 @@
     <ClCompile Include="..\Common\MainGXDK.cpp">
       <Filter>Common</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="..\Common\Logo.scale-100.png">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="..\Common\SmallLogo.scale-100.png">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="..\Common\SplashScreen.scale-100.png">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="..\Common\StoreLogo.scale-100.png">
-      <Filter>Assets</Filter>
-    </Image>
   </ItemGroup>
   <ItemGroup>
     <None Include="comic.spritefont">
@@ -76,6 +65,23 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="MicrosoftGame.Config" />
+    <CopyFileToFolders Include="..\Common\LargeLogo.png">
+      <Filter>Assets\Logos</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\Common\Logo.scale-100.png">
+      <Filter>Assets\Logos</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\Common\SmallLogo.scale-100.png">
+      <Filter>Assets\Logos</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\Common\SplashScreen.scale-100.png">
+      <Filter>Assets\Logos</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\Common\StoreLogo.scale-100.png">
+      <Filter>Assets\Logos</Filter>
+    </CopyFileToFolders>
+  </ItemGroup>
+  <ItemGroup>
+    <MGCCompile Include="MicrosoftGame.Config" />
   </ItemGroup>
 </Project>

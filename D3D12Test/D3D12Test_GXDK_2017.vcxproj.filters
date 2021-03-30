@@ -33,20 +33,23 @@
     <ClCompile Include="Game.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\Common\Logo.scale-100.png">
+    <CopyFileToFolders Include="..\Common\Logo.scale-100.png">
       <Filter>Assets</Filter>
-    </Image>
-    <Image Include="..\Common\SmallLogo.scale-100.png">
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\Common\SmallLogo.scale-100.png">
       <Filter>Assets</Filter>
-    </Image>
-    <Image Include="..\Common\SplashScreen.scale-100.png">
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\Common\SplashScreen.scale-100.png">
       <Filter>Assets</Filter>
-    </Image>
-    <Image Include="..\Common\StoreLogo.scale-100.png">
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\Common\StoreLogo.scale-100.png">
       <Filter>Assets</Filter>
-    </Image>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\Common\LargeLogo.png">
+      <Filter>Assets</Filter>
+    </CopyFileToFolders>
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="MicrosoftGame.Config" />
+    <MGCCompile Include="MicrosoftGame.Config" />
   </ItemGroup>
 </Project>

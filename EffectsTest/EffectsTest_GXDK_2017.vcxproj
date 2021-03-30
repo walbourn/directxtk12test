@@ -341,18 +341,24 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\Common\Logo.scale-100.png">
-      <Link>Logo.png</Link>
-    </Image>
-    <Image Include="..\Common\SmallLogo.scale-100.png">
-      <Link>SmallLogo.png</Link>
-    </Image>
-    <Image Include="..\Common\SplashScreen.scale-100.png">
-      <Link>SplashScreen.png</Link>
-    </Image>
-    <Image Include="..\Common\StoreLogo.scale-100.png">
-      <Link>StoreLogo.png</Link>
-    </Image>
+    <CopyFileToFolders Include="..\Common\Logo.scale-100.png">
+      <DestinationFileName>Logo.png</DestinationFileName>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\Common\SmallLogo.scale-100.png">
+      <DestinationFileName>SmallLogo.png</DestinationFileName>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\Common\SplashScreen.scale-100.png">
+      <DestinationFileName>SplashScreen.png</DestinationFileName>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\Common\StoreLogo.scale-100.png">
+      <DestinationFileName>StoreLogo.png</DestinationFileName>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\Common\LargeLogo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <MGCCompile Include="MicrosoftGame.Config" />
+  </ItemGroup>
+  <ItemGroup>
     <Image Include="cat.dds" />
     <Image Include="cubemap.dds" />
     <Image Include="default.dds" />
@@ -363,12 +369,6 @@
     <Image Include="spnza_bricks_a.DDS" />
     <Image Include="spnza_bricks_a_normal.DDS" />
     <Image Include="spnza_bricks_a_specular.DDS" />
-  </ItemGroup>
-  <ItemGroup>
-    <CopyFileToFolders Include="MicrosoftGame.Config">
-      <FileType>Document</FileType>
-      <SubType>Designer</SubType>
-    </CopyFileToFolders>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

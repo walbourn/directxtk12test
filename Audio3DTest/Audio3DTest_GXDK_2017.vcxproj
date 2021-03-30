@@ -346,27 +346,25 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="MicrosoftGame.Config">
-      <FileType>Document</FileType>
-      <SubType>Designer</SubType>
-    </CopyFileToFolders>
-  </ItemGroup>
-  <ItemGroup>
     <Media Include="heli.wav" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\Common\Logo.scale-100.png">
-      <Link>Logo.png</Link>
-    </Image>
-    <Image Include="..\Common\SmallLogo.scale-100.png">
-      <Link>SmallLogo.png</Link>
-    </Image>
-    <Image Include="..\Common\SplashScreen.scale-100.png">
-      <Link>SplashScreen.png</Link>
-    </Image>
-    <Image Include="..\Common\StoreLogo.scale-100.png">
-      <Link>StoreLogo.png</Link>
-    </Image>
+    <CopyFileToFolders Include="..\Common\Logo.scale-100.png">
+      <DestinationFileName>Logo.png</DestinationFileName>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\Common\SmallLogo.scale-100.png">
+      <DestinationFileName>SmallLogo.png</DestinationFileName>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\Common\SplashScreen.scale-100.png">
+      <DestinationFileName>SplashScreen.png</DestinationFileName>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\Common\StoreLogo.scale-100.png">
+      <DestinationFileName>StoreLogo.png</DestinationFileName>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\Common\LargeLogo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <MGCCompile Include="MicrosoftGame.Config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\DirectXTK_GDK_2017.vcxproj">
