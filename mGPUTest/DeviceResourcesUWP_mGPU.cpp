@@ -938,7 +938,6 @@ void DeviceResources::UpdateColorSpace()
 
     bool isDisplayHDR10 = false;
 
-#if defined(NTDDI_WIN10_RS2)
     if (m_swapChain)
     {
         ComPtr<IDXGIOutput> output;
@@ -958,7 +957,6 @@ void DeviceResources::UpdateColorSpace()
             }
         }
     }
-#endif
 
     if ((m_options & c_EnableHDR) && isDisplayHDR10)
     {

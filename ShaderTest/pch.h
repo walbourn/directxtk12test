@@ -60,12 +60,7 @@
 #include <d3dx12_x.h>
 #else
 #include <d3d12.h>
-
-#if defined(NTDDI_WIN10_RS2)
 #include <dxgi1_6.h>
-#else
-#include <dxgi1_5.h>
-#endif
 
 #ifdef _DEBUG
 #include <dxgidebug.h>
