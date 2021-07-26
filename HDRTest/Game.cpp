@@ -48,13 +48,22 @@ namespace
     constexpr float col3 = 1.f;
     constexpr float col4 = 3.5f;
     constexpr float col5 = 5.f;
+
+    const XMMATRIX c_fromExpanded709to2020 = // Custom Rec.709 into Rec.2020
+    {
+          0.6274040f, 0.0457456f, -0.00121055f, 0.f,
+          0.3292820f,  0.941777f,   0.0176041f, 0.f,
+          0.0433136f, 0.0124772f,    0.983607f, 0.f,
+                 0.f,        0.f,          0.f, 1.f
+    };
 }
 
 #ifdef XBOX
 extern bool g_HDRMode;
 #endif
 
-Game::Game() noexcept(false)
+Game::Game() noexcept(false) :
+    m_hdr10Rotation(ToneMapPostProcess::Default)
 {
 #if defined(TEST_HDR_LINEAR) && !defined(XBOX)
     const DXGI_FORMAT c_DisplayFormat = DXGI_FORMAT_R16G16B16A16_FLOAT;
@@ -155,6 +164,27 @@ void Game::Update(DX::StepTimer const&)
         ExitGame();
     }
 
+    if (pad.IsConnected())
+    {
+        m_gamePadButtons.Update(pad);
+
+        if (m_gamePadButtons.x == GamePad::ButtonStateTracker::PRESSED)
+        {
+            CycleColorRotation();
+        }
+    }
+    else
+    {
+        m_gamePadButtons.Reset();
+    }
+
+    m_keyboardButtons.Update(kb);
+
+    if (m_keyboardButtons.pressed.C || m_keyboardButtons.pressed.Enter)
+    {
+        CycleColorRotation();
+    }
+
     PIXEndEvent();
 }
 #pragma endregion
@@ -237,32 +267,32 @@ void Game::Render()
 
     XMMATRIX world = XMMatrixRotationRollPitchYaw(pitch, yaw, roll);
 
-    m_flatEffect->SetMatrices(world* XMMatrixTranslation(col0, row0, 0), m_view, m_projection);
+    m_flatEffect->SetMatrices(world * XMMatrixTranslation(col0, row0, 0), m_view, m_projection);
     m_flatEffect->SetTexture(hdrImage1, m_states->LinearWrap());
     m_flatEffect->Apply(commandList);
     m_shape->Draw(commandList);
 
-    m_flatEffect->SetMatrices(world* XMMatrixTranslation(col1, row0, 0), m_view, m_projection);
+    m_flatEffect->SetMatrices(world * XMMatrixTranslation(col1, row0, 0), m_view, m_projection);
     m_flatEffect->SetTexture(hdrImage2, m_states->LinearWrap());
     m_flatEffect->Apply(commandList);
     m_shape->Draw(commandList);
 
-    m_basicEffect->SetMatrices(world* XMMatrixTranslation(col2, row0, 0), m_view, m_projection);
+    m_basicEffect->SetMatrices(world * XMMatrixTranslation(col2, row0, 0), m_view, m_projection);
     m_basicEffect->SetTexture(hdrImage1, m_states->LinearWrap());
     m_basicEffect->Apply(commandList);
     m_shape->Draw(commandList);
 
-    m_basicEffect->SetMatrices(world* XMMatrixTranslation(col3, row0, 0), m_view, m_projection);
+    m_basicEffect->SetMatrices(world * XMMatrixTranslation(col3, row0, 0), m_view, m_projection);
     m_basicEffect->SetTexture(hdrImage2, m_states->LinearWrap());
     m_basicEffect->Apply(commandList);
     m_shape->Draw(commandList);
 
-    m_brightEffect->SetMatrices(world* XMMatrixTranslation(col4, row0, 0), m_view, m_projection);
+    m_brightEffect->SetMatrices(world * XMMatrixTranslation(col4, row0, 0), m_view, m_projection);
     m_brightEffect->SetTexture(hdrImage1, m_states->LinearWrap());
     m_brightEffect->Apply(commandList);
     m_shape->Draw(commandList);
 
-    m_brightEffect->SetMatrices(world* XMMatrixTranslation(col5, row0, 0), m_view, m_projection);
+    m_brightEffect->SetMatrices(world * XMMatrixTranslation(col5, row0, 0), m_view, m_projection);
     m_brightEffect->SetTexture(hdrImage2, m_states->LinearWrap());
     m_brightEffect->Apply(commandList);
     m_shape->Draw(commandList);
@@ -270,11 +300,27 @@ void Game::Render()
     // Render HUD
     m_batch->Begin(commandList);
 
-    const wchar_t* info = nullptr;
-
 #ifdef XBOX
-    info = (g_HDRMode) ? L"HDR10 (GameDVR: Reinhard)" : L"Reinhard";
+    wchar_t info[128] = {};
+    if (g_HDRMode)
+    {
+        const wchar_t* hdrRot = nullptr;
+        switch (m_hdr10Rotation)
+        {
+        case ToneMapPostProcess::DCI_P3:    hdrRot = L"DCI-P3"; break;
+        case ToneMapPostProcess::DisplayP3: hdrRot = L"Display P3"; break;
+        case 3:                             hdrRot = L"Custom: X709"; break;
+        default:                            hdrRot = L"Default"; break;
+        }
+
+        swprintf_s(info, L"HDR10 (%ls) [GameDVR: Reinhard]", hdrRot);
+    }
+    else
+    {
+        wcscpy_s(info, L"Reinhard");
+    }
 #else
+    const wchar_t* info = nullptr;
     switch (m_deviceResources->GetColorSpace())
     {
     default:
@@ -282,7 +328,13 @@ void Game::Render()
         break;
 
     case DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020:
-        info = L"HDR10";
+        switch (m_hdr10Rotation)
+        {
+        case ToneMapPostProcess::DCI_P3:    info = L"HDR10 (DCI-P3)"; break;
+        case ToneMapPostProcess::DisplayP3: info = L"HDR10 (Display P3)"; break;
+        case 3:                             info = L"HDR10 (Custom: X709)"; break;
+        default: info = L"HDR10"; break;
+        }
         break;
 
     case DXGI_COLOR_SPACE_RGB_FULL_G10_NONE_P709:
@@ -301,6 +353,15 @@ void Game::Render()
     m_hdrScene->EndScene(commandList);
 
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Tonemap");
+
+    if (m_hdr10Rotation == 3)
+    {
+        m_toneMap->SetColorRotation(c_fromExpanded709to2020);
+    }
+    else
+    {
+        m_toneMap->SetColorRotation(static_cast<ToneMapPostProcess::ColorPrimaryRotation>(m_hdr10Rotation));
+    }
 
 #ifdef XBOX
     D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptors[2] = { m_deviceResources->GetRenderTargetView(), m_deviceResources->GetGameDVRRenderTargetView() };
@@ -370,6 +431,8 @@ void Game::Clear()
 // Message handlers
 void Game::OnActivated()
 {
+    m_keyboardButtons.Reset();
+    m_gamePadButtons.Reset();
 }
 
 void Game::OnDeactivated()
@@ -386,6 +449,8 @@ void Game::OnResuming()
     m_deviceResources->Resume();
 
     m_timer.ResetElapsedTime();
+    m_gamePadButtons.Reset();
+    m_keyboardButtons.Reset();
 }
 
 #ifdef PC
@@ -602,3 +667,18 @@ void Game::OnDeviceRestored()
 }
 #endif
 #pragma endregion
+
+void Game::CycleColorRotation()
+{
+#ifndef XBOX
+    if (m_deviceResources->GetColorSpace() != DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020)
+        return;
+#endif
+
+    m_hdr10Rotation += 1;
+
+    if (m_hdr10Rotation > 3)
+    {
+        m_hdr10Rotation = ToneMapPostProcess::Default;
+    }
+}

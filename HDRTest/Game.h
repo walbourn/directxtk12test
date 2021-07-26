@@ -76,6 +76,8 @@ private:
     void CreateDeviceDependentResources();
     void CreateWindowSizeDependentResources();
 
+    void CycleColorRotation();
+
     // Device resources.
     std::unique_ptr<DX::DeviceResources>    m_deviceResources;
 
@@ -85,6 +87,9 @@ private:
     // Input devices.
     std::unique_ptr<DirectX::GamePad>       m_gamePad;
     std::unique_ptr<DirectX::Keyboard>      m_keyboard;
+
+    DirectX::GamePad::ButtonStateTracker    m_gamePadButtons;
+    DirectX::Keyboard::KeyboardStateTracker m_keyboardButtons;
 
     // DirectXTK Test Objects
     std::unique_ptr<DirectX::GraphicsMemory>    m_graphicsMemory;
@@ -132,4 +137,6 @@ private:
         HDRScene,
         RTCount
     };
+
+    int                                             m_hdr10Rotation;
 };
