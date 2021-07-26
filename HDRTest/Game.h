@@ -77,6 +77,7 @@ private:
     void CreateWindowSizeDependentResources();
 
     void CycleColorRotation();
+    void CycleToneMapOperator();
 
     // Device resources.
     std::unique_ptr<DX::DeviceResources>    m_deviceResources;
@@ -97,7 +98,7 @@ private:
     std::unique_ptr<DirectX::DescriptorHeap>    m_renderDescriptors;
 
     // HDR resources
-    std::unique_ptr<DirectX::ToneMapPostProcess>    m_toneMap;
+    std::unique_ptr<DirectX::ToneMapPostProcess>    m_toneMap[DirectX::ToneMapPostProcess::Operator_Max];
 
 #ifndef XBOX
     std::unique_ptr<DirectX::ToneMapPostProcess>    m_toneMapLinear;
@@ -138,5 +139,6 @@ private:
         RTCount
     };
 
+    int                                             m_toneMapMode;
     int                                             m_hdr10Rotation;
 };

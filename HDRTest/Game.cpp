@@ -63,6 +63,7 @@ extern bool g_HDRMode;
 #endif
 
 Game::Game() noexcept(false) :
+    m_toneMapMode(ToneMapPostProcess::Reinhard),
     m_hdr10Rotation(ToneMapPostProcess::Default)
 {
 #if defined(TEST_HDR_LINEAR) && !defined(XBOX)
@@ -168,6 +169,11 @@ void Game::Update(DX::StepTimer const&)
     {
         m_gamePadButtons.Update(pad);
 
+        if (m_gamePadButtons.y == GamePad::ButtonStateTracker::PRESSED)
+        {
+            CycleToneMapOperator();
+        }
+
         if (m_gamePadButtons.x == GamePad::ButtonStateTracker::PRESSED)
         {
             CycleColorRotation();
@@ -179,6 +185,11 @@ void Game::Update(DX::StepTimer const&)
     }
 
     m_keyboardButtons.Update(kb);
+
+    if (m_keyboardButtons.pressed.T || m_keyboardButtons.pressed.Space)
+    {
+        CycleToneMapOperator();
+    }
 
     if (m_keyboardButtons.pressed.C || m_keyboardButtons.pressed.Enter)
     {
@@ -313,18 +324,36 @@ void Game::Render()
         default:                            hdrRot = L"Default"; break;
         }
 
-        swprintf_s(info, L"HDR10 (%ls) [GameDVR: Reinhard]", hdrRot);
+        const wchar_t* toneMapper = nullptr;
+        switch (m_toneMapMode)
+        {
+        case ToneMapPostProcess::Reinhard: toneMapper = L"Reinhard"; break;
+        case ToneMapPostProcess::ACESFilmic: toneMapper = L"ACES Filmic"; break;
+        default: toneMapper = L"Saturate"; break;
+        }
+
+        swprintf_s(info, L"HDR10 (%ls) [GameDVR: %ls]", hdrRot, toneMapper);
     }
     else
     {
-        wcscpy_s(info, L"Reinhard");
+        switch (m_toneMapMode)
+        {
+        case ToneMapPostProcess::Reinhard: wcscpy_s(info, L"Reinhard"); break;
+        case ToneMapPostProcess::ACESFilmic: wcscpy_s(info, L"ACES Filmic"); break;
+        default: wcscpy_s(info, L"Saturate"); break;
+        }
     }
 #else
     const wchar_t* info = nullptr;
     switch (m_deviceResources->GetColorSpace())
     {
     default:
-        info = L"Reinhard";
+        switch (m_toneMapMode)
+        {
+        case ToneMapPostProcess::Reinhard:   info = L"Reinhard"; break;
+        case ToneMapPostProcess::ACESFilmic: info = L"ACES Filmic"; break;
+        default:                             info = L"Saturate"; break;
+        }
         break;
 
     case DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020:
@@ -352,41 +381,46 @@ void Game::Render()
     // Tonemap the frame.
     m_hdrScene->EndScene(commandList);
 
+    ToneMapPostProcess* toneMap = nullptr;
+#ifdef XBOX
+    toneMap = m_toneMap[m_toneMapMode].get();
+#else
+    switch (m_deviceResources->GetColorSpace())
+    {
+    default:
+        toneMap = m_toneMap[m_toneMapMode].get();
+        break;
+
+    case DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020:
+        toneMap = m_toneMapHDR10.get();
+        break;
+
+    case DXGI_COLOR_SPACE_RGB_FULL_G10_NONE_P709:
+        toneMap = m_toneMapLinear.get();
+        break;
+    }
+#endif
+
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Tonemap");
 
     if (m_hdr10Rotation == 3)
     {
-        m_toneMap->SetColorRotation(c_fromExpanded709to2020);
+        toneMap->SetColorRotation(c_fromExpanded709to2020);
     }
     else
     {
-        m_toneMap->SetColorRotation(static_cast<ToneMapPostProcess::ColorPrimaryRotation>(m_hdr10Rotation));
+        toneMap->SetColorRotation(static_cast<ToneMapPostProcess::ColorPrimaryRotation>(m_hdr10Rotation));
     }
 
 #ifdef XBOX
     D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptors[2] = { m_deviceResources->GetRenderTargetView(), m_deviceResources->GetGameDVRRenderTargetView() };
     commandList->OMSetRenderTargets(2, rtvDescriptors, FALSE, nullptr);
-
-    m_toneMap->Process(commandList);
 #else
     auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, nullptr);
-
-    switch (m_deviceResources->GetColorSpace())
-    {
-    default:
-        m_toneMap->Process(commandList);
-        break;
-
-    case DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020:
-        m_toneMapHDR10->Process(commandList);
-        break;
-
-    case DXGI_COLOR_SPACE_RGB_FULL_G10_NONE_P709:
-        m_toneMapLinear->Process(commandList);
-        break;
-    }
 #endif
+
+    toneMap->Process(commandList);
 
     PIXEndEvent(commandList);
 
@@ -578,14 +612,18 @@ void Game::CreateDeviceDependentResources()
     rtState.rtvFormats[1] = m_deviceResources->GetGameDVRFormat();
 #endif
 
-    m_toneMap = std::make_unique<ToneMapPostProcess>(
-        device,
-        rtState,
-        ToneMapPostProcess::Reinhard, (m_deviceResources->GetBackBufferFormat() == DXGI_FORMAT_R16G16B16A16_FLOAT) ? ToneMapPostProcess::Linear : ToneMapPostProcess::SRGB
+    for (unsigned int mode = ToneMapPostProcess::Saturate; mode < ToneMapPostProcess::Operator_Max; ++mode)
+    {
+        m_toneMap[mode] = std::make_unique<ToneMapPostProcess>(
+            device,
+            rtState,
+            static_cast<ToneMapPostProcess::Operator>(mode),
+            (m_deviceResources->GetBackBufferFormat() == DXGI_FORMAT_R16G16B16A16_FLOAT) ? ToneMapPostProcess::Linear : ToneMapPostProcess::SRGB
 #ifdef XBOX
-        , true
+            , true
 #endif
-        );
+            );
+    }
 
 #ifndef XBOX
     m_toneMapLinear = std::make_unique<ToneMapPostProcess>(device, rtState, ToneMapPostProcess::None, ToneMapPostProcess::Linear);
@@ -616,7 +654,10 @@ void Game::CreateWindowSizeDependentResources()
     // Set windows size for HDR.
     m_hdrScene->SetWindow(size);
 
-    m_toneMap->SetHDRSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex));
+    for (unsigned int mode = ToneMapPostProcess::Saturate; mode < ToneMapPostProcess::Operator_Max; ++mode)
+    {
+        m_toneMap[mode]->SetHDRSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex));
+    }
 
 #ifndef XBOX
     m_toneMapLinear->SetHDRSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex));
@@ -646,7 +687,10 @@ void Game::OnDeviceLost()
     m_hdrImage1.Reset();
     m_hdrImage2.Reset();
 
-    m_toneMap.reset();
+    for (unsigned int mode = ToneMapPostProcess::Saturate; mode < ToneMapPostProcess::Operator_Max; ++mode)
+    {
+        m_toneMap[mode].reset();
+    }
 
     m_toneMapLinear.reset();
     m_toneMapHDR10.reset();
@@ -667,6 +711,21 @@ void Game::OnDeviceRestored()
 }
 #endif
 #pragma endregion
+
+void Game::CycleToneMapOperator()
+{
+#ifndef XBOX
+    if (m_deviceResources->GetColorSpace() != DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709)
+        return;
+#endif
+
+    m_toneMapMode += 1;
+
+    if (m_toneMapMode >= static_cast<int>(ToneMapPostProcess::Operator_Max))
+    {
+        m_toneMapMode = ToneMapPostProcess::Saturate;
+    }
+}
 
 void Game::CycleColorRotation()
 {
