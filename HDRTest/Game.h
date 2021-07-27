@@ -76,8 +76,8 @@ private:
     void CreateDeviceDependentResources();
     void CreateWindowSizeDependentResources();
 
-    void CycleColorRotation();
     void CycleToneMapOperator();
+    void CycleColorRotation();
 
     // Device resources.
     std::unique_ptr<DX::DeviceResources>    m_deviceResources;
