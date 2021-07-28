@@ -76,6 +76,9 @@ private:
     void CreateDeviceDependentResources();
     void CreateWindowSizeDependentResources();
 
+    void CycleToneMapOperator();
+    void CycleColorRotation();
+
     // Device resources.
     std::unique_ptr<DX::DeviceResources>    m_deviceResources;
 
@@ -86,13 +89,16 @@ private:
     std::unique_ptr<DirectX::GamePad>       m_gamePad;
     std::unique_ptr<DirectX::Keyboard>      m_keyboard;
 
+    DirectX::GamePad::ButtonStateTracker    m_gamePadButtons;
+    DirectX::Keyboard::KeyboardStateTracker m_keyboardButtons;
+
     // DirectXTK Test Objects
     std::unique_ptr<DirectX::GraphicsMemory>    m_graphicsMemory;
     std::unique_ptr<DirectX::DescriptorHeap>    m_resourceDescriptors;
     std::unique_ptr<DirectX::DescriptorHeap>    m_renderDescriptors;
 
     // HDR resources
-    std::unique_ptr<DirectX::ToneMapPostProcess>    m_toneMap;
+    std::unique_ptr<DirectX::ToneMapPostProcess>    m_toneMap[DirectX::ToneMapPostProcess::Operator_Max];
 
 #ifndef XBOX
     std::unique_ptr<DirectX::ToneMapPostProcess>    m_toneMapLinear;
@@ -132,4 +138,7 @@ private:
         HDRScene,
         RTCount
     };
+
+    int                                             m_toneMapMode;
+    int                                             m_hdr10Rotation;
 };
