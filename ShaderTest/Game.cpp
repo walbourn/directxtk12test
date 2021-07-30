@@ -12,7 +12,7 @@
 #include "pch.h"
 #include "Game.h"
 
-//#define GAMMA_CORRECT_RENDERING
+#define GAMMA_CORRECT_RENDERING
 
 extern void ExitGame() noexcept;
 
@@ -55,10 +55,14 @@ namespace
         XMFLOAT4 color;
 
         static const D3D12_INPUT_LAYOUT_DESC InputLayout;
+        static const D3D12_INPUT_LAYOUT_DESC InstancedInputLayout;
 
     private:
         static constexpr unsigned int InputElementCount = 7;
         static const D3D12_INPUT_ELEMENT_DESC InputElements[InputElementCount];
+
+        static constexpr unsigned int InstancedInputElementCount = 10;
+        static const D3D12_INPUT_ELEMENT_DESC InstancedInputElements[InstancedInputElementCount];
     };
 
     const D3D12_INPUT_ELEMENT_DESC TestVertex::InputElements[] =
@@ -72,12 +76,32 @@ namespace
         { "COLOR",        0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
     };
 
+    const D3D12_INPUT_ELEMENT_DESC TestVertex::InstancedInputElements[] =
+    {
+        { "SV_Position",  0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,   0 },
+        { "NORMAL",       0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,   0 },
+        { "TEXCOORD",     0, DXGI_FORMAT_R32G32_FLOAT,       0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,   0 },
+        { "TEXCOORD",     1, DXGI_FORMAT_R32G32_FLOAT,       0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,   0 },
+        { "BLENDINDICES", 0, DXGI_FORMAT_R8G8B8A8_UINT,      0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,   0 },
+        { "BLENDWEIGHT",  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,   0 },
+        { "COLOR",        0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,   0 },
+        { "InstMatrix",   0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 },
+        { "InstMatrix",   1, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 },
+        { "InstMatrix",   2, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 },
+    };
+
     const D3D12_INPUT_LAYOUT_DESC TestVertex::InputLayout =
     {
         TestVertex::InputElements,
         TestVertex::InputElementCount
     };
     
+    const D3D12_INPUT_LAYOUT_DESC TestVertex::InstancedInputLayout =
+    {
+        TestVertex::InstancedInputElements,
+        TestVertex::InstancedInputElementCount
+    };
+
     using VertexCollection = std::vector<TestVertex>;
     using IndexCollection = std::vector<uint16_t>;
 
@@ -114,10 +138,14 @@ namespace
         XMCOLOR color;
 
         static const D3D12_INPUT_LAYOUT_DESC InputLayout;
+        static const D3D12_INPUT_LAYOUT_DESC InstancedInputLayout;
 
     private:
         static constexpr int InputElementCount = 7;
         static const D3D12_INPUT_ELEMENT_DESC InputElements[InputElementCount];
+
+        static constexpr unsigned int InstancedInputElementCount = 10;
+        static const D3D12_INPUT_ELEMENT_DESC InstancedInputElements[InstancedInputElementCount];
     };
 
     const D3D12_INPUT_ELEMENT_DESC TestCompressedVertex::InputElements[] =
@@ -131,19 +159,40 @@ namespace
         { "COLOR",        0, DXGI_FORMAT_B8G8R8A8_UNORM,  0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
     };
 
+    const D3D12_INPUT_ELEMENT_DESC TestCompressedVertex::InstancedInputElements[] =
+    {
+        { "SV_Position",  0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,   0 },
+        { "NORMAL",       0, DXGI_FORMAT_R11G11B10_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,   0 },
+        { "TEXCOORD",     0, DXGI_FORMAT_R16G16_FLOAT,       0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,   0 },
+        { "TEXCOORD",     1, DXGI_FORMAT_R16G16_FLOAT,       0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,   0 },
+        { "BLENDINDICES", 0, DXGI_FORMAT_R8G8B8A8_UINT,      0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,   0 },
+        { "BLENDWEIGHT",  0, DXGI_FORMAT_R8G8B8A8_UNORM,     0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,   0 },
+        { "COLOR",        0, DXGI_FORMAT_B8G8R8A8_UNORM,     0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,   0 },
+        { "InstMatrix",   0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 },
+        { "InstMatrix",   1, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 },
+        { "InstMatrix",   2, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 },
+    };
+
     const D3D12_INPUT_LAYOUT_DESC TestCompressedVertex::InputLayout =
     {
         TestCompressedVertex::InputElements,
         TestCompressedVertex::InputElementCount
     };
+
+    const D3D12_INPUT_LAYOUT_DESC TestCompressedVertex::InstancedInputLayout =
+    {
+        TestCompressedVertex::InstancedInputElements,
+        TestCompressedVertex::InstancedInputElementCount
+    };
 }  // anonymous namespace
 
 Game::Game() noexcept(false) :
     m_indexCount(0),
+    m_instanceCount(0),
     m_vertexBufferView{},
     m_vertexBufferViewBn{},
     m_indexBufferView{},
-    m_showCompressed(false),
+    m_renderMode(Render_Normal),
     m_delay(0)
 {
 #ifdef GAMMA_CORRECT_RENDERING
@@ -256,7 +305,8 @@ void Game::Update(DX::StepTimer const& timer)
 
     if (m_keyboardButtons.IsKeyPressed(Keyboard::Space) || (m_gamePadButtons.y == GamePad::ButtonStateTracker::PRESSED))
     {
-        m_showCompressed = !m_showCompressed;
+        CycleRenderMode();
+
         m_delay = INTERACTIVE_TIME;
     }
     else if (!kb.Space && !(pad.IsConnected() && pad.IsYPressed()))
@@ -265,7 +315,7 @@ void Game::Update(DX::StepTimer const& timer)
 
         if (m_delay <= 0.f)
         {
-            m_showCompressed = !m_showCompressed;
+            CycleRenderMode();
             m_delay = SWAP_TIME;
         }
     }
@@ -305,254 +355,345 @@ void Game::Render()
     commandList->SetDescriptorHeaps(static_cast<UINT>(std::size(heaps)), heaps);
 
     // Setup for cube drawing.
-    commandList->IASetVertexBuffers(0, 1, (m_showCompressed) ? &m_vertexBufferViewBn : &m_vertexBufferView);
+    switch (m_renderMode)
+    {
+    case Render_Compressed:
+        commandList->IASetVertexBuffers(0, 1, &m_vertexBufferViewBn);
+        break;
+
+    case Render_Instanced:
+    case Render_CompressedInstanced:
+    {
+        size_t j = 0;
+        for (float x = -ortho_width + 0.5f; x < ortho_width; x += 1.f)
+        {
+            XMMATRIX m = world * XMMatrixTranslation(x, 0.f, 0.f);
+            XMStoreFloat3x4(&m_instanceTransforms[j], m);
+            ++j;
+        }
+
+        assert(j == m_instanceCount);
+
+        const size_t instBytes = j * sizeof(XMFLOAT3X4);
+
+        GraphicsResource inst = m_graphicsMemory->Allocate(instBytes);
+        memcpy(inst.Memory(), m_instanceTransforms.get(), instBytes);
+
+        D3D12_VERTEX_BUFFER_VIEW vertexBuffers[2] = { (m_renderMode == Render_CompressedInstanced) ? m_vertexBufferViewBn : m_vertexBufferView };
+        vertexBuffers[1].BufferLocation = inst.GpuAddress();
+        vertexBuffers[1].SizeInBytes = static_cast<UINT>(instBytes);
+        vertexBuffers[1].StrideInBytes = sizeof(XMFLOAT3X4);
+        commandList->IASetVertexBuffers(0, 2, vertexBuffers);
+    }
+    break;
+
+    default:
+        commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+        break;
+    }
+
     commandList->IASetIndexBuffer(&m_indexBufferView);
 
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    // BasicEffect
     float y = ortho_height - 0.5f;
+    if (m_renderMode == Render_Instanced || m_renderMode == Render_CompressedInstanced)
     {
-        auto it = (m_showCompressed) ? m_basicBn.cbegin() : m_basic.cbegin();
-        auto eit = (m_showCompressed) ? m_basicBn.cend() : m_basic.cend();
-        assert(it != eit);
+        bool showCompressed = (m_renderMode == Render_CompressedInstanced);
 
-        for (; y > -ortho_height; y -= 1.f)
+        // NormalMapEffect (instanced)
         {
-            for (float x = -ortho_width + 0.5f; x < ortho_width; x += 1.f)
+            auto it = (showCompressed) ? m_normalMapInstancedBn.cbegin() : m_normalMapInstanced.cbegin();
+            auto eit = (showCompressed) ? m_normalMapInstancedBn.cend() : m_normalMapInstanced.cend();
+            assert(it != eit);
+
+            for (; y > -ortho_height; y -= 1.f)
             {
-                (*it)->SetWorld(world * XMMatrixTranslation(x, y, -1.f));
+                (*it)->SetWorld(XMMatrixTranslation(0, y, -1.f));
                 (*it)->Apply(commandList);
-                commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+                commandList->DrawIndexedInstanced(m_indexCount, m_instanceCount, 0, 0, 0);
 
                 ++it;
                 if (it == eit)
                     break;
             }
 
-            if (it == eit)
-                break;
+            // Make sure we drew all the effects
+            assert(it == eit);
+
+            y -= 1.f;
         }
 
-        // Make sure we drew all the effects
-        assert(it == eit);
-
-        y -= 1.f;
-    }
-
-    // SkinnedEffect
-    {
-        auto it = (m_showCompressed) ? m_skinningBn.cbegin() : m_skinning.cbegin();
-        auto eit = (m_showCompressed) ? m_skinningBn.cend() : m_skinning.cend();
-        assert(it != eit);
-
-        XMMATRIX bones[4] =
+        // PBREffect (instanced)
         {
-            XMMatrixIdentity(),
-            XMMatrixIdentity(),
-            XMMatrixIdentity(),
-            XMMatrixIdentity(),
-        };
+            auto it = (showCompressed) ? m_pbrInstancedBn.cbegin() : m_pbrInstanced.cbegin();
+            auto eit = (showCompressed) ? m_pbrInstancedBn.cend() : m_pbrInstanced.cend();
+            assert(it != eit);
 
-        for (; y > -ortho_height; y -= 1.f)
-        {
-            for (float x = -ortho_width + 0.5f; x < ortho_width; x += 1.f)
+            for (; y > -ortho_height; y -= 1.f)
             {
-                (*it)->SetBoneTransforms(bones, 4);
-                (*it)->SetWorld(world * XMMatrixTranslation(x, y, -1.f));
+                (*it)->SetWorld(XMMatrixTranslation(0, y, -1.f));
                 (*it)->Apply(commandList);
-                commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+                commandList->DrawIndexedInstanced(m_indexCount, m_instanceCount, 0, 0, 0);
 
                 ++it;
                 if (it == eit)
                     break;
             }
 
-            if (it == eit)
-                break;
+            // Make sure we drew all the effects
+            assert(it == eit);
+
+            y -= 1.f;
         }
-
-        // Make sure we drew all the effects
-        assert(it == eit);
-
-        y -= 1.f;
     }
-
-    // EnvironmentMapEffect
+    else
     {
-        auto it = (m_showCompressed) ? m_envmapBn.cbegin() : m_envmap.cbegin();
-        auto eit = (m_showCompressed) ? m_envmapBn.cend() : m_envmap.cend();
-        assert(it != eit);
+        bool showCompressed = (m_renderMode == Render_Compressed);
 
-        for (; y > -ortho_height; y -= 1.f)
+        // BasicEffect
         {
-            for (float x = -ortho_width + 0.5f; x < ortho_width; x += 1.f)
-            {
-                (*it)->SetWorld(world * XMMatrixTranslation(x, y, -1.f));
-                (*it)->Apply(commandList);
-                commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+            auto it = (showCompressed) ? m_basicBn.cbegin() : m_basic.cbegin();
+            auto eit = (showCompressed) ? m_basicBn.cend() : m_basic.cend();
+            assert(it != eit);
 
-                ++it;
+            for (; y > -ortho_height; y -= 1.f)
+            {
+                for (float x = -ortho_width + 0.5f; x < ortho_width; x += 1.f)
+                {
+                    (*it)->SetWorld(world * XMMatrixTranslation(x, y, -1.f));
+                    (*it)->Apply(commandList);
+                    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+                    ++it;
+                    if (it == eit)
+                        break;
+                }
+
                 if (it == eit)
                     break;
             }
 
-            if (it == eit)
-                break;
+            // Make sure we drew all the effects
+            assert(it == eit);
+
+            y -= 1.f;
         }
 
-        // Make sure we drew all the effects
-        assert(it == eit);
-
-        y -= 1.f;
-    }
-
-    commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-
-    // DualTextureEffect
-    {
-        auto it = m_dual.begin();
-        assert(it != m_dual.end());
-
-        for (; y > -ortho_height; y -= 1.f)
+        // SkinnedEffect
         {
-            for (float x = -ortho_width + 0.5f; x < ortho_width; x += 1.f)
-            {
-                (*it)->SetWorld(world * XMMatrixTranslation(x, y, -1.f));
-                (*it)->Apply(commandList);
-                commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+            auto it = (showCompressed) ? m_skinningBn.cbegin() : m_skinning.cbegin();
+            auto eit = (showCompressed) ? m_skinningBn.cend() : m_skinning.cend();
+            assert(it != eit);
 
-                ++it;
+            XMMATRIX bones[4] =
+            {
+                XMMatrixIdentity(),
+                XMMatrixIdentity(),
+                XMMatrixIdentity(),
+                XMMatrixIdentity(),
+            };
+
+            for (; y > -ortho_height; y -= 1.f)
+            {
+                for (float x = -ortho_width + 0.5f; x < ortho_width; x += 1.f)
+                {
+                    (*it)->SetBoneTransforms(bones, 4);
+                    (*it)->SetWorld(world * XMMatrixTranslation(x, y, -1.f));
+                    (*it)->Apply(commandList);
+                    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+                    ++it;
+                    if (it == eit)
+                        break;
+                }
+
+                if (it == eit)
+                    break;
+            }
+
+            // Make sure we drew all the effects
+            assert(it == eit);
+
+            y -= 1.f;
+        }
+
+        // EnvironmentMapEffect
+        {
+            auto it = (showCompressed) ? m_envmapBn.cbegin() : m_envmap.cbegin();
+            auto eit = (showCompressed) ? m_envmapBn.cend() : m_envmap.cend();
+            assert(it != eit);
+
+            for (; y > -ortho_height; y -= 1.f)
+            {
+                for (float x = -ortho_width + 0.5f; x < ortho_width; x += 1.f)
+                {
+                    (*it)->SetWorld(world * XMMatrixTranslation(x, y, -1.f));
+                    (*it)->Apply(commandList);
+                    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+                    ++it;
+                    if (it == eit)
+                        break;
+                }
+
+                if (it == eit)
+                    break;
+            }
+
+            // Make sure we drew all the effects
+            assert(it == eit);
+
+            y -= 1.f;
+        }
+
+        commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+
+        // DualTextureEffect
+        {
+            auto it = m_dual.begin();
+            assert(it != m_dual.end());
+
+            for (; y > -ortho_height; y -= 1.f)
+            {
+                for (float x = -ortho_width + 0.5f; x < ortho_width; x += 1.f)
+                {
+                    (*it)->SetWorld(world * XMMatrixTranslation(x, y, -1.f));
+                    (*it)->Apply(commandList);
+                    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+                    ++it;
+                    if (it == m_dual.cend())
+                        break;
+                }
+
                 if (it == m_dual.cend())
                     break;
             }
 
-            if (it == m_dual.cend())
-                break;
+            // Make sure we drew all the effects
+            assert(it == m_dual.cend());
+
+            y -= 1.f;
         }
 
-        // Make sure we drew all the effects
-        assert(it == m_dual.cend());
-
-        y -= 1.f;
-    }
-
-    // AlphaTestEffect
-    {
-        auto it = m_alphTest.begin();
-        assert(it != m_alphTest.end());
-
-        for (; y > -ortho_height; y -= 1.f)
+        // AlphaTestEffect
         {
-            for (float x = -ortho_width + 0.5f; x < ortho_width; x += 1.f)
-            {
-                (*it)->SetWorld(world * XMMatrixTranslation(x, y, -1.f));
-                (*it)->Apply(commandList);
-                commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+            auto it = m_alphTest.begin();
+            assert(it != m_alphTest.end());
 
-                ++it;
+            for (; y > -ortho_height; y -= 1.f)
+            {
+                for (float x = -ortho_width + 0.5f; x < ortho_width; x += 1.f)
+                {
+                    (*it)->SetWorld(world * XMMatrixTranslation(x, y, -1.f));
+                    (*it)->Apply(commandList);
+                    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+                    ++it;
+                    if (it == m_alphTest.cend())
+                        break;
+                }
+
                 if (it == m_alphTest.cend())
                     break;
             }
 
-            if (it == m_alphTest.cend())
-                break;
+            // Make sure we drew all the effects
+            assert(it == m_alphTest.cend());
+
+            y -= 1.f;
         }
 
-        // Make sure we drew all the effects
-        assert(it == m_alphTest.cend());
+        commandList->IASetVertexBuffers(0, 1, (showCompressed) ? &m_vertexBufferViewBn : &m_vertexBufferView);
 
-        y -= 1.f;
-    }
-
-    commandList->IASetVertexBuffers(0, 1, (m_showCompressed) ? &m_vertexBufferViewBn : &m_vertexBufferView);
-
-    // NormalMapEffect
-    {
-        auto it = (m_showCompressed) ? m_normalMapBn.cbegin() : m_normalMap.cbegin();
-        auto eit = (m_showCompressed) ? m_normalMapBn.cend() : m_normalMap.cend();
-        assert(it != eit);
-
-        for (; y > -ortho_height; y -= 1.f)
+        // NormalMapEffect
         {
-            for (float x = -ortho_width + 0.5f; x < ortho_width; x += 1.f)
-            {
-                (*it)->SetWorld(world * XMMatrixTranslation(x, y, -1.f));
-                (*it)->Apply(commandList);
-                commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+            auto it = (showCompressed) ? m_normalMapBn.cbegin() : m_normalMap.cbegin();
+            auto eit = (showCompressed) ? m_normalMapBn.cend() : m_normalMap.cend();
+            assert(it != eit);
 
-                ++it;
+            for (; y > -ortho_height; y -= 1.f)
+            {
+                for (float x = -ortho_width + 0.5f; x < ortho_width; x += 1.f)
+                {
+                    (*it)->SetWorld(world * XMMatrixTranslation(x, y, -1.f));
+                    (*it)->Apply(commandList);
+                    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+                    ++it;
+                    if (it == eit)
+                        break;
+                }
+
                 if (it == eit)
                     break;
             }
 
-            if (it == eit)
-                break;
+            // Make sure we drew all the effects
+            assert(it == eit);
+
+            y -= 1.f;
         }
 
-        // Make sure we drew all the effects
-        assert(it == eit);
-
-        y -= 1.f;
-    }
-
-    // PBREffect
-    {
-        auto it = (m_showCompressed) ? m_pbrBn.cbegin() : m_pbr.cbegin();
-        auto eit = (m_showCompressed) ? m_pbrBn.cend() : m_pbr.cend();
-        assert(it != eit);
-
-        for (; y > -ortho_height; y -= 1.f)
+        // PBREffect
         {
-            for (float x = -ortho_width + 0.5f; x < ortho_width; x += 1.f)
-            {
-                (*it)->SetWorld(world * XMMatrixTranslation(x, y, -1.f));
-                (*it)->Apply(commandList);
-                commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+            auto it = (showCompressed) ? m_pbrBn.cbegin() : m_pbr.cbegin();
+            auto eit = (showCompressed) ? m_pbrBn.cend() : m_pbr.cend();
+            assert(it != eit);
 
-                ++it;
+            for (; y > -ortho_height; y -= 1.f)
+            {
+                for (float x = -ortho_width + 0.5f; x < ortho_width; x += 1.f)
+                {
+                    (*it)->SetWorld(world * XMMatrixTranslation(x, y, -1.f));
+                    (*it)->Apply(commandList);
+                    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+                    ++it;
+                    if (it == eit)
+                        break;
+                }
+
                 if (it == eit)
                     break;
             }
 
-            if (it == eit)
-                break;
+            // Make sure we drew all the effects
+            assert(it == eit);
+
+            y -= 1.f;
         }
 
-        // Make sure we drew all the effects
-        assert(it == eit);
+        // DebugEffect
+        {
+            auto it = (showCompressed) ? m_debugBn.cbegin() : m_debug.cbegin();
+            auto eit = (showCompressed) ? m_debugBn.cend() : m_debug.cend();
+            assert(it != eit);
 
-        y -= 1.f;
+            for (; y > -ortho_height; y -= 1.f)
+            {
+                for (float x = -ortho_width + 0.5f; x < ortho_width; x += 1.f)
+                {
+                    (*it)->SetWorld(world * XMMatrixTranslation(x, y, -1.f));
+                    (*it)->Apply(commandList);
+                    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+                    ++it;
+                    if (it == eit)
+                        break;
+                }
+
+                if (it == eit)
+                    break;
+            }
+
+            // Make sure we drew all the effects
+            assert(it == eit);
+
+            y -= 1.f;
+        }
     }
-
-	// DebugEffect
-	{
-		auto it = (m_showCompressed) ? m_debugBn.cbegin() : m_debug.cbegin();
-		auto eit = (m_showCompressed) ? m_debugBn.cend() : m_debug.cend();
-		assert(it != eit);
-
-		for (; y > -ortho_height; y -= 1.f)
-		{
-			for (float x = -ortho_width + 0.5f; x < ortho_width; x += 1.f)
-			{
-				(*it)->SetWorld(world * XMMatrixTranslation(x, y, -1.f));
-				(*it)->Apply(commandList);
-				commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
-
-				++it;
-				if (it == eit)
-					break;
-			}
-
-			if (it == eit)
-				break;
-		}
-
-		// Make sure we drew all the effects
-		assert(it == eit);
-
-		y -= 1.f;
-	}
 
     PIXEndEvent(commandList);
 
@@ -796,6 +937,28 @@ void Game::CreateDeviceDependentResources()
 
     uploadResourcesFinished.wait();
 
+    // Create instance transforms.
+    {
+        size_t j = 0;
+        for (float x = -ortho_width + 0.5f; x < ortho_width; x += 1.f)
+        {
+            ++j;
+        }
+        m_instanceCount = static_cast<UINT>(j);
+
+        m_instanceTransforms = std::make_unique<XMFLOAT3X4[]>(j);
+
+        constexpr XMFLOAT3X4 s_identity = { 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f };
+
+        j = 0;
+        for (float x = -ortho_width + 0.5f; x < ortho_width; x += 1.f)
+        {
+            m_instanceTransforms[j] = s_identity;
+            m_instanceTransforms[j]._14 = x;
+            ++j;
+        }
+    }
+
     // Create test effects
     RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), m_deviceResources->GetDepthBufferFormat());
     rtState.numRenderTargets = 2;
@@ -808,7 +971,7 @@ void Game::CreateDeviceDependentResources()
     for (int j = 0; j < 2; ++j)
     {
         EffectPipelineStateDescription pd(
-            nullptr,
+            (!j) ? &TestVertex::InputLayout : &TestCompressedVertex::InputLayout,
             CommonStates::AlphaBlend,
             CommonStates::DepthDefault,
             CommonStates::CullNone,
@@ -820,9 +983,14 @@ void Game::CreateDeviceDependentResources()
 			CommonStates::DepthDefault,
 			CommonStates::CullNone,
 			rtState);
+		opaquePd.inputLayout = pd.inputLayout;
 
-		pd.inputLayout = (!j) ? TestVertex::InputLayout : TestCompressedVertex::InputLayout;
-		opaquePd.inputLayout = (!j) ? TestVertex::InputLayout : TestCompressedVertex::InputLayout;
+        EffectPipelineStateDescription pdInst(
+            (!j) ? &TestVertex::InstancedInputLayout : &TestCompressedVertex::InstancedInputLayout,
+            CommonStates::AlphaBlend,
+            CommonStates::DepthDefault,
+            CommonStates::CullNone,
+            rtState);
 
         uint32_t eflags = (!j) ? EffectFlags::None : EffectFlags::BiasedVertexNormals;
 
@@ -1190,6 +1358,7 @@ void Game::CreateDeviceDependentResources()
             auto specular = m_resourceDescriptors->GetGpuHandle(Descriptors::BrickSpecular);
 
             std::vector<std::unique_ptr<DirectX::NormalMapEffect>> normalMap;
+            std::vector<std::unique_ptr<DirectX::NormalMapEffect>> normalMapInst;
 
             // NormalMapEffect (no specular)
             auto effect = std::make_unique<NormalMapEffect>(device, eflags, pd);
@@ -1204,6 +1373,12 @@ void Game::CreateDeviceDependentResources()
             effect->SetNormalTexture(normal);
             effect->SetFogColor(Colors::Black);
             normalMap.emplace_back(std::move(effect));
+
+            effect = std::make_unique<NormalMapEffect>(device, eflags | EffectFlags::Instancing, pdInst);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(diffuse, sampler);
+            effect->SetNormalTexture(normal);
+            normalMapInst.emplace_back(std::move(effect));
 
             // NormalMapEffect (specular)
             effect = std::make_unique<NormalMapEffect>(device, eflags | EffectFlags::Specular, pd);
@@ -1221,12 +1396,25 @@ void Game::CreateDeviceDependentResources()
             effect->SetFogColor(Colors::Black);
             normalMap.emplace_back(std::move(effect));
 
+            effect = std::make_unique<NormalMapEffect>(device, eflags | EffectFlags::Instancing | EffectFlags::Specular, pdInst);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(diffuse, sampler);
+            effect->SetNormalTexture(normal);
+            effect->SetSpecularTexture(specular);
+            normalMapInst.emplace_back(std::move(effect));
+
             // NormalMapEffect (vertex color)
             effect = std::make_unique<NormalMapEffect>(device, eflags | EffectFlags::VertexColor, pd);
             effect->EnableDefaultLighting();
             effect->SetTexture(diffuse, sampler);
             effect->SetNormalTexture(normal);
             normalMap.emplace_back(std::move(effect));
+
+            effect = std::make_unique<NormalMapEffect>(device, eflags | EffectFlags::Instancing | EffectFlags::VertexColor, pdInst);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(diffuse, sampler);
+            effect->SetNormalTexture(normal);
+            normalMapInst.emplace_back(std::move(effect));
 
             effect = std::make_unique<NormalMapEffect>(device, eflags | EffectFlags::VertexColor | EffectFlags::Fog, pd);
             effect->EnableDefaultLighting();
@@ -1242,6 +1430,13 @@ void Game::CreateDeviceDependentResources()
             effect->SetSpecularTexture(specular);
             normalMap.emplace_back(std::move(effect));
 
+            effect = std::make_unique<NormalMapEffect>(device, eflags | EffectFlags::Instancing | EffectFlags::VertexColor | EffectFlags::Specular, pdInst);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(diffuse, sampler);
+            effect->SetNormalTexture(normal);
+            effect->SetSpecularTexture(specular);
+            normalMapInst.emplace_back(std::move(effect));
+
             effect = std::make_unique<NormalMapEffect>(device, eflags | EffectFlags::VertexColor | EffectFlags::Specular | EffectFlags::Fog, pd);
             effect->EnableDefaultLighting();
             effect->SetTexture(diffuse, sampler);
@@ -1253,10 +1448,12 @@ void Game::CreateDeviceDependentResources()
             if (!j)
             {
                 m_normalMap.swap(normalMap);
+                m_normalMapInstanced.swap(normalMapInst);
             }
             else
             {
                 m_normalMapBn.swap(normalMap);
+                m_normalMapInstancedBn.swap(normalMapInst);
             }
         }
 
@@ -1268,12 +1465,24 @@ void Game::CreateDeviceDependentResources()
             auto irradiance = m_resourceDescriptors->GetGpuHandle(Descriptors::IrradianceIBL);
 
             std::vector<std::unique_ptr<DirectX::PBREffect>> pbr;
+            std::vector<std::unique_ptr<DirectX::PBREffect>> pbrInst;
 
             // PBREffect
             auto effect = std::make_unique<PBREffect>(device, eflags, pd);
             effect->EnableDefaultLighting();
+            effect->SetConstantAlbedo(Colors::Cyan);
+            effect->SetConstantMetallic(0.5f);
+            effect->SetConstantRoughness(0.75f);
             effect->SetIBLTextures(radiance, diffuseDesc.MipLevels, irradiance, m_states->LinearWrap());
             pbr.emplace_back(std::move(effect));
+
+            effect = std::make_unique<PBREffect>(device, eflags | EffectFlags::Instancing, pdInst);
+            effect->EnableDefaultLighting();
+            effect->SetConstantAlbedo(Colors::Cyan);
+            effect->SetConstantMetallic(0.5f);
+            effect->SetConstantRoughness(0.75f);
+            effect->SetIBLTextures(radiance, diffuseDesc.MipLevels, irradiance, m_states->LinearWrap());
+            pbrInst.emplace_back(std::move(effect));
 
             // PBREffect (textured)
             auto albeto = m_resourceDescriptors->GetGpuHandle(Descriptors::PBRAlbedo);
@@ -1286,6 +1495,12 @@ void Game::CreateDeviceDependentResources()
             effect->SetSurfaceTextures(albeto, normal, rma, m_states->AnisotropicClamp());
             pbr.emplace_back(std::move(effect));
 
+            effect = std::make_unique<PBREffect>(device, eflags | EffectFlags::Instancing | EffectFlags::Texture, pdInst);
+            effect->EnableDefaultLighting();
+            effect->SetIBLTextures(radiance, diffuseDesc.MipLevels, irradiance, m_states->LinearWrap());
+            effect->SetSurfaceTextures(albeto, normal, rma, m_states->AnisotropicClamp());
+            pbrInst.emplace_back(std::move(effect));
+
             // PBREffect (emissive)
             auto emissive = m_resourceDescriptors->GetGpuHandle(Descriptors::PBREmissive);
 
@@ -1295,6 +1510,13 @@ void Game::CreateDeviceDependentResources()
             effect->SetSurfaceTextures(albeto, normal, rma, m_states->AnisotropicClamp());
             effect->SetEmissiveTexture(emissive);
             pbr.emplace_back(std::move(effect));
+
+            effect = std::make_unique<PBREffect>(device, eflags | EffectFlags::Instancing | EffectFlags::Texture | EffectFlags::Emissive, pdInst);
+            effect->EnableDefaultLighting();
+            effect->SetIBLTextures(radiance, diffuseDesc.MipLevels, irradiance, m_states->LinearWrap());
+            effect->SetSurfaceTextures(albeto, normal, rma, m_states->AnisotropicClamp());
+            effect->SetEmissiveTexture(emissive);
+            pbrInst.emplace_back(std::move(effect));
 
             // PBREffect (velocity)
             effect = std::make_unique<PBREffect>(device, eflags | EffectFlags::Texture | EffectFlags::Velocity, opaquePd);
@@ -1316,10 +1538,12 @@ void Game::CreateDeviceDependentResources()
             if (!j)
             {
                 m_pbr.swap(pbr);
+                m_pbrInstanced.swap(pbrInst);
             }
             else
             {
                 m_pbrBn.swap(pbr);
+                m_pbrInstancedBn.swap(pbrInst);
             }
         }
 
@@ -1530,6 +1754,26 @@ void Game::CreateWindowSizeDependentResources()
 	{
 		it->SetProjection(projection);
 	}
+
+    for (auto& it : m_normalMapInstanced)
+    {
+        it->SetProjection(projection);
+    }
+
+    for (auto& it : m_normalMapInstancedBn)
+    {
+        it->SetProjection(projection);
+    }
+
+    for (auto& it : m_pbrInstanced)
+    {
+        it->SetProjection(projection);
+    }
+
+    for (auto& it : m_pbrInstancedBn)
+    {
+        it->SetProjection(projection);
+    }
 }
 
 #ifdef LOSTDEVICE
@@ -1549,6 +1793,11 @@ void Game::OnDeviceLost()
     m_pbrBn.clear();
 	m_debug.clear();
 	m_debugBn.clear();
+
+    m_normalMapInstanced.clear();
+    m_normalMapInstancedBn.clear();
+    m_pbrInstanced.clear();
+    m_pbrInstancedBn.clear();
 
     m_cat.Reset();
     m_cubemap.Reset();
@@ -1702,4 +1951,14 @@ void Game::CreateCube()
     m_indexBufferView.BufferLocation = m_indexBuffer.GpuAddress();
     m_indexBufferView.SizeInBytes = static_cast<UINT>(m_indexBuffer.Size());
     m_indexBufferView.Format = DXGI_FORMAT_R16_UINT;
+}
+
+void Game::CycleRenderMode()
+{
+    m_renderMode += 1;
+
+    if (m_renderMode >= Render_Max)
+    {
+        m_renderMode = Render_Normal;
+    }
 }

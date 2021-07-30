@@ -76,6 +76,8 @@ private:
     void CreateDeviceDependentResources();
     void CreateWindowSizeDependentResources();
 
+    void CycleRenderMode();
+
     void CreateCube();
 
     // Device resources.
@@ -113,9 +115,15 @@ private:
 	std::vector<std::unique_ptr<DirectX::DebugEffect>> m_debug;
 	std::vector<std::unique_ptr<DirectX::DebugEffect>> m_debugBn;
 
+    std::vector<std::unique_ptr<DirectX::NormalMapEffect>> m_normalMapInstanced;
+    std::vector<std::unique_ptr<DirectX::NormalMapEffect>> m_normalMapInstancedBn;
+    std::vector<std::unique_ptr<DirectX::PBREffect>> m_pbrInstanced;
+    std::vector<std::unique_ptr<DirectX::PBREffect>> m_pbrInstancedBn;
+
     std::unique_ptr<DX::RenderTexture>              m_velocityBuffer;
 
     UINT					                        m_indexCount;
+    UINT                                            m_instanceCount;
     DirectX::GraphicsResource		                m_indexBuffer;
     DirectX::GraphicsResource		                m_vertexBuffer;
     DirectX::GraphicsResource		                m_vertexBufferBn;
@@ -140,8 +148,18 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_radianceIBL;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_irradianceIBL;
 
-    bool                                            m_showCompressed;
+    std::unique_ptr<DirectX::XMFLOAT3X4[]>          m_instanceTransforms;
 
+    enum RenderMode
+    {
+        Render_Normal,
+        Render_Compressed,
+        Render_Instanced,
+        Render_CompressedInstanced,
+        Render_Max
+    };
+
+    unsigned int                                    m_renderMode;
     float                                           m_delay;
 
     enum Descriptors
