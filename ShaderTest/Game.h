@@ -112,13 +112,15 @@ private:
     std::vector<std::unique_ptr<DirectX::NormalMapEffect>> m_normalMapBn;
     std::vector<std::unique_ptr<DirectX::PBREffect>> m_pbr;
     std::vector<std::unique_ptr<DirectX::PBREffect>> m_pbrBn;
-	std::vector<std::unique_ptr<DirectX::DebugEffect>> m_debug;
-	std::vector<std::unique_ptr<DirectX::DebugEffect>> m_debugBn;
+    std::vector<std::unique_ptr<DirectX::DebugEffect>> m_debug;
+    std::vector<std::unique_ptr<DirectX::DebugEffect>> m_debugBn;
 
     std::vector<std::unique_ptr<DirectX::NormalMapEffect>> m_normalMapInstanced;
     std::vector<std::unique_ptr<DirectX::NormalMapEffect>> m_normalMapInstancedBn;
     std::vector<std::unique_ptr<DirectX::PBREffect>> m_pbrInstanced;
     std::vector<std::unique_ptr<DirectX::PBREffect>> m_pbrInstancedBn;
+    std::vector<std::unique_ptr<DirectX::DebugEffect>> m_debugInstanced;
+    std::vector<std::unique_ptr<DirectX::DebugEffect>> m_debugInstancedBn;
 
     std::unique_ptr<DX::RenderTexture>              m_velocityBuffer;
 

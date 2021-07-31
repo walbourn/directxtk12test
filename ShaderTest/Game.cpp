@@ -446,6 +446,29 @@ void Game::Render()
 
             y -= 1.f;
         }
+
+        // DebugEffect (instanced)
+        {
+            auto it = (showCompressed) ? m_debugInstancedBn.cbegin() : m_debugInstanced.cbegin();
+            auto eit = (showCompressed) ? m_debugInstancedBn.cend() : m_debugInstanced.cend();
+            assert(it != eit);
+
+            for (; y > -ortho_height; y -= 1.f)
+            {
+                (*it)->SetWorld(XMMatrixTranslation(0, y, -1.f));
+                (*it)->Apply(commandList);
+                commandList->DrawIndexedInstanced(m_indexCount, m_instanceCount, 0, 0, 0);
+
+                ++it;
+                if (it == eit)
+                    break;
+            }
+
+            // Make sure we drew all the effects
+            assert(it == eit);
+
+            y -= 1.f;
+        }
     }
     else
     {
@@ -977,13 +1000,13 @@ void Game::CreateDeviceDependentResources()
             CommonStates::CullNone,
             rtState);
 
-		EffectPipelineStateDescription opaquePd(
-			nullptr,
-			CommonStates::Opaque,
-			CommonStates::DepthDefault,
-			CommonStates::CullNone,
-			rtState);
-		opaquePd.inputLayout = pd.inputLayout;
+        EffectPipelineStateDescription opaquePd(
+            nullptr,
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
+            CommonStates::CullNone,
+            rtState);
+        opaquePd.inputLayout = pd.inputLayout;
 
         EffectPipelineStateDescription pdInst(
             (!j) ? &TestVertex::InstancedInputLayout : &TestCompressedVertex::InstancedInputLayout,
@@ -1547,46 +1570,55 @@ void Game::CreateDeviceDependentResources()
             }
         }
 
-		//--- DebugEffect ------------------------------------------------------------------
+        //--- DebugEffect ------------------------------------------------------------------
 
-		{
-			std::vector<std::unique_ptr<DirectX::DebugEffect>> debug;
+        {
+            std::vector<std::unique_ptr<DirectX::DebugEffect>> debug;
+            std::vector<std::unique_ptr<DirectX::DebugEffect>> debugInst;
 
-			// DebugEffect
-			auto effect = std::make_unique<DebugEffect>(device, eflags, pd, DebugEffect::Mode_Default);
-			debug.emplace_back(std::move(effect));
+            // DebugEffect
+            auto effect = std::make_unique<DebugEffect>(device, eflags, pd, DebugEffect::Mode_Default);
+            debug.emplace_back(std::move(effect));
 
-			effect = std::make_unique<DebugEffect>(device, eflags, pd, DebugEffect::Mode_Normals);
-			debug.emplace_back(std::move(effect));
+            effect = std::make_unique<DebugEffect>(device, eflags | EffectFlags::Instancing, pdInst, DebugEffect::Mode_Default);
+            debugInst.emplace_back(std::move(effect));
 
-			effect = std::make_unique<DebugEffect>(device, eflags, pd, DebugEffect::Mode_Tangents);
-			debug.emplace_back(std::move(effect));
+            effect = std::make_unique<DebugEffect>(device, eflags, pd, DebugEffect::Mode_Normals);
+            debug.emplace_back(std::move(effect));
 
-			effect = std::make_unique<DebugEffect>(device, eflags, pd, DebugEffect::Mode_BiTangents);
-			debug.emplace_back(std::move(effect));
+            effect = std::make_unique<DebugEffect>(device, eflags, pd, DebugEffect::Mode_Tangents);
+            debug.emplace_back(std::move(effect));
 
-			// DebugEffect (vertex color)
-			effect = std::make_unique<DebugEffect>(device, eflags | EffectFlags::VertexColor, pd, DebugEffect::Mode_Default);
-			debug.emplace_back(std::move(effect));
+            effect = std::make_unique<DebugEffect>(device, eflags, pd, DebugEffect::Mode_BiTangents);
+            debug.emplace_back(std::move(effect));
 
-			effect = std::make_unique<DebugEffect>(device, eflags | EffectFlags::VertexColor, pd, DebugEffect::Mode_Normals);
-			debug.emplace_back(std::move(effect));
+            // DebugEffect (vertex color)
+            effect = std::make_unique<DebugEffect>(device, eflags | EffectFlags::VertexColor, pd, DebugEffect::Mode_Default);
+            debug.emplace_back(std::move(effect));
 
-			effect = std::make_unique<DebugEffect>(device, eflags | EffectFlags::VertexColor, pd, DebugEffect::Mode_Tangents);
-			debug.emplace_back(std::move(effect));
+            effect = std::make_unique<DebugEffect>(device, eflags | EffectFlags::Instancing | EffectFlags::VertexColor, pdInst, DebugEffect::Mode_Default);
+            debugInst.emplace_back(std::move(effect));
 
-			effect = std::make_unique<DebugEffect>(device, eflags | EffectFlags::VertexColor, pd, DebugEffect::Mode_BiTangents);
-			debug.emplace_back(std::move(effect));
+            effect = std::make_unique<DebugEffect>(device, eflags | EffectFlags::VertexColor, pd, DebugEffect::Mode_Normals);
+            debug.emplace_back(std::move(effect));
 
-			if (!j)
-			{
-				m_debug.swap(debug);
-			}
-			else
-			{
-				m_debugBn.swap(debug);
-			}
-		}
+            effect = std::make_unique<DebugEffect>(device, eflags | EffectFlags::VertexColor, pd, DebugEffect::Mode_Tangents);
+            debug.emplace_back(std::move(effect));
+
+            effect = std::make_unique<DebugEffect>(device, eflags | EffectFlags::VertexColor, pd, DebugEffect::Mode_BiTangents);
+            debug.emplace_back(std::move(effect));
+
+            if (!j)
+            {
+                m_debug.swap(debug);
+                m_debugInstanced.swap(debugInst);
+            }
+            else
+            {
+                m_debugBn.swap(debug);
+                m_debugInstancedBn.swap(debugInst);
+            }
+        }
     }
 
     EffectPipelineStateDescription pd(
@@ -1745,15 +1777,15 @@ void Game::CreateWindowSizeDependentResources()
         it->SetProjection(projection);
     }
 
-	for (auto& it : m_debug)
-	{
-		it->SetProjection(projection);
-	}
+    for (auto& it : m_debug)
+    {
+        it->SetProjection(projection);
+    }
 
-	for (auto& it : m_debugBn)
-	{
-		it->SetProjection(projection);
-	}
+    for (auto& it : m_debugBn)
+    {
+        it->SetProjection(projection);
+    }
 
     for (auto& it : m_normalMapInstanced)
     {
@@ -1774,6 +1806,16 @@ void Game::CreateWindowSizeDependentResources()
     {
         it->SetProjection(projection);
     }
+
+    for (auto& it : m_debugInstanced)
+    {
+        it->SetProjection(projection);
+    }
+
+    for (auto& it : m_debugInstancedBn)
+    {
+        it->SetProjection(projection);
+    }
 }
 
 #ifdef LOSTDEVICE
@@ -1791,13 +1833,15 @@ void Game::OnDeviceLost()
     m_normalMapBn.clear();
     m_pbr.clear();
     m_pbrBn.clear();
-	m_debug.clear();
-	m_debugBn.clear();
+    m_debug.clear();
+    m_debugBn.clear();
 
     m_normalMapInstanced.clear();
     m_normalMapInstancedBn.clear();
     m_pbrInstanced.clear();
     m_pbrInstancedBn.clear();
+    m_debugInstanced.clear();
+    m_debugInstancedBn.clear();
 
     m_cat.Reset();
     m_cubemap.Reset();
