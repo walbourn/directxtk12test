@@ -21,6 +21,7 @@
 
 namespace
 {
+    constexpr float rowtop = 4.f;
     constexpr float row0 = 2.7f;
     constexpr float row1 = 1.f;
     constexpr float row2 = -0.7f;
@@ -46,6 +47,7 @@ using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 
 Game::Game() noexcept(false) :
+    m_instanceCount(0),
     m_spinning(true),
     m_firstFrame(false),
     m_pitch(0),
@@ -301,7 +303,7 @@ void Game::Render()
 #endif
     SimpleMath::Vector4 white = Colors::White.v;
 
-    // Draw shapes.
+    //--- Draw shapes ----------------------------------------------------------------------
     m_effect->SetWorld(world * XMMatrixTranslation(col0, row0, 0));
     m_effect->SetDiffuseColor(Colors::White);
     m_effect->Apply(commandList);
@@ -362,7 +364,7 @@ void Game::Render()
     m_effect->Apply(commandList);
     m_box->Draw(commandList);
 
-    // Draw textured shapes.
+    //--- Draw textured shapes -------------------------------------------------------------
     m_effectTexture->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::RefTexture), m_states->AnisotropicWrap());
     m_effectTexture->SetWorld(world * XMMatrixTranslation(col0, row1, 0));
     m_effectTexture->SetDiffuseColor(Colors::White);
@@ -429,7 +431,7 @@ void Game::Render()
     m_effectTexture->Apply(commandList);
     m_customBox->Draw(commandList);
 
-    // Draw shapes in wireframe.
+    //--- Draw shapes in wireframe ---------------------------------------------------------
     m_effectWireframe->SetDiffuseColor(gray);
     m_effectWireframe->SetWorld(world * XMMatrixTranslation(col0, row2, 0));
     m_effectWireframe->Apply(commandList);
@@ -479,7 +481,7 @@ void Game::Render()
     m_effectWireframe->Apply(commandList);
     m_box->Draw(commandList);
 
-    // Draw shapes with alpha blending.
+    //--- Draw shapes with alpha blending --------------------------------------------------
     m_effectAlpha->SetWorld(world * XMMatrixTranslation(col0, row3, 0));
     m_effectAlpha->SetDiffuseColor(white * alphaFade);
     m_effectAlpha->SetAlpha(alphaFade);
@@ -500,7 +502,7 @@ void Game::Render()
     m_effectAlphaTexture->Apply(commandList);
     m_cube->Draw(commandList);
 
-    // Draw dynamic light.
+    //--- Draw dynamic light ---------------------------------------------------------------
     XMVECTOR quat = XMQuaternionRotationRollPitchYaw(pitch, yaw, roll);
     XMVECTOR dir = XMVector3Rotate(g_XMOne, quat);
     m_effectLights->SetLightDirection(0, dir);
@@ -509,13 +511,44 @@ void Game::Render()
     m_effectLights->Apply(commandList);
     m_cube->Draw(commandList);
 
-    // Draw dynamic light and fog.
+    //--- Draw dynamic light and fog -------------------------------------------------------
     XMMATRIX fbworld = XMMatrixTranslation(0, 0, cos(time) * 2.f);
     m_effectFog->SetWorld(fbworld  * XMMatrixTranslation(col5, row3, 0));
     m_effectFog->SetLightDirection(0, dir);
     m_effectFog->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::DirectXLogo), m_states->AnisotropicWrap());
     m_effectFog->Apply(commandList);
     m_cube->Draw(commandList);
+
+    //--- Draw shapes with instancing ------------------------------------------------------
+    {
+        size_t j = 0;
+        for (float x = -8.f; x <= 8.f; x += 3.f)
+        {
+            XMMATRIX m = world * XMMatrixTranslation(x, 0.f, cos(time + float(j) * XM_PIDIV4));
+            XMStoreFloat3x4(&m_instanceTransforms[j], m);
+            ++j;
+        }
+
+        assert(j == m_instanceCount);
+
+        const size_t instBytes = j * sizeof(XMFLOAT3X4);
+
+        GraphicsResource inst = m_graphicsMemory->Allocate(instBytes);
+        memcpy(inst.Memory(), m_instanceTransforms.get(), instBytes);
+
+        D3D12_VERTEX_BUFFER_VIEW vertexBufferInst = {};
+        vertexBufferInst.BufferLocation = inst.GpuAddress();
+        vertexBufferInst.SizeInBytes = static_cast<UINT>(instBytes);
+        vertexBufferInst.StrideInBytes = sizeof(XMFLOAT3X4);
+        commandList->IASetVertexBuffers(1, 1, &vertexBufferInst);
+
+        m_instancedEffect->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::DirectXLogo), m_states->AnisotropicWrap());
+        m_instancedEffect->SetNormalTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::NormalMap));
+        m_instancedEffect->SetWorld(XMMatrixTranslation(0.f, rowtop, 0.f));
+
+        m_instancedEffect->Apply(commandList);
+        m_teapot->DrawInstanced(commandList, m_instanceCount);
+    }
 
     PIXEndEvent(commandList);
 
@@ -751,6 +784,69 @@ void Game::CreateDeviceDependentResources()
         m_effectFog->SetFogColor(color);
     }
 
+    {
+        static const D3D12_INPUT_ELEMENT_DESC s_InputElements[] =
+        {
+            // GeometricPrimitive::VertexType
+            { "SV_Position", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,   0 },
+            { "NORMAL",      0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,   0 },
+            { "TEXCOORD",    0, DXGI_FORMAT_R32G32_FLOAT,       0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,   0 },
+            // XMFLOAT3X4
+            { "InstMatrix",  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 },
+            { "InstMatrix",  1, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 },
+            { "InstMatrix",  2, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 },
+        };
+
+        static const D3D12_INPUT_LAYOUT_DESC s_layout = { s_InputElements, static_cast<UINT>(std::size(s_InputElements)) };
+
+        EffectPipelineStateDescription pd(
+            &s_layout,
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
+            CommonStates::CullCounterClockwise,
+            rtState);
+
+        m_instancedEffect = std::make_unique<NormalMapEffect>(device, EffectFlags::Fog | EffectFlags::Instancing, pd);
+        m_instancedEffect->EnableDefaultLighting();
+
+#ifdef LH_COORDS
+        m_instancedEffect->SetFogStart(-9);
+        m_instancedEffect->SetFogEnd(-10);
+#else
+        m_instancedEffect->SetFogStart(9);
+        m_instancedEffect->SetFogEnd(10);
+#endif
+
+        XMVECTORF32 color;
+#ifdef GAMMA_CORRECT_RENDERING
+        color.v = XMColorSRGBToRGB(Colors::CornflowerBlue);
+#else
+        color.v = Colors::CornflowerBlue;
+#endif
+
+        m_instancedEffect->SetFogColor(color);
+
+        // Create instance transforms.
+        size_t j = 0;
+        for (float x = -8.f; x <= 8.f; x += 3.f)
+        {
+            ++j;
+        }
+        m_instanceCount = static_cast<UINT>(j);
+
+        m_instanceTransforms = std::make_unique<XMFLOAT3X4[]>(j);
+
+        constexpr XMFLOAT3X4 s_identity = { 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f };
+
+        j = 0;
+        for (float x = -8.f; x <= 8.f; x += 3.f)
+        {
+            m_instanceTransforms[j] = s_identity;
+            m_instanceTransforms[j]._14 = x;
+            ++j;
+        }
+    }
+
     // Create shapes.
 #ifdef LH_COORDS
     bool rhcoords = false;
@@ -854,6 +950,13 @@ void Game::CreateDeviceDependentResources()
 
         CreateShaderResourceView(device, m_refTexture.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::RefTexture));
 
+        DX::ThrowIfFailed(
+            CreateDDSTextureFromFileEx(device, resourceUpload, L"normalMap.dds",
+                0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_DEFAULT,
+                m_normalMap.ReleaseAndGetAddressOf()));
+
+        CreateShaderResourceView(device, m_normalMap.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::NormalMap));
+
         auto uploadResourcesFinished = resourceUpload.End(m_deviceResources->GetCommandQueue());
 
         uploadResourcesFinished.wait();
@@ -942,6 +1045,7 @@ void Game::CreateWindowSizeDependentResources()
     m_effectAlphaTexture->SetView(view);
     m_effectLights->SetView(view);
     m_effectFog->SetView(view);
+    m_instancedEffect->SetView(view);
     
     m_effect->SetProjection(projection);
     m_effectWireframe->SetProjection(projection);
@@ -951,6 +1055,7 @@ void Game::CreateWindowSizeDependentResources()
     m_effectAlphaTexture->SetProjection(projection);
     m_effectLights->SetProjection(projection);
     m_effectFog->SetProjection(projection);
+    m_instancedEffect->SetProjection(projection);
 }
 
 #ifdef LOSTDEVICE
@@ -979,10 +1084,12 @@ void Game::OnDeviceLost()
     m_effectAlphaTexture.reset();
     m_effectLights.reset();
     m_effectFog.reset();
+    m_instancedEffect.reset();
 
     m_cat.Reset();
     m_dxLogo.Reset();
     m_refTexture.Reset();
+    m_normalMap.Reset();
 
     m_resourceDescriptors.reset();
     m_states.reset();

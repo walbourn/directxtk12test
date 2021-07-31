@@ -100,6 +100,7 @@ private:
     std::unique_ptr<DirectX::BasicEffect>           m_effectAlphaTexture;
     std::unique_ptr<DirectX::BasicEffect>           m_effectLights;
     std::unique_ptr<DirectX::BasicEffect>           m_effectFog;
+    std::unique_ptr<DirectX::NormalMapEffect>       m_instancedEffect;
 
     std::unique_ptr<DirectX::GeometricPrimitive>    m_cube;
     std::unique_ptr<DirectX::GeometricPrimitive>    m_box;
@@ -119,6 +120,10 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_cat;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_dxLogo;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_refTexture;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_normalMap;
+
+    UINT                                            m_instanceCount;
+    std::unique_ptr<DirectX::XMFLOAT3X4[]>          m_instanceTransforms;
 
     bool m_spinning;
     bool m_firstFrame;
@@ -133,6 +138,7 @@ private:
         Cat,
         DirectXLogo,
         RefTexture,
+        NormalMap,
         Count
     };
 };
