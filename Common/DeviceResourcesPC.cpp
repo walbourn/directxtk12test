@@ -172,8 +172,9 @@ void DeviceResources::CreateDeviceResources()
         d3dInfoQueue->AddStorageFilterEntries(&filter);
     }
 
-#if defined(NTDDI_WIN10_VB) && (NTDDI_VERSION >= NTDDI_WIN10_VB)
+#if 0 //defined(NTDDI_WIN10_VB) && (NTDDI_VERSION >= NTDDI_WIN10_VB)
     // Only want to enable this on the Windows 10 OS (Build 19041) or later due to some bugs before that.
+    // Has known issues on hybrid devices as well, so best used only on systems with discrete GPUs.
     ComPtr<ID3D12Device7> device7;
     if (SUCCEEDED(m_d3dDevice.As(&device7)))
     {

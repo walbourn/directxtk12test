@@ -32,6 +32,7 @@ using Microsoft::WRL::ComPtr;
 std::unique_ptr<Model> CreateModelFromOBJ(
     _In_opt_ ID3D12Device* device,
     _In_z_ const wchar_t* szFileName,
+    bool enableInstacing,
     ModelLoaderFlags flags = ModelLoader_Default);
 
 namespace
@@ -42,6 +43,7 @@ namespace
 }
 
 Game::Game() noexcept(false) :
+    m_instanceCount(0),
     m_spinning(true),
     m_firstFrame(false),
     m_pitch(0),
@@ -380,6 +382,54 @@ void Game::Render()
         assert(mesh->alphaMeshParts.empty());
     }
 
+        // Custom drawing using instancing
+    local = XMMatrixTranslation(6.f, 0, 0);
+    {
+        size_t j = 0;
+        for (float y = -4.f; y <= 4.f; y += 1.f)
+        {
+            XMMATRIX m = world * XMMatrixTranslation(0.f, y, cos(time + float(j) * XM_PIDIV4));
+            XMStoreFloat3x4(&m_instanceTransforms[j], m);
+            ++j;
+        }
+
+        assert(j == m_instanceCount);
+
+        const size_t instBytes = j * sizeof(XMFLOAT3X4);
+
+        GraphicsResource inst = m_graphicsMemory->Allocate(instBytes);
+        memcpy(inst.Memory(), m_instanceTransforms.get(), instBytes);
+
+        D3D12_VERTEX_BUFFER_VIEW vertexBufferInst = {};
+        vertexBufferInst.BufferLocation = inst.GpuAddress();
+        vertexBufferInst.SizeInBytes = static_cast<UINT>(instBytes);
+        vertexBufferInst.StrideInBytes = sizeof(XMFLOAT3X4);
+        commandList->IASetVertexBuffers(1, 1, &vertexBufferInst);
+
+        for (auto mit = m_cupInst->meshes.cbegin(); mit != m_cupInst->meshes.cend(); ++mit)
+        {
+            auto mesh = mit->get();
+            assert(mesh != 0);
+
+            for (auto it = mesh->opaqueMeshParts.cbegin(); it != mesh->opaqueMeshParts.cend(); ++it)
+            {
+                auto part = it->get();
+                assert(part != 0);
+
+                auto effect = m_cupInstNormal[part->partIndex].get();
+
+                auto imatrices = dynamic_cast<IEffectMatrices*>(effect);
+                if (imatrices) imatrices->SetMatrices(local, m_view, m_projection);
+
+                effect->Apply(commandList);
+                part->DrawInstanced(commandList, m_instanceCount);
+            }
+
+            // Skipping alphaMeshParts for this model since we know it's empty...
+            assert(mesh->alphaMeshParts.empty());
+        }
+    }
+
     //--- Draw VBO models ------------------------------------------------------------------
     local = XMMatrixMultiply(XMMatrixScaling(0.25f, 0.25f, 0.25f), XMMatrixTranslation(4.5f, row0, 0.f));
     local = XMMatrixMultiply(world, local);
@@ -564,9 +614,11 @@ void Game::CreateDeviceDependentResources()
     RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), m_deviceResources->GetDepthBufferFormat());
 
 #ifdef GAMMA_CORRECT_RENDERING
-    m_cup = CreateModelFromOBJ(device, L"cup._obj", ModelLoader_MaterialColorsSRGB);
+    m_cup = CreateModelFromOBJ(device, L"cup._obj", false, ModelLoader_MaterialColorsSRGB);
+    m_cupInst = CreateModelFromOBJ(device, L"cup._obj", true, ModelLoader_MaterialColorsSRGB);
 #else
-    m_cup = CreateModelFromOBJ(device, L"cup._obj");
+    m_cup = CreateModelFromOBJ(device, L"cup._obj", false);
+    m_cupInst = CreateModelFromOBJ(device, L"cup._obj", true);
 #endif
 
     m_vbo = Model::CreateFromVBO(device, L"player_ship_a.vbo");
@@ -658,6 +710,31 @@ void Game::CreateDeviceDependentResources()
             m_cupVertexLighting = m_cup->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
 
             m_fxFactory->EnablePerPixelLighting(true);
+        }
+
+        // Create instanced cup.
+        {
+            {
+                size_t start, end;
+                m_resourceDescriptors->AllocateRange(m_cupInst->textureNames.size(), start, end);
+                txtOffset = static_cast<int>(start);
+            }
+            m_cupInst->LoadTextures(*m_modelResources, txtOffset);
+
+            EffectPipelineStateDescription pd(
+                nullptr,
+                CommonStates::Opaque,
+                CommonStates::DepthDefault,
+                ncull,
+                rtState);
+
+            m_fxFactory->SetSharing(false);
+            m_fxFactory->EnableInstancing(true);
+
+            m_cupInstNormal = m_cupInst->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
+
+            m_fxFactory->EnableInstancing(false);
+            m_fxFactory->SetSharing(true);
         }
 
         // Create VBO effects (no textures)
@@ -915,6 +992,28 @@ void Game::CreateDeviceDependentResources()
     // Set textures
     m_vboEnvMap->SetTexture(m_resourceDescriptors->GetGpuHandle(StaticDescriptors::DefaultTex), m_states->AnisotropicWrap());
     m_vboEnvMap->SetEnvironmentMap(m_resourceDescriptors->GetGpuHandle(StaticDescriptors::Cubemap), m_states->AnisotropicWrap());
+
+    // Create instance transforms.
+    {
+        size_t j = 0;
+        for (float y = -4.f; y <= 4.f; y += 1.f)
+        {
+            ++j;
+        }
+        m_instanceCount = static_cast<UINT>(j);
+
+        m_instanceTransforms = std::make_unique<XMFLOAT3X4[]>(j);
+
+        constexpr XMFLOAT3X4 s_identity = { 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f };
+
+        j = 0;
+        for (float y = -4.f; y <= 4.f; y += 1.f)
+        {
+            m_instanceTransforms[j] = s_identity;
+            m_instanceTransforms[j]._24 = y;
+            ++j;
+        }
+    }
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
@@ -974,6 +1073,7 @@ void Game::CreateWindowSizeDependentResources()
 void Game::OnDeviceLost()
 {
     m_cup.reset();
+    m_cupInst.reset();
     m_cupMesh.reset();
     m_vbo.reset();
     m_tiny.reset();
@@ -987,6 +1087,8 @@ void Game::OnDeviceLost()
     m_cupWireframe.clear();
     m_cupFog.clear();
     m_cupVertexLighting.clear();
+
+    m_cupInstNormal.clear();
 
     m_cupMeshNormal.clear();
 

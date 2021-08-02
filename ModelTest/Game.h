@@ -102,6 +102,9 @@ private:
     std::vector<std::shared_ptr<DirectX::IEffect>>  m_cupFog;
     std::vector<std::shared_ptr<DirectX::IEffect>>  m_cupVertexLighting;
 
+    std::unique_ptr<DirectX::Model>                 m_cupInst;
+    std::vector<std::shared_ptr<DirectX::IEffect>>  m_cupInstNormal;
+
     std::unique_ptr<DirectX::Model>                 m_cupMesh;
     std::vector<std::shared_ptr<DirectX::IEffect>>  m_cupMeshNormal;
 
@@ -136,7 +139,9 @@ private:
     DirectX::SimpleMath::Matrix                     m_view;
     DirectX::SimpleMath::Matrix                     m_projection;
 
-    std::unique_ptr<DirectX::XMMATRIX[], DirectX::aligned_deleter> m_bones;
+    UINT                                                            m_instanceCount;
+    std::unique_ptr<DirectX::XMFLOAT3X4[]>                          m_instanceTransforms;
+    std::unique_ptr<DirectX::XMMATRIX[], DirectX::aligned_deleter>  m_bones;
 
     bool m_spinning;
     bool m_firstFrame;
