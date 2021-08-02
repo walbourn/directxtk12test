@@ -99,6 +99,9 @@ private:
     std::unique_ptr<DirectX::Model>                 m_cube;
     std::vector<std::shared_ptr<DirectX::IEffect>>  m_cubeNormal;
 
+    std::unique_ptr<DirectX::Model>                 m_cubeInst;
+    std::vector<std::shared_ptr<DirectX::IEffect>>  m_cubeInstNormal;
+
     std::unique_ptr<DirectX::Model>                 m_sphere;
     std::vector<std::shared_ptr<DirectX::IEffect>>  m_sphereNormal;
 
@@ -150,6 +153,9 @@ private:
 
     DirectX::SimpleMath::Matrix             m_view;
     DirectX::SimpleMath::Matrix             m_projection;
+
+    UINT                                    m_instanceCount;
+    std::unique_ptr<DirectX::XMFLOAT3X4[]>  m_instanceTransforms;
 
     uint32_t m_ibl;
     bool m_spinning;

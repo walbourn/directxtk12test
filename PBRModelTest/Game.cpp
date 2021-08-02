@@ -27,6 +27,7 @@
 
 namespace
 {
+    constexpr float rowtop = 6.f;
     constexpr float row0 = 1.5f;
     constexpr float row1 = -1.5f;
 }
@@ -40,6 +41,7 @@ using Microsoft::WRL::ComPtr;
 
 // Constructor.
 Game::Game() noexcept(false) :
+    m_instanceCount(0),
     m_ibl(0),
     m_spinning(true),
     m_pitch(0),
@@ -308,6 +310,15 @@ void Game::Render()
         }
     }
 
+    for (auto& it : m_cubeInstNormal)
+    {
+        auto pbr = dynamic_cast<PBREffect*>(it.get());
+        if (pbr)
+        {
+            pbr->SetIBLTextures(radianceTex, diffuseDesc.MipLevels, irradianceTex, m_states->AnisotropicClamp());
+        }
+    }
+
     for (auto& it : m_sphereNormal)
     {
         auto pbr = dynamic_cast<PBREffect*>(it.get());
@@ -367,6 +378,54 @@ void Game::Render()
     }
     Model::UpdateEffectMatrices(m_robotNormal, local, m_view, m_projection);
     m_robot->Draw(commandList, m_robotNormal.cbegin());
+
+    //--- Draw with instancing ---
+    local = XMMatrixTranslation(0.f, rowtop, 0.f) * XMMatrixScaling(0.25f, 0.25f, 0.25f);
+    {
+        size_t j = 0;
+        for (float x = -16.f; x <= 16.f; x += 4.f)
+        {
+            XMMATRIX m = world * XMMatrixTranslation(x, rowtop, cos(time + float(j) * XM_PIDIV4));
+            XMStoreFloat3x4(&m_instanceTransforms[j], m);
+            ++j;
+        }
+
+        assert(j == m_instanceCount);
+
+        const size_t instBytes = j * sizeof(XMFLOAT3X4);
+
+        GraphicsResource inst = m_graphicsMemory->Allocate(instBytes);
+        memcpy(inst.Memory(), m_instanceTransforms.get(), instBytes);
+
+        D3D12_VERTEX_BUFFER_VIEW vertexBufferInst = {};
+        vertexBufferInst.BufferLocation = inst.GpuAddress();
+        vertexBufferInst.SizeInBytes = static_cast<UINT>(instBytes);
+        vertexBufferInst.StrideInBytes = sizeof(XMFLOAT3X4);
+        commandList->IASetVertexBuffers(1, 1, &vertexBufferInst);
+
+        for (auto mit = m_cubeInst->meshes.cbegin(); mit != m_cubeInst->meshes.cend(); ++mit)
+        {
+            auto mesh = mit->get();
+            assert(mesh != 0);
+
+            for (auto it = mesh->opaqueMeshParts.cbegin(); it != mesh->opaqueMeshParts.cend(); ++it)
+            {
+                auto part = it->get();
+                assert(part != 0);
+
+                auto effect = m_cubeInstNormal[part->partIndex].get();
+
+                auto imatrices = dynamic_cast<IEffectMatrices*>(effect);
+                if (imatrices) imatrices->SetMatrices(local, m_view, m_projection);
+
+                effect->Apply(commandList);
+                part->DrawInstanced(commandList, m_instanceCount);
+            }
+
+            // Skipping alphaMeshParts for this model since we know it's empty...
+            assert(mesh->alphaMeshParts.empty());
+        }
+    }
 
     PIXEndEvent(commandList);
 
@@ -531,6 +590,51 @@ void Game::CreateDeviceDependentResources()
     m_sphere2 = Model::CreateFromSDKMESH(device, L"Sphere2.sdkmesh");
     m_robot = Model::CreateFromSDKMESH(device, L"ToyRobot.sdkmesh");
 
+    // Create instanced mesh.
+    m_cubeInst = Model::CreateFromSDKMESH(device, L"BrokenCube.sdkmesh");
+
+    static const D3D12_INPUT_ELEMENT_DESC s_instElements[] =
+    {
+        // XMFLOAT3X4
+        { "InstMatrix",  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 },
+        { "InstMatrix",  1, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 },
+        { "InstMatrix",  2, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 },
+    };
+
+    for (auto mit = m_cubeInst->meshes.begin(); mit != m_cubeInst->meshes.end(); ++mit)
+    {
+        auto mesh = mit->get();
+        assert(mesh != 0);
+
+        for (auto it = mesh->opaqueMeshParts.begin(); it != mesh->opaqueMeshParts.end(); ++it)
+        {
+            auto part = it->get();
+            assert(part != 0);
+
+            auto il = part->vbDecl;
+
+            // Since vbDecl can be a shared pointer, make sure we don't add this multiple times.
+            bool foundInst = false;
+            for (const auto& fit : *il)
+            {
+                if (_stricmp(fit.SemanticName, "InstMatrix") == 0)
+                {
+                    foundInst = true;
+                }
+            }
+
+            if (!foundInst)
+            {
+                il->push_back(s_instElements[0]);
+                il->push_back(s_instElements[1]);
+                il->push_back(s_instElements[2]);
+            }
+        }
+
+        // Skipping alphaMeshParts for this model since we know it's empty...
+        assert(mesh->alphaMeshParts.empty());
+    }
+
     RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), DXGI_FORMAT_UNKNOWN);
 #ifdef XBOX
     rtState.numRenderTargets = 2;
@@ -611,6 +715,16 @@ void Game::CreateDeviceDependentResources()
 
     m_robotNormal = m_robot->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
 
+    {
+        size_t start, end;
+        m_resourceDescriptors->AllocateRange(m_cubeInst->textureNames.size(), start, end);
+        txtOffset = static_cast<int>(start);
+    }
+    m_cubeInst->LoadTextures(*m_modelResources, txtOffset);
+
+    m_fxFactory->EnableInstancing(true);
+    m_cubeInstNormal = m_cubeInst->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
+
     // Optimize VBs/IBs
     m_cube->LoadStaticBuffers(device, resourceUpload);
     m_sphere->LoadStaticBuffers(device, resourceUpload);
@@ -654,6 +768,28 @@ void Game::CreateDeviceDependentResources()
 
     auto uploadResourcesFinished = resourceUpload.End(m_deviceResources->GetCommandQueue());
     uploadResourcesFinished.wait();
+
+    // Create instance transforms.
+    {
+        size_t j = 0;
+        for (float x = -16.f; x <= 16.f; x += 4.f)
+        {
+            ++j;
+        }
+        m_instanceCount = static_cast<UINT>(j);
+
+        m_instanceTransforms = std::make_unique<XMFLOAT3X4[]>(j);
+
+        constexpr XMFLOAT3X4 s_identity = { 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f };
+
+        j = 0;
+        for (float x = -16.f; x <= 16.f; x += 4.f)
+        {
+            m_instanceTransforms[j] = s_identity;
+            m_instanceTransforms[j]._14 = x;
+            ++j;
+        }
+    }
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
@@ -695,11 +831,13 @@ void Game::CreateWindowSizeDependentResources()
 void Game::OnDeviceLost()
 {
     m_cube.reset();
+    m_cubeInst.reset();
     m_sphere.reset();
     m_sphere2.reset();
     m_robot.reset();
 
     m_cubeNormal.clear();
+    m_cubeInstNormal.clear();
     m_sphereNormal.clear();
     m_sphere2Normal.clear();
     m_robotNormal.clear();

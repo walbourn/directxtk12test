@@ -375,7 +375,7 @@ void Game::Render()
             if (imatrices) imatrices->SetWorld(local);
 
             effect->Apply(commandList);
-            part->DrawInstanced(commandList, 1);
+            part->Draw(commandList);
         }
 
         // Skipping alphaMeshParts for this model since we know it's empty...
@@ -728,13 +728,11 @@ void Game::CreateDeviceDependentResources()
                 ncull,
                 rtState);
 
-            m_fxFactory->SetSharing(false);
             m_fxFactory->EnableInstancing(true);
 
             m_cupInstNormal = m_cupInst->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
 
             m_fxFactory->EnableInstancing(false);
-            m_fxFactory->SetSharing(true);
         }
 
         // Create VBO effects (no textures)
