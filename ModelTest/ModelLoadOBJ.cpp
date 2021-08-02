@@ -48,6 +48,15 @@ namespace
     // Shared VB input element description
     INIT_ONCE g_InitOnce = INIT_ONCE_STATIC_INIT;
     std::shared_ptr<std::vector<D3D12_INPUT_ELEMENT_DESC>> g_vbdecl;
+    std::shared_ptr<std::vector<D3D12_INPUT_ELEMENT_DESC>> g_vbdeclInst;
+
+    static const D3D12_INPUT_ELEMENT_DESC s_instElements[] =
+    {
+        // XMFLOAT3X4
+        { "InstMatrix",  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 },
+        { "InstMatrix",  1, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 },
+        { "InstMatrix",  2, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 },
+    };
 
     BOOL CALLBACK InitializeDecl(PINIT_ONCE initOnce, PVOID Parameter, PVOID *lpContext)
     {
@@ -57,6 +66,14 @@ namespace
         g_vbdecl = std::make_shared<std::vector<D3D12_INPUT_ELEMENT_DESC>>(
             VertexPositionNormalTexture::InputLayout.pInputElementDescs,
             VertexPositionNormalTexture::InputLayout.pInputElementDescs + VertexPositionNormalTexture::InputLayout.NumElements);
+
+        g_vbdeclInst = std::make_shared<std::vector<D3D12_INPUT_ELEMENT_DESC>>(
+            VertexPositionNormalTexture::InputLayout.pInputElementDescs,
+            VertexPositionNormalTexture::InputLayout.pInputElementDescs + VertexPositionNormalTexture::InputLayout.NumElements);
+        g_vbdeclInst->push_back(s_instElements[0]);
+        g_vbdeclInst->push_back(s_instElements[1]);
+        g_vbdeclInst->push_back(s_instElements[2]);
+
         return TRUE;
     }
 
@@ -84,6 +101,7 @@ namespace
 std::unique_ptr<Model> CreateModelFromOBJ(
     _In_opt_ ID3D12Device* device,
     _In_z_ const wchar_t* szFileName,
+    bool enableInstacing,
     ModelLoaderFlags flags)
 {
     if (!InitOnceExecuteOnce(&g_InitOnce, InitializeDecl, nullptr, nullptr))
@@ -187,13 +205,30 @@ std::unique_ptr<Model> CreateModelFromOBJ(
             info.ambientColor = GetMaterialColor(mat.vAmbient.x, mat.vAmbient.y, mat.vAmbient.z, (flags & ModelLoader_MaterialColorsSRGB) != 0);
             info.diffuseColor = GetMaterialColor(mat.vDiffuse.x, mat.vDiffuse.y, mat.vDiffuse.z, (flags & ModelLoader_MaterialColorsSRGB) != 0);
 
+            info.diffuseTextureIndex = GetUniqueTextureIndex(mat.strTexture, textureDictionary);
+
+            if (enableInstacing)
+            {
+                // Hack to make sure we use NormalMapEffect in order to test instancing.
+                info.enableNormalMaps = true;
+
+                if (info.diffuseTextureIndex == -1)
+                {
+                    info.diffuseTextureIndex = GetUniqueTextureIndex(L"default.dds", textureDictionary);
+                    info.normalTextureIndex = GetUniqueTextureIndex(L"smoothMap.dds", textureDictionary);
+                }
+                else
+                {
+                    info.normalTextureIndex = GetUniqueTextureIndex(L"normalMap.dds", textureDictionary);
+                }
+            }
+
             if (mat.bSpecular)
             {
                 info.specularPower = static_cast<float>(mat.nShininess);
                 info.specularColor = mat.vSpecular;
             }
 
-            info.diffuseTextureIndex = GetUniqueTextureIndex(mat.strTexture, textureDictionary);
             if (info.diffuseTextureIndex != -1)
             {
                 info.samplerIndex = static_cast<int>(CommonStates::SamplerIndex::AnisotropicWrap);
@@ -221,7 +256,7 @@ std::unique_ptr<Model> CreateModelFromOBJ(
             part->vertexBufferSize = static_cast<uint32_t>(vertSize);
             part->vertexBuffer = vb;
             part->materialIndex = matIndex;
-            part->vbDecl = g_vbdecl;
+            part->vbDecl = (enableInstacing) ? g_vbdeclInst : g_vbdecl;
 
             if (isAlpha)
             {
