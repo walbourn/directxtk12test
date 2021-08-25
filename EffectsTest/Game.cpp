@@ -1033,12 +1033,14 @@ void Game::CreateDeviceDependentResources()
     CreateShaderResourceView(device, m_brickDiffuse.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::BrickDiffuse));
 
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFile(device, resourceUpload, L"spnza_bricks_a_normal.DDS", m_brickNormal.ReleaseAndGetAddressOf()));
+        CreateDDSTextureFromFile(device, resourceUpload, L"spnza_bricks_a_normal.DDS",
+            m_brickNormal.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_brickNormal.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::BrickNormal));
 
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFile(device, resourceUpload, L"spnza_bricks_a_specular.DDS", m_brickSpecular.ReleaseAndGetAddressOf()));
+        CreateDDSTextureFromFile(device, resourceUpload, L"spnza_bricks_a_specular.DDS",
+            m_brickSpecular.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_brickSpecular.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::BrickSpecular));
 

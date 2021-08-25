@@ -915,43 +915,51 @@ void Game::CreateDeviceDependentResources()
     CreateShaderResourceView(device, m_brickDiffuse.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::BrickDiffuse));
 
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFile(device, resourceUpload, L"spnza_bricks_a_normal.DDS", m_brickNormal.ReleaseAndGetAddressOf()));
+        CreateDDSTextureFromFile(device, resourceUpload, L"spnza_bricks_a_normal.DDS",
+            m_brickNormal.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_brickNormal.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::BrickNormal));
 
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFile(device, resourceUpload, L"spnza_bricks_a_specular.DDS", m_brickSpecular.ReleaseAndGetAddressOf()));
+        CreateDDSTextureFromFile(device, resourceUpload, L"spnza_bricks_a_specular.DDS",
+            m_brickSpecular.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_brickSpecular.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::BrickSpecular));
 
     DX::ThrowIfFailed(
-        CreateWICTextureFromFile(device, resourceUpload, L"Sphere2Mat_baseColor.png", m_pbrAlbedo.ReleaseAndGetAddressOf()));
+        CreateWICTextureFromFile(device, resourceUpload, L"Sphere2Mat_baseColor.png",
+            m_pbrAlbedo.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_pbrAlbedo.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::PBRAlbedo));
 
     DX::ThrowIfFailed(
-        CreateWICTextureFromFile(device, resourceUpload, L"Sphere2Mat_normal.png", m_pbrNormal.ReleaseAndGetAddressOf()));
+        CreateWICTextureFromFile(device, resourceUpload, L"Sphere2Mat_normal.png",
+            m_pbrNormal.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_pbrNormal.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::PBRNormal));
 
     DX::ThrowIfFailed(
-        CreateWICTextureFromFile(device, resourceUpload, L"Sphere2Mat_occlusionRoughnessMetallic.png", m_pbrRMA.ReleaseAndGetAddressOf()));
+        CreateWICTextureFromFile(device, resourceUpload, L"Sphere2Mat_occlusionRoughnessMetallic.png",
+            m_pbrRMA.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_pbrRMA.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::PBR_RMA));
 
     DX::ThrowIfFailed(
-        CreateWICTextureFromFile(device, resourceUpload, L"Sphere2Mat_emissive.png", m_pbrEmissive.ReleaseAndGetAddressOf()));
+        CreateWICTextureFromFile(device, resourceUpload, L"Sphere2Mat_emissive.png",
+            m_pbrEmissive.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_pbrEmissive.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::PBREmissive));
 
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFile(device, resourceUpload, L"Atrium_diffuseIBL.dds", m_radianceIBL.ReleaseAndGetAddressOf())
+        CreateDDSTextureFromFile(device, resourceUpload, L"Atrium_diffuseIBL.dds",
+            m_radianceIBL.ReleaseAndGetAddressOf())
     );
 
     CreateShaderResourceView(device, m_radianceIBL.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::RadianceIBL), true);
 
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFile(device, resourceUpload, L"Atrium_specularIBL.dds", m_irradianceIBL.ReleaseAndGetAddressOf())
+        CreateDDSTextureFromFile(device, resourceUpload, L"Atrium_specularIBL.dds",
+            m_irradianceIBL.ReleaseAndGetAddressOf())
     );
 
     CreateShaderResourceView(device, m_irradianceIBL.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::IrradianceIBL), true);
