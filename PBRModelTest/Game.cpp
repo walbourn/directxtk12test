@@ -611,24 +611,12 @@ void Game::CreateDeviceDependentResources()
             auto part = it.get();
             assert(part != 0);
 
-            auto il = part->vbDecl;
+            auto il = *it->vbDecl;
+            il.push_back(s_instElements[0]);
+            il.push_back(s_instElements[1]);
+            il.push_back(s_instElements[2]);
 
-            // Since vbDecl can be a shared pointer, make sure we don't add this multiple times.
-            bool foundInst = false;
-            for (const auto& fit : *il)
-            {
-                if (_stricmp(fit.SemanticName, "InstMatrix") == 0)
-                {
-                    foundInst = true;
-                }
-            }
-
-            if (!foundInst)
-            {
-                il->push_back(s_instElements[0]);
-                il->push_back(s_instElements[1]);
-                il->push_back(s_instElements[2]);
-            }
+            it->vbDecl = std::make_unique<std::vector<D3D12_INPUT_ELEMENT_DESC>>(il);
         }
 
         // Skipping alphaMeshParts for this model since we know it's empty...
