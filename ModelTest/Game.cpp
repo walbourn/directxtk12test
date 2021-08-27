@@ -359,15 +359,15 @@ void Game::Render()
 
         // Custom drawing
     local = XMMatrixRotationX(cos(time)) * XMMatrixTranslation(-5.f, row0, cos(time) * 2.f);
-    for (auto mit = m_cup->meshes.cbegin(); mit != m_cup->meshes.cend(); ++mit)
+    for (const auto& mit : m_cup->meshes)
     {
-        auto mesh = mit->get();
-        assert(mesh != 0);
+        auto mesh = mit.get();
+        assert(mesh != nullptr);
 
-        for (auto it = mesh->opaqueMeshParts.cbegin(); it != mesh->opaqueMeshParts.cend(); ++it)
+        for (const auto& it : mesh->opaqueMeshParts)
         {
-            auto part = it->get();
-            assert(part != 0);
+            auto part = it.get();
+            assert(part != nullptr);
 
             auto effect = m_cupNormal[part->partIndex].get();
 
@@ -406,15 +406,15 @@ void Game::Render()
         vertexBufferInst.StrideInBytes = sizeof(XMFLOAT3X4);
         commandList->IASetVertexBuffers(1, 1, &vertexBufferInst);
 
-        for (auto mit = m_cupInst->meshes.cbegin(); mit != m_cupInst->meshes.cend(); ++mit)
+        for (const auto& mit : m_cupInst->meshes)
         {
-            auto mesh = mit->get();
-            assert(mesh != 0);
+            auto mesh = mit.get();
+            assert(mesh != nullptr);
 
-            for (auto it = mesh->opaqueMeshParts.cbegin(); it != mesh->opaqueMeshParts.cend(); ++it)
+            for (const auto& it : mesh->opaqueMeshParts)
             {
-                auto part = it->get();
-                assert(part != 0);
+                auto part = it.get();
+                assert(part != nullptr);
 
                 auto effect = m_cupInstNormal[part->partIndex].get();
 

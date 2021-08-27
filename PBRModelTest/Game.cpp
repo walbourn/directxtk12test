@@ -403,14 +403,14 @@ void Game::Render()
         vertexBufferInst.StrideInBytes = sizeof(XMFLOAT3X4);
         commandList->IASetVertexBuffers(1, 1, &vertexBufferInst);
 
-        for (auto mit = m_cubeInst->meshes.cbegin(); mit != m_cubeInst->meshes.cend(); ++mit)
+        for (const auto& mit : m_cubeInst->meshes)
         {
-            auto mesh = mit->get();
+            auto mesh = mit.get();
             assert(mesh != 0);
 
-            for (auto it = mesh->opaqueMeshParts.cbegin(); it != mesh->opaqueMeshParts.cend(); ++it)
+            for (const auto& it : mesh->opaqueMeshParts)
             {
-                auto part = it->get();
+                auto part = it.get();
                 assert(part != 0);
 
                 auto effect = m_cubeInstNormal[part->partIndex].get();
@@ -601,14 +601,14 @@ void Game::CreateDeviceDependentResources()
         { "InstMatrix",  2, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 },
     };
 
-    for (auto mit = m_cubeInst->meshes.begin(); mit != m_cubeInst->meshes.end(); ++mit)
+    for (auto& mit : m_cubeInst->meshes)
     {
-        auto mesh = mit->get();
+        auto mesh = mit.get();
         assert(mesh != 0);
 
-        for (auto it = mesh->opaqueMeshParts.begin(); it != mesh->opaqueMeshParts.end(); ++it)
+        for (auto& it : mesh->opaqueMeshParts)
         {
-            auto part = it->get();
+            auto part = it.get();
             assert(part != 0);
 
             auto il = part->vbDecl;
