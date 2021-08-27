@@ -611,7 +611,7 @@ void Game::CreateDeviceDependentResources()
             auto part = it.get();
             assert(part != 0);
 
-            auto il = *it->vbDecl;
+            auto il = *part->vbDecl;
             il.push_back(s_instElements[0]);
             il.push_back(s_instElements[1]);
             il.push_back(s_instElements[2]);
