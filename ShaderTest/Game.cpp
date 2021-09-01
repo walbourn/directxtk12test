@@ -1516,20 +1516,20 @@ void Game::CreateDeviceDependentResources()
             pbrInst.emplace_back(std::move(effect));
 
             // PBREffect (textured)
-            auto albeto = m_resourceDescriptors->GetGpuHandle(Descriptors::PBRAlbedo);
+            auto albedo = m_resourceDescriptors->GetGpuHandle(Descriptors::PBRAlbedo);
             auto normal = m_resourceDescriptors->GetGpuHandle(Descriptors::PBRNormal);
             auto rma = m_resourceDescriptors->GetGpuHandle(Descriptors::PBR_RMA);
 
             effect = std::make_unique<PBREffect>(device, eflags | EffectFlags::Texture, pd);
             effect->EnableDefaultLighting();
             effect->SetIBLTextures(radiance, diffuseDesc.MipLevels, irradiance, m_states->LinearWrap());
-            effect->SetSurfaceTextures(albeto, normal, rma, m_states->AnisotropicClamp());
+            effect->SetSurfaceTextures(albedo, normal, rma, m_states->AnisotropicClamp());
             pbr.emplace_back(std::move(effect));
 
             effect = std::make_unique<PBREffect>(device, eflags | EffectFlags::Instancing | EffectFlags::Texture, pdInst);
             effect->EnableDefaultLighting();
             effect->SetIBLTextures(radiance, diffuseDesc.MipLevels, irradiance, m_states->LinearWrap());
-            effect->SetSurfaceTextures(albeto, normal, rma, m_states->AnisotropicClamp());
+            effect->SetSurfaceTextures(albedo, normal, rma, m_states->AnisotropicClamp());
             pbrInst.emplace_back(std::move(effect));
 
             // PBREffect (emissive)
@@ -1538,14 +1538,14 @@ void Game::CreateDeviceDependentResources()
             effect = std::make_unique<PBREffect>(device, eflags | EffectFlags::Texture | EffectFlags::Emissive, pd);
             effect->EnableDefaultLighting();
             effect->SetIBLTextures(radiance, diffuseDesc.MipLevels, irradiance, m_states->LinearWrap());
-            effect->SetSurfaceTextures(albeto, normal, rma, m_states->AnisotropicClamp());
+            effect->SetSurfaceTextures(albedo, normal, rma, m_states->AnisotropicClamp());
             effect->SetEmissiveTexture(emissive);
             pbr.emplace_back(std::move(effect));
 
             effect = std::make_unique<PBREffect>(device, eflags | EffectFlags::Instancing | EffectFlags::Texture | EffectFlags::Emissive, pdInst);
             effect->EnableDefaultLighting();
             effect->SetIBLTextures(radiance, diffuseDesc.MipLevels, irradiance, m_states->LinearWrap());
-            effect->SetSurfaceTextures(albeto, normal, rma, m_states->AnisotropicClamp());
+            effect->SetSurfaceTextures(albedo, normal, rma, m_states->AnisotropicClamp());
             effect->SetEmissiveTexture(emissive);
             pbrInst.emplace_back(std::move(effect));
 
@@ -1553,7 +1553,7 @@ void Game::CreateDeviceDependentResources()
             effect = std::make_unique<PBREffect>(device, eflags | EffectFlags::Texture | EffectFlags::Velocity, opaquePd);
             effect->EnableDefaultLighting();
             effect->SetIBLTextures(radiance, diffuseDesc.MipLevels, irradiance, m_states->LinearWrap());
-            effect->SetSurfaceTextures(albeto, normal, rma, m_states->AnisotropicClamp());
+            effect->SetSurfaceTextures(albedo, normal, rma, m_states->AnisotropicClamp());
             effect->SetRenderTargetSizeInPixels(1920, 1080);
             pbr.emplace_back(std::move(effect));
 
@@ -1561,7 +1561,7 @@ void Game::CreateDeviceDependentResources()
             effect = std::make_unique<PBREffect>(device, eflags | EffectFlags::Texture | EffectFlags::Emissive | EffectFlags::Velocity, opaquePd);
             effect->EnableDefaultLighting();
             effect->SetIBLTextures(radiance, diffuseDesc.MipLevels, irradiance, m_states->LinearWrap());
-            effect->SetSurfaceTextures(albeto, normal, rma, m_states->AnisotropicClamp());
+            effect->SetSurfaceTextures(albedo, normal, rma, m_states->AnisotropicClamp());
             effect->SetEmissiveTexture(emissive);
             effect->SetRenderTargetSizeInPixels(1920, 1080);
             pbr.emplace_back(std::move(effect));

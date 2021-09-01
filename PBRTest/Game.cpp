@@ -441,21 +441,21 @@ void Game::Render()
     }
     else
     {
-        auto albetoTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::BaseColor1);
+        auto albedoTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::BaseColor1);
         auto normalTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::NormalMap1);
 
-        auto albetoTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::BaseColor2);
+        auto albedoTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::BaseColor2);
         auto normalTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::NormalMap2);
 
         //--- NormalMap --------------------------------------------------------------------
         m_normalMapEffect->SetWorld(world * XMMatrixTranslation(col0, row0, 0));
-        m_normalMapEffect->SetTexture(albetoTex1, m_states->AnisotropicClamp());
+        m_normalMapEffect->SetTexture(albedoTex1, m_states->AnisotropicClamp());
         m_normalMapEffect->SetNormalTexture(normalTex1);
         m_normalMapEffect->Apply(commandList);
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
         m_normalMapEffect->SetWorld(world * XMMatrixTranslation(col3, row0, 0));
-        m_normalMapEffect->SetTexture(albetoTex2, m_states->AnisotropicClamp());
+        m_normalMapEffect->SetTexture(albedoTex2, m_states->AnisotropicClamp());
         m_normalMapEffect->SetNormalTexture(normalTex2);
         m_normalMapEffect->Apply(commandList);
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
@@ -466,7 +466,7 @@ void Game::Render()
 
             m_pbr->SetAlpha(1.f);
             m_pbr->SetWorld(world * XMMatrixTranslation(col1, row0, 0));
-            m_pbr->SetSurfaceTextures(albetoTex1, normalTex1, rmaTex1, m_states->AnisotropicClamp());
+            m_pbr->SetSurfaceTextures(albedoTex1, normalTex1, rmaTex1, m_states->AnisotropicClamp());
             m_pbr->Apply(commandList);
             commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
@@ -492,7 +492,7 @@ void Game::Render()
 
             m_pbrEmissive->SetAlpha(1.f);
             m_pbrEmissive->SetWorld(world * XMMatrixTranslation(col4, row0, 0));
-            m_pbrEmissive->SetSurfaceTextures(albetoTex2, normalTex2, rmaTex2, m_states->AnisotropicClamp());
+            m_pbrEmissive->SetSurfaceTextures(albedoTex2, normalTex2, rmaTex2, m_states->AnisotropicClamp());
             m_pbrEmissive->SetEmissiveTexture(emissiveTex);
             m_pbrEmissive->Apply(commandList);
             commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
@@ -936,7 +936,7 @@ void Game::CreateDeviceDependentResources()
     resourceUpload.Begin();
 
     // Load textures
-    static const wchar_t* s_albetoTextures[s_nMaterials] =
+    static const wchar_t* s_albedoTextures[s_nMaterials] =
     {
         L"SphereMat_baseColor.png",
         L"Sphere2Mat_baseColor.png",
@@ -961,14 +961,14 @@ void Game::CreateDeviceDependentResources()
         L"BrokenCube_emissive.png",
     };
 
-    static_assert(std::size(s_albetoTextures) == std::size(s_normalMapTextures), "Material array mismatch");
-    static_assert(std::size(s_albetoTextures) == std::size(s_rmaTextures), "Material array mismatch");
-    static_assert(std::size(s_albetoTextures) == std::size(s_emissiveTextures), "Material array mismatch");
+    static_assert(std::size(s_albedoTextures) == std::size(s_normalMapTextures), "Material array mismatch");
+    static_assert(std::size(s_albedoTextures) == std::size(s_rmaTextures), "Material array mismatch");
+    static_assert(std::size(s_albedoTextures) == std::size(s_emissiveTextures), "Material array mismatch");
 
     for (size_t j = 0; j < s_nMaterials; ++j)
     {
         DX::ThrowIfFailed(
-            CreateWICTextureFromFile(device, resourceUpload, s_albetoTextures[j], m_baseColor[j].ReleaseAndGetAddressOf(), true)
+            CreateWICTextureFromFile(device, resourceUpload, s_albedoTextures[j], m_baseColor[j].ReleaseAndGetAddressOf(), true)
         );
 
         DX::ThrowIfFailed(

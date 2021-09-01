@@ -1106,15 +1106,15 @@ void Game::CreateDeviceDependentResources()
     m_alphaTestNotEqual->SetTexture(cat, sampler);
 
     {
-        auto albeto = m_resourceDescriptors->GetGpuHandle(Descriptors::BrickDiffuse);
+        auto albedo = m_resourceDescriptors->GetGpuHandle(Descriptors::BrickDiffuse);
         auto normal = m_resourceDescriptors->GetGpuHandle(Descriptors::BrickNormal);
         auto specular = m_resourceDescriptors->GetGpuHandle(Descriptors::BrickSpecular);
 
-        m_normalMapEffect->SetTexture(albeto, sampler);
+        m_normalMapEffect->SetTexture(albedo, sampler);
         m_normalMapEffect->SetNormalTexture(normal);
         m_normalMapEffect->SetSpecularTexture(specular);
 
-        m_normalMapEffectFog->SetTexture(albeto, sampler);
+        m_normalMapEffectFog->SetTexture(albedo, sampler);
         m_normalMapEffectFog->SetNormalTexture(normal);
         m_normalMapEffectFog->SetSpecularTexture(specular);
 
@@ -1125,7 +1125,7 @@ void Game::CreateDeviceDependentResources()
         m_normalMapEffectNormalsOnly->SetTexture(defaultTex, sampler);
         m_normalMapEffectNormalsOnly->SetNormalTexture(normal);
 
-        m_normalMapEffectNoSpecular->SetTexture(albeto, sampler);
+        m_normalMapEffectNoSpecular->SetTexture(albedo, sampler);
         m_normalMapEffectNoSpecular->SetNormalTexture(normal);
     }
 }
