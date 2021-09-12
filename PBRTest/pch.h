@@ -79,8 +79,12 @@
 #include <DirectXColors.h>
 
 #include <algorithm>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <cwchar>
 #include <exception>
 #include <fstream>
