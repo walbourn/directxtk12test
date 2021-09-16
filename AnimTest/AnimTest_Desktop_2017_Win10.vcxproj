@@ -216,6 +216,24 @@
   <ItemGroup>
     <Manifest Include="..\Common\settings.manifest" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="default.dds" />
+    <Image Include="ground_diff.dds" />
+    <Image Include="ground_norm.dds" />
+    <Image Include="head_diff.dds" />
+    <Image Include="jacket_diff.dds" />
+    <Image Include="left_engine_diff.dds" />
+    <Image Include="left_engine_norm.dds" />
+    <Image Include="pants_diff.dds" />
+    <Image Include="turret_diff.dds" />
+    <Image Include="turret_norm.dds" />
+    <Image Include="upBody_diff.dds" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="soldier.sdkmesh" />
+    <None Include="soldier.sdkmesh_anim" />
+    <None Include="TankScene.sdkmesh" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
