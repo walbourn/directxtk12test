@@ -103,19 +103,19 @@ private:
     std::unique_ptr<DirectX::CommonStates>          m_states;
 
     std::unique_ptr<DirectX::Model>                 m_cube;
-    DirectX::Model::EffectsList                     m_cubeNormal;
+    DirectX::Model::EffectCollection                m_cubeNormal;
 
     std::unique_ptr<DirectX::Model>                 m_cubeInst;
-    DirectX::Model::EffectsList                     m_cubeInstNormal;
+    DirectX::Model::EffectCollection                m_cubeInstNormal;
 
     std::unique_ptr<DirectX::Model>                 m_sphere;
-    DirectX::Model::EffectsList                     m_sphereNormal;
+    DirectX::Model::EffectCollection                m_sphereNormal;
 
     std::unique_ptr<DirectX::Model>                 m_sphere2;
-    DirectX::Model::EffectsList                     m_sphere2Normal;
+    DirectX::Model::EffectCollection                m_sphere2Normal;
 
     std::unique_ptr<DirectX::Model>                 m_robot;
-    DirectX::Model::EffectsList                     m_robotNormal;
+    DirectX::Model::EffectCollection                m_robotNormal;
 
     std::unique_ptr<DirectX::EffectTextureFactory>  m_modelResources;
     std::unique_ptr<DirectX::PBREffectFactory>      m_fxFactory;
