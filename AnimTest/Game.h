@@ -92,5 +92,20 @@ private:
     std::unique_ptr<DirectX::Keyboard>      m_keyboard;
 
     // DirectXTK Test Objects
-    std::unique_ptr<DirectX::GraphicsMemory>    m_graphicsMemory;
+    std::unique_ptr<DirectX::GraphicsMemory>        m_graphicsMemory;
+
+    std::unique_ptr<DirectX::Model>                 m_soldier;
+    DirectX::Model::EffectsList                     m_soldierNormal;
+
+    std::unique_ptr<DirectX::Model>                 m_tank;
+    DirectX::Model::EffectsList                     m_tankNormal;
+
+    std::unique_ptr<DirectX::CommonStates>          m_states;
+    std::unique_ptr<DirectX::EffectFactory>         m_fxFactory;
+    std::unique_ptr<DirectX::EffectTextureFactory>  m_modelResources;
+
+    DirectX::SimpleMath::Matrix                 m_view;
+    DirectX::SimpleMath::Matrix                 m_projection;
+
+    DirectX::ModelBone::TransformArray          m_bones;
 };
