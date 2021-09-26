@@ -616,7 +616,7 @@ void Game::CreateDeviceDependentResources()
             il.push_back(s_instElements[1]);
             il.push_back(s_instElements[2]);
 
-            it->vbDecl = std::make_unique<std::vector<D3D12_INPUT_ELEMENT_DESC>>(il);
+            it->vbDecl = std::make_unique<ModelMeshPart::InputLayoutList>(il);
         }
 
         // Skipping alphaMeshParts for this model since we know it's empty...
