@@ -102,36 +102,36 @@ private:
     std::unique_ptr<DirectX::DescriptorPile>        m_resourceDescriptors;
 
     std::unique_ptr<DirectX::Model>                 m_cup;
-    DirectX::Model::EffectsList                     m_cupNormal;
-    DirectX::Model::EffectsList                     m_cupCustom;
-    DirectX::Model::EffectsList                     m_cupWireframe;
-    DirectX::Model::EffectsList                     m_cupFog;
-    DirectX::Model::EffectsList                     m_cupVertexLighting;
+    DirectX::Model::EffectCollection                m_cupNormal;
+    DirectX::Model::EffectCollection                m_cupCustom;
+    DirectX::Model::EffectCollection                m_cupWireframe;
+    DirectX::Model::EffectCollection                m_cupFog;
+    DirectX::Model::EffectCollection                m_cupVertexLighting;
 
     std::unique_ptr<DirectX::Model>                 m_cupInst;
-    DirectX::Model::EffectsList                     m_cupInstNormal;
+    DirectX::Model::EffectCollection                m_cupInstNormal;
 
     std::unique_ptr<DirectX::Model>                 m_cupMesh;
-    DirectX::Model::EffectsList                     m_cupMeshNormal;
+    DirectX::Model::EffectCollection                m_cupMeshNormal;
 
     std::unique_ptr<DirectX::Model>                 m_vbo;
     std::unique_ptr<DirectX::BasicEffect>           m_vboNormal;
     std::unique_ptr<DirectX::EnvironmentMapEffect>  m_vboEnvMap;
 
     std::unique_ptr<DirectX::Model>                 m_tiny;
-    DirectX::Model::EffectsList                     m_tinyNormal;
+    DirectX::Model::EffectCollection                m_tinyNormal;
 
     std::unique_ptr<DirectX::Model>                 m_soldier;
-    DirectX::Model::EffectsList                     m_soldierNormal;
+    DirectX::Model::EffectCollection                m_soldierNormal;
 
     std::unique_ptr<DirectX::Model>                 m_dwarf;
-    DirectX::Model::EffectsList                     m_dwarfNormal;
+    DirectX::Model::EffectCollection                m_dwarfNormal;
 
     std::unique_ptr<DirectX::Model>                 m_lmap;
-    DirectX::Model::EffectsList                     m_lmapNormal;
+    DirectX::Model::EffectCollection                m_lmapNormal;
 
     std::unique_ptr<DirectX::Model>                 m_nmap;
-    DirectX::Model::EffectsList                     m_nmapNormal;
+    DirectX::Model::EffectCollection                m_nmapNormal;
 
     std::unique_ptr<DirectX::IEffectTextureFactory> m_abstractModelResources;
     std::unique_ptr<DirectX::EffectTextureFactory>  m_modelResources;

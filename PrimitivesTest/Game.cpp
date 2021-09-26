@@ -868,8 +868,8 @@ void Game::CreateDeviceDependentResources()
     m_iso = GeometricPrimitive::CreateIcosahedron(0.5f, rhcoords);
 
     {
-        std::vector<GeometricPrimitive::VertexType> customVerts;
-        std::vector<uint16_t> customIndices;
+        GeometricPrimitive::VertexCollection customVerts;
+        GeometricPrimitive::IndexCollection customIndices;
         GeometricPrimitive::CreateBox(customVerts, customIndices, XMFLOAT3(1.f / 2.f, 2.f / 2.f, 3.f / 2.f), rhcoords);
 
         assert(customVerts.size() == 24);
@@ -886,8 +886,8 @@ void Game::CreateDeviceDependentResources()
 
     {
         // Ensure VertexType alias is consistent with alternative client usage
-        std::vector<VertexPositionNormalTexture> customVerts;
-        std::vector<uint16_t> customIndices;
+        GeometricPrimitive::VertexCollection customVerts;
+        GeometricPrimitive::IndexCollection customIndices;
         GeometricPrimitive::CreateBox(customVerts, customIndices, XMFLOAT3(1.f / 2.f, 2.f / 2.f, 3.f / 2.f), rhcoords);
 
         assert(customVerts.size() == 24);
