@@ -95,6 +95,7 @@
 #include <pix.h>
 
 #include "CommonStates.h"
+#include "DescriptorHeap.h"
 #include "Effects.h"
 #include "GamePad.h"
 #include "GraphicsMemory.h"
@@ -102,6 +103,7 @@
 #include "Model.h"
 #include "Mouse.h"
 #include "RenderTargetState.h"
+#include "ResourceUploadBatch.h"
 #include "SimpleMath.h"
 
 namespace DX
