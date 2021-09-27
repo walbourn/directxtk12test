@@ -541,6 +541,7 @@ void Game::CreateDeviceDependentResources()
 
     m_deviceResources->WaitForGpu();
 
+    DX::ThrowIfFailed(m_soldierAnim.Load(L"soldier.sdkmesh_anim"));
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
