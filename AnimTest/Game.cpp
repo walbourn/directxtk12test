@@ -274,8 +274,7 @@ void Game::Render()
         // For SDKMESH rigid-body, the matrix data is the local position to use.
 
     Model::UpdateEffectMatrices(m_tankNormal, local, m_view, m_projection);
-    m_tank->Draw(commandList, m_tankNormal.cbegin());
-    // TODO - m_tank->Draw(context, *m_states, nbones, bones.get(), local, m_view, m_projection);
+    m_tank->Draw(commandList, nbones, bones.get(), local, m_tankNormal.cbegin());
 
     // Teapot (direct-mapped bones)
     // TODO - Needs CMO loading
@@ -479,6 +478,9 @@ void Game::CreateDeviceDependentResources()
 
     ResourceUploadBatch resourceUpload(device);
     resourceUpload.Begin();
+
+    m_tank->LoadStaticBuffers(device, resourceUpload);
+    m_soldier->LoadStaticBuffers(device, resourceUpload);
 
     m_modelResources = std::make_unique<EffectTextureFactory>(device, resourceUpload, m_resourceDescriptors->Heap());
 
