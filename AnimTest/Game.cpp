@@ -344,7 +344,7 @@ void Game::Render()
         bones[j] = XMMatrixMultiply(m_soldier->invBindPoseMatrices[j], targetBones[j]);
     }
 
-    // TODO - m_soldier->DrawSkinned(context, *m_states, nbones, bones.get(), local, m_view, m_projection);
+    m_soldier->DrawSkinned(commandList, nbones, bones.get(), local, m_soldierNormal.cbegin());
 
     PIXEndEvent(commandList);
 
