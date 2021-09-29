@@ -239,6 +239,7 @@
     <None Include="soldier.sdkmesh" />
     <None Include="soldier.sdkmesh_anim" />
     <None Include="TankScene.sdkmesh" />
+    <None Include="teapot.cmo" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -14,6 +14,9 @@
     <Filter Include="Assets\Tank">
       <UniqueIdentifier>{303a1935-7d38-4a74-8e6e-cb9b9b76c5bb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Assets\VSStarter">
+      <UniqueIdentifier>{6b71b73c-204e-44b5-b6bb-51664900e4d5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Common\d3dx12.h">
@@ -104,6 +107,9 @@
     </None>
     <None Include="soldier.sdkmesh_anim">
       <Filter>Assets\Soldier</Filter>
+    </None>
+    <None Include="teapot.cmo">
+      <Filter>Assets\VSStarter</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

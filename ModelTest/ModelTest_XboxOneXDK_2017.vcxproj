@@ -216,8 +216,17 @@
     <Image Include="Tiny_skin.dds" />
     <Image Include="upBody_diff.dds" />
     <Image Include="Weapons.dds" />
+    <Image Include="_USERS_CHUCKW.WINGROUP_DESKTOP_VS 3D STARTER KIT_STARTERKIT_ASSETS_CUBEUVIMAGE.PNG.DDS" />
+    <Image Include="_Users_Shaun_Desktop_Transfer_Model Generation_CMO_Ships_StarFire_25ab10e8-621a-47d4-a63d-f65a00bc1549__texture__01.png.dds" />
+    <Image Include="_Users_Shaun_Desktop_Transfer_Model Generation_CMO_Ships_StarFire_25ab10e8-621a-47d4-a63d-f65a00bc1549__texture__03.png.dds" />
+    <Image Include="_Users_Shaun_Desktop_Transfer_Model Generation_CMO_Ships_StarFire_25ab10e8-621a-47d4-a63d-f65a00bc1549__texture__04.png.dds" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="25ab10e8-621a-47d4-a63d-f65a00bc1549_model.cmo">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Durango'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Durango'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Profile|Durango'">true</DeploymentContent>
+    </None>
     <None Include="cup.mtl">
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Durango'">true</DeploymentContent>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Durango'">true</DeploymentContent>
@@ -238,6 +247,11 @@
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Durango'">true</DeploymentContent>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Profile|Durango'">true</DeploymentContent>
     </None>
+    <None Include="gamelevel.cmo">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Durango'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Durango'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Profile|Durango'">true</DeploymentContent>
+    </None>
     <None Include="Helmet.sdkmesh">
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Durango'">true</DeploymentContent>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Durango'">true</DeploymentContent>
@@ -254,6 +268,11 @@
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Profile|Durango'">true</DeploymentContent>
     </None>
     <None Include="soldier.sdkmesh">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Durango'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Durango'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Profile|Durango'">true</DeploymentContent>
+    </None>
+    <None Include="teapot.cmo">
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Durango'">true</DeploymentContent>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Durango'">true</DeploymentContent>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Profile|Durango'">true</DeploymentContent>

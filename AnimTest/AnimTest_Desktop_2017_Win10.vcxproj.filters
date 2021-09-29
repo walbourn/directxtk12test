@@ -13,6 +13,9 @@
     <Filter Include="Assets\Tank">
       <UniqueIdentifier>{eb1f44d8-c255-41b8-834d-9eecbd3eb5bb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Assets\VSStarter">
+      <UniqueIdentifier>{5384bbfd-7e63-47ef-90f0-7ef0c7b2f51c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -91,6 +94,9 @@
     </None>
     <None Include="soldier.sdkmesh_anim">
       <Filter>Assets\Soldier</Filter>
+    </None>
+    <None Include="teapot.cmo">
+      <Filter>Assets\VSStarter</Filter>
     </None>
   </ItemGroup>
 </Project>

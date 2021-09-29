@@ -14,6 +14,9 @@
     <Filter Include="Assets\Tank">
       <UniqueIdentifier>{084592fa-baf6-4bf4-aa5a-27c8553b897e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Assets\VSStarter">
+      <UniqueIdentifier>{8122c977-0103-40fd-9409-d10cde841898}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -105,6 +108,9 @@
     </None>
     <None Include="TankScene.sdkmesh">
       <Filter>Assets\Tank</Filter>
+    </None>
+    <None Include="teapot.cmo">
+      <Filter>Assets\VSStarter</Filter>
     </None>
   </ItemGroup>
 </Project>
