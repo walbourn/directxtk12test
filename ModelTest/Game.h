@@ -13,8 +13,6 @@
 #include "DirectXTKTest.h"
 #include "StepTimer.h"
 
-#include "PlatformHelpers.h"
-
 
 // A basic game implementation that creates a D3D12 device and
 // provides a game loop.
@@ -145,9 +143,9 @@ private:
     DirectX::SimpleMath::Matrix                     m_view;
     DirectX::SimpleMath::Matrix                     m_projection;
 
-    UINT                                                            m_instanceCount;
-    std::unique_ptr<DirectX::XMFLOAT3X4[]>                          m_instanceTransforms;
-    std::unique_ptr<DirectX::XMMATRIX[], DirectX::aligned_deleter>  m_bones;
+    UINT                                            m_instanceCount;
+    std::unique_ptr<DirectX::XMFLOAT3X4[]>          m_instanceTransforms;
+    DirectX::ModelBone::TransformArray              m_bones;
 
     bool m_spinning;
     bool m_firstFrame;
