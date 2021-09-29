@@ -185,9 +185,11 @@ void Game::Tick()
 }
 
 // Updates the world.
-void Game::Update(DX::StepTimer const&)
+void Game::Update(DX::StepTimer const& timer)
 {
     PIXBeginEvent(PIX_COLOR_DEFAULT, L"Update");
+
+    float elapsedTime = float(timer.GetElapsedSeconds());
 
     auto pad = m_gamePad->GetState(0);
     auto kb = m_keyboard->GetState();
@@ -195,6 +197,8 @@ void Game::Update(DX::StepTimer const&)
     {
         ExitGame();
     }
+
+    m_soldierAnim.Update(elapsedTime);
 
     PIXEndEvent();
 }
@@ -296,7 +300,7 @@ void Game::Render()
 
     nbones = static_cast<uint32_t>(m_soldier->bones.size());
     bones = ModelBone::MakeArray(nbones);
-    m_soldierAnim.Apply(*m_soldier, m_timer.GetTotalSeconds(), m_soldier->bones.size(), bones.get());
+    m_soldierAnim.Apply(*m_soldier, m_soldier->bones.size(), bones.get());
 
     m_soldier->DrawSkinned(commandList, nbones, bones.get(), local, m_soldierNormal.cbegin());
 
