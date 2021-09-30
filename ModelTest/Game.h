@@ -131,6 +131,15 @@ private:
     std::unique_ptr<DirectX::Model>                 m_nmap;
     DirectX::Model::EffectCollection                m_nmapNormal;
 
+    std::unique_ptr<DirectX::Model>                 m_teapot;
+    DirectX::Model::EffectCollection                m_teapotNormal;
+
+    std::unique_ptr<DirectX::Model>                 m_gamelevel;
+    DirectX::Model::EffectCollection                m_gamelevelNormal;
+
+    std::unique_ptr<DirectX::Model>                 m_ship;
+    DirectX::Model::EffectCollection                m_shipNormal;
+
     std::unique_ptr<DirectX::IEffectTextureFactory> m_abstractModelResources;
     std::unique_ptr<DirectX::EffectTextureFactory>  m_modelResources;
 

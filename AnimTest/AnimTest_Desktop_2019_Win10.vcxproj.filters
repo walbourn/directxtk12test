@@ -72,9 +72,6 @@
     <Image Include="upBody_diff.dds">
       <Filter>Assets\Soldier</Filter>
     </Image>
-    <Image Include="default.dds">
-      <Filter>Assets\Soldier</Filter>
-    </Image>
     <Image Include="head_diff.dds">
       <Filter>Assets\Soldier</Filter>
     </Image>
@@ -83,6 +80,9 @@
     </Image>
     <Image Include="pants_diff.dds">
       <Filter>Assets\Soldier</Filter>
+    </Image>
+    <Image Include="default.dds">
+      <Filter>Assets</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>

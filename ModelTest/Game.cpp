@@ -441,8 +441,41 @@ void Game::Render()
     m_vboEnvMap->SetWorld(local);
     m_vbo->Draw(commandList, m_vboEnvMap.get());
 
+    //--- Draw CMO models ------------------------------------------------------------------
+    for (auto& it : m_teapotNormal)
+    {
+        auto skinnedEffect = dynamic_cast<IEffectSkinning*>(it.get());
+        if (skinnedEffect)
+            skinnedEffect->ResetBoneTransforms();
+    }
+    local = XMMatrixMultiply(XMMatrixScaling(0.01f, 0.01f, 0.01f), XMMatrixTranslation(-2.f, row1, 0.f));
+    local = XMMatrixMultiply(world, local);
+    Model::UpdateEffectMatrices(m_teapotNormal, local, m_view, m_projection);
+    m_teapot->Draw(commandList, m_teapotNormal.cbegin());
+
+    for (auto& it : m_teapotNormal)
+    {
+        auto skinnedEffect = dynamic_cast<IEffectSkinning*>(it.get());
+        if (skinnedEffect)
+            skinnedEffect->SetBoneTransforms(m_bones.get(), SkinnedEffect::MaxBones);
+    }
+    local = XMMatrixMultiply(XMMatrixScaling(0.01f, 0.01f, 0.01f), XMMatrixTranslation(-3.5f, row1, 0.f));
+    local = XMMatrixMultiply(world, local);
+    Model::UpdateEffectMatrices(m_teapotNormal, local, m_view, m_projection);
+    m_teapot->Draw(commandList, m_teapotNormal.cbegin());
+
+    local = XMMatrixMultiply(XMMatrixScaling(0.1f, 0.1f, 0.1f), XMMatrixTranslation(0.f, row1, 0.f));
+    local = XMMatrixMultiply(world, local);
+    Model::UpdateEffectMatrices(m_gamelevelNormal, local, m_view, m_projection);
+    m_gamelevel->Draw(commandList, m_gamelevelNormal.cbegin());
+
+    local = XMMatrixMultiply(XMMatrixScaling(.2f, .2f, .2f), XMMatrixTranslation(0.f, row2, 0.f));
+    local = XMMatrixMultiply(world, local);
+    Model::UpdateEffectMatrices(m_shipNormal, local, m_view, m_projection);
+    m_ship->Draw(commandList, m_shipNormal.cbegin());
+
     //--- Draw SDKMESH models --------------------------------------------------------------
-    local = XMMatrixTranslation(0.f, row2, 0.f);
+    local = XMMatrixTranslation(-1.f, row2, 0.f);
     local = XMMatrixMultiply(world, local);
     Model::UpdateEffectMatrices(m_cupMeshNormal, local, m_view, m_projection);
     m_cupMesh->Draw(commandList, m_cupMeshNormal.cbegin());
@@ -462,7 +495,7 @@ void Game::Render()
     Model::UpdateEffectMatrices(m_lmapNormal, local, m_view, m_projection);
     m_lmap->Draw(commandList, m_lmapNormal.cbegin());
 
-    local = XMMatrixMultiply(XMMatrixScaling(0.05f, 0.05f, 0.05f), XMMatrixTranslation(-4.0f, row1, 0.f));
+    local = XMMatrixMultiply(XMMatrixScaling(0.05f, 0.05f, 0.05f), XMMatrixTranslation(-5.0f, row1, 0.f));
     local = XMMatrixMultiply(world, local);
     Model::UpdateEffectMatrices(m_nmapNormal, local, m_view, m_projection);
     m_nmap->Draw(commandList, m_nmapNormal.cbegin());
@@ -664,9 +697,10 @@ void Game::CreateDeviceDependentResources()
 
 #ifdef LH_COORDS
         auto& ncull = CommonStates::CullCounterClockwise;
-
+        auto& cull = CommonStates::CullClockwise;
 #else
         auto& ncull = CommonStates::CullClockwise;
+        auto& cull = CommonStates::CullCounterClockwise;
 #endif
 
         {
@@ -878,6 +912,72 @@ void Game::CreateDeviceDependentResources()
             m_nmapNormal = m_nmap->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
         }
 
+        // CMO teapot.cmo
+        m_teapot = Model::CreateFromCMO(device, L"teapot.cmo");
+
+        {
+            EffectPipelineStateDescription pd(
+                nullptr,
+                CommonStates::Opaque,
+                CommonStates::DepthDefault,
+                cull,
+                rtState);
+
+            m_teapotNormal = m_teapot->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
+        }
+
+        for (auto& it : m_teapotNormal)
+        {
+            auto skinnedEffect = dynamic_cast<SkinnedEffect*>(it.get());
+            if (skinnedEffect)
+            {
+                // Skinned effect always needs a texture and this model has no texture on the skinned teapot.
+                skinnedEffect->SetTexture(m_resourceDescriptors->GetGpuHandle(StaticDescriptors::DefaultTex), m_states->LinearClamp());
+            }
+        }
+
+        // Visual Studio CMO
+        m_gamelevel = Model::CreateFromCMO(device, L"gamelevel.cmo");
+
+        {
+            size_t start, end;
+            m_resourceDescriptors->AllocateRange(m_gamelevel->textureNames.size(), start, end);
+            txtOffset = static_cast<int>(start);
+        }
+        m_gamelevel->LoadTextures(*m_modelResources, txtOffset);
+
+        {
+            EffectPipelineStateDescription pd(
+                nullptr,
+                CommonStates::Opaque,
+                CommonStates::DepthDefault,
+                cull,
+                rtState);
+
+            m_gamelevelNormal = m_gamelevel->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
+        }
+
+        // CMO ship
+        m_ship = Model::CreateFromCMO(device, L"25ab10e8-621a-47d4-a63d-f65a00bc1549_model.cmo");
+
+        {
+            size_t start, end;
+            m_resourceDescriptors->AllocateRange(m_ship->textureNames.size(), start, end);
+            txtOffset = static_cast<int>(start);
+        }
+        m_ship->LoadTextures(*m_modelResources, txtOffset);
+
+        {
+            EffectPipelineStateDescription pd(
+                nullptr,
+                CommonStates::Opaque,
+                CommonStates::DepthDefault,
+                cull,
+                rtState);
+
+            m_shipNormal = m_ship->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
+        }
+
 #ifdef GAMMA_CORRECT_RENDERING
         constexpr DDS_LOADER_FLAGS loadFlags = DDS_LOADER_FORCE_SRGB;
 #else
@@ -1079,6 +1179,9 @@ void Game::OnDeviceLost()
     m_dwarf.reset();
     m_lmap.reset();
     m_nmap.reset();
+    m_teapot.reset();
+    m_gamelevel.reset();
+    m_ship.reset();
 
     m_cupNormal.clear();
     m_cupCustom.clear();
@@ -1087,21 +1190,20 @@ void Game::OnDeviceLost()
     m_cupVertexLighting.clear();
 
     m_cupInstNormal.clear();
-
     m_cupMeshNormal.clear();
 
     m_vboNormal.reset();
     m_vboEnvMap.reset();
 
     m_tinyNormal.clear();
-
     m_soldierNormal.clear();
-
     m_dwarfNormal.clear();
-
     m_lmapNormal.clear();
-
     m_nmapNormal.clear();
+
+    m_teapotNormal.clear();
+    m_gamelevelNormal.clear();
+    m_shipNormal.clear();
 
     m_defaultTex.Reset();
     m_cubemap.Reset();
