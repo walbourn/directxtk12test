@@ -84,6 +84,7 @@
 #include <memory>
 #include <stdexcept>
 #include <system_error>
+#include <type_traits>
 
 #include <pix.h>
 
@@ -92,6 +93,7 @@
 #include "DescriptorHeap.h"
 #include "DirectXHelpers.h"
 #include "Effects.h"
+#include "EffectPipelineStateDescription.h"
 #include "GamePad.h"
 #include "GeometricPrimitive.h"
 #include "GraphicsMemory.h"
