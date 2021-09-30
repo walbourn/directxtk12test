@@ -199,6 +199,7 @@ void Game::Update(DX::StepTimer const& timer)
     }
 
     m_soldierAnim.Update(elapsedTime);
+    m_teapotAnim.Update(elapsedTime);
 
     PIXEndEvent();
 }
@@ -278,7 +279,23 @@ void Game::Render()
     m_tank->Draw(commandList, nbones, bones.get(), local, m_tankNormal.cbegin());
 
     // Teapot (direct-mapped bones)
-    // TODO - Needs CMO loading
+    for (auto it : m_teapotNormal)
+    {
+        auto skinnedEffect = dynamic_cast<IEffectSkinning*>(it.get());
+        if (skinnedEffect)
+            skinnedEffect->ResetBoneTransforms();
+    }
+    local = XMMatrixMultiply(XMMatrixScaling(0.01f, 0.01f, 0.01f), XMMatrixTranslation(-2.f, row0, 0.f));
+    Model::UpdateEffectMatrices(m_teapotNormal, local, m_view, m_projection);
+    m_teapot->Draw(commandList, m_teapotNormal.cbegin());
+
+    nbones = static_cast<uint32_t>(m_teapot->bones.size());
+    bones = ModelBone::MakeArray(nbones);
+    m_teapotAnim.Apply(*m_teapot, m_teapot->bones.size(), bones.get());
+
+    local = XMMatrixMultiply(XMMatrixScaling(0.01f, 0.01f, 0.01f), XMMatrixTranslation(-2.f, row1, 0.f));
+    Model::UpdateEffectMatrices(m_teapotNormal, local, m_view, m_projection);
+    m_teapot->DrawSkinned(commandList, nbones, bones.get(), local, m_teapotNormal.cbegin());
 
     // Draw SDKMESH models (bone influences)
     for(auto it : m_soldierNormal)
@@ -431,14 +448,44 @@ void Game::CreateDeviceDependentResources()
 
     DumpBones(m_soldier->bones, "soldier.sdkmesh");
 
+    size_t animsOffset;
+    m_teapot = Model::CreateFromCMO(device, L"teapot.cmo", ModelLoader_IncludeBones, &animsOffset);
+
+    DumpBones(m_teapot->bones, "teapot.cmo");
+
+    if (!animsOffset)
+    {
+        OutputDebugStringA("ERROR: 'teapot.cmo' - No animation clips found in file!\n");
+    }
+    else
+    {
+        DX::ThrowIfFailed(m_teapotAnim.Load(L"teapot.cmo", animsOffset, L"Take 001"));
+
+        OutputDebugStringA("'teapot.cmo' contains animation clips.\n");
+    }
+
     // Load textures & effects
-    m_resourceDescriptors = std::make_unique<DescriptorPile>(device, 128);
+    m_resourceDescriptors = std::make_unique<DescriptorPile>(device, 128, StaticDescriptors::Reserve);
 
     ResourceUploadBatch resourceUpload(device);
     resourceUpload.Begin();
 
+#ifdef GAMMA_CORRECT_RENDERING
+    constexpr DDS_LOADER_FLAGS loadFlags = DDS_LOADER_FORCE_SRGB;
+#else
+    constexpr DDS_LOADER_FLAGS loadFlags = DDS_LOADER_DEFAULT;
+#endif
+
+    DX::ThrowIfFailed(
+        CreateDDSTextureFromFileEx(device, resourceUpload, L"default.dds",
+            0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
+            m_defaultTex.ReleaseAndGetAddressOf()));
+
+    CreateShaderResourceView(device, m_defaultTex.Get(), m_resourceDescriptors->GetCpuHandle(StaticDescriptors::DefaultTex));
+
     m_tank->LoadStaticBuffers(device, resourceUpload);
     m_soldier->LoadStaticBuffers(device, resourceUpload);
+    m_teapot->LoadStaticBuffers(device, resourceUpload);
 
     m_modelResources = std::make_unique<EffectTextureFactory>(device, resourceUpload, m_resourceDescriptors->Heap());
 
@@ -459,8 +506,10 @@ void Game::CreateDeviceDependentResources()
 
 #ifdef LH_COORDS
     auto& ncull = CommonStates::CullCounterClockwise;
+    auto& cull = CommonStates::CullClockwise;
 #else
     auto& ncull = CommonStates::CullClockwise;
+    auto& cull = CommonStates::CullCounterClockwise;
 #endif
 
     {
@@ -492,7 +541,26 @@ void Game::CreateDeviceDependentResources()
         m_soldierNormal = m_soldier->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
     }
 
-    // TODO - Load teapot from CMO
+    {
+        EffectPipelineStateDescription pd(
+            nullptr,
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
+            cull,
+            rtState);
+
+        m_teapotNormal = m_teapot->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
+    }
+
+    for (auto& it : m_teapotNormal)
+    {
+        auto skinnedEffect = dynamic_cast<SkinnedEffect*>(it.get());
+        if (skinnedEffect)
+        {
+            // Skinned effect always needs a texture and this model has no texture on the skinned teapot.
+            skinnedEffect->SetTexture(m_resourceDescriptors->GetGpuHandle(StaticDescriptors::DefaultTex), m_states->LinearClamp());
+        }
+    }
 
     auto uploadResourcesFinished = resourceUpload.End(m_deviceResources->GetCommandQueue());
     uploadResourcesFinished.wait();
@@ -505,6 +573,8 @@ void Game::CreateDeviceDependentResources()
     {
         OutputDebugStringA("ERROR: Bind of soldier to animation failed to find any matching bones!\n");
     }
+
+    m_teapotAnim.Bind(*m_teapot);
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
@@ -541,10 +611,15 @@ void Game::OnDeviceLost()
     m_tank.reset();
     m_tankNormal.clear();
 
+    m_teapot.reset();
+    m_teapotNormal.clear();
+
     m_states.reset();
     m_fxFactory.reset();
     m_modelResources.reset();
     m_resourceDescriptors.reset();
+
+    m_defaultTex.Reset();
 
     m_graphicsMemory.reset();
 }

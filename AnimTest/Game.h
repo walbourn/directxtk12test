@@ -101,10 +101,15 @@ private:
     std::unique_ptr<DirectX::Model>                 m_tank;
     DirectX::Model::EffectCollection                m_tankNormal;
 
+    std::unique_ptr<DirectX::Model>                 m_teapot;
+    DirectX::Model::EffectCollection                m_teapotNormal;
+
     std::unique_ptr<DirectX::CommonStates>          m_states;
     std::unique_ptr<DirectX::DescriptorPile>        m_resourceDescriptors;
     std::unique_ptr<DirectX::EffectFactory>         m_fxFactory;
     std::unique_ptr<DirectX::EffectTextureFactory>  m_modelResources;
+
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_defaultTex;
 
     DirectX::SimpleMath::Matrix                     m_view;
     DirectX::SimpleMath::Matrix                     m_projection;
@@ -112,4 +117,11 @@ private:
     DirectX::ModelBone::TransformArray              m_bones;
 
     DX::AnimationSDKMESH                            m_soldierAnim;
+    DX::AnimationCMO                                m_teapotAnim;
+
+    enum StaticDescriptors
+    {
+        DefaultTex = 0,
+        Reserve
+    };
 };

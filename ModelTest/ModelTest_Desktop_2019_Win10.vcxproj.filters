@@ -26,6 +26,12 @@
     <Filter Include="Assets\Normalmap">
       <UniqueIdentifier>{ac5bd0f5-fddb-4f66-8da6-6fb3f9c2bffa}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Assets\CmoShip">
+      <UniqueIdentifier>{d0a90d21-ba22-4a21-ac3d-cc8909f3057e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets\VSStarter">
+      <UniqueIdentifier>{c276548a-a158-42de-8c36-9b4d2e873bb3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -87,6 +93,15 @@
     </None>
     <None Include="Helmet.sdkmesh">
       <Filter>Assets\Normalmap</Filter>
+    </None>
+    <None Include="25ab10e8-621a-47d4-a63d-f65a00bc1549_model.cmo">
+      <Filter>Assets\CmoShip</Filter>
+    </None>
+    <None Include="gamelevel.cmo">
+      <Filter>Assets\VSStarter</Filter>
+    </None>
+    <None Include="teapot.cmo">
+      <Filter>Assets\VSStarter</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -161,6 +176,18 @@
     </Image>
     <Image Include="smoothMap.dds">
       <Filter>Assets</Filter>
+    </Image>
+    <Image Include="_Users_Shaun_Desktop_Transfer_Model Generation_CMO_Ships_StarFire_25ab10e8-621a-47d4-a63d-f65a00bc1549__texture__01.png.dds">
+      <Filter>Assets\CmoShip</Filter>
+    </Image>
+    <Image Include="_Users_Shaun_Desktop_Transfer_Model Generation_CMO_Ships_StarFire_25ab10e8-621a-47d4-a63d-f65a00bc1549__texture__03.png.dds">
+      <Filter>Assets\CmoShip</Filter>
+    </Image>
+    <Image Include="_Users_Shaun_Desktop_Transfer_Model Generation_CMO_Ships_StarFire_25ab10e8-621a-47d4-a63d-f65a00bc1549__texture__04.png.dds">
+      <Filter>Assets\CmoShip</Filter>
+    </Image>
+    <Image Include="_USERS_CHUCKW.WINGROUP_DESKTOP_VS 3D STARTER KIT_STARTERKIT_ASSETS_CUBEUVIMAGE.PNG.DDS">
+      <Filter>Assets\VSStarter</Filter>
     </Image>
   </ItemGroup>
 </Project>

@@ -13,6 +13,9 @@
     <Filter Include="Assets\Tank">
       <UniqueIdentifier>{eb1f44d8-c255-41b8-834d-9eecbd3eb5bb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Assets\VSStarter">
+      <UniqueIdentifier>{c653aed8-d89e-4d90-ae8b-3e8d4c4346f0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -69,9 +72,6 @@
     <Image Include="upBody_diff.dds">
       <Filter>Assets\Soldier</Filter>
     </Image>
-    <Image Include="default.dds">
-      <Filter>Assets\Soldier</Filter>
-    </Image>
     <Image Include="head_diff.dds">
       <Filter>Assets\Soldier</Filter>
     </Image>
@@ -80,6 +80,9 @@
     </Image>
     <Image Include="pants_diff.dds">
       <Filter>Assets\Soldier</Filter>
+    </Image>
+    <Image Include="default.dds">
+      <Filter>Assets</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
@@ -91,6 +94,9 @@
     </None>
     <None Include="soldier.sdkmesh_anim">
       <Filter>Assets\Soldier</Filter>
+    </None>
+    <None Include="teapot.cmo">
+      <Filter>Assets\VSStarter</Filter>
     </None>
   </ItemGroup>
 </Project>
