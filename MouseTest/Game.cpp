@@ -51,7 +51,11 @@ Game::Game() noexcept(false) :
 #ifdef XBOX
     m_deviceResources = std::make_unique<DX::DeviceResources>(
         c_RenderFormat, DXGI_FORMAT_D32_FLOAT, 2,
-        DX::DeviceResources::c_Enable4K_UHD);
+        DX::DeviceResources::c_Enable4K_UHD
+#ifdef _GAMING_XBOX
+        | DX::DeviceResources::c_EnableQHD
+#endif
+        );
 #elif defined(UWP)
     m_deviceResources = std::make_unique<DX::DeviceResources>(
         c_RenderFormat, DXGI_FORMAT_D24_UNORM_S8_UINT, 2, D3D_FEATURE_LEVEL_11_0,
@@ -529,11 +533,17 @@ void Game::CreateWindowSizeDependentResources()
     if (m_deviceResources->GetDeviceOptions() & DX::DeviceResources::c_Enable4K_UHD)
     {
 #ifdef GAMEINPUT
-        Mouse::SetResolution(true);
+        Mouse::SetResolution(2.f);
 #else
         Mouse::SetDpi(192.);
 #endif
     }
+#ifdef _GAMING_XBOX
+    else if (m_deviceResources->GetDeviceOptions() & DX::DeviceResources::c_EnableQHD)
+    {
+        Mouse::SetResolution(1.3333f);
+    }
+#endif
 #elif defined(UWP)
     if (m_deviceResources->GetDeviceOptions() & DX::DeviceResources::c_Enable4K_Xbox)
     {

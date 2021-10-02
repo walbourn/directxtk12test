@@ -54,6 +54,9 @@ Game::Game() noexcept(false) :
     m_deviceResources = std::make_unique<DX::DeviceResources>(
         c_RenderFormat, DXGI_FORMAT_UNKNOWN, 2,
         DX::DeviceResources::c_Enable4K_UHD
+#ifdef _GAMING_XBOX
+        | DX::DeviceResources::c_EnableQHD
+#endif
         );
 #elif defined(UWP)
     m_deviceResources = std::make_unique<DX::DeviceResources>(
@@ -562,9 +565,13 @@ void Game::CreateWindowSizeDependentResources()
     m_spriteBatch->SetViewport(viewport);
 
 #ifdef XBOX
-    if (m_deviceResources->GetDeviceOptions() & DX::DeviceResources::c_Enable4K_UHD)
+    unsigned int resflags = DX::DeviceResources::c_Enable4K_UHD;
+#if _GAMING_XBOX
+    resflags |= DX::DeviceResources::c_EnableQHD;
+#endif
+    if (m_deviceResources->GetDeviceOptions() & resflags)
     {
-        // Scale sprite batch rendering when running 4k
+        // Scale sprite batch rendering when running >1080p
         static const D3D12_VIEWPORT s_vp1080 = { 0.f, 0.f, 1920.f, 1080.f, D3D12_MIN_DEPTH, D3D12_MAX_DEPTH };
         m_spriteBatch->SetViewport(s_vp1080);
     }
