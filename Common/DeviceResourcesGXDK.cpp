@@ -60,7 +60,7 @@ DeviceResources::~DeviceResources()
 }
 
 // Configures the Direct3D device, and stores handles to it and the device context.
-void DeviceResources::CreateDeviceResources(D3D12XBOX_CREATE_DEVICE_FLAGS createDeviceFlags)
+void DeviceResources::CreateDeviceResources()
 {
     // Create the DX12 API device object.
     D3D12XBOX_CREATE_DEVICE_PARAMETERS params = {};
@@ -77,7 +77,6 @@ void DeviceResources::CreateDeviceResources(D3D12XBOX_CREATE_DEVICE_FLAGS create
     params.GraphicsCommandQueueRingSizeBytes = static_cast<UINT>(D3D12XBOX_DEFAULT_SIZE_BYTES);
     params.GraphicsScratchMemorySizeBytes = static_cast<UINT>(D3D12XBOX_DEFAULT_SIZE_BYTES);
     params.ComputeScratchMemorySizeBytes = static_cast<UINT>(D3D12XBOX_DEFAULT_SIZE_BYTES);
-    params.CreateDeviceFlags = createDeviceFlags;
 
     HRESULT hr = D3D12XboxCreateDevice(
         nullptr,

@@ -26,7 +26,7 @@ namespace DX
         DeviceResources(DeviceResources const&) = delete;
         DeviceResources& operator= (DeviceResources const&) = delete;
 
-        void CreateDeviceResources(D3D12XBOX_CREATE_DEVICE_FLAGS createDeviceFlags = D3D12XBOX_CREATE_DEVICE_FLAG_NONE);
+        void CreateDeviceResources();
         void CreateWindowSizeDependentResources();
         void SetWindow(HWND window) noexcept { m_window = window; }
         void Prepare(D3D12_RESOURCE_STATES beforeState = D3D12_RESOURCE_STATE_PRESENT,
