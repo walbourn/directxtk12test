@@ -54,6 +54,9 @@
 #include <wrl/client.h>
 #include <wrl/event.h>
 
+#define D3DX12_NO_STATE_OBJECT_HELPERS
+#define D3DX12_NO_CHECK_FEATURE_SUPPORT_CLASS
+
 #include <d3d12.h>
 #include <dxgi1_6.h>
 
@@ -61,7 +64,6 @@
 #include <dxgidebug.h>
 #endif
 
-#define D3DX12_NO_STATE_OBJECT_HELPERS
 #include "d3dx12.h"
 
 #define _XM_NO_XMVECTOR_OVERLOADS_

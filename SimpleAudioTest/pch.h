@@ -57,6 +57,9 @@
 #include <wrl/client.h>
 #include <wrl/event.h>
 
+#define D3DX12_NO_STATE_OBJECT_HELPERS
+#define D3DX12_NO_CHECK_FEATURE_SUPPORT_CLASS
+
 #ifdef _GAMING_XBOX_SCARLETT
 #include <d3d12_xs.h>
 #include <d3dx12_xs.h>
@@ -71,7 +74,6 @@
 #include <dxgidebug.h>
 #endif
 
-#define D3DX12_NO_STATE_OBJECT_HELPERS
 #include "d3dx12.h"
 #endif
 

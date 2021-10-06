@@ -54,6 +54,9 @@
 #include <Dbt.h>
 #endif
 
+#define D3DX12_NO_STATE_OBJECT_HELPERS
+#define D3DX12_NO_CHECK_FEATURE_SUPPORT_CLASS
+
 #include <wrl/client.h>
 #include <wrl/event.h>
 
@@ -71,7 +74,6 @@
 #include <dxgidebug.h>
 #endif
 
-#define D3DX12_NO_STATE_OBJECT_HELPERS
 #include "d3dx12.h"
 #endif
 
