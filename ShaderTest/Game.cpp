@@ -662,6 +662,9 @@ void Game::Render()
             y -= 1.f;
         }
 
+        // SkinnedNormalMapEffect
+        // TODO -
+
         // PBREffect
         {
             auto it = (showCompressed) ? m_pbrBn.cbegin() : m_pbr.cbegin();
@@ -1490,6 +1493,9 @@ void Game::CreateDeviceDependentResources()
                 m_normalMapInstancedBn.swap(normalMapInst);
             }
         }
+
+        //-- SkinnedNormalMapEffect --------------------------------------------------------
+        // TODO -
 
         //--- PBREffect --------------------------------------------------------------------
 
