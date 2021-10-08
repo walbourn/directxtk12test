@@ -97,6 +97,7 @@ private:
 
     std::unique_ptr<DirectX::Model>                 m_soldier;
     DirectX::Model::EffectCollection                m_soldierNormal;
+    DirectX::Model::EffectCollection                m_soldierDiffuse;
 
     std::unique_ptr<DirectX::Model>                 m_tank;
     DirectX::Model::EffectCollection                m_tankNormal;
