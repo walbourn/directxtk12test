@@ -1,0 +1,125 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Common">
+      <UniqueIdentifier>faf9f403-8032-47ff-81db-63f85d100065</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets">
+      <UniqueIdentifier>2aca067a-51bc-464b-9baa-637b1fa8f4b9</UniqueIdentifier>
+      <Extensions>bmp;dds;fbx;gif;jpg;jpeg;tga;tiff;tif;png</Extensions>
+    </Filter>
+    <Filter Include="Assets\Soldier">
+      <UniqueIdentifier>{c1c5b34b-0b1a-4f7e-a38a-ecd0d48475f1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets\Tank">
+      <UniqueIdentifier>{e4f5d28f-8b5e-4ce3-b72c-d86179c709bf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets\VSStarter">
+      <UniqueIdentifier>{c5bf2cba-86b3-4934-aab1-7d8e177bf19b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="Game.h" />
+    <ClInclude Include="..\Common\DeviceResourcesXDK.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\StepTimer.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\DirectXTKTest.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Animation.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="..\Common\DeviceResourcesXDK.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\MainXDK.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="Animation.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <AppxManifest Include="PackageXDK.appxmanifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\Common\Logo.scale-100.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="..\Common\SmallLogo.scale-100.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="..\Common\SplashScreen.scale-100.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="..\Common\StoreLogo.scale-100.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="..\Common\WideLogo.scale-100.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="ground_diff.dds">
+      <Filter>Assets\Tank</Filter>
+    </Image>
+    <Image Include="ground_norm.dds">
+      <Filter>Assets\Tank</Filter>
+    </Image>
+    <Image Include="left_engine_diff.dds">
+      <Filter>Assets\Tank</Filter>
+    </Image>
+    <Image Include="left_engine_norm.dds">
+      <Filter>Assets\Tank</Filter>
+    </Image>
+    <Image Include="turret_diff.dds">
+      <Filter>Assets\Tank</Filter>
+    </Image>
+    <Image Include="turret_norm.dds">
+      <Filter>Assets\Tank</Filter>
+    </Image>
+    <Image Include="default.dds">
+      <Filter>Assets\Soldier</Filter>
+    </Image>
+    <Image Include="head_diff.dds">
+      <Filter>Assets\Soldier</Filter>
+    </Image>
+    <Image Include="head_norm.dds">
+      <Filter>Assets\Soldier</Filter>
+    </Image>
+    <Image Include="jacket_diff.dds">
+      <Filter>Assets\Soldier</Filter>
+    </Image>
+    <Image Include="jacket_norm.dds">
+      <Filter>Assets\Soldier</Filter>
+    </Image>
+    <Image Include="pants_diff.dds">
+      <Filter>Assets\Soldier</Filter>
+    </Image>
+    <Image Include="pants_norm.dds">
+      <Filter>Assets\Soldier</Filter>
+    </Image>
+    <Image Include="upBody_diff.dds">
+      <Filter>Assets\Soldier</Filter>
+    </Image>
+    <Image Include="upbody_norm.dds">
+      <Filter>Assets\Soldier</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="TankScene.sdkmesh">
+      <Filter>Assets\Tank</Filter>
+    </None>
+    <None Include="teapot.cmo">
+      <Filter>Assets\VSStarter</Filter>
+    </None>
+    <None Include="soldier.sdkmesh">
+      <Filter>Assets\Soldier</Filter>
+    </None>
+    <None Include="soldier.sdkmesh_anim">
+      <Filter>Assets\Soldier</Filter>
+    </None>
+  </ItemGroup>
+</Project>
