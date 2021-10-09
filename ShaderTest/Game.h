@@ -116,6 +116,8 @@ private:
     std::vector<std::unique_ptr<DirectX::AlphaTestEffect>> m_alphTest;
     std::vector<std::unique_ptr<DirectX::NormalMapEffect>> m_normalMap;
     std::vector<std::unique_ptr<DirectX::NormalMapEffect>> m_normalMapBn;
+    std::vector<std::unique_ptr<DirectX::SkinnedNormalMapEffect>> m_skinningNormalMap;
+    std::vector<std::unique_ptr<DirectX::SkinnedNormalMapEffect>> m_skinningNormalMapBn;
     std::vector<std::unique_ptr<DirectX::PBREffect>> m_pbr;
     std::vector<std::unique_ptr<DirectX::PBREffect>> m_pbrBn;
     std::vector<std::unique_ptr<DirectX::DebugEffect>> m_debug;
