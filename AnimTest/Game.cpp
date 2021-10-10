@@ -314,6 +314,19 @@ void Game::Render()
     Model::UpdateEffectMatrices(m_soldierNormal, local, m_view, m_projection);
     m_soldier->Draw(commandList, m_soldierNormal.cbegin());
 
+    for (auto it : m_soldierDiffuse)
+    {
+        auto skinnedEffect = dynamic_cast<IEffectSkinning*>(it.get());
+        if (skinnedEffect)
+        {
+            skinnedEffect->ResetBoneTransforms();
+        }
+    }
+    local = XMMatrixMultiply(XMMatrixScaling(2.f, 2.f, 2.f), XMMatrixTranslation(4.f, row0, 0.f));
+    local = XMMatrixMultiply(world, local);
+    Model::UpdateEffectMatrices(m_soldierDiffuse, local, m_view, m_projection);
+    m_soldier->Draw(commandList, m_soldierDiffuse.cbegin());
+
     local = XMMatrixMultiply(XMMatrixScaling(2.f, 2.f, 2.f), XMMatrixTranslation(2.f, row1, 0.f));
     local = XMMatrixMultiply(XMMatrixRotationY(XM_PI), local);
     local = XMMatrixMultiply(world, local);
@@ -323,6 +336,11 @@ void Game::Render()
     m_soldierAnim.Apply(*m_soldier, m_soldier->bones.size(), bones.get());
 
     m_soldier->DrawSkinned(commandList, nbones, bones.get(), local, m_soldierNormal.cbegin());
+
+    local = XMMatrixMultiply(XMMatrixScaling(2.f, 2.f, 2.f), XMMatrixTranslation(4.f, row1, 0.f));
+    local = XMMatrixMultiply(XMMatrixRotationY(XM_PI), local);
+    local = XMMatrixMultiply(world, local);
+    m_soldier->DrawSkinned(commandList, nbones, bones.get(), local, m_soldierDiffuse.cbegin());
 
     PIXEndEvent(commandList);
 
@@ -542,6 +560,9 @@ void Game::CreateDeviceDependentResources()
             rtState);
 
         m_soldierNormal = m_soldier->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
+
+        m_fxFactory->EnableNormalMapEffect(false);
+        m_soldierDiffuse = m_soldier->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
     }
 
     {
@@ -610,6 +631,7 @@ void Game::OnDeviceLost()
 {
     m_soldier.reset();
     m_soldierNormal.clear();
+    m_soldierDiffuse.clear();
 
     m_tank.reset();
     m_tankNormal.clear();

@@ -634,6 +634,7 @@ void Game::Render()
         commandList->IASetVertexBuffers(0, 1, (showCompressed) ? &m_vertexBufferViewBn : &m_vertexBufferView);
 
         // NormalMapEffect
+        float lastx = 0.f;
         {
             auto it = (showCompressed) ? m_normalMapBn.cbegin() : m_normalMap.cbegin();
             auto eit = (showCompressed) ? m_normalMapBn.cend() : m_normalMap.cend();
@@ -641,7 +642,38 @@ void Game::Render()
 
             for (; y > -ortho_height; y -= 1.f)
             {
-                for (float x = -ortho_width + 0.5f; x < ortho_width; x += 1.f)
+                float x;
+                for (x = -ortho_width + 0.5f; x < ortho_width; x += 1.f)
+                {
+                    (*it)->SetWorld(world * XMMatrixTranslation(x, y, -1.f));
+                    (*it)->Apply(commandList);
+                    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+                    ++it;
+                    if (it == eit)
+                        break;
+                }
+                lastx = x;
+
+                if (it == eit)
+                    break;
+            }
+
+            // Make sure we drew all the effects
+            assert(it == eit);
+
+            // SkinnedNormalMapEffect should be on same line...
+        }
+
+        // SkinnedNormalMapEffect
+        {
+            auto it = (showCompressed) ? m_skinningNormalMapBn.cbegin() : m_skinningNormalMap.cbegin();
+            auto eit = (showCompressed) ? m_skinningNormalMapBn.cend() : m_skinningNormalMap.cend();
+            assert(it != eit);
+
+            for (; y > -ortho_height; y -= 1.f)
+            {
+                for (float x = lastx + 1.f; x < ortho_width; x += 1.f)
                 {
                     (*it)->SetWorld(world * XMMatrixTranslation(x, y, -1.f));
                     (*it)->Apply(commandList);
@@ -1491,6 +1523,55 @@ void Game::CreateDeviceDependentResources()
             }
         }
 
+        //-- SkinnedNormalMapEffect --------------------------------------------------------
+
+        {
+            auto diffuse = m_resourceDescriptors->GetGpuHandle(Descriptors::BrickDiffuse);
+            auto normal = m_resourceDescriptors->GetGpuHandle(Descriptors::BrickNormal);
+            auto specular = m_resourceDescriptors->GetGpuHandle(Descriptors::BrickSpecular);
+
+            std::vector<std::unique_ptr<DirectX::SkinnedNormalMapEffect>> normalMap;
+
+            // SkinnedNormalMapEffect (no specular)
+            auto effect = std::make_unique<SkinnedNormalMapEffect>(device, eflags, pd);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(diffuse, sampler);
+            effect->SetNormalTexture(normal);
+            normalMap.emplace_back(std::move(effect));
+
+            effect = std::make_unique<SkinnedNormalMapEffect>(device, eflags | EffectFlags::Fog, pd);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(diffuse, sampler);
+            effect->SetNormalTexture(normal);
+            effect->SetFogColor(Colors::Black);
+            normalMap.emplace_back(std::move(effect));
+
+            // SkinnedNormalMapEffect (specular)
+            effect = std::make_unique<SkinnedNormalMapEffect>(device, eflags | EffectFlags::Specular, pd);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(diffuse, sampler);
+            effect->SetNormalTexture(normal);
+            effect->SetSpecularTexture(specular);
+            normalMap.emplace_back(std::move(effect));
+
+            effect = std::make_unique<SkinnedNormalMapEffect>(device, eflags | EffectFlags::Specular | EffectFlags::Fog, pd);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(diffuse, sampler);
+            effect->SetNormalTexture(normal);
+            effect->SetSpecularTexture(specular);
+            effect->SetFogColor(Colors::Black);
+            normalMap.emplace_back(std::move(effect));
+
+            if (!j)
+            {
+                m_skinningNormalMap.swap(normalMap);
+            }
+            else
+            {
+                m_skinningNormalMapBn.swap(normalMap);
+            }
+        }
+
         //--- PBREffect --------------------------------------------------------------------
 
         {
@@ -1778,6 +1859,16 @@ void Game::CreateWindowSizeDependentResources()
         it->SetProjection(projection);
     }
 
+    for (auto& it : m_skinningNormalMap)
+    {
+        it->SetProjection(projection);
+    }
+
+    for (auto& it : m_skinningNormalMapBn)
+    {
+        it->SetProjection(projection);
+    }
+
     for (auto& it : m_pbr)
     {
         it->SetProjection(projection);
@@ -1842,6 +1933,8 @@ void Game::OnDeviceLost()
     m_alphTest.clear();
     m_normalMap.clear();
     m_normalMapBn.clear();
+    m_skinningNormalMap.clear();
+    m_skinningNormalMapBn.clear();
     m_pbr.clear();
     m_pbrBn.clear();
     m_debug.clear();
