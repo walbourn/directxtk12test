@@ -120,6 +120,8 @@ private:
     std::vector<std::unique_ptr<DirectX::SkinnedNormalMapEffect>> m_skinningNormalMapBn;
     std::vector<std::unique_ptr<DirectX::PBREffect>> m_pbr;
     std::vector<std::unique_ptr<DirectX::PBREffect>> m_pbrBn;
+    std::vector<std::unique_ptr<DirectX::SkinnedPBREffect>> m_skinningPbr;
+    std::vector<std::unique_ptr<DirectX::SkinnedPBREffect>> m_skinningPbrBn;
     std::vector<std::unique_ptr<DirectX::DebugEffect>> m_debug;
     std::vector<std::unique_ptr<DirectX::DebugEffect>> m_debugBn;
 

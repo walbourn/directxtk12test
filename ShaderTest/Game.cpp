@@ -695,6 +695,7 @@ void Game::Render()
         }
 
         // PBREffect
+        lastx = 0.f;
         {
             auto it = (showCompressed) ? m_pbrBn.cbegin() : m_pbr.cbegin();
             auto eit = (showCompressed) ? m_pbrBn.cend() : m_pbr.cend();
@@ -702,7 +703,38 @@ void Game::Render()
 
             for (; y > -ortho_height; y -= 1.f)
             {
-                for (float x = -ortho_width + 0.5f; x < ortho_width; x += 1.f)
+                float x;
+                for (x = -ortho_width + 0.5f; x < ortho_width; x += 1.f)
+                {
+                    (*it)->SetWorld(world * XMMatrixTranslation(x, y, -1.f));
+                    (*it)->Apply(commandList);
+                    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+                    ++it;
+                    if (it == eit)
+                        break;
+                }
+                lastx = x;
+
+                if (it == eit)
+                    break;
+            }
+
+            // Make sure we drew all the effects
+            assert(it == eit);
+
+            // SkinnedPBREffect should be on same line...
+        }
+
+        // SkinnedPBREffect
+        {
+            auto it = (showCompressed) ? m_skinningPbrBn.cbegin() : m_skinningPbr.cbegin();
+            auto eit = (showCompressed) ? m_skinningPbrBn.cend() : m_skinningPbr.cend();
+            assert(it != eit);
+
+            for (; y > -ortho_height; y -= 1.f)
+            {
+                for (float x = lastx + 1.f; x < ortho_width; x += 1.f)
                 {
                     (*it)->SetWorld(world * XMMatrixTranslation(x, y, -1.f));
                     (*it)->Apply(commandList);
@@ -1662,6 +1694,55 @@ void Game::CreateDeviceDependentResources()
             }
         }
 
+        //--- SkinnedPBREffect -------------------------------------------------------------
+
+        {
+            auto radiance = m_resourceDescriptors->GetGpuHandle(Descriptors::RadianceIBL);
+            auto diffuseDesc = m_radianceIBL->GetDesc();
+            auto irradiance = m_resourceDescriptors->GetGpuHandle(Descriptors::IrradianceIBL);
+
+            std::vector<std::unique_ptr<DirectX::SkinnedPBREffect>> pbr;
+
+            // SkinnedPBREffect
+            auto effect = std::make_unique<SkinnedPBREffect>(device, eflags, pd);
+            effect->EnableDefaultLighting();
+            effect->SetConstantAlbedo(Colors::Cyan);
+            effect->SetConstantMetallic(0.5f);
+            effect->SetConstantRoughness(0.75f);
+            effect->SetIBLTextures(radiance, diffuseDesc.MipLevels, irradiance, m_states->LinearWrap());
+            pbr.emplace_back(std::move(effect));
+
+            // SkinnedPBREffect (textured)
+            auto albedo = m_resourceDescriptors->GetGpuHandle(Descriptors::PBRAlbedo);
+            auto normal = m_resourceDescriptors->GetGpuHandle(Descriptors::PBRNormal);
+            auto rma = m_resourceDescriptors->GetGpuHandle(Descriptors::PBR_RMA);
+
+            effect = std::make_unique<SkinnedPBREffect>(device, eflags | EffectFlags::Texture, pd);
+            effect->EnableDefaultLighting();
+            effect->SetIBLTextures(radiance, diffuseDesc.MipLevels, irradiance, m_states->LinearWrap());
+            effect->SetSurfaceTextures(albedo, normal, rma, m_states->AnisotropicClamp());
+            pbr.emplace_back(std::move(effect));
+
+            // SkinnedPBREffect (emissive)
+            auto emissive = m_resourceDescriptors->GetGpuHandle(Descriptors::PBREmissive);
+
+            effect = std::make_unique<SkinnedPBREffect>(device, eflags | EffectFlags::Texture | EffectFlags::Emissive, pd);
+            effect->EnableDefaultLighting();
+            effect->SetIBLTextures(radiance, diffuseDesc.MipLevels, irradiance, m_states->LinearWrap());
+            effect->SetSurfaceTextures(albedo, normal, rma, m_states->AnisotropicClamp());
+            effect->SetEmissiveTexture(emissive);
+            pbr.emplace_back(std::move(effect));
+
+            if (!j)
+            {
+                m_skinningPbr.swap(pbr);
+            }
+            else
+            {
+                m_skinningPbrBn.swap(pbr);
+            }
+        }
+
         //--- DebugEffect ------------------------------------------------------------------
 
         {
@@ -1879,6 +1960,16 @@ void Game::CreateWindowSizeDependentResources()
         it->SetProjection(projection);
     }
 
+    for (auto& it : m_skinningPbr)
+    {
+        it->SetProjection(projection);
+    }
+
+    for (auto& it : m_skinningPbrBn)
+    {
+        it->SetProjection(projection);
+    }
+
     for (auto& it : m_debug)
     {
         it->SetProjection(projection);
@@ -1937,6 +2028,8 @@ void Game::OnDeviceLost()
     m_skinningNormalMapBn.clear();
     m_pbr.clear();
     m_pbrBn.clear();
+    m_skinningPbr.clear();
+    m_skinningPbrBn.clear();
     m_debug.clear();
     m_debugBn.clear();
 
