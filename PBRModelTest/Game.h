@@ -10,10 +10,11 @@
 //--------------------------------------------------------------------------------------
 #pragma once
 
+#include "Animation.h"
 #include "DirectXTKTest.h"
 #include "StepTimer.h"
-
 #include "RenderTexture.h"
+
 
 // A basic game implementation that creates a D3D12 device and
 // provides a game loop.
@@ -117,6 +118,9 @@ private:
     std::unique_ptr<DirectX::Model>                 m_robot;
     DirectX::Model::EffectCollection                m_robotNormal;
 
+    std::unique_ptr<DirectX::Model>                 m_teapot;
+    DirectX::Model::EffectCollection                m_teapotNormal;
+
     std::unique_ptr<DirectX::EffectTextureFactory>  m_modelResources;
     std::unique_ptr<DirectX::PBREffectFactory>      m_fxFactory;
 
@@ -163,8 +167,10 @@ private:
     UINT                                    m_instanceCount;
     std::unique_ptr<DirectX::XMFLOAT3X4[]>  m_instanceTransforms;
 
-    uint32_t m_ibl;
-    bool m_spinning;
-    float m_pitch;
-    float m_yaw;
+    uint32_t                                m_ibl;
+    bool                                    m_spinning;
+    float                                   m_pitch;
+    float                                   m_yaw;
+
+    DX::AnimationCMO                        m_teapotAnim;
 };
