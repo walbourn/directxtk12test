@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.1209
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31729.503
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PBRModelTest_GXDK_2017", "PBRModelTest_GXDK_2017.vcxproj", "{DE5DD6C9-5D9B-4C86-B416-77ABE848BEB2}"
 EndProject
@@ -10,6 +10,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0BC793B7-7C2F-41EF-BE10-6C976E81235B}"
 	ProjectSection(SolutionItems) = preProject
 		..\..\.editorconfig = ..\..\.editorconfig
+		..\PBRTest\SunSubMixer_diffuseIBL.dds = ..\PBRTest\SunSubMixer_diffuseIBL.dds
+		..\PBRTest\SunSubMixer_specularIBL.dds = ..\PBRTest\SunSubMixer_specularIBL.dds
 	EndProjectSection
 EndProject
 Global
