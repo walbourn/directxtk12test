@@ -139,9 +139,9 @@ void Game::Initialize(
     m_deviceResources->CreateWindowSizeDependentResources();
     CreateWindowSizeDependentResources();
 
-    m_bones = ModelBone::MakeArray(SkinnedEffect::MaxBones);
+    m_bones = ModelBone::MakeArray(IEffectSkinning::MaxBones);
     XMMATRIX id = XMMatrixIdentity();
-    for (size_t j = 0; j < SkinnedEffect::MaxBones; ++j)
+    for (size_t j = 0; j < IEffectSkinning::MaxBones; ++j)
     {
         m_bones[j] = id;
     }
@@ -279,7 +279,7 @@ void Game::Render()
 
     XMMATRIX scale = XMMatrixScaling(s, s, s);
 
-    for (size_t j = 0; j < SkinnedEffect::MaxBones; ++j)
+    for (size_t j = 0; j < IEffectSkinning::MaxBones; ++j)
     {
         m_bones[j] = scale;
     }
@@ -480,7 +480,7 @@ void Game::Render()
     {
         auto skinnedEffect = dynamic_cast<IEffectSkinning*>(it.get());
         if (skinnedEffect)
-            skinnedEffect->SetBoneTransforms(m_bones.get(), SkinnedEffect::MaxBones);
+            skinnedEffect->SetBoneTransforms(m_bones.get(), IEffectSkinning::MaxBones);
     }
     local = XMMatrixMultiply(XMMatrixScaling(0.01f, 0.01f, 0.01f), XMMatrixTranslation(-3.5f, row1, 0.f));
     local = XMMatrixMultiply(world, local);
@@ -542,7 +542,7 @@ void Game::Render()
         auto skin = dynamic_cast<IEffectSkinning*>(it.get());
         if (skin)
         {
-            skin->SetBoneTransforms(m_bones.get(), SkinnedEffect::MaxBones);
+            skin->SetBoneTransforms(m_bones.get(), IEffectSkinning::MaxBones);
         }
     }
 
