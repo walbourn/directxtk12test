@@ -18,6 +18,8 @@
 // For UWP/PC, this tests using a linear F16 swapchain intead of HDR10
 //#define TEST_HDR_LINEAR
 
+#define REVERSEZ
+
 #ifdef __clang__
 #pragma clang diagnostic ignored "-Wcovered-switch-default"
 #pragma clang diagnostic ignored "-Wswitch-enum"
@@ -510,11 +512,17 @@ void Game::Clear()
     auto rtvDescriptor = m_renderDescriptors->GetCpuHandle(RTDescriptors::HDRScene);
     auto dsvDescriptor = m_deviceResources->GetDepthStencilView();
 
+#ifdef REVERSEZ
+    const float c_zclear = 0.f;
+#else
+    const float c_zclear = 1.f;
+#endif
+
     XMVECTORF32 color;
     color.v = XMColorSRGBToRGB(Colors::CornflowerBlue);
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, &dsvDescriptor);
     commandList->ClearRenderTargetView(rtvDescriptor, color, 0, nullptr);
-    commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+    commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, c_zclear, 0, 0, nullptr);
 
     // Set the viewport and scissor rect.
     auto viewport = m_deviceResources->GetScreenViewport();
@@ -697,17 +705,23 @@ void Game::CreateDeviceDependentResources()
     RenderTargetState hdrState(m_hdrScene->GetFormat(), m_deviceResources->GetDepthBufferFormat());
 
 #ifdef LH_COORDS
-    auto& ncull = CommonStates::CullCounterClockwise;
-    auto& cull = CommonStates::CullClockwise;
+    const auto& ncull = CommonStates::CullCounterClockwise;
+    const auto& cull = CommonStates::CullClockwise;
 #else
-    auto& ncull = CommonStates::CullClockwise;
-    auto& cull = CommonStates::CullCounterClockwise;
+    const auto& ncull = CommonStates::CullClockwise;
+    const auto& cull = CommonStates::CullCounterClockwise;
+#endif
+
+#ifdef REVERSEZ
+    const auto& c_depthState = CommonStates::DepthReverseZ;
+#else
+    const auto& c_depthState = CommonStates::DepthDefault;
 #endif
 
     EffectPipelineStateDescription pd(
         nullptr,
         CommonStates::Opaque,
-        CommonStates::DepthDefault,
+        c_depthState,
         ncull,
         hdrState);
 
@@ -839,12 +853,20 @@ void Game::CreateWindowSizeDependentResources()
     auto size = m_deviceResources->GetOutputSize();
     float aspect = (float)size.right / (float)size.bottom;
 
+#ifdef REVERSEZ
+    constexpr float c_nearz = 15.f;
+    constexpr float c_farz = 1.f;
+#else
+    constexpr float c_nearz = 1.f;
+    constexpr float c_farz = 15.f;
+#endif
+
 #ifdef LH_COORDS
     m_view = XMMatrixLookAtLH(cameraPosition, g_XMZero, XMVectorSet(0, 1, 0, 0));
-    m_projection = XMMatrixPerspectiveFovLH(1, aspect, 1, 15);
+    m_projection = XMMatrixPerspectiveFovLH(1, aspect, c_nearz, c_farz);
 #else
     m_view = XMMatrixLookAtRH(cameraPosition, g_XMZero, XMVectorSet(0, 1, 0, 0));
-    m_projection = XMMatrixPerspectiveFovRH(1, aspect, 1, 15);
+    m_projection = XMMatrixPerspectiveFovRH(1, aspect, c_nearz, c_farz);
 #endif
 
 #ifdef UWP
