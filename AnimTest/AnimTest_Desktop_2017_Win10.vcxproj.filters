@@ -32,7 +32,7 @@
     <ClInclude Include="..\Common\StepTimer.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="Animation.h" />
+    <ClInclude Include="..\Common\Animation.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -43,7 +43,7 @@
     <ClCompile Include="..\Common\DeviceResourcesPC.cpp">
       <Filter>Common</Filter>
     </ClCompile>
-    <ClCompile Include="Animation.cpp" />
+    <ClCompile Include="..\Common\Animation.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="..\Common\settings.manifest">

@@ -29,7 +29,8 @@ namespace
 {
     constexpr float rowtop = 6.f;
     constexpr float row0 = 1.5f;
-    constexpr float row1 = -1.5f;
+    constexpr float row1 = 0.f;
+    constexpr float row2 = -1.5f;
 }
 
 extern void ExitGame() noexcept;
@@ -139,9 +140,11 @@ void Game::Tick()
 }
 
 // Updates the world.
-void Game::Update(DX::StepTimer const&)
+void Game::Update(DX::StepTimer const& timer)
 {
     PIXBeginEvent(PIX_COLOR_DEFAULT, L"Update");
+
+    float elapsedTime = float(timer.GetElapsedSeconds());
 
     auto kb = m_keyboard->GetState();
     m_keyboardButtons.Update(kb);
@@ -248,6 +251,8 @@ void Game::Update(DX::StepTimer const&)
         m_spinning = !m_spinning;
     }
 
+    m_teapotAnim.Update(elapsedTime);
+
     PIXEndEvent();
 }
 #pragma endregion
@@ -350,6 +355,15 @@ void Game::Render()
         }
     }
 
+    for (auto& it : m_teapotNormal)
+    {
+        auto pbr = dynamic_cast<PBREffect*>(it.get());
+        if (pbr)
+        {
+            pbr->SetIBLTextures(radianceTex, diffuseDesc.MipLevels, irradianceTex, m_states->AnisotropicClamp());
+        }
+    }
+
     //--- Draw SDKMESH models ---
     XMMATRIX local = XMMatrixTranslation(1.5f, row0, 0.f);
     local = XMMatrixMultiply(world, local);
@@ -367,7 +381,7 @@ void Game::Render()
 
     {
         XMMATRIX scale = XMMatrixScaling(0.75f, 0.75f, 0.75f);
-        XMMATRIX trans = XMMatrixTranslation(-2.5f, row1, 0.f);
+        XMMATRIX trans = XMMatrixTranslation(-2.5f, row2, 0.f);
         local = XMMatrixMultiply(scale, trans);
         local = XMMatrixMultiply(world, local);
     }
@@ -376,7 +390,7 @@ void Game::Render()
 
     {
         XMMATRIX scale = XMMatrixScaling(0.1f, 0.1f, 0.1f);
-        XMMATRIX trans = XMMatrixTranslation(1.5f, row1, 0.f);
+        XMMATRIX trans = XMMatrixTranslation(1.5f, row2, 0.f);
         local = XMMatrixMultiply(scale, trans);
         local = XMMatrixMultiply(world, local);
     }
@@ -430,6 +444,16 @@ void Game::Render()
             assert(mesh->alphaMeshParts.empty());
         }
     }
+
+    //--- Draw with skinning ---
+    auto nbones = static_cast<uint32_t>(m_teapot->bones.size());
+    auto bones = ModelBone::MakeArray(nbones);
+    m_teapotAnim.Apply(*m_teapot, m_teapot->bones.size(), bones.get());
+
+    local = XMMatrixMultiply(XMMatrixScaling(0.02f, 0.02f, 0.02f), XMMatrixTranslation(4.f, row1, 0.f));
+    local = XMMatrixMultiply(world, local);
+    Model::UpdateEffectMatrices(m_teapotNormal, local, m_view, m_projection);
+    m_teapot->DrawSkinned(commandList, nbones, bones.get(), local, m_teapotNormal.cbegin());
 
     PIXEndEvent(commandList);
 
@@ -627,6 +651,21 @@ void Game::CreateDeviceDependentResources()
         assert(mesh->alphaMeshParts.empty());
     }
 
+    // Create skinning teapot.
+    size_t animsOffset;
+    m_teapot = Model::CreateFromCMO(device, L"teapot.cmo", ModelLoader_IncludeBones, &animsOffset);
+
+    if (!animsOffset)
+    {
+        OutputDebugStringA("ERROR: 'teapot.cmo' - No animation clips found in file!\n");
+    }
+    else
+    {
+        DX::ThrowIfFailed(m_teapotAnim.Load(L"teapot.cmo", animsOffset, L"Take 001"));
+
+        OutputDebugStringA("'teapot.cmo' contains animation clips.\n");
+    }
+
     RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), DXGI_FORMAT_UNKNOWN);
 #ifdef XBOX
     rtState.numRenderTargets = 2;
@@ -659,8 +698,10 @@ void Game::CreateDeviceDependentResources()
 
 #ifdef LH_COORDS
     auto& ncull = CommonStates::CullCounterClockwise;
+    auto& cull = CommonStates::CullClockwise;
 #else
     auto& ncull = CommonStates::CullClockwise;
+    auto& cull = CommonStates::CullCounterClockwise;
 #endif
 
     EffectPipelineStateDescription pd(
@@ -717,11 +758,15 @@ void Game::CreateDeviceDependentResources()
     m_fxFactory->EnableInstancing(true);
     m_cubeInstNormal = m_cubeInst->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
 
+    pd.rasterizerDesc = cull;
+    m_teapotNormal = m_teapot->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
+
     // Optimize VBs/IBs
     m_cube->LoadStaticBuffers(device, resourceUpload);
     m_sphere->LoadStaticBuffers(device, resourceUpload);
     m_sphere2->LoadStaticBuffers(device, resourceUpload);
     m_robot->LoadStaticBuffers(device, resourceUpload);
+    m_teapot->LoadStaticBuffers(device, resourceUpload);
 
 #ifdef PC
 #define IBL_PATH L"..\\PBRTest\\"
@@ -782,6 +827,8 @@ void Game::CreateDeviceDependentResources()
             ++j;
         }
     }
+
+    m_teapotAnim.Bind(*m_teapot);
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
@@ -827,12 +874,14 @@ void Game::OnDeviceLost()
     m_sphere.reset();
     m_sphere2.reset();
     m_robot.reset();
+    m_teapot.reset();
 
     m_cubeNormal.clear();
     m_cubeInstNormal.clear();
     m_sphereNormal.clear();
     m_sphere2Normal.clear();
     m_robotNormal.clear();
+    m_teapotNormal.clear();
 
     for (size_t j = 0; j < s_nIBL; ++j)
     {
