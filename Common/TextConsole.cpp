@@ -20,6 +20,8 @@
 
 using Microsoft::WRL::ComPtr;
 
+#pragma warning(disable : 26451)
+
 using namespace DirectX;
 using namespace DX;
 
