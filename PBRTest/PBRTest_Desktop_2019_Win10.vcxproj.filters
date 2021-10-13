@@ -8,6 +8,15 @@
       <UniqueIdentifier>f51b4bd1-8fa6-41b5-ac5a-c7deec429023</UniqueIdentifier>
       <Extensions>ico;cur;bmp;dds;dlg;fbx;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tga;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Assets\IBL">
+      <UniqueIdentifier>{95a6800d-fe2c-4cbf-bed0-e70c5901e2bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets\BrokenCube">
+      <UniqueIdentifier>{da61c31b-6273-4c46-b692-77585e82caef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets\Sphere">
+      <UniqueIdentifier>{9bf903b3-3a27-441b-8437-eec540957664}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -43,55 +52,55 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="Atrium_diffuseIBL.dds">
-      <Filter>Assets</Filter>
+      <Filter>Assets\IBL</Filter>
     </Image>
     <Image Include="Atrium_specularIBL.dds">
-      <Filter>Assets</Filter>
+      <Filter>Assets\IBL</Filter>
     </Image>
     <Image Include="Garage_diffuseIBL.dds">
-      <Filter>Assets</Filter>
+      <Filter>Assets\IBL</Filter>
     </Image>
     <Image Include="Garage_specularIBL.dds">
-      <Filter>Assets</Filter>
+      <Filter>Assets\IBL</Filter>
     </Image>
     <Image Include="SunSubMixer_diffuseIBL.dds">
-      <Filter>Assets</Filter>
+      <Filter>Assets\IBL</Filter>
     </Image>
     <Image Include="SunSubMixer_specularIBL.dds">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="Sphere2Mat_baseColor.png">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="Sphere2Mat_emissive.png">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="Sphere2Mat_normal.png">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="Sphere2Mat_occlusionRoughnessMetallic.png">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="SphereMat_baseColor.png">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="SphereMat_normal.png">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="SphereMat_occlusionRoughnessMetallic.png">
-      <Filter>Assets</Filter>
+      <Filter>Assets\IBL</Filter>
     </Image>
     <Image Include="BrokenCube_baseColor.png">
-      <Filter>Assets</Filter>
+      <Filter>Assets\BrokenCube</Filter>
     </Image>
     <Image Include="BrokenCube_emissive.png">
-      <Filter>Assets</Filter>
+      <Filter>Assets\BrokenCube</Filter>
     </Image>
     <Image Include="BrokenCube_normal.png">
-      <Filter>Assets</Filter>
+      <Filter>Assets\BrokenCube</Filter>
     </Image>
     <Image Include="BrokenCube_occlusionRoughnessMetallic.png">
-      <Filter>Assets</Filter>
+      <Filter>Assets\BrokenCube</Filter>
+    </Image>
+    <Image Include="Sphere2Mat_baseColor.png">
+      <Filter>Assets\Sphere</Filter>
+    </Image>
+    <Image Include="Sphere2Mat_emissive.png">
+      <Filter>Assets\Sphere</Filter>
+    </Image>
+    <Image Include="Sphere2Mat_normal.png">
+      <Filter>Assets\Sphere</Filter>
+    </Image>
+    <Image Include="Sphere2Mat_occlusionRoughnessMetallic.png">
+      <Filter>Assets\Sphere</Filter>
+    </Image>
+    <Image Include="SphereMat_baseColor.png">
+      <Filter>Assets\Sphere</Filter>
+    </Image>
+    <Image Include="SphereMat_normal.png">
+      <Filter>Assets\Sphere</Filter>
+    </Image>
+    <Image Include="SphereMat_occlusionRoughnessMetallic.png">
+      <Filter>Assets\Sphere</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
@@ -101,7 +110,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="BrokenCube.vbo">
-      <Filter>Assets</Filter>
+      <Filter>Assets\BrokenCube</Filter>
     </None>
   </ItemGroup>
 </Project>

@@ -1,7 +1,7 @@
 //--------------------------------------------------------------------------------------
 // Main.cpp
 //
-// Entry point for Microsoft Game Core on Xbox
+// Entry point for Microsoft GDK with Xbox extensions
 //
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
@@ -16,12 +16,19 @@
 
 using namespace DirectX;
 
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wcovered-switch-default"
+#pragma clang diagnostic ignored "-Wswitch-enum"
+#endif
+
+#pragma warning(disable : 4061)
+
 namespace
 {
     std::unique_ptr<Game> g_game;
     HANDLE g_plmSuspendComplete = nullptr;
     HANDLE g_plmSignalResume = nullptr;
-};
+}
 
 bool g_HDRMode = false;
 
@@ -55,7 +62,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR lp
     // Default main thread to CPU 0
     SetThreadAffinityMask(GetCurrentThread(), 0x1);
 
-    // Microsoft Game Core on Xbox supports UTF-8 everywhere
+    // Microsoft GDKX supports UTF-8 everywhere
     assert(GetACP() == CP_UTF8);
 
     g_game = std::make_unique<Game>();
@@ -71,7 +78,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR lp
         wcex.lpfnWndProc = WndProc;
         wcex.hInstance = hInstance;
         wcex.lpszClassName = L"D3D12TestWindowClass";
-        wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+        wcex.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1);
         if (!RegisterClassExW(&wcex))
             return 1;
 
@@ -118,7 +125,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR lp
         if (RegisterAppConstrainedChangeNotification([](BOOLEAN constrained, PVOID context)
         {
             // To ensure we use the main UI thread to process the notification, we self-post a message
-                SendMessage(reinterpret_cast<HWND>(context), WM_USER + 1, (constrained) ? 1u : 0u, 0);
+            SendMessage(reinterpret_cast<HWND>(context), WM_USER + 1, (constrained) ? 1u : 0u, 0);
         }, hwnd, &hPLM2))
             return 1;
     }

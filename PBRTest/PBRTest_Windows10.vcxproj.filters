@@ -8,6 +8,18 @@
       <UniqueIdentifier>ad1a0121-be1c-4f51-8a9c-3931b5b66462</UniqueIdentifier>
       <Extensions>bmp;dds;fbx;gif;jpg;jpeg;tga;tiff;tif;png</Extensions>
     </Filter>
+    <Filter Include="Assets\IBL">
+      <UniqueIdentifier>{3a595df5-7019-4f71-90fa-1da37356c255}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets\BrokenCube">
+      <UniqueIdentifier>{31ce3672-e05a-4ba2-be0e-f8842edd93b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets\Sphere">
+      <UniqueIdentifier>{e223b6a8-f526-4990-995c-5cbc8af74725}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets\Logos">
+      <UniqueIdentifier>{cee55805-f5bb-474b-8cf3-62721b41c61c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -42,71 +54,71 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\Common\Logo.scale-100.png">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="..\Common\SmallLogo.scale-100.png">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="..\Common\SplashScreen.scale-100.png">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="..\Common\StoreLogo.scale-100.png">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="..\Common\WideLogo.scale-100.png">
-      <Filter>Assets</Filter>
+    <Image Include="Atrium_specularIBL.dds">
+      <Filter>Assets\IBL</Filter>
     </Image>
     <Image Include="Atrium_diffuseIBL.dds">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="Atrium_specularIBL.dds">
-      <Filter>Assets</Filter>
+      <Filter>Assets\IBL</Filter>
     </Image>
     <Image Include="Garage_diffuseIBL.dds">
-      <Filter>Assets</Filter>
+      <Filter>Assets\IBL</Filter>
     </Image>
     <Image Include="Garage_specularIBL.dds">
-      <Filter>Assets</Filter>
+      <Filter>Assets\IBL</Filter>
     </Image>
     <Image Include="SunSubMixer_diffuseIBL.dds">
-      <Filter>Assets</Filter>
+      <Filter>Assets\IBL</Filter>
     </Image>
     <Image Include="SunSubMixer_specularIBL.dds">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="SphereMat_baseColor.png">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="SphereMat_normal.png">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="SphereMat_occlusionRoughnessMetallic.png">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="Sphere2Mat_baseColor.png">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="Sphere2Mat_emissive.png">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="Sphere2Mat_normal.png">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="Sphere2Mat_occlusionRoughnessMetallic.png">
-      <Filter>Assets</Filter>
+      <Filter>Assets\IBL</Filter>
     </Image>
     <Image Include="BrokenCube_baseColor.png">
-      <Filter>Assets</Filter>
+      <Filter>Assets\BrokenCube</Filter>
     </Image>
     <Image Include="BrokenCube_emissive.png">
-      <Filter>Assets</Filter>
+      <Filter>Assets\BrokenCube</Filter>
     </Image>
     <Image Include="BrokenCube_normal.png">
-      <Filter>Assets</Filter>
+      <Filter>Assets\BrokenCube</Filter>
     </Image>
     <Image Include="BrokenCube_occlusionRoughnessMetallic.png">
-      <Filter>Assets</Filter>
+      <Filter>Assets\BrokenCube</Filter>
+    </Image>
+    <Image Include="Sphere2Mat_baseColor.png">
+      <Filter>Assets\Sphere</Filter>
+    </Image>
+    <Image Include="Sphere2Mat_emissive.png">
+      <Filter>Assets\Sphere</Filter>
+    </Image>
+    <Image Include="Sphere2Mat_normal.png">
+      <Filter>Assets\Sphere</Filter>
+    </Image>
+    <Image Include="Sphere2Mat_occlusionRoughnessMetallic.png">
+      <Filter>Assets\Sphere</Filter>
+    </Image>
+    <Image Include="SphereMat_baseColor.png">
+      <Filter>Assets\Sphere</Filter>
+    </Image>
+    <Image Include="SphereMat_normal.png">
+      <Filter>Assets\Sphere</Filter>
+    </Image>
+    <Image Include="SphereMat_occlusionRoughnessMetallic.png">
+      <Filter>Assets\Sphere</Filter>
+    </Image>
+    <Image Include="..\Common\Logo.scale-100.png">
+      <Filter>Assets\Logos</Filter>
+    </Image>
+    <Image Include="..\Common\SmallLogo.scale-100.png">
+      <Filter>Assets\Logos</Filter>
+    </Image>
+    <Image Include="..\Common\SplashScreen.scale-100.png">
+      <Filter>Assets\Logos</Filter>
+    </Image>
+    <Image Include="..\Common\StoreLogo.scale-100.png">
+      <Filter>Assets\Logos</Filter>
+    </Image>
+    <Image Include="..\Common\WideLogo.scale-100.png">
+      <Filter>Assets\Logos</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
@@ -114,7 +126,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="BrokenCube.vbo">
-      <Filter>Assets</Filter>
+      <Filter>Assets\BrokenCube</Filter>
     </None>
   </ItemGroup>
 </Project>
