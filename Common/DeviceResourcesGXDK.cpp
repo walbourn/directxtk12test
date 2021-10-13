@@ -172,6 +172,8 @@ void DeviceResources::CreateDeviceResources()
             }
             break;
 
+        case XSystemDeviceType::XboxScarlettAnaconda /* Xbox Series X */:
+        case XSystemDeviceType::XboxScarlettDevkit:
         default:
             m_outputSize = (m_options & c_Enable4K_UHD) ? RECT{ 0, 0, 3840, 2160 } : RECT{ 0, 0, 2560, 1440 };
             break;
