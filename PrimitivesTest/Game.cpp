@@ -19,6 +19,8 @@
 // Build for LH vs. RH coords
 //#define LH_COORDS
 
+#define REVERSEZ
+
 namespace
 {
     constexpr float rowtop = 4.f;
@@ -586,9 +588,15 @@ void Game::Clear()
     color.v = Colors::CornflowerBlue;
 #endif
 
+#ifdef REVERSEZ
+    constexpr float c_zclear = 0.f;
+#else
+    constexpr float c_zclear = 1.f;
+#endif
+
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, &dsvDescriptor);
     commandList->ClearRenderTargetView(rtvDescriptor, color, 0, nullptr);
-    commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+    commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, c_zclear, 0, 0, nullptr);
 
     // Set the viewport and scissor rect.
     auto viewport = m_deviceResources->GetScreenViewport();
@@ -676,11 +684,17 @@ void Game::CreateDeviceDependentResources()
     // Create effects.
     RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), m_deviceResources->GetDepthBufferFormat());
 
+#ifdef REVERSEZ
+    const auto& c_depthState = CommonStates::DepthReverseZ;
+#else
+    const auto& c_depthState = CommonStates::DepthDefault;
+#endif
+
     {
         EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
             CommonStates::Opaque,
-            CommonStates::DepthDefault,
+            c_depthState,
             CommonStates::CullCounterClockwise,
             rtState);
 
@@ -692,7 +706,7 @@ void Game::CreateDeviceDependentResources()
         EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
             CommonStates::Opaque,
-            CommonStates::DepthDefault,
+            c_depthState,
             CommonStates::Wireframe,
             rtState);
 
@@ -704,7 +718,7 @@ void Game::CreateDeviceDependentResources()
         EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
             CommonStates::Opaque,
-            CommonStates::DepthDefault,
+            c_depthState,
             CommonStates::CullCounterClockwise,
             rtState);
 
@@ -717,7 +731,7 @@ void Game::CreateDeviceDependentResources()
         EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
             CommonStates::AlphaBlend,
-            CommonStates::DepthDefault,
+            c_depthState,
             CommonStates::CullCounterClockwise,
             rtState);
 
@@ -729,7 +743,7 @@ void Game::CreateDeviceDependentResources()
         EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
             CommonStates::AlphaBlend,
-            CommonStates::DepthDefault,
+            c_depthState,
             CommonStates::CullCounterClockwise,
             rtState);
 
@@ -741,7 +755,7 @@ void Game::CreateDeviceDependentResources()
         EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
             CommonStates::NonPremultiplied,
-            CommonStates::DepthDefault,
+            c_depthState,
             CommonStates::CullCounterClockwise,
             rtState);
 
@@ -753,7 +767,7 @@ void Game::CreateDeviceDependentResources()
         EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
             CommonStates::Opaque,
-            CommonStates::DepthDefault,
+            c_depthState,
             CommonStates::CullCounterClockwise,
             rtState);
 
@@ -765,7 +779,7 @@ void Game::CreateDeviceDependentResources()
         EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
             CommonStates::Opaque,
-            CommonStates::DepthDefault,
+            c_depthState,
             CommonStates::CullCounterClockwise,
             rtState);
 
@@ -808,7 +822,7 @@ void Game::CreateDeviceDependentResources()
         EffectPipelineStateDescription pd(
             &s_layout,
             CommonStates::Opaque,
-            CommonStates::DepthDefault,
+            c_depthState,
             CommonStates::CullCounterClockwise,
             rtState);
 
@@ -1027,12 +1041,20 @@ void Game::CreateWindowSizeDependentResources()
     auto size = m_deviceResources->GetOutputSize();
     float aspect = (float)size.right / (float)size.bottom;
 
+#ifdef REVERSEZ
+    constexpr float c_nearz = 10.f;
+    constexpr float c_farz = 1.f;
+#else
+    constexpr float c_nearz = 1.f;
+    constexpr float c_farz = 10.f;
+#endif
+
 #ifdef LH_COORDS
     XMMATRIX view = XMMatrixLookAtLH(cameraPosition, g_XMZero, XMVectorSet(0, 1, 0, 0));
-    XMMATRIX projection = XMMatrixPerspectiveFovLH(1, aspect, 1, 10);
+    XMMATRIX projection = XMMatrixPerspectiveFovLH(1, aspect, c_nearz, c_farz);
 #else
     XMMATRIX view = XMMatrixLookAtRH(cameraPosition, g_XMZero, XMVectorSet(0, 1, 0, 0));
-    XMMATRIX projection = XMMatrixPerspectiveFovRH(1, aspect, 1, 10);
+    XMMATRIX projection = XMMatrixPerspectiveFovRH(1, aspect, c_nearz, c_farz);
 #endif
 
 #ifdef UWP
