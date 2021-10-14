@@ -589,9 +589,9 @@ void Game::Clear()
 #endif
 
 #ifdef REVERSEZ
-    const float c_zclear = 0.f;
+    constexpr float c_zclear = 0.f;
 #else
-    const float c_zclear = 1.f;
+    constexpr float c_zclear = 1.f;
 #endif
 
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, &dsvDescriptor);

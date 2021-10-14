@@ -513,9 +513,9 @@ void Game::Clear()
     auto dsvDescriptor = m_deviceResources->GetDepthStencilView();
 
 #ifdef REVERSEZ
-    const float c_zclear = 0.f;
+    constexpr float c_zclear = 0.f;
 #else
-    const float c_zclear = 1.f;
+    constexpr float c_zclear = 1.f;
 #endif
 
     XMVECTORF32 color;
