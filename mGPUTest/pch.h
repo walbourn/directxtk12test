@@ -84,6 +84,7 @@
 #include <random>
 #include <stdexcept>
 #include <system_error>
+#include <tuple>
 
 #include <pix.h>
 

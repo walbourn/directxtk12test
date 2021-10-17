@@ -263,7 +263,7 @@ void Game::Render()
     m_graphicsMemory->Commit(m_deviceResources->GetCommandQueue());
 
     // Sample stats to update peak values
-    (void)m_graphicsMemory->GetStatistics();
+    std::ignore = m_graphicsMemory->GetStatistics();
 
     PIXEndEvent(m_deviceResources->GetCommandQueue());
 
@@ -416,7 +416,7 @@ void Game::Render()
             varValues[1].vt = VT_UI1;
             varValues[1].bVal = WICTiffCompressionNone;
 
-            (void)props->Write(2, options, varValues);
+            std::ignore = props->Write(2, options, varValues);
         }, true);
 
         if (FAILED(hr))

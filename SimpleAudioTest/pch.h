@@ -94,6 +94,7 @@
 #include <memory>
 #include <stdexcept>
 #include <system_error>
+#include <tuple>
 #include <type_traits>
 
 #include <pix.h>

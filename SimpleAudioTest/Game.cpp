@@ -809,7 +809,7 @@ void Game::Render()
     m_graphicsMemory->Commit(m_deviceResources->GetCommandQueue());
 
     // Sample stats to update peak values
-    (void)m_graphicsMemory->GetStatistics();
+    std::ignore = m_graphicsMemory->GetStatistics();
 
     PIXEndEvent(m_deviceResources->GetCommandQueue());
 }
