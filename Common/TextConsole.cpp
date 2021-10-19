@@ -8,10 +8,6 @@
 #include "pch.h"
 #include "TextConsole.h"
 
-#include "SimpleMath.h"
-#include "DDSTextureLoader.h"
-#include "WICTextureLoader.h"
-
 #include <algorithm>
 #include <cassert>
 #include <cstdarg>

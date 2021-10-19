@@ -137,8 +137,8 @@ private:
     std::unique_ptr<DirectX::DebugEffect>           m_debugT;
     std::unique_ptr<DirectX::DebugEffect>           m_debugB;
 
-    static const size_t s_nMaterials = 3;
-    static const size_t s_nIBL = 3;
+    static constexpr size_t s_nMaterials = 3;
+    static constexpr size_t s_nIBL = 3;
 
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_baseColor[s_nMaterials];
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_normalMap[s_nMaterials];

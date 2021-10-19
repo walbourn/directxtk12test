@@ -20,8 +20,8 @@ namespace DX
     class DeviceResources
     {
     public:
-        static constexpr unsigned int c_AllowTearing    = 0x1;
-        static constexpr unsigned int c_EnableHDR       = 0x2;
+        static constexpr unsigned int c_AllowTearing = 0x1;
+        static constexpr unsigned int c_EnableHDR    = 0x2;
 
         DeviceResources(DXGI_FORMAT backBufferFormat = DXGI_FORMAT_B8G8R8A8_UNORM,
                         DXGI_FORMAT depthBufferFormat = DXGI_FORMAT_D32_FLOAT,
@@ -45,8 +45,8 @@ namespace DX
         void Prepare(D3D12_RESOURCE_STATES beforeState = D3D12_RESOURCE_STATE_PRESENT,
                      D3D12_RESOURCE_STATES afterState = D3D12_RESOURCE_STATE_RENDER_TARGET);
         void Present(D3D12_RESOURCE_STATES beforeState = D3D12_RESOURCE_STATE_RENDER_TARGET);
-        void Suspend() noexcept {};
-        void Resume() noexcept {};
+        void Suspend() noexcept {}
+        void Resume() noexcept {}
         void WaitForGpu() noexcept;
 
         // Device Accessors.
@@ -103,7 +103,7 @@ namespace DX
         void GetAdapter(IDXGIAdapter1** ppAdapter);
         void UpdateColorSpace();
 
-        static const size_t MAX_BACK_BUFFER_COUNT = 3;
+        static constexpr size_t MAX_BACK_BUFFER_COUNT = 3;
 
         UINT                                                m_backBufferIndex;
 

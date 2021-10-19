@@ -28,7 +28,8 @@ namespace DX
         RenderTexture(RenderTexture const&) = delete;
         RenderTexture& operator= (RenderTexture const&) = delete;
 
-        void SetDevice(_In_ ID3D12Device* device, D3D12_CPU_DESCRIPTOR_HANDLE srvDescriptor, D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptor);
+        void SetDevice(_In_ ID3D12Device* device,
+            D3D12_CPU_DESCRIPTOR_HANDLE srvDescriptor, D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptor);
 
         void SizeResources(size_t width, size_t height);
 
@@ -46,6 +47,11 @@ namespace DX
             TransitionTo(commandList, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         }
 
+        void Clear(_In_ ID3D12GraphicsCommandList* commandList)
+        {
+            commandList->ClearRenderTargetView(m_rtvDescriptor, m_clearColor, 0, nullptr);
+        }
+
         void SetClearColor(DirectX::FXMVECTOR color)
         {
             DirectX::XMStoreFloat4(reinterpret_cast<DirectX::XMFLOAT4*>(m_clearColor), color);
@@ -53,6 +59,9 @@ namespace DX
 
         ID3D12Resource* GetResource() const noexcept { return m_resource.Get(); }
         D3D12_RESOURCE_STATES GetCurrentState() const noexcept { return m_state; }
+
+        void UpdateState(D3D12_RESOURCE_STATES state) noexcept { m_state = state; }
+            // Use when a state transition was applied to the resource directly
 
         void SetWindow(const RECT& rect);
 

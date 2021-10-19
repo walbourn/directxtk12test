@@ -174,7 +174,7 @@ void DeviceResources::CreateDeviceResources()
         d3dInfoQueue->AddStorageFilterEntries(&filter);
     }
 
-#if 0 //defined(NTDDI_WIN10_VB) && (NTDDI_VERSION >= NTDDI_WIN10_VB)
+#if 0
     // Only want to enable this on the Windows 10 OS (Build 19041) or later due to some bugs before that.
     // Has known issues on hybrid devices as well, so best used only on systems with discrete GPUs.
     ComPtr<ID3D12Device7> device7;
@@ -199,7 +199,7 @@ void DeviceResources::CreateDeviceResources()
     // Determine maximum supported feature level for this device
     static const D3D_FEATURE_LEVEL s_featureLevels[] =
     {
-#if defined(USING_D3D12_AGILITY_SDK) || (defined(NTDDI_WIN10_FE) && (NTDDI_VERSION >= NTDDI_WIN10_FE))
+#if defined(NTDDI_WIN10_FE) || defined(USING_D3D12_AGILITY_SDK)
         D3D_FEATURE_LEVEL_12_2,
 #endif
         D3D_FEATURE_LEVEL_12_1,
@@ -315,16 +315,8 @@ void DeviceResources::CreateDeviceResources()
     D3D12_FEATURE_DATA_SHADER_MODEL shaderModel = {};
 #if defined(USING_D3D12_AGILITY_SDK) || (defined(NTDDI_WIN10_FE) && (NTDDI_VERSION >= NTDDI_WIN10_FE))
     shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_7;
-#elif defined(USING_D3D12_AGILITY_SDK) || (defined(NTDDI_WIN10_VB) && (NTDDI_VERSION >= NTDDI_WIN10_VB))
-    shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_6;
-#elif defined(USING_D3D12_AGILITY_SDK) || (defined(NTDDI_WIN10_19H1) && (NTDDI_VERSION >= NTDDI_WIN10_19H1))
-    shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_5;
-#elif defined(USING_D3D12_AGILITY_SDK) || (defined(NTDDI_WIN10_RS5) && (NTDDI_VERSION >= NTDDI_WIN10_RS5))
-    shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_4;
-#elif defined(USING_D3D12_AGILITY_SDK) || (defined(NTDDI_WIN10_RS4) && (NTDDI_VERSION >= NTDDI_WIN10_RS4))
-    shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_2;
 #else
-    shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_0;
+    shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_6;
 #endif
     hr = m_d3dDevice->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel));
     while (hr == E_INVALIDARG && shaderModel.HighestShaderModel > D3D_SHADER_MODEL_6_0)
@@ -342,27 +334,12 @@ void DeviceResources::CreateDeviceResources()
     {
     case D3D_SHADER_MODEL_5_1: shaderModelVer = "5.1"; break;
     case D3D_SHADER_MODEL_6_0: shaderModelVer = "6.0"; break;
-
-#if defined(NTDDI_WIN10_RS3) && (NTDDI_VERSION >= NTDDI_WIN10_RS3)
     case D3D_SHADER_MODEL_6_1: shaderModelVer = "6.1"; break;
-#endif
-
-#if defined(NTDDI_WIN10_RS4) && (NTDDI_VERSION >= NTDDI_WIN10_RS4)
     case D3D_SHADER_MODEL_6_2: shaderModelVer = "6.2"; break;
-#endif
-
-#if defined(NTDDI_WIN10_RS5) && (NTDDI_VERSION >= NTDDI_WIN10_RS5)
     case D3D_SHADER_MODEL_6_3: shaderModelVer = "6.3"; break;
     case D3D_SHADER_MODEL_6_4: shaderModelVer = "6.4"; break;
-#endif
-
-#if defined(USING_D3D12_AGILITY_SDK) || (defined(NTDDI_WIN10_19H1) && (NTDDI_VERSION >= NTDDI_WIN10_19H1))
     case D3D_SHADER_MODEL_6_5: shaderModelVer = "6.5"; break;
-#endif
-
-#if defined(USING_D3D12_AGILITY_SDK) || (defined(NTDDI_WIN10_VB) && (NTDDI_VERSION >= NTDDI_WIN10_VB))
     case D3D_SHADER_MODEL_6_6: shaderModelVer = "6.6"; break;
-#endif
 
 #if defined(USING_D3D12_AGILITY_SDK) || (defined(NTDDI_WIN10_FE) && (NTDDI_VERSION >= NTDDI_WIN10_FE))
     case D3D_SHADER_MODEL_6_7: shaderModelVer = "6.7"; break;
@@ -739,7 +716,6 @@ void DeviceResources::GetAdapter(IDXGIAdapter1** ppAdapter)
     ComPtr<IDXGIAdapter1> adapter;
     if (!s_debugForceWarp)
     {
-#if defined(__dxgi1_6_h__) && defined(NTDDI_WIN10_RS4)
         ComPtr<IDXGIFactory6> factory6;
         HRESULT hr = m_dxgiFactory.As(&factory6);
         if (SUCCEEDED(hr))
@@ -775,7 +751,7 @@ void DeviceResources::GetAdapter(IDXGIAdapter1** ppAdapter)
                 }
             }
         }
-#endif
+
         if (!adapter)
         {
             for (UINT adapterIndex = 0;

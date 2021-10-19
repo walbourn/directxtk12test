@@ -682,53 +682,52 @@ void DeviceResources::GetAdapter(IDXGIAdapter1* ppAdapters[], unsigned int numAd
     
     if (!s_debugForceWarp)
     {
-    #if defined(__dxgi1_6_h__) && defined(NTDDI_WIN10_RS4)
-            ComPtr<IDXGIFactory6> factory6;
-            HRESULT hr = m_dxgiFactory.As(&factory6);
-            if (SUCCEEDED(hr))
+        ComPtr<IDXGIFactory6> factory6;
+        HRESULT hr = m_dxgiFactory.As(&factory6);
+        if (SUCCEEDED(hr))
+        {
+            for (UINT adapterIndex = 0;
+                DXGI_ERROR_NOT_FOUND != factory6->EnumAdapterByGpuPreference(
+                    adapterIndex,
+                    s_debugPreferMinPower ? DXGI_GPU_PREFERENCE_MINIMUM_POWER : DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
+                    IID_PPV_ARGS(&(ppAdapters[numFoundAdapters])));
+                adapterIndex++)
             {
-                for (UINT adapterIndex = 0;
-                    DXGI_ERROR_NOT_FOUND != factory6->EnumAdapterByGpuPreference(
-                        adapterIndex,
-                        s_debugPreferMinPower ? DXGI_GPU_PREFERENCE_MINIMUM_POWER : DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
-                        IID_PPV_ARGS(&(ppAdapters[numFoundAdapters])));
-                    adapterIndex++)
+                DXGI_ADAPTER_DESC1 desc;
+                ppAdapters[numFoundAdapters]->GetDesc1(&desc);
+
+                if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
                 {
-                    DXGI_ADAPTER_DESC1 desc;
-                    ppAdapters[numFoundAdapters]->GetDesc1(&desc);
+                    // Don't select the Basic Render Driver adapter.
+                    continue;
+                }
 
-                    if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+                // Check to see if the adapter supports Direct3D 12, but don't create the actual device yet.
+                if (SUCCEEDED(D3D12CreateDevice(ppAdapters[numFoundAdapters], m_d3dMinFeatureLevel, _uuidof(ID3D12Device), nullptr)))
+                {
+                    if (s_debugAdapterOrdinal == -1 || (s_debugAdapterOrdinal == int(adapterIndex)))
                     {
-                        // Don't select the Basic Render Driver adapter.
-                        continue;
-                    }
-
-                    // Check to see if the adapter supports Direct3D 12, but don't create the actual device yet.
-                    if (SUCCEEDED(D3D12CreateDevice(ppAdapters[numFoundAdapters], m_d3dMinFeatureLevel, _uuidof(ID3D12Device), nullptr)))
-                    {
-                        if (s_debugAdapterOrdinal == -1 || (s_debugAdapterOrdinal == int(adapterIndex)))
+#ifdef _DEBUG
+                        wchar_t buff[256] = {};
+                        swprintf_s(buff, L"Direct3D Adapter (%u): VID:%04X, PID:%04X - %ls\n", adapterIndex, desc.VendorId, desc.DeviceId, desc.Description);
+                        OutputDebugStringW(buff);
+#endif
+                        ++numFoundAdapters;
+                        if (numFoundAdapters == numAdapters)
                         {
-    #ifdef _DEBUG
-                            wchar_t buff[256] = {};
-                            swprintf_s(buff, L"Direct3D Adapter (%u): VID:%04X, PID:%04X - %ls\n", adapterIndex, desc.VendorId, desc.DeviceId, desc.Description);
-                            OutputDebugStringW(buff);
-    #endif
-                            ++numFoundAdapters;
-                            if (numFoundAdapters == numAdapters)
-                            {
-                                break; //We found enough adapters.
-                            }
+                            break; //We found enough adapters.
                         }
                     }
                 }
             }
-            else
-    #endif
+        }
+        else
+        {
             for (UINT adapterIndex = 0;
-                 DXGI_ERROR_NOT_FOUND != m_dxgiFactory->EnumAdapters1(
+                DXGI_ERROR_NOT_FOUND != m_dxgiFactory->EnumAdapters1(
                     adapterIndex,
                     &(ppAdapters[numFoundAdapters]));
-                 ++adapterIndex)
+                ++adapterIndex)
             {
                 DXGI_ADAPTER_DESC1 desc;
                 ThrowIfFailed(ppAdapters[numFoundAdapters]->GetDesc1(&desc));
@@ -747,7 +746,7 @@ void DeviceResources::GetAdapter(IDXGIAdapter1* ppAdapters[], unsigned int numAd
                         wchar_t buff[256] = {};
                         swprintf_s(buff, L"Direct3D Adapter (%u): VID:%04X, PID:%04X - %ls\n", adapterIndex, desc.VendorId, desc.DeviceId, desc.Description);
                         OutputDebugStringW(buff);
-                        
+
                         ++numFoundAdapters;
                         if (numFoundAdapters == numAdapters)
                         {
@@ -756,6 +755,7 @@ void DeviceResources::GetAdapter(IDXGIAdapter1* ppAdapters[], unsigned int numAd
                     }
                 }
             }
+        }
     }
 
     if (numFoundAdapters != numAdapters)

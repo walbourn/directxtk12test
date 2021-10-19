@@ -126,8 +126,7 @@ private:
     std::unique_ptr<DirectX::BasicPostProcess>      m_basicPostProcess[DirectX::BasicPostProcess::Effect_Max];
     std::unique_ptr<DirectX::DualPostProcess>       m_dualPostProcess[DirectX::DualPostProcess::Effect_Max];
 
-    static const size_t ToneMapCount = static_cast<size_t>(DirectX::ToneMapPostProcess::Operator_Max)
-                                       * static_cast<size_t>(DirectX::ToneMapPostProcess::TransferFunction_Max)
+    static constexpr size_t ToneMapCount = static_cast<size_t>(DirectX::ToneMapPostProcess::Operator_Max) * static_cast<size_t>(DirectX::ToneMapPostProcess::TransferFunction_Max)
 #ifdef XBOX
                                        * 2
 #endif

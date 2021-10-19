@@ -10,12 +10,10 @@ using namespace DX;
 
 using Microsoft::WRL::ComPtr;
 
-#if defined(NTDDI_WIN10_RS3)
 #include "Gamingdeviceinformation.h"
 
 #include <libloaderapi2.h>
 extern "C" IMAGE_DOS_HEADER __ImageBase;
-#endif
 
 #ifdef __clang__
 #pragma clang diagnostic ignored "-Wcovered-switch-default"
@@ -95,9 +93,9 @@ DeviceResources::DeviceResources(
         m_rotation(DXGI_MODE_ROTATION_IDENTITY),
         m_dxgiFactoryFlags(0),
         m_outputSize{0, 0, 1, 1},
+        m_orientationTransform3D(ScreenRotation::Rotation0),
         m_colorSpace(DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709),
         m_options(flags),
-        m_orientationTransform3D(ScreenRotation::Rotation0),
         m_deviceNotify(nullptr)
 {
     if (backBufferCount < 2 || backBufferCount > MAX_BACK_BUFFER_COUNT)
@@ -110,7 +108,6 @@ DeviceResources::DeviceResources(
         throw std::out_of_range("minFeatureLevel too low");
     }
 
-#if defined(NTDDI_WIN10_RS3)
     if (QueryOptionalDelayLoadedAPI(reinterpret_cast<HMODULE>(&__ImageBase),
         "api-ms-win-gaming-deviceinformation-l1-1-0.dll",
         "GetGamingDeviceModelInformation",
@@ -163,7 +160,6 @@ DeviceResources::DeviceResources(
         }
     }
     else
-#endif
     {
         m_options &= ~c_Enable4K_Xbox;
     }
@@ -392,16 +388,8 @@ void DeviceResources::CreateDeviceResources()
     D3D12_FEATURE_DATA_SHADER_MODEL shaderModel = {};
 #if defined(NTDDI_WIN10_FE) && (NTDDI_VERSION >= NTDDI_WIN10_FE)
     shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_7;
-#elif defined(NTDDI_WIN10_VB) && (NTDDI_VERSION >= NTDDI_WIN10_VB)
-    shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_6;
-#elif defined(NTDDI_WIN10_19H1) && (NTDDI_VERSION >= NTDDI_WIN10_19H1)
-    shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_5;
-#elif defined(NTDDI_WIN10_RS5) && (NTDDI_VERSION >= NTDDI_WIN10_RS5)
-    shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_4;
-#elif defined(NTDDI_WIN10_RS4) && (NTDDI_VERSION >= NTDDI_WIN10_RS4)
-    shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_2;
 #else
-    shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_0;
+    shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_6;
 #endif
     hr = m_d3dDevice->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel));
     while (hr == E_INVALIDARG && shaderModel.HighestShaderModel > D3D_SHADER_MODEL_6_0)
@@ -419,27 +407,12 @@ void DeviceResources::CreateDeviceResources()
     {
     case D3D_SHADER_MODEL_5_1: shaderModelVer = "5.1"; break;
     case D3D_SHADER_MODEL_6_0: shaderModelVer = "6.0"; break;
-
-#if defined(NTDDI_WIN10_RS3) && (NTDDI_VERSION >= NTDDI_WIN10_RS3)
     case D3D_SHADER_MODEL_6_1: shaderModelVer = "6.1"; break;
-#endif
-
-#if defined(NTDDI_WIN10_RS4) && (NTDDI_VERSION >= NTDDI_WIN10_RS4)
     case D3D_SHADER_MODEL_6_2: shaderModelVer = "6.2"; break;
-#endif
-
-#if defined(NTDDI_WIN10_RS5) && (NTDDI_VERSION >= NTDDI_WIN10_RS5)
     case D3D_SHADER_MODEL_6_3: shaderModelVer = "6.3"; break;
     case D3D_SHADER_MODEL_6_4: shaderModelVer = "6.4"; break;
-#endif
-
-#if defined(NTDDI_WIN10_19H1) && (NTDDI_VERSION >= NTDDI_WIN10_19H1)
     case D3D_SHADER_MODEL_6_5: shaderModelVer = "6.5"; break;
-#endif
-
-#if defined(NTDDI_WIN10_VB) && (NTDDI_VERSION >= NTDDI_WIN10_VB)
     case D3D_SHADER_MODEL_6_6: shaderModelVer = "6.6"; break;
-#endif
 
 #if defined(NTDDI_WIN10_FE) && (NTDDI_VERSION >= NTDDI_WIN10_FE)
     case D3D_SHADER_MODEL_6_7: shaderModelVer = "6.7"; break;

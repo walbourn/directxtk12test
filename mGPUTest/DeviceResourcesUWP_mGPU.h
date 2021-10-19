@@ -94,7 +94,7 @@ namespace DX
         void GetAdapter(IDXGIAdapter1** ppAdapters, unsigned int numAdapters = 1);
         void UpdateColorSpace();
 
-        static const size_t MAX_BACK_BUFFER_COUNT = 3;
+        static constexpr size_t MAX_BACK_BUFFER_COUNT = 3;
 
         UINT                                                m_backBufferIndex;
 
@@ -121,14 +121,14 @@ namespace DX
         DWORD                                               m_dxgiFactoryFlags;
         RECT                                                m_outputSize;
 
+        // Transforms used for display orientation.
+        DirectX::XMFLOAT4X4                                 m_orientationTransform3D;
+
         // HDR Support
         DXGI_COLOR_SPACE_TYPE                               m_colorSpace;
 
         // DeviceResources options (see flags above)
         unsigned int                                        m_options;
-
-        // Transforms used for display orientation.
-        DirectX::XMFLOAT4X4                                 m_orientationTransform3D;
 
         // Hold features that are per device in a multi GPU setup.
         struct PerAdapter

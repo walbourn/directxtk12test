@@ -60,7 +60,11 @@ DeviceResources::~DeviceResources()
 }
 
 // Configures the Direct3D device, and stores handles to it and the device context.
+#ifdef _GAMING_XBOX_SCARLETT
+void DeviceResources::CreateDeviceResources(D3D12XBOX_CREATE_DEVICE_FLAGS createDeviceFlags)
+#else
 void DeviceResources::CreateDeviceResources()
+#endif
 {
     // Create the DX12 API device object.
     D3D12XBOX_CREATE_DEVICE_PARAMETERS params = {};
@@ -77,6 +81,9 @@ void DeviceResources::CreateDeviceResources()
     params.GraphicsCommandQueueRingSizeBytes = static_cast<UINT>(D3D12XBOX_DEFAULT_SIZE_BYTES);
     params.GraphicsScratchMemorySizeBytes = static_cast<UINT>(D3D12XBOX_DEFAULT_SIZE_BYTES);
     params.ComputeScratchMemorySizeBytes = static_cast<UINT>(D3D12XBOX_DEFAULT_SIZE_BYTES);
+#ifdef _GAMING_XBOX_SCARLETT
+    params.CreateDeviceFlags = createDeviceFlags;
+#endif
 
     HRESULT hr = D3D12XboxCreateDevice(
         nullptr,
@@ -173,6 +180,7 @@ void DeviceResources::CreateDeviceResources()
             break;
 
         case XSystemDeviceType::XboxScarlettAnaconda /* Xbox Series X */:
+        case XSystemDeviceType::XboxOneXDevkit:
         case XSystemDeviceType::XboxScarlettDevkit:
         default:
             m_outputSize = (m_options & c_Enable4K_UHD) ? RECT{ 0, 0, 3840, 2160 } : RECT{ 0, 0, 2560, 1440 };
