@@ -95,9 +95,9 @@ DeviceResources::DeviceResources(
         m_rotation(DXGI_MODE_ROTATION_IDENTITY),
         m_dxgiFactoryFlags(0),
         m_outputSize{0, 0, 1, 1},
+        m_orientationTransform3D(ScreenRotation::Rotation0),
         m_colorSpace(DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709),
         m_options(flags),
-        m_orientationTransform3D(ScreenRotation::Rotation0),
         m_pAdaptersD3D(nullptr)
 {
     if (backBufferCount < 2 || backBufferCount > MAX_BACK_BUFFER_COUNT)
