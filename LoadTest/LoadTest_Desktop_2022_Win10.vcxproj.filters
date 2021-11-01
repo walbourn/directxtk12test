@@ -1,0 +1,108 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Common">
+      <UniqueIdentifier>a4b3a184-c3dd-43c7-8835-78c1ae247450</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets">
+      <UniqueIdentifier>cc7617b5-4a9b-45a4-8441-7155c08c995d</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dds;dlg;fbx;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tga;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="Game.h" />
+    <ClInclude Include="..\Common\d3dx12.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\DeviceResourcesPC.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\StepTimer.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\DirectXTKTest.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\ReadData.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="..\Common\DeviceResourcesPC.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\MainPC.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="..\Common\settings.manifest">
+      <Filter>Assets</Filter>
+    </Manifest>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="dx5_logo.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="dx5_logo_autogen.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="earth_A2B10G10R10.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="io_R8G8B8A8_UNORM_SRGB_SRV_DIMENSION_TEXTURE1D_MipOff.DDS">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="io_R8G8B8A8_UNORM_SRGB_SRV_DIMENSION_TEXTURE1DArray_MipOff.DDS">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="io_R8G8B8A8_UNORM_SRGB_SRV_DIMENSION_TEXTURE2DArray_MipOff.DDS">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="io_R8G8B8A8_UNORM_SRGB_SRV_DIMENSION_TEXTURE3D_MipOff.DDS">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="tree02S_pmalpha.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="cup_small.jpg">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="win95.bmp">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="lenaNV12.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="dx5_logo_autogen_bgra.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="dx5_logo_autogen_srgb.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="testpattern.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="dx5_logo_nomips.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="grad4d_a1r5g5b5.bmp">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="earth_A2B10G10R10_autogen.DDS">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="windowslogo_r32f.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="pentagon.tiff">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="text.tif">
+      <Filter>Assets</Filter>
+    </Image>
+  </ItemGroup>
+</Project>
