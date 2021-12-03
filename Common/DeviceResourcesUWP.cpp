@@ -125,7 +125,7 @@ DeviceResources::DeviceResources(
             case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_S: OutputDebugStringA("INFO: Running on Xbox One S\n"); break;
             case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X: OutputDebugStringA("INFO: Running on Xbox One X\n"); break;
             case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X_DEVKIT: OutputDebugStringA("INFO: Running on Xbox One X (DevKit)\n"); break;
-            default: break;
+            default: OutputDebugStringA("INFO: Unknown Microsoft gaming device\n"); break;
             }
 #endif
 
