@@ -223,12 +223,27 @@
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Durango'">true</DeploymentContent>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Profile|Durango'">true</DeploymentContent>
     </None>
+    <None Include="WaveBankADPCM4Kn.xwb">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Durango'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Durango'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Profile|Durango'">true</DeploymentContent>
+    </None>
     <None Include="WaveBankXMA2.xwb">
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Durango'">true</DeploymentContent>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Durango'">true</DeploymentContent>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Profile|Durango'">true</DeploymentContent>
     </None>
+    <None Include="WaveBankXMA2_4Kn.xwb">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Durango'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Durango'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Profile|Durango'">true</DeploymentContent>
+    </None>
     <None Include="WaveBankxWMA.xwb">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Durango'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Durango'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Profile|Durango'">true</DeploymentContent>
+    </None>
+    <None Include="WaveBankxWMA4Kn.xwb">
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Durango'">true</DeploymentContent>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Durango'">true</DeploymentContent>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Profile|Durango'">true</DeploymentContent>
