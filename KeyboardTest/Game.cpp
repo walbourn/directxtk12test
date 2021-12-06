@@ -110,7 +110,7 @@ void Game::Initialize(
 
         try
         {
-            std::unique_ptr<Keyboard> kb2(new Keyboard);
+            auto kb2 = std::make_unique<Keyboard>();
         }
         catch (...)
         {
@@ -217,6 +217,26 @@ void Game::Update(DX::StepTimer const&)
         m_lastStr = L"Space was pressed";
     else if (m_tracker.released.Space)
         m_lastStr = L"Space was released";
+    else if (m_tracker.pressed.Enter)
+        m_lastStr = L"Enter was pressed";
+    else if (m_tracker.released.Enter)
+        m_lastStr = L"Enter was released";
+    else if (m_tracker.pressed.Back)
+        m_lastStr = L"Back was pressed";
+    else if (m_tracker.released.Back)
+        m_lastStr = L"Back was released";
+    else if (m_tracker.pressed.NumLock)
+        m_lastStr = L"NumLock was pressed";
+    else if (m_tracker.released.NumLock)
+        m_lastStr = L"NumLock was released";
+    else if (m_tracker.pressed.CapsLock)
+        m_lastStr = L"CapsLock was pressed";
+    else if (m_tracker.released.CapsLock)
+        m_lastStr = L"CapsLock was released";
+    else if (m_tracker.pressed.Scroll)
+        m_lastStr = L"Scroll was pressed";
+    else if (m_tracker.released.Scroll)
+        m_lastStr = L"Scroll was released";
     else if (m_tracker.pressed.Up)
         m_lastStr = L"Up was pressed";
     else if (m_tracker.released.Up)
@@ -426,7 +446,11 @@ void Game::Render()
 
     m_comicFont->DrawString(m_spriteBatch.get(), L"RightShift", pos, m_kb.RightShift ? red : lightGray);
 
-    pos.x += width * 15;
+    pos.x += width * 10;
+
+    m_comicFont->DrawString(m_spriteBatch.get(), L"NumLock", pos, m_kb.NumLock ? red : lightGray);
+
+    pos.x += width * 10;
 
     for (int vk = 0x67; vk <= 0x69; ++vk)
     {
@@ -447,7 +471,11 @@ void Game::Render()
 
     m_comicFont->DrawString(m_spriteBatch.get(), L"RightCtrl", pos, m_kb.RightControl ? red : lightGray);
 
-    pos.x += width * 15;
+    pos.x += width * 10;
+
+    m_comicFont->DrawString(m_spriteBatch.get(), L"CapsLock", pos, m_kb.CapsLock ? red : lightGray);
+
+    pos.x += width * 10;
 
     for (int vk = 0x64; vk <= 0x66; ++vk)
     {
@@ -468,7 +496,11 @@ void Game::Render()
 
     m_comicFont->DrawString(m_spriteBatch.get(), L"RightAlt", pos, m_kb.RightAlt ? red : lightGray);
 
-    pos.x += width * 15;
+    pos.x += width * 10;
+
+    m_comicFont->DrawString(m_spriteBatch.get(), L"Scroll", pos, m_kb.Scroll ? red : lightGray);
+
+    pos.x += width * 10;
 
     for (int vk = 0x61; vk <= 0x63; ++vk)
     {
@@ -485,10 +517,19 @@ void Game::Render()
 
     m_comicFont->DrawString(m_spriteBatch.get(), L"Space", pos, m_kb.Space ? red : lightGray);
 
-    pos.x += width * 25;
+    pos.x += width * 10;
+
+    m_comicFont->DrawString(m_spriteBatch.get(), L"Enter", pos, m_kb.Enter ? red : lightGray);
+
+    pos.x += width * 10;
+
+    m_comicFont->DrawString(m_spriteBatch.get(), L"Back", pos, m_kb.Back ? red : lightGray);
+
+    pos.x += width * 10;
 
     m_comicFont->DrawString(m_spriteBatch.get(), "0", pos, m_kb.IsKeyDown(DirectX::Keyboard::Keys::NumPad0) ? red : lightGray);
 
+    // Row 7
     if (m_lastStr)
     {
         m_comicFont->DrawString(m_spriteBatch.get(), m_lastStr, XMFLOAT2(50, 650), yellow);
