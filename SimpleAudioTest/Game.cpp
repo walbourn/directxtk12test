@@ -14,6 +14,9 @@
 
 //#define GAMMA_CORRECT_RENDERING
 
+// Test Advanced Format (4Kn) streaming wave banks vs. DVD (2048) sector aligned
+#define TEST_4KN
+
 extern void ExitGame() noexcept;
 
 using namespace DirectX;
@@ -366,8 +369,13 @@ void Game::Initialize(
         dump_wfx(m_console.get(), m_wbADPCM->GetFormat(WB_INMEMORY_ENTRY, wfx, 64));
     }
 
+#ifdef TEST_4KN
+    m_wbstreamADPCM = std::make_unique<WaveBank>(m_audEngine.get(), L"WaveBankADPCM4Kn.xwb");
+    m_console->WriteLine(L"WaveBankADPCM4Kn.xwb");
+#else
     m_wbstreamADPCM = std::make_unique<WaveBank>(m_audEngine.get(), L"WaveBankADPCM.xwb");
     m_console->WriteLine(L"WaveBankADPCM.xwb");
+#endif
     m_console->Format(L"    Index #%u (%zu bytes, %zu samples, %zu ms)\n",
         WB_STREAM_ENTRY,
         m_wbstreamADPCM->GetSampleSizeInBytes(WB_STREAM_ENTRY),
@@ -392,8 +400,13 @@ void Game::Initialize(
         dump_wfx(m_console.get(), m_wbXWMA->GetFormat(WB_INMEMORY_ENTRY, wfx, 64));
     }
 
+#ifdef TEST_4KN
+    m_wbstreamXWMA = std::make_unique<WaveBank>(m_audEngine.get(), L"WaveBankxWMA4Kn.xwb");
+    m_console->WriteLine(L"WaveBankxWMA4Kn.xwb");
+#else
     m_wbstreamXWMA = std::make_unique<WaveBank>(m_audEngine.get(), L"WaveBankxWMA.xwb");
     m_console->WriteLine(L"WaveBankxWMA.xwb");
+#endif
     m_console->Format(L"    Index #%u (%zu bytes, %zu samples, %zu ms)\n",
         WB_STREAM_ENTRY,
         m_wbstreamXWMA->GetSampleSizeInBytes(WB_STREAM_ENTRY),
@@ -419,8 +432,13 @@ void Game::Initialize(
         dump_wfx(m_console.get(), m_wbXMA->GetFormat(WB_INMEMORY_ENTRY, wfx, 64));
     }
 
+#ifdef TEST_4KN
+    m_wbstreamXMA = std::make_unique<WaveBank>(m_audEngine.get(), L"WaveBankXMA2_4Kn.xwb");
+    m_console->WriteLine(L"WaveBankXMA2_4Kn.xwb");
+#else
     m_wbstreamXMA = std::make_unique<WaveBank>(m_audEngine.get(), L"WaveBankXMA2.xwb");
     m_console->WriteLine(L"WaveBankXMA2.xwb");
+#endif
     m_console->Format(L"    Index #%u (%zu bytes, %zu samples, %zu ms)\n",
         WB_STREAM_ENTRY,
         m_wbstreamXMA->GetSampleSizeInBytes(WB_STREAM_ENTRY),

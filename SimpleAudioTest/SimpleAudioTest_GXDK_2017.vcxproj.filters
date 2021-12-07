@@ -69,6 +69,15 @@
     <None Include="WaveBankxWMA.xwb">
       <Filter>Assets</Filter>
     </None>
+    <None Include="WaveBankADPCM4Kn.xwb">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="WaveBankXMA2_4Kn.xwb">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="WaveBankxWMA4Kn.xwb">
+      <Filter>Assets</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Media Include="Alarm01.wav">

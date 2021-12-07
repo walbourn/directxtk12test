@@ -85,5 +85,11 @@
     <None Include="WaveBankADPCM.xwb">
       <Filter>Assets</Filter>
     </None>
+    <None Include="WaveBankADPCM4Kn.xwb">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="WaveBankxWMA4Kn.xwb">
+      <Filter>Assets</Filter>
+    </None>
   </ItemGroup>
 </Project>
