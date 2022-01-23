@@ -14,6 +14,9 @@
 
 #define GAMMA_CORRECT_RENDERING
 
+// Enable to test using always relative mode and not using absolute
+//#define TEST_LOCKED_RELATIVE
+
 extern void ExitGame() noexcept;
 
 using namespace DirectX;
@@ -111,6 +114,10 @@ void Game::Initialize(
     m_mouse->SetWindow(window);
 #endif
 
+#ifdef TEST_LOCKED_RELATIVE
+    m_mouse->SetMode(Mouse::MODE_RELATIVE);
+#endif
+
     // Singleton test
     {
         bool thrown = false;
@@ -183,6 +190,7 @@ void Game::Update(DX::StepTimer const&)
     }
     else if (m_keyboardButtons.IsKeyPressed(Keyboard::End))
     {
+#ifndef TEST_LOCKED_RELATIVE
         if (m_lastMode == Mouse::MODE_ABSOLUTE)
         {
             m_mouse->SetMode(Mouse::MODE_RELATIVE);
@@ -191,6 +199,7 @@ void Game::Update(DX::StepTimer const&)
         {
             m_mouse->SetMode(Mouse::MODE_ABSOLUTE);
         }
+#endif
     }
 
     auto mouse = m_mouse->GetState();
@@ -245,6 +254,7 @@ void Game::Update(DX::StepTimer const&)
     else if (m_tracker.xButton2 == ButtonState::RELEASED)
         m_lastStr = L"XButton2 was released";
 
+#ifndef TEST_LOCKED_RELATIVE
     if (m_tracker.leftButton == ButtonState::PRESSED)
     {
         m_mouse->SetMode(Mouse::MODE_RELATIVE);
@@ -253,6 +263,7 @@ void Game::Update(DX::StepTimer const&)
     {
         m_mouse->SetMode(Mouse::MODE_ABSOLUTE);
     }
+#endif
 
     m_ms = mouse;
 
