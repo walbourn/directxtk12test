@@ -273,6 +273,11 @@ void Game::OnWindowMoved()
 }
 #endif
 
+void Game::OnDisplayChange()
+{
+    m_deviceResources->UpdateColorSpace();
+}
+
 void Game::OnWindowSizeChanged(int width, int height, DXGI_MODE_ROTATION rotation)
 {
 #if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)

@@ -45,6 +45,7 @@ namespace DX
         void Prepare(D3D12_RESOURCE_STATES beforeState = D3D12_RESOURCE_STATE_PRESENT,
                      D3D12_RESOURCE_STATES afterState = D3D12_RESOURCE_STATE_RENDER_TARGET);
         void Present(D3D12_RESOURCE_STATES beforeState = D3D12_RESOURCE_STATE_RENDER_TARGET);
+        void UpdateColorSpace();
         void Suspend() noexcept {}
         void Resume() noexcept {}
         void WaitForGpu() noexcept;
@@ -101,7 +102,6 @@ namespace DX
     private:
         void MoveToNextFrame();
         void GetAdapter(IDXGIAdapter1** ppAdapter);
-        void UpdateColorSpace();
 
         static constexpr size_t MAX_BACK_BUFFER_COUNT = 3;
 
