@@ -45,10 +45,10 @@ namespace DX
         void Prepare(D3D12_RESOURCE_STATES beforeState = D3D12_RESOURCE_STATE_PRESENT,
                      D3D12_RESOURCE_STATES afterState = D3D12_RESOURCE_STATE_RENDER_TARGET);
         void Present(D3D12_RESOURCE_STATES beforeState = D3D12_RESOURCE_STATE_RENDER_TARGET);
+        void WaitForGpu() noexcept;
         void UpdateColorSpace();
         void Suspend() noexcept {}
         void Resume() noexcept {}
-        void WaitForGpu() noexcept;
 
         // Device Accessors.
         RECT GetOutputSize() const noexcept { return m_outputSize; }

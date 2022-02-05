@@ -511,6 +511,7 @@ void ExitGame() noexcept
     Windows::ApplicationModel::Core::CoreApplication::Exit();
 }
 
+
 // Window size helper
 _Use_decl_annotations_
 void GetWindowBounds(IUnknown* window, RECT* rect)
