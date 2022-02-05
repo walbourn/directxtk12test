@@ -10,6 +10,13 @@
 
 using namespace DirectX;
 
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wcovered-switch-default"
+#pragma clang diagnostic ignored "-Wswitch-enum"
+#endif
+
+#pragma warning(disable : 4061)
+
 namespace
 {
     std::unique_ptr<Game> g_game;
@@ -17,9 +24,10 @@ namespace
 #ifdef WM_DEVICECHANGE
     HDEVNOTIFY g_hNewAudio;
 #endif
-};
+}
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+void ExitGame() noexcept;
 void ParseCommandLine(_In_ LPWSTR lpCmdLine);
 
 extern "C"
@@ -154,6 +162,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         break;
 
+    case WM_DISPLAYCHANGE:
+        if (game)
+        {
+            game->OnDisplayChange();
+        }
+        break;
+
     case WM_MOVE:
         if (game)
         {
@@ -276,7 +291,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
             else
             {
-                SetWindowLongPtr(hWnd, GWL_STYLE, 0);
+                SetWindowLongPtr(hWnd, GWL_STYLE, WS_POPUP);
                 SetWindowLongPtr(hWnd, GWL_EXSTYLE, WS_EX_TOPMOST);
 
                 SetWindowPos(hWnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);

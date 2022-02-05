@@ -50,6 +50,7 @@ namespace DX
         void Suspend() noexcept {}
         void Resume() noexcept {}
         void WaitForGpu() noexcept;
+        void UpdateColorSpace();
 
         // Device Accessors.
         RECT GetOutputSize() const noexcept             { return m_outputSize; }
@@ -89,7 +90,6 @@ namespace DX
     private:
         void MoveToNextFrame();
         void GetAdapter(IDXGIAdapter1** ppAdapter);
-        void UpdateColorSpace();
 
         static constexpr size_t MAX_BACK_BUFFER_COUNT = 3;
 
