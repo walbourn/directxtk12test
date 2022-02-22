@@ -374,7 +374,7 @@ void DeviceResources::CreateWindowSizeDependentResources()
         rtvDesc.Format = m_backBufferFormat;
         rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvDescriptor(
+        const CD3DX12_CPU_DESCRIPTOR_HANDLE rtvDescriptor(
             m_pAdaptersD3D[DT_Primary].m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
             static_cast<INT>(n), m_pAdaptersD3D[DT_Primary].m_rtvDescriptorSize);
         m_pAdaptersD3D[DT_Primary].m_d3dDevice->CreateRenderTargetView(m_pAdaptersD3D[DT_Primary].m_renderTargets[n].Get(), &rtvDesc, rtvDescriptor);
@@ -412,7 +412,8 @@ void DeviceResources::CreateWindowSizeDependentResources()
             rtvDesc.Format = m_backBufferFormat;
             rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 
-            CD3DX12_CPU_DESCRIPTOR_HANDLE rtvDescriptor(m_pAdaptersD3D[adapterIdx].m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
+            const CD3DX12_CPU_DESCRIPTOR_HANDLE rtvDescriptor(
+                m_pAdaptersD3D[adapterIdx].m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
                 static_cast<INT>(n), m_pAdaptersD3D[adapterIdx].m_rtvDescriptorSize);
             m_pAdaptersD3D[adapterIdx].m_d3dDevice->CreateRenderTargetView(m_pAdaptersD3D[adapterIdx].m_renderTargets[n].Get(), &rtvDesc, rtvDescriptor);
         }
@@ -564,7 +565,8 @@ void DeviceResources::Prepare(D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_
         if (beforeState != afterState)
         {
             // Transition the render target into the correct state to allow for drawing into it.
-            D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_pAdaptersD3D[adapterIdx].m_renderTargets[m_backBufferIndex].Get(),
+            const D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+                m_pAdaptersD3D[adapterIdx].m_renderTargets[m_backBufferIndex].Get(),
                 beforeState, afterState);
             m_pAdaptersD3D[adapterIdx].m_commandList->ResourceBarrier(1, &barrier);
         }
@@ -579,7 +581,9 @@ void DeviceResources::Present(D3D12_RESOURCE_STATES beforeState)
         if (beforeState != D3D12_RESOURCE_STATE_PRESENT)
         {
             // Transition the render target to the state that allows it to be presented to the display.
-            D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_pAdaptersD3D[adapterIdx].m_renderTargets[m_backBufferIndex].Get(), beforeState, D3D12_RESOURCE_STATE_PRESENT);
+            const D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+                m_pAdaptersD3D[adapterIdx].m_renderTargets[m_backBufferIndex].Get(),
+                beforeState, D3D12_RESOURCE_STATE_PRESENT);
             m_pAdaptersD3D[adapterIdx].m_commandList->ResourceBarrier(1, &barrier);
         }
 
@@ -635,7 +639,7 @@ void DeviceResources::WaitForGpu() noexcept
         if (m_pAdaptersD3D[adapterIdx].m_commandQueue && m_pAdaptersD3D[adapterIdx].m_fence && m_pAdaptersD3D[adapterIdx].m_fenceEvent.IsValid())
         {
             // Schedule a Signal command in the GPU queue.
-            UINT64 fenceValue = m_pAdaptersD3D[adapterIdx].m_fenceValues[m_backBufferIndex];
+            const UINT64 fenceValue = m_pAdaptersD3D[adapterIdx].m_fenceValues[m_backBufferIndex];
             if (SUCCEEDED(m_pAdaptersD3D[adapterIdx].m_commandQueue->Signal(m_pAdaptersD3D[adapterIdx].m_fence.Get(), fenceValue)))
             {
                 // Wait until the Signal has been processed.

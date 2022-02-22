@@ -238,7 +238,7 @@ void Game::Render()
     m_shape->Draw(commandList);
 
     {
-        auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_sceneTex.Get(),
+        auto const barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_sceneTex.Get(),
             D3D12_RESOURCE_STATE_RENDER_TARGET,
             D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0);
         commandList->ResourceBarrier(1, &barrier);
@@ -344,7 +344,7 @@ void Game::Render()
             pp->Process(commandList);
 
             {
-                auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                auto const barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
                     D3D12_RESOURCE_STATE_RENDER_TARGET,
                     D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0);
                 commandList->ResourceBarrier(1, &barrier);
@@ -361,7 +361,7 @@ void Game::Render()
             pp->Process(commandList);
 
             {
-                auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                auto const barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
                     D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
                     D3D12_RESOURCE_STATE_RENDER_TARGET, 0);
                 commandList->ResourceBarrier(1, &barrier);
@@ -384,7 +384,7 @@ void Game::Render()
             pp->Process(commandList);
 
             {
-                auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                auto const barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
                     D3D12_RESOURCE_STATE_RENDER_TARGET,
                     D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0);
                 commandList->ResourceBarrier(1, &barrier);
@@ -401,7 +401,7 @@ void Game::Render()
             pp->Process(commandList);
 
             {
-                auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                auto const barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
                     D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
                     D3D12_RESOURCE_STATE_RENDER_TARGET, 0);
                 commandList->ResourceBarrier(1, &barrier);
@@ -424,7 +424,7 @@ void Game::Render()
             pp->Process(commandList);
 
             {
-                auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                auto const barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
                     D3D12_RESOURCE_STATE_RENDER_TARGET,
                     D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0);
                 commandList->ResourceBarrier(1, &barrier);
@@ -441,7 +441,7 @@ void Game::Render()
             pp->Process(commandList);
 
             {
-                auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur2Tex.Get(),
+                auto const barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur2Tex.Get(),
                     D3D12_RESOURCE_STATE_RENDER_TARGET,
                     D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0);
                 commandList->ResourceBarrier(1, &barrier);
@@ -486,7 +486,7 @@ void Game::Render()
             pp->Process(commandList);
 
             {
-                auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                auto const barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
                     D3D12_RESOURCE_STATE_RENDER_TARGET,
                     D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0);
                 commandList->ResourceBarrier(1, &barrier);
@@ -524,7 +524,7 @@ void Game::Render()
             pp->Process(commandList);
 
             {
-                auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                auto const barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
                     D3D12_RESOURCE_STATE_RENDER_TARGET,
                     D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0);
                 commandList->ResourceBarrier(1, &barrier);
@@ -571,7 +571,7 @@ void Game::Render()
             pp->Process(commandList);
 
             {
-                auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                auto const barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
                     D3D12_RESOURCE_STATE_RENDER_TARGET,
                     D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0);
                 commandList->ResourceBarrier(1, &barrier);
@@ -609,7 +609,7 @@ void Game::Render()
             pp->Process(commandList);
 
             {
-                auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                auto const barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
                     D3D12_RESOURCE_STATE_RENDER_TARGET,
                     D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0);
                 commandList->ResourceBarrier(1, &barrier);
@@ -793,7 +793,7 @@ void Game::Render()
 
     // Set scene texture for next frame
     {
-        auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_sceneTex.Get(),
+        auto const barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_sceneTex.Get(),
             D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
             D3D12_RESOURCE_STATE_RENDER_TARGET, 0);
         commandList->ResourceBarrier(1, &barrier);
@@ -817,16 +817,16 @@ void Game::Clear()
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Clear");
 
     // Clear the views.
-    auto rtvDescriptor = m_rtvDescriptors->GetCpuHandle(RTDescriptors::SceneRT);
-    auto dsvDescriptor = m_deviceResources->GetDepthStencilView();
+    auto const rtvDescriptor = m_rtvDescriptors->GetCpuHandle(RTDescriptors::SceneRT);
+    auto const dsvDescriptor = m_deviceResources->GetDepthStencilView();
 
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, &dsvDescriptor);
     commandList->ClearRenderTargetView(rtvDescriptor, Colors::CornflowerBlue, 0, nullptr);
     commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
     // Set the viewport and scissor rect.
-    auto viewport = m_deviceResources->GetScreenViewport();
-    auto scissorRect = m_deviceResources->GetScissorRect();
+    auto const viewport = m_deviceResources->GetScreenViewport();
+    auto const scissorRect = m_deviceResources->GetScissorRect();
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissorRect);
 
@@ -864,7 +864,7 @@ void Game::OnResuming()
 #ifdef PC
 void Game::OnWindowMoved()
 {
-    auto r = m_deviceResources->GetOutputSize();
+    auto const r = m_deviceResources->GetOutputSize();
     m_deviceResources->WindowSizeChanged(r.right, r.bottom);
 }
 #endif

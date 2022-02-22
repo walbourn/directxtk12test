@@ -58,12 +58,12 @@ void TextConsole::Render(_In_ ID3D12GraphicsCommandList* commandList)
 
     std::lock_guard<std::mutex> lock(m_mutex);
 
-    float lineSpacing = m_font->GetLineSpacing();
+    const float lineSpacing = m_font->GetLineSpacing();
 
-    float x = float(m_layout.left);
-    float y = float(m_layout.top);
+    const float x = float(m_layout.left);
+    const float y = float(m_layout.top);
 
-    XMVECTOR color = XMLoadFloat4(&m_textColor);
+    const XMVECTOR color = XMLoadFloat4(&m_textColor);
 
     m_batch->Begin(commandList);
 
@@ -71,7 +71,7 @@ void TextConsole::Render(_In_ ID3D12GraphicsCommandList* commandList)
 
     for (unsigned int line = 0; line < m_rows; ++line)
     {
-        XMFLOAT2 pos(x, y + lineSpacing * float(line));
+        const XMFLOAT2 pos(x, y + lineSpacing * float(line));
 
         if (*m_lines[textLine])
         {
@@ -140,7 +140,7 @@ void TextConsole::Format(const wchar_t* strFormat, ...)
     va_list argList;
     va_start(argList, strFormat);
 
-    auto len = size_t(_vscwprintf(strFormat, argList) + 1);
+    auto const len = size_t(_vscwprintf(strFormat, argList) + 1);
 
     if (m_tempBuffer.size() < len)
         m_tempBuffer.resize(len);
@@ -170,10 +170,10 @@ void TextConsole::SetWindow(const RECT& layout)
 
     assert(m_font != nullptr);
 
-    float lineSpacing = m_font->GetLineSpacing();
+    const float lineSpacing = m_font->GetLineSpacing();
     unsigned int rows = std::max<unsigned int>(1, static_cast<unsigned int>(float(layout.bottom - layout.top) / lineSpacing));
 
-    RECT fontLayout = m_font->MeasureDrawBounds(L"X", XMFLOAT2(0, 0));
+    const RECT fontLayout = m_font->MeasureDrawBounds(L"X", XMFLOAT2(0, 0));
     unsigned int columns = std::max<unsigned int>(1, static_cast<unsigned int>(float(layout.right - layout.left) / float(fontLayout.right - fontLayout.left)));
 
     auto buffer = std::make_unique<wchar_t[]>((columns + 1) * rows);
@@ -187,8 +187,8 @@ void TextConsole::SetWindow(const RECT& layout)
 
     if (m_lines)
     {
-        unsigned int c = std::min<unsigned int>(columns, m_columns);
-        unsigned int r = std::min<unsigned int>(rows, m_rows);
+        const unsigned int c = std::min<unsigned int>(columns, m_columns);
+        const unsigned int r = std::min<unsigned int>(rows, m_rows);
 
         for (unsigned int line = 0; line < r; ++line)
         {
@@ -257,7 +257,7 @@ void TextConsole::ProcessString(_In_z_ const wchar_t* str)
     if (!m_lines)
         return;
 
-    float width = float(m_layout.right - m_layout.left);
+    const float width = float(m_layout.right - m_layout.left);
 
     for (const wchar_t* ch = str; *ch != 0; ++ch)
     {
@@ -277,7 +277,7 @@ void TextConsole::ProcessString(_In_z_ const wchar_t* str)
         {
             m_lines[m_currentLine][m_currentColumn] = *ch;
 
-            auto fontSize = m_font->MeasureString(m_lines[m_currentLine]);
+            auto const fontSize = m_font->MeasureString(m_lines[m_currentLine]);
             if (XMVectorGetX(fontSize) > width)
             {
                 m_lines[m_currentLine][m_currentColumn] = L'\0';
