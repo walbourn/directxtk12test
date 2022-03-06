@@ -12,13 +12,13 @@
 #include "pch.h"
 #include "Game.h"
 
-#ifdef GAMEINPUT
-#include <GameInput.h>
-#endif
+#include "FindMedia.h"
 
 #define GAMMA_CORRECT_RENDERING
 
-#if defined(COREWINDOW) || defined(WGI)
+#ifdef USING_GAMEINPUT
+#include <GameInput.h>
+#elif defined(USING_WINDOWS_GAMING_INPUT)
 #include <Windows.UI.Core.h>
 #endif
 
@@ -40,16 +40,22 @@ Game::Game() noexcept(false) :
     m_lastStr(nullptr)
 {
 #ifdef GAMMA_CORRECT_RENDERING
-    const DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+    constexpr DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
 #else
-    const DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
+    constexpr DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
 #endif
 
     // 2D only rendering
-#ifdef XBOX
+#ifdef COMBO_GDK
+    m_deviceResources = std::make_unique<DX::DeviceResources>(c_RenderFormat, DXGI_FORMAT_UNKNOWN);
+#elif defined(XBOX)
     m_deviceResources = std::make_unique<DX::DeviceResources>(
         c_RenderFormat, DXGI_FORMAT_UNKNOWN, 2,
-        DX::DeviceResources::c_Enable4K_UHD);
+        DX::DeviceResources::c_Enable4K_UHD
+#ifdef _GAMING_XBOX
+        | DX::DeviceResources::c_EnableQHD
+#endif
+        );
 #elif defined(UWP)
     m_deviceResources = std::make_unique<DX::DeviceResources>(
         c_RenderFormat, DXGI_FORMAT_UNKNOWN, 2, D3D_FEATURE_LEVEL_11_0,
@@ -80,7 +86,10 @@ void Game::Initialize(
 #endif
     int width, int height, DXGI_MODE_ROTATION rotation)
 {
-#ifdef XBOX
+#ifdef COMBO_GDK
+    UNREFERENCED_PARAMETER(rotation);
+    m_deviceResources->SetWindow(window, width, height);
+#elif defined(XBOX)
     UNREFERENCED_PARAMETER(rotation);
     UNREFERENCED_PARAMETER(width);
     UNREFERENCED_PARAMETER(height);
@@ -119,7 +128,7 @@ void Game::Initialize(
     }
 #endif
 
-#ifdef GAMEINPUT
+#ifdef USING_GAMEINPUT
 
     m_ctrlChanged.Attach(CreateEvent(nullptr, FALSE, FALSE, nullptr));
     if (!m_ctrlChanged.IsValid())
@@ -129,7 +138,7 @@ void Game::Initialize(
 
     m_gamePad->RegisterEvents(m_ctrlChanged.Get());
 
-#elif defined(COREWINDOW)
+#elif defined(USING_WINDOWS_GAMING_INPUT) || defined(_XBOX_ONE)
 
     m_ctrlChanged.Attach(CreateEvent(nullptr, FALSE, FALSE, nullptr));
     m_userChanged.Attach(CreateEvent(nullptr, FALSE, FALSE, nullptr));
@@ -171,14 +180,14 @@ void Game::Update(DX::StepTimer const&)
 
     m_state.connected = false;
 
-#ifdef GAMEINPUT
+#ifdef USING_GAMEINPUT
 
     if (WaitForSingleObject(m_ctrlChanged.Get(), 0) == WAIT_OBJECT_0)
     {
         OutputDebugStringA("EVENT: Controller changed\n");
     }
 
-#elif defined(COREWINDOW)
+#elif defined(USING_WINDOWS_GAMING_INPUT) || defined(_XBOX_ONE)
 
     HANDLE events[2] = { m_ctrlChanged.Get(), m_userChanged.Get() };
     switch (WaitForMultipleObjects(static_cast<DWORD>(std::size(events)), events, FALSE, 0))
@@ -208,7 +217,7 @@ void Game::Update(DX::StepTimer const&)
 
                 if (caps.IsConnected())
                 {
-#ifdef GAMEINPUT
+#ifdef USING_GAMEINPUT
                     char idstr[128] = {};
                     for (size_t l = 0; l < APP_LOCAL_DEVICE_ID_SIZE; ++l)
                     {
@@ -240,7 +249,7 @@ void Game::Update(DX::StepTimer const&)
                             }
                         }
                     }
-#elif defined(WGI)
+#elif defined(USING_WINDOWS_GAMING_INPUT)
                     if (!caps.id.empty())
                     {
                         using namespace Microsoft::WRL;
@@ -444,14 +453,14 @@ void Game::Render()
     auto commandList = m_deviceResources->GetCommandList();
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Render");
 
-    auto heap = m_resourceDescriptors->Heap();
+    auto const heap = m_resourceDescriptors->Heap();
     commandList->SetDescriptorHeaps(1, &heap);
 
     m_spriteBatch->Begin(commandList);
 
     for (int j = 0; j < std::min(GamePad::MAX_PLAYER_COUNT, 4); ++j)
     {
-        XMVECTOR color = m_found[size_t(j)] ? Colors::White : Colors::DimGray;
+        const XMVECTOR color = m_found[size_t(j)] ? Colors::White : Colors::DimGray;
         m_ctrlFont->DrawString(m_spriteBatch.get(), L"$", XMFLOAT2(800.f, float(50 + j * 150)), color);
     }
 
@@ -521,7 +530,7 @@ void Game::Render()
     m_ctrlFont->DrawString(m_spriteBatch.get(), L"-", XMFLOAT2(10, 10), m_state.IsLeftShoulderPressed() ? Colors::White : Colors::DimGray, 0, XMFLOAT2(0, 0), 0.5f);
 
     // Sticks
-    RECT src = { 0, 0, 1, 1 };
+    const RECT src = { 0, 0, 1, 1 };
 
     RECT rc;
     rc.top = 500;
@@ -529,7 +538,7 @@ void Game::Render()
     rc.bottom = 525;
     rc.right = rc.left + int(((m_state.thumbSticks.leftX + 1.f) / 2.f) * 275);
 
-    auto texSize = XMUINT2(1, 1);
+    auto const texSize = XMUINT2(1, 1);
     m_spriteBatch->Draw(m_resourceDescriptors->GetGpuHandle(Descriptors::DefaultTex), texSize, rc, &src);
 
     rc.top = 550;
@@ -673,7 +682,8 @@ void Game::CreateDeviceDependentResources()
 
     m_graphicsMemory = std::make_unique<GraphicsMemory>(device);
 
-    RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), m_deviceResources->GetDepthBufferFormat());
+    const RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(),
+        m_deviceResources->GetDepthBufferFormat());
 
     m_resourceDescriptors = std::make_unique<DescriptorHeap>(device, Descriptors::Count);
 
@@ -682,24 +692,27 @@ void Game::CreateDeviceDependentResources()
     resourceUpload.Begin();
 
     {
-        SpriteBatchPipelineStateDescription pd(rtState);
+        const SpriteBatchPipelineStateDescription pd(rtState);
         m_spriteBatch = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
     }
 
+    wchar_t strFilePath[MAX_PATH] = {};
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"comic.spritefont");
     m_comicFont = std::make_unique<SpriteFont>(device, resourceUpload,
-        L"comic.spritefont",
+        strFilePath,
         m_resourceDescriptors->GetCpuHandle(Descriptors::ComicFont),
         m_resourceDescriptors->GetGpuHandle(Descriptors::ComicFont));
 
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"xboxController.spritefont");
     m_ctrlFont = std::make_unique<SpriteFont>(device, resourceUpload,
-        L"xboxController.spritefont",
+        strFilePath,
         m_resourceDescriptors->GetCpuHandle(Descriptors::ControllerFont),
         m_resourceDescriptors->GetGpuHandle(Descriptors::ControllerFont));
 
     {
-        auto desc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, 1, 1, 1, 1);
+        auto const desc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, 1, 1, 1, 1);
 
-        CD3DX12_HEAP_PROPERTIES defaultHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
+        const CD3DX12_HEAP_PROPERTIES defaultHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
 
         DX::ThrowIfFailed(
             device->CreateCommittedResource(
@@ -712,7 +725,7 @@ void Game::CreateDeviceDependentResources()
 
         static const uint32_t s_pixel = 0xffffffff;
 
-        D3D12_SUBRESOURCE_DATA initData = { &s_pixel, sizeof(uint32_t), 0 };
+        const D3D12_SUBRESOURCE_DATA initData = { &s_pixel, sizeof(uint32_t), 0 };
 
         resourceUpload.Upload(m_defaultTex.Get(), 0,&initData, 1);
 
@@ -739,16 +752,13 @@ void Game::CreateDeviceDependentResources()
 // Allocate all memory resources that change on a window SizeChanged event.
 void Game::CreateWindowSizeDependentResources()
 {
-    auto viewPort = m_deviceResources->GetScreenViewport();
+    auto const viewPort = m_deviceResources->GetScreenViewport();
     m_spriteBatch->SetViewport(viewPort);
 
 #ifdef XBOX
-    if (m_deviceResources->GetDeviceOptions() & DX::DeviceResources::c_Enable4K_UHD)
-    {
-        // Scale sprite batch rendering when running 4k
-        static const D3D12_VIEWPORT s_vp1080 = { 0.f, 0.f, 1920.f, 1080.f, D3D12_DEFAULT_VIEWPORT_MIN_DEPTH, D3D12_DEFAULT_VIEWPORT_MAX_DEPTH };
-        m_spriteBatch->SetViewport(s_vp1080);
-    }
+    // Scale sprite batch rendering when running 1440p/4k
+    static const D3D12_VIEWPORT s_vp1080 = { 0.f, 0.f, 1920.f, 1080.f, D3D12_DEFAULT_VIEWPORT_MIN_DEPTH, D3D12_DEFAULT_VIEWPORT_MAX_DEPTH };
+    m_spriteBatch->SetViewport(s_vp1080);
 #elif defined(UWP)
     if (m_deviceResources->GetDeviceOptions() & DX::DeviceResources::c_Enable4K_Xbox)
     {
