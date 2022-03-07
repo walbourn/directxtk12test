@@ -194,6 +194,14 @@ void Game::Update(DX::StepTimer const&)
     {
         m_mouse->ResetScrollWheelValue();
     }
+    else if (m_keyboardButtons.IsKeyPressed(Keyboard::X))
+    {
+        m_mouse->ResetScrollWheelValue(Mouse::ScrollWheel_X);
+    }
+    else if (m_keyboardButtons.IsKeyPressed(Keyboard::Y))
+    {
+        m_mouse->ResetScrollWheelValue(Mouse::ScrollWheel_Y);
+    }
     else if (m_keyboardButtons.IsKeyPressed(Keyboard::End))
     {
 #ifndef TEST_LOCKED_RELATIVE
@@ -349,8 +357,8 @@ void Game::Render()
     // Scroll Wheel
     pos.y += height * 2;
     {
-        wchar_t buff[16] = {};
-        swprintf_s(buff, L"%d", m_ms.scrollWheelValue);
+        wchar_t buff[64] = {};
+        swprintf_s(buff, L"Vertical %d    Horizontal %d", m_ms.scrollWheelValueY, m_ms.scrollWheelValueX);
         m_comicFont->DrawString(m_spriteBatch.get(), buff, pos, Colors::Black);
     }
 
