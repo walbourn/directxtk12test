@@ -11,11 +11,17 @@
 
 #pragma once
 
-#ifdef _GAMING_XBOX
+#ifdef COMBO_GDK
+#include "DeviceResourcesGDK.h"
+#ifdef _GAMING_DESKTOP
+#define PC
+#define LOSTDEVICE
+#else
 #define XBOX
-#define GAMEINPUT
+#endif
+#elif defined(_GAMING_XBOX)
+#define XBOX
 #include "DeviceResourcesGXDK.h"
-
 #elif defined(_XBOX_ONE) && defined(_TITLE)
 #define XBOX
 #define COREWINDOW
@@ -25,16 +31,11 @@
 #define UWP
 #define COREWINDOW
 #define LOSTDEVICE
-#define WGI
 #include "DeviceResourcesUWP.h"
 
 #else
 #define PC
 #define LOSTDEVICE
 #include "DeviceResourcesPC.h"
-
-#if (_WIN32_WINNT >= 0x0A00 /*_WIN32_WINNT_WIN10*/)
-#define WGI
-#endif
 
 #endif

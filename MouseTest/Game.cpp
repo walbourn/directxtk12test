@@ -12,6 +12,8 @@
 #include "pch.h"
 #include "Game.h"
 
+#include "FindMedia.h"
+
 #define GAMMA_CORRECT_RENDERING
 
 // Enable to test using always relative mode and not using absolute
@@ -46,12 +48,14 @@ Game::Game() noexcept(false) :
     m_cameraPos = START_POSITION.v;
 
 #ifdef GAMMA_CORRECT_RENDERING
-    const DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+    constexpr DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
 #else
-    const DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
+    constexpr DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
 #endif
 
-#ifdef XBOX
+#ifdef COMBO_GDK
+    m_deviceResources = std::make_unique<DX::DeviceResources>(c_RenderFormat);
+#elif defined(XBOX)
     m_deviceResources = std::make_unique<DX::DeviceResources>(
         c_RenderFormat, DXGI_FORMAT_D32_FLOAT, 2,
         DX::DeviceResources::c_Enable4K_UHD
@@ -93,16 +97,18 @@ void Game::Initialize(
 
     m_mouse = std::make_unique<Mouse>();
 
-#ifdef XBOX
+#ifdef COMBO_GDK
+    UNREFERENCED_PARAMETER(rotation);
+    m_deviceResources->SetWindow(window, width, height);
+    m_mouse->SetWindow(window);
+#elif defined(XBOX)
     UNREFERENCED_PARAMETER(rotation);
     UNREFERENCED_PARAMETER(width);
     UNREFERENCED_PARAMETER(height);
     m_deviceResources->SetWindow(window);
 #ifdef COREWINDOW
     m_keyboard->SetWindow(reinterpret_cast<ABI::Windows::UI::Core::ICoreWindow*>(window));
-#if _XDK_VER >= 0x42D907D1
     m_mouse->SetWindow(reinterpret_cast<ABI::Windows::UI::Core::ICoreWindow*>(window));
-#endif
 #endif
 #elif defined(UWP)
     m_deviceResources->SetWindow(window, width, height, rotation);
@@ -178,7 +184,7 @@ void Game::Update(DX::StepTimer const&)
 
     if (m_keyboardButtons.IsKeyPressed(Keyboard::Space))
     {
-        bool isvisible = m_mouse->IsVisible();
+        const bool isvisible = m_mouse->IsVisible();
         m_mouse->SetVisible(!isvisible);
 
         OutputDebugStringA(m_mouse->IsVisible() ? "INFO: Mouse cursor is visible\n" : "INFO: Mouse cursor NOT visible\n");
@@ -208,7 +214,7 @@ void Game::Update(DX::StepTimer const&)
     if (mouse.positionMode == Mouse::MODE_RELATIVE)
     {
         const SimpleMath::Vector4 ROTATION_GAIN(0.004f, 0.004f, 0.f, 0.f);
-        XMVECTOR delta = SimpleMath::Vector4(float(mouse.x), float(mouse.y), 0.f, 0.f) * ROTATION_GAIN;
+        const XMVECTOR delta = SimpleMath::Vector4(float(mouse.x), float(mouse.y), 0.f, 0.f) * ROTATION_GAIN;
 
         m_pitch -= XMVectorGetY(delta);
         m_yaw -= XMVectorGetX(delta);
@@ -288,7 +294,7 @@ void Game::Render()
     auto commandList = m_deviceResources->GetCommandList();
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Render");
 
-    ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap(), m_states->Heap() };
+    ID3D12DescriptorHeap* const heaps[] = { m_resourceDescriptors->Heap(), m_states->Heap() };
     commandList->SetDescriptorHeaps(static_cast<UINT>(std::size(heaps)), heaps);
 
     XMVECTORF32 red, blue, lightGray, yellow;
@@ -304,10 +310,10 @@ void Game::Render()
     yellow.v = Colors::Yellow;
 #endif
 
-    float y = sinf(m_pitch);        // vertical
-    float r = cosf(m_pitch);        // in the plane
-    float z = r * cosf(m_yaw);        // fwd-back
-    float x = r * sinf(m_yaw);        // left-right
+    const float y = sinf(m_pitch);      // vertical
+    const float r = cosf(m_pitch);      // in the plane
+    const float z = r * cosf(m_yaw);    // fwd-back
+    const float x = r * sinf(m_yaw);    // left-right
 
     XMVECTOR lookAt = XMVectorAdd(m_cameraPos, XMVectorSet(x, y, z, 0.f));
 
@@ -317,9 +323,9 @@ void Game::Render()
     m_roomEffect->Apply(commandList);
     m_room->Draw(commandList);
 
-    XMVECTOR xsize = m_comicFont->MeasureString(L"X");
+    const XMVECTOR xsize = m_comicFont->MeasureString(L"X");
 
-    float height = XMVectorGetY(xsize);
+    const float height = XMVectorGetY(xsize);
 
     m_spriteBatch->Begin(commandList);
 
@@ -491,10 +497,11 @@ void Game::CreateDeviceDependentResources()
 
     m_room = GeometricPrimitive::CreateBox(XMFLOAT3(ROOM_BOUNDS[0], ROOM_BOUNDS[1], ROOM_BOUNDS[2]), false, true);
 
-    RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), m_deviceResources->GetDepthBufferFormat());
+    const RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(),
+        m_deviceResources->GetDepthBufferFormat());
 
     {
-        EffectPipelineStateDescription pd(
+        const EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
             CommonStates::Opaque,
             CommonStates::DepthDefault,
@@ -510,12 +517,14 @@ void Game::CreateDeviceDependentResources()
     resourceUpload.Begin();
 
     {
-        SpriteBatchPipelineStateDescription pd(rtState);
+        const SpriteBatchPipelineStateDescription pd(rtState);
         m_spriteBatch = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
     }
 
+    wchar_t strFilePath[MAX_PATH] = {};
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"comic.spritefont");
     m_comicFont = std::make_unique<SpriteFont>(device, resourceUpload,
-        L"comic.spritefont",
+        strFilePath,
         m_resourceDescriptors->GetCpuHandle(Descriptors::ComicFont),
         m_resourceDescriptors->GetGpuHandle(Descriptors::ComicFont));
 
@@ -525,7 +534,8 @@ void Game::CreateDeviceDependentResources()
     constexpr DDS_LOADER_FLAGS loadFlags = DDS_LOADER_DEFAULT;
 #endif
 
-    DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, L"texture.dds", 0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"texture.dds");
+    DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, strFilePath, 0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
         m_roomTex.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_roomTex.Get(),
@@ -533,7 +543,8 @@ void Game::CreateDeviceDependentResources()
 
     m_roomEffect->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::RoomTex), m_states->LinearClamp());
 
-    DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"arrow.png", m_cursor.ReleaseAndGetAddressOf()));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"arrow.png");
+    DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, strFilePath, m_cursor.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_cursor.Get(),
         m_resourceDescriptors->GetCpuHandle(Descriptors::ArrowTex));
@@ -547,21 +558,13 @@ void Game::CreateDeviceDependentResources()
 // Allocate all memory resources that change on a window SizeChanged event.
 void Game::CreateWindowSizeDependentResources()
 {
-#ifdef XBOX
+    // Mouse::Resolution for GDK combo is handled in MainGDK.cpp
+
+#if defined(_XBOX_ONE) && defined(_TITLE)
     if (m_deviceResources->GetDeviceOptions() & DX::DeviceResources::c_Enable4K_UHD)
     {
-#ifdef GAMEINPUT
-        Mouse::SetResolution(2.f);
-#else
         Mouse::SetDpi(192.);
-#endif
     }
-#ifdef _GAMING_XBOX
-    else if (m_deviceResources->GetDeviceOptions() & DX::DeviceResources::c_EnableQHD)
-    {
-        Mouse::SetResolution(1.3333f);
-    }
-#endif
 #elif defined(UWP)
     if (m_deviceResources->GetDeviceOptions() & DX::DeviceResources::c_Enable4K_Xbox)
     {
@@ -569,12 +572,12 @@ void Game::CreateWindowSizeDependentResources()
     }
 #endif
 
-    auto size = m_deviceResources->GetOutputSize();
-    auto proj = Matrix::CreatePerspectiveFieldOfView(XMConvertToRadians(70.f), float(size.right) / float(size.bottom), 0.01f, 100.f);
+    auto const size = m_deviceResources->GetOutputSize();
+    auto const proj = Matrix::CreatePerspectiveFieldOfView(XMConvertToRadians(70.f), float(size.right) / float(size.bottom), 0.01f, 100.f);
 
     m_roomEffect->SetProjection(proj);
 
-    auto viewPort = m_deviceResources->GetScreenViewport();
+    auto const viewPort = m_deviceResources->GetScreenViewport();
     m_spriteBatch->SetViewport(viewPort);
 
 #ifdef UWP

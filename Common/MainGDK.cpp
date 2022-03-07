@@ -1,12 +1,19 @@
-//
+//--------------------------------------------------------------------------------------
 // Main.cpp
 //
+// Entry point for Microsoft Game Development Kit (GDK)
+//
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+//--------------------------------------------------------------------------------------
 
 #include "pch.h"
 #include "Game.h"
 
-#include <wrl/wrappers/corewrappers.h>
-#include <shellapi.h>
+#include <appnotify.h>
+#include <XGameRuntimeInit.h>
+#include <XGameErr.h>
+#include <XSystem.h>
 
 using namespace DirectX;
 
@@ -20,49 +27,58 @@ using namespace DirectX;
 namespace
 {
     std::unique_ptr<Game> g_game;
-
-#ifdef WM_DEVICECHANGE
-    HDEVNOTIFY g_hNewAudio;
+#ifdef _GAMING_XBOX
+    HANDLE g_plmSuspendComplete = nullptr;
+    HANDLE g_plmSignalResume = nullptr;
 #endif
 }
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 void ExitGame() noexcept;
-void ParseCommandLine(_In_ LPWSTR lpCmdLine);
-
-extern "C"
-{
-    // Indicates to hybrid graphics systems to prefer the discrete part by default
-    __declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
-    __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
-
-#ifdef USING_D3D12_AGILITY_SDK
-    // Used to enable the "Agility SDK" components
-    __declspec(dllexport) extern const UINT D3D12SDKVersion = D3D12_SDK_VERSION;
-    __declspec(dllexport) extern const char* D3D12SDKPath = u8".\\D3D12\\";
-#endif
-}
 
 // Entry point
-int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
+int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
 {
-    UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
     if (!XMVerifyCPUSupport())
+    {
+#ifdef _DEBUG
+        OutputDebugStringA("ERROR: This hardware does not support the required instruction set.\n");
+#if defined(_GAMING_XBOX) && defined(__AVX2__)
+        OutputDebugStringA("This may indicate a Gaming.Xbox.Scarlett.x64 binary is being run on an Xbox One.\n");
+#endif
+#endif
+        return 1;
+    }
+
+    // Initialize COM for WIC usage
+    if (FAILED(CoInitializeEx(nullptr, COINITBASE_MULTITHREADED)))
         return 1;
 
-    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-
-    Microsoft::WRL::Wrappers::RoInitializeWrapper initialize(RO_INIT_MULTITHREADED);
-    if (FAILED(initialize))
+    HRESULT hr = XGameRuntimeInitialize();
+    if (FAILED(hr))
+    {
+        if (hr == E_GAMERUNTIME_DLL_NOT_FOUND || hr == E_GAMERUNTIME_VERSION_MISMATCH)
+        {
+#ifdef _GAMING_DESKTOP
+            std::ignore = MessageBoxW(nullptr, L"Game Runtime is not installed on this system or needs updating.", L"D3D12Test", MB_ICONERROR | MB_OK);
+#endif
+        }
         return 1;
+    }
 
-    ParseCommandLine(lpCmdLine);
+#ifdef _GAMING_XBOX
+    // Default main thread to CPU 0
+    SetThreadAffinityMask(GetCurrentThread(), 0x1);
+#endif
 
     g_game = std::make_unique<Game>();
 
     // Register class and create window
+#ifdef _GAMING_XBOX
+    PAPPSTATE_REGISTRATION hPLM = {};
+#endif
     {
         // Register class
         WNDCLASSEXW wcex = {};
@@ -70,26 +86,55 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         wcex.style = CS_HREDRAW | CS_VREDRAW;
         wcex.lpfnWndProc = WndProc;
         wcex.hInstance = hInstance;
-        wcex.hIcon = LoadIconW(hInstance, L"IDI_ICON");
         wcex.hCursor = LoadCursorW(nullptr, IDC_ARROW);
         wcex.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1);
         wcex.lpszClassName = L"D3D12TestWindowClass";
-        wcex.hIconSm = LoadIconW(wcex.hInstance, L"IDI_ICON");
         if (!RegisterClassExW(&wcex))
             return 1;
 
         // Create window
+#ifdef _GAMING_XBOX
+        RECT rc = { 0, 0, 1920, 1080 };
+        float uiScale = 1.f;
+        switch (XSystemGetDeviceType())
+        {
+        case XSystemDeviceType::XboxOne:
+        case XSystemDeviceType::XboxOneS:
+#ifdef _DEBUG
+            OutputDebugStringA("INFO: Swapchain using 1080p (1920 x 1080)\n");
+#endif
+            break;
+
+        case XSystemDeviceType::XboxScarlettLockhart /* Xbox Series S */:
+            rc = { 0, 0, 2560, 1440 };
+            uiScale = 1.333333f;
+#ifdef _DEBUG
+            OutputDebugStringA("INFO: Swapchain using 1440p (2560 x 1440)\n");
+#endif
+            break;
+
+        case XSystemDeviceType::XboxScarlettAnaconda /* Xbox Series X */:
+        case XSystemDeviceType::XboxOneXDevkit:
+        case XSystemDeviceType::XboxScarlettDevkit:
+        default:
+            rc = { 0, 0, 3840, 2160 };
+            uiScale = 2.f;
+#ifdef _DEBUG
+            OutputDebugStringA("INFO: Swapchain using 4k (3840 x 2160)\n");
+#endif
+            break;
+        }
+#else
         int w, h;
         g_game->GetDefaultSize(w, h);
 
         RECT rc = { 0, 0, static_cast<LONG>(w), static_cast<LONG>(h) };
-
         AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
+#endif
 
         HWND hwnd = CreateWindowExW(0, L"D3D12TestWindowClass", g_game->GetAppName(), WS_OVERLAPPEDWINDOW,
             CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top, nullptr, nullptr, hInstance,
             nullptr);
-
         if (!hwnd)
             return 1;
 
@@ -101,13 +146,33 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
         g_game->Initialize(hwnd, rc.right - rc.left, rc.bottom - rc.top, DXGI_MODE_ROTATION_IDENTITY);
 
-#ifdef _DBT_H
-        DEV_BROADCAST_DEVICEINTERFACE filter = {};
-        filter.dbcc_size = sizeof(filter);
-        filter.dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
-        filter.dbcc_classguid = KSCATEGORY_AUDIO;
+#ifdef _GAMING_XBOX
+        Mouse::SetResolution(uiScale);
 
-        g_hNewAudio = RegisterDeviceNotification(hwnd, &filter, DEVICE_NOTIFY_WINDOW_HANDLE);
+        g_plmSuspendComplete = CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
+        g_plmSignalResume = CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
+        if (!g_plmSuspendComplete || !g_plmSignalResume)
+            return 1;
+
+        if (RegisterAppStateChangeNotification([](BOOLEAN quiesced, PVOID context)
+        {
+            if (quiesced)
+            {
+                ResetEvent(g_plmSuspendComplete);
+                ResetEvent(g_plmSignalResume);
+
+                // To ensure we use the main UI thread to process the notification, we self-post a message
+                PostMessage(reinterpret_cast<HWND>(context), WM_USER, 0, 0);
+
+                // To defer suspend, you must wait to exit this callback
+                std::ignore = WaitForSingleObject(g_plmSuspendComplete, INFINITE);
+            }
+            else
+            {
+                SetEvent(g_plmSignalResume);
+            }
+        }, hwnd, &hPLM))
+            return 1;
 #endif
     }
 
@@ -128,9 +193,14 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
     g_game.reset();
 
-#ifdef WM_DEVICECHANGE
-    UnregisterDeviceNotification(g_hNewAudio);
+#ifdef _GAMING_XBOX
+    UnregisterAppStateChangeNotification(hPLM);
+
+    CloseHandle(g_plmSuspendComplete);
+    CloseHandle(g_plmSignalResume);
 #endif
+
+    XGameRuntimeUninitialize();
 
     CoUninitialize();
 
@@ -140,15 +210,67 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 // Windows procedure
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+#ifdef _GAMING_DESKTOP
     static bool s_in_sizemove = false;
     static bool s_in_suspend = false;
     static bool s_minimized = false;
     static bool s_fullscreen = false;
+#endif
 
     auto game = reinterpret_cast<Game*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 
     switch (message)
     {
+    case WM_ACTIVATEAPP:
+        if (game)
+        {
+            Keyboard::ProcessMessage(message, wParam, lParam);
+            Mouse::ProcessMessage(message, wParam, lParam);
+
+            if (wParam)
+            {
+                game->OnActivated();
+            }
+            else
+            {
+                game->OnDeactivated();
+            }
+        }
+        break;
+
+    case WM_ACTIVATE:
+        Keyboard::ProcessMessage(message, wParam, lParam);
+        Mouse::ProcessMessage(message, wParam, lParam);
+        break;
+
+    case WM_MOUSEMOVE:
+    case WM_LBUTTONDOWN:
+    case WM_LBUTTONUP:
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+    case WM_MBUTTONDOWN:
+    case WM_MBUTTONUP:
+    case WM_MOUSEWHEEL:
+    case WM_XBUTTONDOWN:
+    case WM_XBUTTONUP:
+        Mouse::ProcessMessage(message, wParam, lParam);
+        break;
+
+#ifdef _GAMING_XBOX
+    case WM_USER:
+        if (game)
+        {
+            game->OnSuspending();
+
+            // Complete deferral
+            SetEvent(g_plmSuspendComplete);
+
+            std::ignore = WaitForSingleObject(g_plmSignalResume, INFINITE);
+
+            game->OnResuming();
+        }
+        break;
+#else
     case WM_PAINT:
         if (s_in_sizemove && game)
         {
@@ -159,13 +281,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             PAINTSTRUCT ps;
             std::ignore = BeginPaint(hWnd, &ps);
             EndPaint(hWnd, &ps);
-        }
-        break;
-
-    case WM_DISPLAYCHANGE:
-        if (game)
-        {
-            game->OnDisplayChange();
         }
         break;
 
@@ -224,28 +339,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         break;
 
-    case WM_ACTIVATEAPP:
-        Keyboard::ProcessMessage(message, wParam, lParam);
-        Mouse::ProcessMessage(message, wParam, lParam);
-
-        if (game)
-        {
-            if (wParam)
-            {
-                game->OnActivated();
-            }
-            else
-            {
-                game->OnDeactivated();
-            }
-        }
-        break;
-
-    case WM_ACTIVATE:
-        Keyboard::ProcessMessage(message, wParam, lParam);
-        Mouse::ProcessMessage(message, wParam, lParam);
-        break;
-
     case WM_POWERBROADCAST:
         switch (wParam)
         {
@@ -270,11 +363,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         PostQuitMessage(0);
         break;
 
+#ifndef USING_GAMEINPUT
+    case WM_INPUT:
+    case WM_MOUSEHOVER:
+        Mouse::ProcessMessage(message, wParam, lParam);
+        break;
+
     case WM_KEYDOWN:
     case WM_KEYUP:
     case WM_SYSKEYUP:
         Keyboard::ProcessMessage(message, wParam, lParam);
         break;
+#endif
 
     case WM_SYSKEYDOWN:
         if (wParam == VK_RETURN && (lParam & 0x60000000) == 0x20000000)
@@ -296,7 +396,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
             else
             {
-                SetWindowLongPtr(hWnd, GWL_STYLE, WS_POPUP);
+                SetWindowLongPtr(hWnd, GWL_STYLE, 0);
                 SetWindowLongPtr(hWnd, GWL_EXSTYLE, WS_EX_TOPMOST);
 
                 SetWindowPos(hWnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
@@ -306,117 +406,28 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
             s_fullscreen = !s_fullscreen;
         }
+#ifndef USING_GAMEINPUT
         Keyboard::ProcessMessage(message, wParam, lParam);
-        break;
-
-    case WM_INPUT:
-    case WM_MOUSEMOVE:
-    case WM_LBUTTONDOWN:
-    case WM_LBUTTONUP:
-    case WM_RBUTTONDOWN:
-    case WM_RBUTTONUP:
-    case WM_MBUTTONDOWN:
-    case WM_MBUTTONUP:
-    case WM_MOUSEWHEEL:
-    case WM_XBUTTONDOWN:
-    case WM_XBUTTONUP:
-    case WM_MOUSEHOVER:
-        Mouse::ProcessMessage(message, wParam, lParam);
+#endif
         break;
 
     case WM_MOUSEACTIVATE:
-        // When you click activate the window, we want Mouse to ignore it.
+        // When you click activate the window, we want Mouse to ignore that event.
         return MA_ACTIVATEANDEAT;
-
-#ifdef _DBT_H
-    case WM_DEVICECHANGE:
-        if (wParam == DBT_DEVICEARRIVAL)
-        {
-            auto pDev = reinterpret_cast<PDEV_BROADCAST_HDR>(lParam);
-            if (pDev)
-            {
-                if (pDev->dbch_devicetype == DBT_DEVTYP_DEVICEINTERFACE)
-                {
-                    auto pInter = reinterpret_cast<const PDEV_BROADCAST_DEVICEINTERFACE>(pDev);
-                    if (pInter->dbcc_classguid == KSCATEGORY_AUDIO)
-                    {
-#ifdef _DEBUG
-                        OutputDebugStringA("INFO: New audio device detected: ");
-                        OutputDebugString(pInter->dbcc_name);
-                        OutputDebugStringA("\n");
-#endif
-                        PostMessage(hWnd, WM_USER, 0, 0);
-                    }
-                }
-            }
-        }
-        return 0;
-
-    case WM_USER:
-        if (g_game)
-        {
-            g_game->OnAudioDeviceChange();
-        }
-        break;
-#endif
 
     case WM_MENUCHAR:
         // A menu is active and the user presses a key that does not correspond
         // to any mnemonic or accelerator key. Ignore so we don't produce an error beep.
         return MAKELRESULT(0, MNC_CLOSE);
+#endif
     }
 
     return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
-void ParseCommandLine(_In_ LPWSTR lpCmdLine)
-{
-    int argc = 0;
-    wchar_t** argv = CommandLineToArgvW(lpCmdLine, &argc);
-
-    for (int iArg = 0; iArg < argc; iArg++)
-    {
-        wchar_t* pArg = argv[iArg];
-
-        if (('-' == pArg[0]) || ('/' == pArg[0]))
-        {
-            pArg++;
-            wchar_t* pValue;
-
-            for (pValue = pArg; *pValue && (':' != *pValue); pValue++);
-
-            if (*pValue)
-                *pValue++ = 0;
-
-            if (!_wcsicmp(pArg, L"forcewarp"))
-            {
-                DX::DeviceResources::DebugForceWarp(true);
-            }
-
-            if (!_wcsicmp(pArg, L"minpower"))
-            {
-                DX::DeviceResources::DebugPreferMinimumPower(true);
-            }
-
-            if (!_wcsicmp(pArg, L"adapter"))
-            {
-                if (pValue && *pValue != 0)
-                {
-                    DX::DeviceResources::DebugSetAdapter(_wtoi(pValue));
-                }
-            }
-
-        }
-    }
-
-    LocalFree(argv);
-}
-
-
 // Exit helper
 void ExitGame() noexcept
 {
-#ifndef TEST_MGPU
     auto& graphicsMemory = GraphicsMemory::Get();
 
     auto stats = graphicsMemory.GetStatistics();
@@ -430,7 +441,6 @@ void ExitGame() noexcept
         stats.peakTotalMemory / 1024,
         stats.peakTotalPages);
     OutputDebugStringA(buff);
-#endif
 
     PostQuitMessage(0);
 }

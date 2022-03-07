@@ -12,6 +12,8 @@
 #include "pch.h"
 #include "Game.h"
 
+#include "FindMedia.h"
+
 #define GAMMA_CORRECT_RENDERING
 
 extern void ExitGame() noexcept;
@@ -43,12 +45,14 @@ Game::Game() noexcept(false) :
     m_cameraPos = START_POSITION.v;
 
 #ifdef GAMMA_CORRECT_RENDERING
-    const DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+    constexpr DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
 #else
-    const DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
+    constexpr DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
 #endif
 
-#ifdef XBOX
+#ifdef COMBO_GDK
+    m_deviceResources = std::make_unique<DX::DeviceResources>(c_RenderFormat);
+#elif defined(XBOX)
     m_deviceResources = std::make_unique<DX::DeviceResources>(
         c_RenderFormat, DXGI_FORMAT_D32_FLOAT, 2,
         DX::DeviceResources::c_Enable4K_UHD
@@ -88,7 +92,10 @@ void Game::Initialize(
 {
     m_keyboard = std::make_unique<Keyboard>();
 
-#ifdef XBOX
+#ifdef COMBO_GDK
+    UNREFERENCED_PARAMETER(rotation);
+    m_deviceResources->SetWindow(window, width, height);
+#elif defined(XBOX)
     UNREFERENCED_PARAMETER(rotation);
     UNREFERENCED_PARAMETER(width);
     UNREFERENCED_PARAMETER(height);
@@ -328,7 +335,7 @@ void Game::Update(DX::StepTimer const&)
 
     m_cameraPos += move;
 
-    Vector3 halfBound = (Vector3(ROOM_BOUNDS.v) / Vector3(2.f)) - Vector3(0.1f, 0.1f, 0.1f);
+    const Vector3 halfBound = (Vector3(ROOM_BOUNDS.v) / Vector3(2.f)) - Vector3(0.1f, 0.1f, 0.1f);
 
     m_cameraPos = Vector3::Min(m_cameraPos, halfBound);
     m_cameraPos = Vector3::Max(m_cameraPos, -halfBound);
@@ -367,21 +374,21 @@ void Game::Render()
     auto commandList = m_deviceResources->GetCommandList();
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Render");
 
-    ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap(), m_states->Heap() };
+    ID3D12DescriptorHeap* const heaps[] = { m_resourceDescriptors->Heap(), m_states->Heap() };
     commandList->SetDescriptorHeaps(static_cast<UINT>(std::size(heaps)), heaps);
 
-    XMVECTOR lookAt = XMVectorAdd(m_cameraPos, Vector3::Backward);
+    const XMVECTOR lookAt = XMVectorAdd(m_cameraPos, Vector3::Backward);
 
-    XMMATRIX view = XMMatrixLookAtRH(m_cameraPos, lookAt, Vector3::Up);
+    const XMMATRIX view = XMMatrixLookAtRH(m_cameraPos, lookAt, Vector3::Up);
 
     m_roomEffect->SetView(view);
     m_roomEffect->Apply(commandList);
     m_room->Draw(commandList);
 
-    XMVECTOR xsize = m_comicFont->MeasureString(L"X");
+    const XMVECTOR xsize = m_comicFont->MeasureString(L"X");
 
-    float width = XMVectorGetX(xsize);
-    float height = XMVectorGetY(xsize);
+    const float width = XMVectorGetX(xsize);
+    const float height = XMVectorGetY(xsize);
 
     m_spriteBatch->Begin(commandList);
 
@@ -663,10 +670,11 @@ void Game::CreateDeviceDependentResources()
 
     m_room = GeometricPrimitive::CreateBox(XMFLOAT3(ROOM_BOUNDS[0], ROOM_BOUNDS[1], ROOM_BOUNDS[2]), false, true);
 
-    RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), m_deviceResources->GetDepthBufferFormat());
+    const RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(),
+        m_deviceResources->GetDepthBufferFormat());
 
     {
-        EffectPipelineStateDescription pd(
+        const EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
             CommonStates::Opaque,
             CommonStates::DepthDefault,
@@ -682,12 +690,14 @@ void Game::CreateDeviceDependentResources()
     resourceUpload.Begin();
 
     {
-        SpriteBatchPipelineStateDescription pd(rtState);
+        const SpriteBatchPipelineStateDescription pd(rtState);
         m_spriteBatch = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
     }
 
+    wchar_t strFilePath[MAX_PATH] = {};
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"comic.spritefont");
     m_comicFont = std::make_unique<SpriteFont>(device, resourceUpload,
-        L"comic.spritefont",
+        strFilePath,
         m_resourceDescriptors->GetCpuHandle(Descriptors::ComicFont),
         m_resourceDescriptors->GetGpuHandle(Descriptors::ComicFont));
 
@@ -697,7 +707,8 @@ void Game::CreateDeviceDependentResources()
     constexpr DDS_LOADER_FLAGS loadFlags = DDS_LOADER_DEFAULT;
 #endif
 
-    DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, L"texture.dds", 0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"texture.dds");
+    DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, strFilePath, 0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
         m_roomTex.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_roomTex.Get(),
@@ -714,12 +725,12 @@ void Game::CreateDeviceDependentResources()
 // Allocate all memory resources that change on a window SizeChanged event.
 void Game::CreateWindowSizeDependentResources()
 {
-    auto size = m_deviceResources->GetOutputSize();
-    auto proj = Matrix::CreatePerspectiveFieldOfView(XMConvertToRadians(70.f), float(size.right) / float(size.bottom), 0.01f, 100.f);
+    auto const size = m_deviceResources->GetOutputSize();
+    auto const proj = Matrix::CreatePerspectiveFieldOfView(XMConvertToRadians(70.f), float(size.right) / float(size.bottom), 0.01f, 100.f);
 
     m_roomEffect->SetProjection(proj);
 
-    auto viewPort = m_deviceResources->GetScreenViewport();
+    auto const viewPort = m_deviceResources->GetScreenViewport();
     m_spriteBatch->SetViewport(viewPort);
 
 #ifdef UWP

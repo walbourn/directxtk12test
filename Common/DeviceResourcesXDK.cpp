@@ -152,7 +152,6 @@ void DeviceResources::CreateDeviceResources()
 
     if (m_options & c_Enable4K_UHD)
     {
-#if _XDK_VER >= 0x3F6803F3 /* XDK Edition 170600 */
         D3D12XBOX_GPU_HARDWARE_CONFIGURATION hwConfig = {};
         m_d3dDevice->GetGpuHardwareConfigurationX(&hwConfig);
         if (hwConfig.HardwareVersion >= D3D12XBOX_HARDWARE_VERSION_XBOX_ONE_X)
@@ -173,7 +172,6 @@ void DeviceResources::CreateDeviceResources()
         m_options &= ~c_Enable4K_UHD;
 #ifdef _DEBUG
         OutputDebugStringA("WARNING: Hardware detection not supported on this XDK edition; Swapchain using 1080p (1920 x 1080)\n");
-#endif
 #endif
     }
 }
