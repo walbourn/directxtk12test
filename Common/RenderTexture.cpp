@@ -11,6 +11,7 @@
 #include "RenderTexture.h"
 
 #include "DirectXHelpers.h"
+#include "PlatformHelpers.h"
 
 #include <algorithm>
 #include <cstdio>
@@ -53,7 +54,7 @@ void RenderTexture::SetDevice(_In_ ID3D12Device* device,
             throw std::runtime_error("CheckFeatureSupport");
         }
 
-        constexpr UINT required = D3D12_FORMAT_SUPPORT1_TEXTURE2D | D3D12_FORMAT_SUPPORT1_RENDER_TARGET;
+        ENUM_FLAGS_CONSTEXPR UINT required = D3D12_FORMAT_SUPPORT1_TEXTURE2D | D3D12_FORMAT_SUPPORT1_RENDER_TARGET;
         if ((formatSupport.Support1 & required) != required)
         {
 #ifdef _DEBUG

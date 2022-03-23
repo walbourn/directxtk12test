@@ -4,8 +4,8 @@
 
 #pragma once
 
-#if _XDK_VER < 0x38390403 /* XDK Edition 160800 */
-#error This sample requires the August 2016 XDK or later
+#if _XDK_VER < 0x3F6803F3 /* XDK Edition 170600 */
+#error This code requires the June 2017 XDK or later
 #endif
 
 namespace DX
@@ -85,7 +85,7 @@ namespace DX
     private:
         void MoveToNextFrame();
 
-        static const size_t MAX_BACK_BUFFER_COUNT = 3;
+        static constexpr size_t MAX_BACK_BUFFER_COUNT = 3;
 
         UINT                                                m_backBufferIndex;
 
