@@ -44,9 +44,9 @@ Game::Game() noexcept(false) :
     m_delay(0)
 {
 #ifdef GAMMA_CORRECT_RENDERING
-    const DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+    constexpr DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
 #else
-    const DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
+    constexpr DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
 #endif
 
     // 2D only rendering
@@ -385,7 +385,7 @@ void Game::Render()
 
     m_spriteBatch->Begin(commandList);
 
-    RECT r = { 640, 20, 740, 38 };
+    const RECT r = { 640, 20, 740, 38 };
     commandList->RSSetScissorRects(1, &r);
 
     m_comicFont->DrawString(m_spriteBatch.get(), L"Clipping!", XMFLOAT2(640, 0), dgreen);
@@ -519,10 +519,11 @@ void Game::CreateDeviceDependentResources()
 
     resourceUpload.Begin();
 
-    RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), m_deviceResources->GetDepthBufferFormat());
+    const RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(),
+        m_deviceResources->GetDepthBufferFormat());
 
     {
-        SpriteBatchPipelineStateDescription pd(rtState);
+        const SpriteBatchPipelineStateDescription pd(rtState);
 
         m_spriteBatch = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
     }
@@ -568,7 +569,7 @@ void Game::CreateDeviceDependentResources()
 // Allocate all memory resources that change on a window SizeChanged event.
 void Game::CreateWindowSizeDependentResources()
 {
-    auto viewport = m_deviceResources->GetScreenViewport();
+    auto const viewport = m_deviceResources->GetScreenViewport();
     m_spriteBatch->SetViewport(viewport);
 
 #ifdef XBOX
@@ -654,8 +655,7 @@ void Game::UnitTests()
             success = false;
         }
 
-
-        auto spriteSheet = m_comicFont->GetSpriteSheet();
+        auto const spriteSheet = m_comicFont->GetSpriteSheet();
 
         if (!spriteSheet.ptr)
         {
@@ -698,7 +698,7 @@ void Game::UnitTests()
 
     // Measure tests
     {
-        auto spinText = L"Spinning\nlike a cat";
+        auto const spinText = L"Spinning\nlike a cat";
 
         auto drawSize = m_comicFont->MeasureString(spinText);
 

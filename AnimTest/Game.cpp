@@ -98,9 +98,9 @@ namespace
 Game::Game() noexcept(false)
 {
 #ifdef GAMMA_CORRECT_RENDERING
-    const DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+    constexpr DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
 #else
-    const DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
+    constexpr DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
 #endif
 
 #ifdef XBOX
@@ -463,7 +463,8 @@ void Game::CreateDeviceDependentResources()
 
     m_states = std::make_unique<CommonStates>(device);
 
-    RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), m_deviceResources->GetDepthBufferFormat());
+    const RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(),
+        m_deviceResources->GetDepthBufferFormat());
 
     // DirectX SDK Mesh
     ModelLoaderFlags flags = ModelLoader_IncludeBones;
@@ -541,7 +542,7 @@ void Game::CreateDeviceDependentResources()
 #endif
 
     {
-        EffectPipelineStateDescription pd(
+        const EffectPipelineStateDescription pd(
             nullptr,
             CommonStates::Opaque,
             CommonStates::DepthDefault,
@@ -559,7 +560,7 @@ void Game::CreateDeviceDependentResources()
     m_soldier->LoadTextures(*m_modelResources, txtOffset);
 
     {
-        EffectPipelineStateDescription pd(
+        const EffectPipelineStateDescription pd(
             nullptr,
             CommonStates::Opaque,
             CommonStates::DepthDefault,
@@ -573,7 +574,7 @@ void Game::CreateDeviceDependentResources()
     }
 
     {
-        EffectPipelineStateDescription pd(
+        const EffectPipelineStateDescription pd(
             nullptr,
             CommonStates::Opaque,
             CommonStates::DepthDefault,
@@ -613,8 +614,8 @@ void Game::CreateWindowSizeDependentResources()
 {
     static const XMVECTORF32 cameraPosition = { { { 0.f, 0.f, 6.f, 0.f } } };
 
-    auto size = m_deviceResources->GetOutputSize();
-    float aspect = (float)size.right / (float)size.bottom;
+    auto const  size = m_deviceResources->GetOutputSize();
+    const float aspect = (float)size.right / (float)size.bottom;
 
 #ifdef LH_COORDS
     m_view = XMMatrixLookAtLH(cameraPosition, g_XMZero, XMVectorSet(0, 1, 0, 0));

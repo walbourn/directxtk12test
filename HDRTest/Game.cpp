@@ -67,9 +67,9 @@ Game::Game() noexcept(false) :
     m_hdr10Rotation(ToneMapPostProcess::HDTV_to_UHDTV)
 {
 #if defined(TEST_HDR_LINEAR) && !defined(XBOX)
-    const DXGI_FORMAT c_DisplayFormat = DXGI_FORMAT_R16G16B16A16_FLOAT;
+    constexpr DXGI_FORMAT c_DisplayFormat = DXGI_FORMAT_R16G16B16A16_FLOAT;
 #else
-    const DXGI_FORMAT c_DisplayFormat = DXGI_FORMAT_R10G10B10A2_UNORM;
+    constexpr DXGI_FORMAT c_DisplayFormat = DXGI_FORMAT_R10G10B10A2_UNORM;
 #endif
 
 #ifdef XBOX
@@ -556,7 +556,8 @@ void Game::CreateDeviceDependentResources()
         m_resourceDescriptors->GetCpuHandle(Descriptors::SceneTex),
         m_renderDescriptors->GetCpuHandle(RTDescriptors::HDRScene));
 
-    RenderTargetState hdrState(m_hdrScene->GetFormat(), m_deviceResources->GetDepthBufferFormat());
+    const RenderTargetState hdrState(m_hdrScene->GetFormat(),
+        m_deviceResources->GetDepthBufferFormat());
 
 #ifdef LH_COORDS
     m_shape = GeometricPrimitive::CreateCube(1.f, false);
@@ -565,7 +566,7 @@ void Game::CreateDeviceDependentResources()
 #endif
 
     {
-        EffectPipelineStateDescription pd(
+        const EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
             CommonStates::Opaque,
             CommonStates::DepthDefault,
@@ -593,7 +594,7 @@ void Game::CreateDeviceDependentResources()
     resourceUpload.Begin();
 
     {
-        SpriteBatchPipelineStateDescription pd(hdrState);
+        const SpriteBatchPipelineStateDescription pd(hdrState);
         m_batch = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
     }
 
@@ -651,8 +652,8 @@ void Game::CreateWindowSizeDependentResources()
 {
     static const XMVECTORF32 cameraPosition = { { { 0.f, 0.f, 7.f, 0.f } } };
 
-    auto size = m_deviceResources->GetOutputSize();
-    float aspect = (float)size.right / (float)size.bottom;
+    auto const size = m_deviceResources->GetOutputSize();
+    const float aspect = (float)size.right / (float)size.bottom;
 
 #ifdef LH_COORDS
     m_view = XMMatrixLookAtLH(cameraPosition, g_XMZero, XMVectorSet(0, 1, 0, 0));

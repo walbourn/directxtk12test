@@ -99,6 +99,8 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <AdditionalIncludeDirectories>$(ProjectDir);..\..\Inc;..\Common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/Zc:__cplusplus /ZH:SHA_256 %(AdditionalOptions)</AdditionalOptions>
+      <ExternalWarningLevel>Level4</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -123,6 +125,8 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <FloatingPointModel>Fast</FloatingPointModel>
       <AdditionalIncludeDirectories>$(ProjectDir);..\..\Inc;..\Common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/Zc:__cplusplus /ZH:SHA_256 %(AdditionalOptions)</AdditionalOptions>
+      <ExternalWarningLevel>Level4</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -150,6 +154,8 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <AdditionalIncludeDirectories>$(ProjectDir);..\..\Inc;..\Common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/Zc:__cplusplus /ZH:SHA_256 %(AdditionalOptions)</AdditionalOptions>
+      <ExternalWarningLevel>Level4</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -178,6 +184,8 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <FloatingPointModel>Fast</FloatingPointModel>
       <AdditionalIncludeDirectories>$(ProjectDir);..\..\Inc;..\Common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/Zc:__cplusplus /ZH:SHA_256 %(AdditionalOptions)</AdditionalOptions>
+      <ExternalWarningLevel>Level4</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

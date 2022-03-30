@@ -110,9 +110,9 @@ static_assert(std::is_nothrow_move_assignable<PrimitiveBatch<VertexPositionColor
 Game::Game() noexcept(false)
 {
 #ifdef GAMMA_CORRECT_RENDERING
-    const DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+    constexpr DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
 #else
-    const DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
+    constexpr DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
 #endif
 
 #ifdef XBOX
@@ -454,7 +454,8 @@ void Game::CreateDeviceDependentResources()
 
     m_batch = std::make_unique<PrimitiveBatch<VertexPositionColor>>(device);
 
-    RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), m_deviceResources->GetDepthBufferFormat());
+    const RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(),
+        m_deviceResources->GetDepthBufferFormat());
 
     {
         EffectPipelineStateDescription pd(

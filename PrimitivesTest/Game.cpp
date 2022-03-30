@@ -59,9 +59,9 @@ Game::Game() noexcept(false) :
     m_yaw(0)
 {
 #ifdef GAMMA_CORRECT_RENDERING
-    const DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+    constexpr DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
 #else
-    const DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
+    constexpr DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
 #endif
 
 #ifdef XBOX
@@ -689,7 +689,8 @@ void Game::CreateDeviceDependentResources()
     m_states = std::make_unique<CommonStates>(device);
 
     // Create effects.
-    RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), m_deviceResources->GetDepthBufferFormat());
+    const RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(),
+        m_deviceResources->GetDepthBufferFormat());
 
 #ifdef REVERSEZ
     const auto& c_depthState = CommonStates::DepthReverseZ;
@@ -698,7 +699,7 @@ void Game::CreateDeviceDependentResources()
 #endif
 
     {
-        EffectPipelineStateDescription pd(
+        const EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
             CommonStates::Opaque,
             c_depthState,
@@ -710,7 +711,7 @@ void Game::CreateDeviceDependentResources()
     }
 
     {
-        EffectPipelineStateDescription pd(
+        const EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
             CommonStates::Opaque,
             c_depthState,
@@ -722,7 +723,7 @@ void Game::CreateDeviceDependentResources()
     }
 
     {
-        EffectPipelineStateDescription pd(
+        const EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
             CommonStates::Opaque,
             c_depthState,
@@ -735,7 +736,7 @@ void Game::CreateDeviceDependentResources()
     }
 
     {
-        EffectPipelineStateDescription pd(
+        const EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
             CommonStates::AlphaBlend,
             c_depthState,
@@ -747,7 +748,7 @@ void Game::CreateDeviceDependentResources()
     }
 
     {
-        EffectPipelineStateDescription pd(
+        const EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
             CommonStates::AlphaBlend,
             c_depthState,
@@ -759,7 +760,7 @@ void Game::CreateDeviceDependentResources()
     }
 
     {
-        EffectPipelineStateDescription pd(
+        const EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
             CommonStates::NonPremultiplied,
             c_depthState,
@@ -771,7 +772,7 @@ void Game::CreateDeviceDependentResources()
     }
 
     {
-        EffectPipelineStateDescription pd(
+        const EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
             CommonStates::Opaque,
             c_depthState,
@@ -783,7 +784,7 @@ void Game::CreateDeviceDependentResources()
     }
 
     {
-        EffectPipelineStateDescription pd(
+        const EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
             CommonStates::Opaque,
             c_depthState,
@@ -826,7 +827,7 @@ void Game::CreateDeviceDependentResources()
 
         static const D3D12_INPUT_LAYOUT_DESC s_layout = { s_InputElements, static_cast<UINT>(std::size(s_InputElements)) };
 
-        EffectPipelineStateDescription pd(
+        const EffectPipelineStateDescription pd(
             &s_layout,
             CommonStates::Opaque,
             c_depthState,
@@ -1045,8 +1046,8 @@ void Game::CreateWindowSizeDependentResources()
 {
     static const XMVECTORF32 cameraPosition = { { { 0.f, 0.f, 9.f, 0.f } } };
 
-    auto size = m_deviceResources->GetOutputSize();
-    float aspect = (float)size.right / (float)size.bottom;
+    auto const size = m_deviceResources->GetOutputSize();
+    const float aspect = (float)size.right / (float)size.bottom;
 
 #ifdef REVERSEZ
     constexpr float c_nearz = 10.f;

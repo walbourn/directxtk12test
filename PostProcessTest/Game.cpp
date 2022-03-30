@@ -378,7 +378,7 @@ void Game::Render()
             pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex), m_sceneTex.Get());
             pp->SetBloomExtractParameter(0.25f);
 
-            auto blurRT1 = m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur1RT);
+            auto const blurRT1 = m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur1RT);
             commandList->OMSetRenderTargets(1, &blurRT1, FALSE, nullptr);
 
             pp->Process(commandList);
@@ -395,7 +395,7 @@ void Game::Render()
             pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Blur1Tex), m_blur1Tex.Get());
             pp->SetBloomBlurParameters(false, 4.f, 1.f);
 
-            auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
+            auto const rtvDescriptor = m_deviceResources->GetRenderTargetView();
             commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, nullptr);
 
             pp->Process(commandList);
@@ -418,7 +418,7 @@ void Game::Render()
             pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex), m_sceneTex.Get());
             pp->SetBloomExtractParameter(0.25f);
 
-            auto blurRT1 = m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur1RT);
+            auto const blurRT1 = m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur1RT);
             commandList->OMSetRenderTargets(1, &blurRT1, FALSE, nullptr);
 
             pp->Process(commandList);
@@ -435,7 +435,7 @@ void Game::Render()
             pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Blur1Tex), m_blur1Tex.Get());
             pp->SetBloomBlurParameters(true, 4.f, 1.f);
 
-            auto blurRT2 = m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur2RT);
+            auto const blurRT2 = m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur2RT);
             commandList->OMSetRenderTargets(1, &blurRT2, FALSE, nullptr);
 
             pp->Process(commandList);
@@ -451,7 +451,7 @@ void Game::Render()
             pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Blur2Tex), m_blur2Tex.Get());
             pp->SetBloomBlurParameters(false, 4.f, 1.f);
 
-            auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
+            auto const rtvDescriptor = m_deviceResources->GetRenderTargetView();
             commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, nullptr);
 
             pp->Process(commandList);
@@ -480,7 +480,7 @@ void Game::Render()
             pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex), m_sceneTex.Get());
             pp->SetBloomExtractParameter(0.25f);
 
-            auto blurRT1 = m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur1RT);
+            auto const blurRT1 = m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur1RT);
             commandList->OMSetRenderTargets(1, &blurRT1, FALSE, nullptr);
 
             pp->Process(commandList);
@@ -497,7 +497,7 @@ void Game::Render()
             pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Blur1Tex), m_blur1Tex.Get());
             pp->SetBloomBlurParameters(true, 4.f, 1.f);
 
-            auto blurRT2 = m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur2RT);
+            auto const blurRT2 = m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur2RT);
             commandList->OMSetRenderTargets(1, &blurRT2, FALSE, nullptr);
 
             pp->Process(commandList);
@@ -536,7 +536,7 @@ void Game::Render()
             dp->SetSourceTexture2(m_resourceDescriptors->GetGpuHandle(Descriptors::Blur1Tex));
             dp->SetBloomCombineParameters(1.25f, 1.f, 1.f, 1.f);
 
-            auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
+            auto const rtvDescriptor = m_deviceResources->GetRenderTargetView();
             commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, nullptr);
 
             dp->Process(commandList);
@@ -565,7 +565,7 @@ void Game::Render()
             pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex), m_sceneTex.Get());
             pp->SetBloomExtractParameter(0.25f);
 
-            auto blurRT1 = m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur1RT);
+            auto const blurRT1 = m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur1RT);
             commandList->OMSetRenderTargets(1, &blurRT1, FALSE, nullptr);
 
             pp->Process(commandList);
@@ -582,7 +582,7 @@ void Game::Render()
             pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Blur1Tex), m_blur1Tex.Get());
             pp->SetBloomBlurParameters(true, 4.f, 1.f);
 
-            auto blurRT2 = m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur2RT);
+            auto const blurRT2 = m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur2RT);
             commandList->OMSetRenderTargets(1, &blurRT2, FALSE, nullptr);
 
             pp->Process(commandList);
@@ -621,7 +621,7 @@ void Game::Render()
             dp->SetSourceTexture2(m_resourceDescriptors->GetGpuHandle(Descriptors::Blur1Tex));
             dp->SetBloomCombineParameters(2.f, 1.f, 2.f, 0.f);
 
-            auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
+            auto const rtvDescriptor = m_deviceResources->GetRenderTargetView();
             commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, nullptr);
 
             dp->Process(commandList);
@@ -783,7 +783,7 @@ void Game::Render()
     }
 
     // Draw UI.
-    auto safeRect = Viewport::ComputeTitleSafeArea(UINT(size.right), UINT(size.bottom));
+    auto const safeRect = Viewport::ComputeTitleSafeArea(UINT(size.right), UINT(size.bottom));
 
     m_spriteBatchUI->Begin(commandList);
     m_font->DrawString(m_spriteBatchUI.get(), descstr, XMFLOAT2(float(safeRect.left), float(safeRect.bottom - m_font->GetLineSpacing())));
@@ -915,9 +915,9 @@ void Game::CreateDeviceDependentResources()
 
     m_graphicsMemory = std::make_unique<GraphicsMemory>(device);
 
-    RenderTargetState hdrState(c_hdrFormat, m_deviceResources->GetDepthBufferFormat());
+    const RenderTargetState hdrState(c_hdrFormat, m_deviceResources->GetDepthBufferFormat());
 
-    RenderTargetState rtState(c_sdrFormat, m_deviceResources->GetDepthBufferFormat());
+    const RenderTargetState rtState(c_sdrFormat, m_deviceResources->GetDepthBufferFormat());
 
     m_resourceDescriptors = std::make_unique<DescriptorHeap>(device, Descriptors::Count);
 
@@ -931,12 +931,12 @@ void Game::CreateDeviceDependentResources()
     resourceUpload.Begin();
 
     {
-        SpriteBatchPipelineStateDescription pd(hdrState);
+        const SpriteBatchPipelineStateDescription pd(hdrState);
         m_spriteBatch = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
     }
 
     {
-        SpriteBatchPipelineStateDescription pd(rtState);
+        const SpriteBatchPipelineStateDescription pd(rtState);
         m_spriteBatchUI = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
     }
 
@@ -970,7 +970,7 @@ void Game::CreateDeviceDependentResources()
     m_states = std::make_unique<CommonStates>(device);
 
     {
-        EffectPipelineStateDescription pd(
+        const EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
             CommonStates::Opaque,
             CommonStates::DepthDefault,
@@ -1037,7 +1037,7 @@ void Game::CreateWindowSizeDependentResources()
     // Create scene render target
     auto device = m_deviceResources->GetD3DDevice();
 
-    auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+    auto const heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
     {
         D3D12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(c_hdrFormat,

@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
+# Visual Studio Version 16
 VisualStudioVersion = 16.0.31729.503
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PBRModelTest_GXDK_2017", "PBRModelTest_GXDK_2017.vcxproj", "{DE5DD6C9-5D9B-4C86-B416-77ABE848BEB2}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PBRModelTest_GDK_2019", "PBRModelTest_GDK_2019.vcxproj", "{DE5DD6C9-5D9B-4C86-B416-77ABE848BEB2}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DirectXTK12", "..\..\DirectXTK_GDK_2017.vcxproj", "{052C4858-C76F-4CEA-8A1A-E8E5559E67C2}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DirectXTK12", "..\..\DirectXTK_GDK_2019.vcxproj", "{052C4858-C76F-4CEA-8A1A-E8E5559E67C2}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0BC793B7-7C2F-41EF-BE10-6C976E81235B}"
 	ProjectSection(SolutionItems) = preProject

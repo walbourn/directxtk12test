@@ -58,7 +58,7 @@ namespace
             if (!inFile)
                 throw std::runtime_error("ReadVBO");
 
-            std::streampos len = inFile.tellg();
+            const std::streampos len = inFile.tellg();
             if (!inFile)
                 throw std::runtime_error("ReadVBO");
 
@@ -85,11 +85,11 @@ namespace
 
         static_assert(sizeof(VertexPositionNormalTexture) == 32, "VBO vertex size mismatch");
 
-        size_t vertSize = sizeof(VertexPositionNormalTexture) * hdr->numVertices;
+        const size_t vertSize = sizeof(VertexPositionNormalTexture) * hdr->numVertices;
         if (blob.size() < (vertSize + sizeof(VBO::header_t)))
             throw std::runtime_error("End of file");
 
-        size_t indexSize = sizeof(uint16_t) * hdr->numIndices;
+        const size_t indexSize = sizeof(uint16_t) * hdr->numIndices;
         if (blob.size() < (sizeof(VBO::header_t) + vertSize + indexSize))
             throw std::runtime_error("End of file");
 
@@ -118,9 +118,9 @@ Game::Game() noexcept(false) :
     m_yaw(0)
 {
 #if defined(TEST_HDR_LINEAR) && !defined(XBOX)
-    const DXGI_FORMAT c_DisplayFormat = DXGI_FORMAT_R16G16B16A16_FLOAT;
+    constexpr DXGI_FORMAT c_DisplayFormat = DXGI_FORMAT_R16G16B16A16_FLOAT;
 #else
-    const DXGI_FORMAT c_DisplayFormat = DXGI_FORMAT_R10G10B10A2_UNORM;
+    constexpr DXGI_FORMAT c_DisplayFormat = DXGI_FORMAT_R10G10B10A2_UNORM;
 #endif
 
 #ifdef XBOX
@@ -383,11 +383,11 @@ void Game::Render()
     commandList->IASetIndexBuffer(&m_indexBufferView);
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    auto radianceTex = m_resourceDescriptors->GetGpuHandle(Descriptors::RadianceIBL1 + size_t(m_ibl));
+    auto const radianceTex = m_resourceDescriptors->GetGpuHandle(Descriptors::RadianceIBL1 + size_t(m_ibl));
 
-    auto diffuseDesc = m_radianceIBL[0]->GetDesc();
+    auto const diffuseDesc = m_radianceIBL[0]->GetDesc();
 
-    auto irradianceTex = m_resourceDescriptors->GetGpuHandle(Descriptors::IrradianceIBL1 + size_t(m_ibl));
+    auto const irradianceTex = m_resourceDescriptors->GetGpuHandle(Descriptors::IrradianceIBL1 + size_t(m_ibl));
     m_pbr->SetIBLTextures(radianceTex, diffuseDesc.MipLevels, irradianceTex, m_states->AnisotropicClamp());
     m_pbrConstant->SetIBLTextures(radianceTex, diffuseDesc.MipLevels, irradianceTex, m_states->LinearWrap());
     m_pbrEmissive->SetIBLTextures(radianceTex, diffuseDesc.MipLevels, irradianceTex, m_states->LinearWrap());
@@ -445,11 +445,11 @@ void Game::Render()
     }
     else
     {
-        auto albedoTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::BaseColor1);
-        auto normalTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::NormalMap1);
+        auto const albedoTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::BaseColor1);
+        auto const normalTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::NormalMap1);
 
-        auto albedoTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::BaseColor2);
-        auto normalTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::NormalMap2);
+        auto const albedoTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::BaseColor2);
+        auto const normalTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::NormalMap2);
 
         //--- NormalMap --------------------------------------------------------------------
         m_normalMapEffect->SetWorld(world * XMMatrixTranslation(col0, row0, 0));
@@ -466,7 +466,7 @@ void Game::Render()
 
         //--- PBREffect (basic) ------------------------------------------------------------
         {
-            auto rmaTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::RMA1);
+            auto const rmaTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::RMA1);
 
             m_pbr->SetAlpha(1.f);
             m_pbr->SetWorld(world * XMMatrixTranslation(col1, row0, 0));
@@ -491,8 +491,8 @@ void Game::Render()
         commandList->IASetIndexBuffer(&m_indexBufferView);
 
         {
-            auto rmaTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::RMA2);
-            auto emissiveTex = m_resourceDescriptors->GetGpuHandle(Descriptors::EmissiveTexture2);
+            auto const rmaTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::RMA2);
+            auto const emissiveTex = m_resourceDescriptors->GetGpuHandle(Descriptors::EmissiveTexture2);
 
             m_pbrEmissive->SetAlpha(1.f);
             m_pbrEmissive->SetWorld(world * XMMatrixTranslation(col4, row0, 0));
@@ -665,7 +665,7 @@ void Game::Render()
 
     m_toneMap->Process(commandList);
 #else
-    auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
+    auto const rtvDescriptor = m_deviceResources->GetRenderTargetView();
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, nullptr);
 
     switch (m_deviceResources->GetColorSpace())
@@ -814,7 +814,8 @@ void Game::CreateDeviceDependentResources()
         m_resourceDescriptors->GetCpuHandle(Descriptors::SceneTex),
         m_renderDescriptors->GetCpuHandle(RTDescriptors::HDRScene));
 
-    RenderTargetState hdrState(m_hdrScene->GetFormat(), m_deviceResources->GetDepthBufferFormat());
+    const RenderTargetState hdrState(m_hdrScene->GetFormat(),
+        m_deviceResources->GetDepthBufferFormat());
 
     EffectPipelineStateDescription pipelineDesc(
         &GeometricPrimitive::VertexType::InputLayout,
@@ -880,14 +881,14 @@ void Game::CreateDeviceDependentResources()
 
         // Vertex data
         auto verts = reinterpret_cast<const uint8_t*>(vertices.data());
-        size_t vertSizeBytes = vertices.size() * sizeof(GeometricPrimitive::VertexType);
+        const size_t vertSizeBytes = vertices.size() * sizeof(GeometricPrimitive::VertexType);
 
         m_vertexBuffer = GraphicsMemory::Get().Allocate(vertSizeBytes);
         memcpy(m_vertexBuffer.Memory(), verts, vertSizeBytes);
 
         // Index data
         auto ind = reinterpret_cast<const uint8_t*>(indices.data());
-        size_t indSizeBytes = indices.size() * sizeof(uint16_t);
+        const size_t indSizeBytes = indices.size() * sizeof(uint16_t);
 
         m_indexBuffer = GraphicsMemory::Get().Allocate(indSizeBytes);
         memcpy(m_indexBuffer.Memory(), ind, indSizeBytes);
@@ -918,14 +919,14 @@ void Game::CreateDeviceDependentResources()
 
         // Vertex data
         auto verts = reinterpret_cast<const uint8_t*>(vertices.data());
-        size_t vertSizeBytes = vertices.size() * sizeof(GeometricPrimitive::VertexType);
+        const size_t vertSizeBytes = vertices.size() * sizeof(GeometricPrimitive::VertexType);
 
         m_vertexBufferCube = GraphicsMemory::Get().Allocate(vertSizeBytes);
         memcpy(m_vertexBufferCube.Memory(), verts, vertSizeBytes);
 
         // Index data
         auto ind = reinterpret_cast<const uint8_t*>(indices.data());
-        size_t indSizeBytes = indices.size() * sizeof(uint16_t);
+        const size_t indSizeBytes = indices.size() * sizeof(uint16_t);
 
         m_indexBufferCube = GraphicsMemory::Get().Allocate(indSizeBytes);
         memcpy(m_indexBufferCube.Memory(), ind, indSizeBytes);
@@ -1049,8 +1050,8 @@ void Game::CreateWindowSizeDependentResources()
 {
     static const XMVECTORF32 cameraPosition = { { { 0.f, 0.f, 6.f, 0.f } } };
 
-    auto size = m_deviceResources->GetOutputSize();
-    float aspect = (float)size.right / (float)size.bottom;
+    auto const size = m_deviceResources->GetOutputSize();
+    const float aspect = (float)size.right / (float)size.bottom;
 
 #ifdef LH_COORDS
     XMMATRIX view = XMMatrixLookAtLH(cameraPosition, g_XMZero, XMVectorSet(0, 1, 0, 0));

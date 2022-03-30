@@ -196,9 +196,9 @@ Game::Game() noexcept(false) :
     m_indexBufferView{}
 {
 #ifdef GAMMA_CORRECT_RENDERING
-    const DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+    constexpr DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
 #else
-    const DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
+    constexpr DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
 #endif
 
 #ifdef XBOX
@@ -834,11 +834,11 @@ void Game::CreateDeviceDependentResources()
     RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), m_deviceResources->GetDepthBufferFormat());
 
 #ifdef LH_COORDS
-    const float fogstart = -6;
-    const float fogend = -8;
+    constexpr float fogstart = -6;
+    constexpr float fogend = -8;
 #else
-    const float fogstart = 6;
-    const float fogend = 8;
+    constexpr float fogstart = 6;
+    constexpr float fogend = 8;
 #endif
 
     XMVECTORF32 red, blue, gray;
@@ -853,7 +853,7 @@ void Game::CreateDeviceDependentResources()
 #endif
 
     {
-        EffectPipelineStateDescription pdAlpha(
+        const EffectPipelineStateDescription pdAlpha(
             &TestVertex::InputLayout,
             CommonStates::AlphaBlend,
             CommonStates::DepthDefault,
@@ -864,7 +864,7 @@ void Game::CreateDeviceDependentResources()
 #endif
             rtState);
 
-        EffectPipelineStateDescription pdOpaque(
+        const EffectPipelineStateDescription pdOpaque(
             &TestVertex::InputLayout,
             CommonStates::Opaque,
             CommonStates::DepthDefault,
@@ -1113,9 +1113,9 @@ void Game::CreateDeviceDependentResources()
     uploadResourcesFinished.wait();
 
     // Set textures.
-    auto opaqueCat = m_resourceDescriptors->GetGpuHandle(Descriptors::OpaqueCat);
+    auto const opaqueCat = m_resourceDescriptors->GetGpuHandle(Descriptors::OpaqueCat);
 
-    auto sampler = m_states->LinearWrap();
+    auto const sampler = m_states->LinearWrap();
 
     m_skinnedEffect->SetTexture(opaqueCat, sampler);
     m_skinnedEffectFog->SetTexture(opaqueCat, sampler);
@@ -1123,9 +1123,9 @@ void Game::CreateDeviceDependentResources()
     m_skinnedEffectPPL->SetTexture(opaqueCat, sampler);
     m_skinnedEffectFogPPL->SetTexture(opaqueCat, sampler);
 
-    auto cubemap = m_resourceDescriptors->GetGpuHandle(Descriptors::Cubemap);
+    auto const cubemap = m_resourceDescriptors->GetGpuHandle(Descriptors::Cubemap);
 
-    auto ansitropic = m_states->AnisotropicWrap();
+    auto const ansitropic = m_states->AnisotropicWrap();
 
     m_envmap->SetTexture(opaqueCat, sampler);
     m_envmap->SetEnvironmentMap(cubemap, ansitropic);
@@ -1144,24 +1144,24 @@ void Game::CreateDeviceDependentResources()
     m_envmapNoFresnelPPL->SetTexture(opaqueCat, sampler);
     m_envmapNoFresnelPPL->SetEnvironmentMap(cubemap, ansitropic);
 
-    auto defaultTex = m_resourceDescriptors->GetGpuHandle(Descriptors::DefaultTex);
+    auto const defaultTex = m_resourceDescriptors->GetGpuHandle(Descriptors::DefaultTex);
     m_spheremap->SetTexture(defaultTex, sampler);
     m_dparabolamap->SetTexture(defaultTex, sampler);
 
-    auto spheremap = m_resourceDescriptors->GetGpuHandle(Descriptors::SphereMap);
+    auto const spheremap = m_resourceDescriptors->GetGpuHandle(Descriptors::SphereMap);
     m_spheremap->SetEnvironmentMap(spheremap, ansitropic);
 
-    auto dualmap = m_resourceDescriptors->GetGpuHandle(Descriptors::DualParabolaMap);
+    auto const dualmap = m_resourceDescriptors->GetGpuHandle(Descriptors::DualParabolaMap);
     m_dparabolamap->SetEnvironmentMap(dualmap, ansitropic);
 
-    auto overlay = m_resourceDescriptors->GetGpuHandle(Descriptors::Overlay);
+    auto const overlay = m_resourceDescriptors->GetGpuHandle(Descriptors::Overlay);
 
     m_dualTexture->SetTexture(opaqueCat, sampler);
     m_dualTexture->SetTexture2(overlay, sampler);
     m_dualTextureFog->SetTexture(opaqueCat, sampler);
     m_dualTextureFog->SetTexture2(overlay, sampler);
 
-    auto cat = m_resourceDescriptors->GetGpuHandle(Descriptors::Cat);
+    auto const cat = m_resourceDescriptors->GetGpuHandle(Descriptors::Cat);
 
     m_alphaTest->SetTexture(cat, sampler);
     m_alphaTestFog->SetTexture(cat, sampler);
@@ -1199,8 +1199,8 @@ void Game::CreateWindowSizeDependentResources()
 {
     static const XMVECTORF32 cameraPosition = { { { 0.f, 0.f, 6.f, 0.f } } };
 
-    auto size = m_deviceResources->GetOutputSize();
-    float aspect = (float)size.right / (float)size.bottom;
+    auto const size = m_deviceResources->GetOutputSize();
+    const float aspect = (float)size.right / (float)size.bottom;
 
 #ifdef LH_COORDS
     XMMATRIX view = XMMatrixLookAtLH(cameraPosition, g_XMZero, XMVectorSet(0, 1, 0, 0));

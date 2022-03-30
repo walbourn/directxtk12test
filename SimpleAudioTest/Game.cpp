@@ -198,9 +198,9 @@ Game::Game() noexcept(false) :
     m_gamepadPresent(false)
 {
 #ifdef GAMMA_CORRECT_RENDERING
-    const DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+    constexpr DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
 #else
-    const DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
+    constexpr DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
 #endif
 
     // 2D only rendering
@@ -752,9 +752,9 @@ void Game::Render()
         stats.allocatedVoicesOneShot, stats.allocatedVoicesIdle,
         stats.audioBytes, stats.streamingBytes);
 
-    auto size = m_deviceResources->GetOutputSize();
+    auto const size = m_deviceResources->GetOutputSize();
 
-    auto safeRect = Viewport::ComputeTitleSafeArea(UINT(size.right), UINT(size.bottom));
+    auto const safeRect = Viewport::ComputeTitleSafeArea(UINT(size.right), UINT(size.bottom));
 
     m_spriteBatch->Begin(commandList);
 
@@ -984,7 +984,8 @@ void Game::CreateDeviceDependentResources()
 
     m_resourceDescriptors = std::make_unique<DescriptorHeap>(device, Descriptors::Count);
 
-    RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), m_deviceResources->GetDepthBufferFormat());
+    const RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(),
+        m_deviceResources->GetDepthBufferFormat());
 
     ResourceUploadBatch resourceUpload(device);
 
@@ -1017,11 +1018,11 @@ void Game::CreateWindowSizeDependentResources()
     m_spriteBatch->SetViewport(viewport);
     m_console->SetViewport(viewport);
 
-    RECT size = m_deviceResources->GetOutputSize();
+    const RECT size = m_deviceResources->GetOutputSize();
 
     RECT safeRect = Viewport::ComputeTitleSafeArea(UINT(size.right), UINT(size.bottom));
 
-    float dy = m_comicFont->GetLineSpacing();
+    const float dy = m_comicFont->GetLineSpacing();
 
     safeRect.top += long(dy * 3);
     safeRect.bottom -= long(dy * 4);

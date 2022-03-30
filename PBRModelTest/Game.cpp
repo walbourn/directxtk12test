@@ -51,9 +51,9 @@ Game::Game() noexcept(false) :
     m_yaw(0)
 {
 #if defined(TEST_HDR_LINEAR) && !defined(XBOX)
-    const DXGI_FORMAT c_DisplayFormat = DXGI_FORMAT_R16G16B16A16_FLOAT;
+    constexpr DXGI_FORMAT c_DisplayFormat = DXGI_FORMAT_R16G16B16A16_FLOAT;
 #else
-    const DXGI_FORMAT c_DisplayFormat = DXGI_FORMAT_R10G10B10A2_UNORM;
+    constexpr DXGI_FORMAT c_DisplayFormat = DXGI_FORMAT_R10G10B10A2_UNORM;
 #endif
 
 #ifdef XBOX
@@ -306,11 +306,11 @@ void Game::Render()
     commandList->SetDescriptorHeaps(static_cast<UINT>(std::size(heaps)), heaps);
 
     //--- Set PBR lighting sources ---
-    auto radianceTex = m_resourceDescriptors->GetGpuHandle(Descriptors::RadianceIBL1 + size_t(m_ibl));
+    auto const radianceTex = m_resourceDescriptors->GetGpuHandle(Descriptors::RadianceIBL1 + size_t(m_ibl));
 
-    auto diffuseDesc = m_radianceIBL[0]->GetDesc();
+    auto const diffuseDesc = m_radianceIBL[0]->GetDesc();
 
-    auto irradianceTex = m_resourceDescriptors->GetGpuHandle(Descriptors::IrradianceIBL1 + size_t(m_ibl));
+    auto const irradianceTex = m_resourceDescriptors->GetGpuHandle(Descriptors::IrradianceIBL1 + size_t(m_ibl));
 
     for (auto& it : m_cubeNormal)
     {
@@ -448,8 +448,8 @@ void Game::Render()
     }
 
     //--- Draw with skinning ---
-    auto nbones = static_cast<uint32_t>(m_teapot->bones.size());
-    auto bones = ModelBone::MakeArray(nbones);
+    auto const nbones = static_cast<uint32_t>(m_teapot->bones.size());
+    auto const bones = ModelBone::MakeArray(nbones);
     m_teapotAnim.Apply(*m_teapot, m_teapot->bones.size(), bones.get());
 
     local = XMMatrixMultiply(XMMatrixScaling(0.02f, 0.02f, 0.02f), XMMatrixTranslation(4.f, row1, 0.f));
@@ -470,7 +470,7 @@ void Game::Render()
 
     m_toneMap->Process(commandList);
 #else
-    auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
+    auto const rtvDescriptor = m_deviceResources->GetRenderTargetView();
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, nullptr);
 
     switch (m_deviceResources->GetColorSpace())
@@ -857,8 +857,8 @@ void Game::CreateWindowSizeDependentResources()
 {
     static const XMVECTORF32 cameraPosition = { { { 0.f, 0.f, 6.f, 0.f } } };
 
-    auto size = m_deviceResources->GetOutputSize();
-    float aspect = (float)size.right / (float)size.bottom;
+    auto const size = m_deviceResources->GetOutputSize();
+    const float aspect = (float)size.right / (float)size.bottom;
 
 #ifdef REVERSEZ
     constexpr float c_nearz = 15.f;

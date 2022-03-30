@@ -1,0 +1,111 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Common">
+      <UniqueIdentifier>7162bc57-127b-4e1c-9dc1-ce0da54337a6</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets">
+      <UniqueIdentifier>14aec27e-d0f7-48f4-85fc-1c5d6a97049a</UniqueIdentifier>
+      <Extensions>bmp;dds;fbx;gif;jpg;jpeg;tga;tiff;tif;png</Extensions>
+    </Filter>
+    <Filter Include="Assets\Logos">
+      <UniqueIdentifier>{374fa856-a3a8-4d33-bd56-7aaa779cb5ae}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="Game.h" />
+    <ClInclude Include="..\Common\DeviceResourcesGXDK.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\StepTimer.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\RenderTexture.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\DirectXTKTest.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="..\Common\DeviceResourcesGXDK.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\MainGXDK.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\RenderTexture.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Atrium_diffuseIBL.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Atrium_specularIBL.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="cat.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="cubemap.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="default.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="overlay.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="spnza_bricks_a.DDS">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="spnza_bricks_a_normal.DDS">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="spnza_bricks_a_specular.DDS">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Sphere2Mat_baseColor.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Sphere2Mat_emissive.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Sphere2Mat_normal.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Sphere2Mat_occlusionRoughnessMetallic.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="dualparabola.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="spheremap.bmp">
+      <Filter>Assets</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="..\Common\LargeLogo.png">
+      <Filter>Assets\Logos</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\Common\Logo.scale-100.png">
+      <Filter>Assets\Logos</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\Common\SmallLogo.scale-100.png">
+      <Filter>Assets\Logos</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\Common\SplashScreen.scale-100.png">
+      <Filter>Assets\Logos</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\Common\StoreLogo.scale-100.png">
+      <Filter>Assets\Logos</Filter>
+    </CopyFileToFolders>
+  </ItemGroup>
+  <ItemGroup>
+    <MGCCompile Include="MicrosoftGame.Config" />
+  </ItemGroup>
+</Project>
