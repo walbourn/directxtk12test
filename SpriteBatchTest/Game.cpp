@@ -41,9 +41,9 @@ static_assert(std::is_nothrow_move_assignable<SpriteBatchPipelineStateDescriptio
 Game::Game() noexcept(false)
 {
 #ifdef GAMMA_CORRECT_RENDERING
-    const DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+    constexpr DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
 #else
-    const DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
+    constexpr DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
 #endif
 
     // 2D only rendering
@@ -229,7 +229,7 @@ void Game::Render()
     // Differently scaled.
     m_spriteBatch->Draw(cat, catSize, XMFLOAT2(0, 0), nullptr, Colors::White, 0, XMFLOAT2(0, 0), 0.5);
 
-    RECT dest1 = { 0, 0, 256, 64 };
+    const RECT dest1 = { 0, 0, 256, 64 };
     Rectangle dest2 = { 0, 0, 64, 256 };
 
     m_spriteBatch->Draw(cat, catSize, dest1);
@@ -242,13 +242,13 @@ void Game::Render()
     m_spriteBatch->Draw(cat, catSize, XMFLOAT2(450, 10), nullptr, Colors::White, 0, XMFLOAT2(0, 0), 0.3f, SpriteEffects_FlipBoth);
 
     // Sorting.
-    auto letterA = m_resourceDescriptors->GetGpuHandle(Descriptors::A);
+    auto const letterA = m_resourceDescriptors->GetGpuHandle(Descriptors::A);
     auto letterASize = GetTextureSize(m_letterA.Get());
 
-    auto letterB = m_resourceDescriptors->GetGpuHandle(Descriptors::B);
+    auto const letterB = m_resourceDescriptors->GetGpuHandle(Descriptors::B);
     auto letterBSize = GetTextureSize(m_letterB.Get());
 
-    auto letterC = m_resourceDescriptors->GetGpuHandle(Descriptors::C);
+    auto const letterC = m_resourceDescriptors->GetGpuHandle(Descriptors::C);
     auto letterCSize = GetTextureSize(m_letterC.Get());
 
     m_spriteBatch->Draw(letterA, letterASize, XMFLOAT2(10, 280), nullptr, Colors::White, 0, XMFLOAT2(0, 0), 1, SpriteEffects_None, 0.1f);
@@ -280,9 +280,9 @@ void Game::Render()
     m_spriteBatch->Draw(cat, catSize, XMVectorSet(450, 450, randf(), randf()), &source, blue, time / 500, XMVectorSet(120, 80, randf(), randf()), XMVectorSet(0.5f, 0.25f, randf(), randf()), SpriteEffects_None, 0.5f);
 
     // Draw overloads specifying position as a RECT.
-    RECT rc1 = { 500, 320, 600, 420 };
-    RECT rc2 = { 550, 450, 650, 550 };
-    RECT rc3 = { 550, 550, 650, 650 };
+    const RECT rc1 = { 500, 320, 600, 420 };
+    const RECT rc2 = { 550, 450, 650, 550 };
+    const RECT rc3 = { 550, 550, 650, 650 };
 
     m_spriteBatch->Draw(cat, catSize, rc1, gray);
     m_spriteBatch->Draw(cat, catSize, rc2, nullptr, lsgreen, time / 300, XMFLOAT2(128, 128), SpriteEffects_None, 0.5f);
@@ -293,7 +293,7 @@ void Game::Render()
     // Test alt samplers
     commandList->SetDescriptorHeaps(static_cast<UINT>(std::size(heaps)), heaps);
 
-    RECT tileRect = { long(catSize.x), long(catSize.y), long(catSize.x * 3), long(catSize.y * 3) };
+    const RECT tileRect = { long(catSize.x), long(catSize.y), long(catSize.x * 3), long(catSize.y * 3) };
 
     m_spriteBatchSampler->Begin(commandList, m_states->PointClamp());
     m_spriteBatchSampler->Draw(cat, catSize, XMFLOAT2(1100.f, 100.f), nullptr, Colors::White, time / 50, XMFLOAT2(128, 128));
@@ -432,10 +432,11 @@ void Game::CreateDeviceDependentResources()
 
     resourceUpload.Begin();
 
-    RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), m_deviceResources->GetDepthBufferFormat());
+    const RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(),
+        m_deviceResources->GetDepthBufferFormat());
 
     {
-        SpriteBatchPipelineStateDescription pd(
+        const SpriteBatchPipelineStateDescription pd(
             rtState,
             &CommonStates::NonPremultiplied);
 
@@ -443,9 +444,9 @@ void Game::CreateDeviceDependentResources()
     }
 
     {
-        auto sampler = m_states->PointClamp();
+        auto const sampler = m_states->PointClamp();
 
-        SpriteBatchPipelineStateDescription pd(
+        const SpriteBatchPipelineStateDescription pd(
             rtState,
             &CommonStates::NonPremultiplied,
             nullptr, nullptr, &sampler);
@@ -495,7 +496,7 @@ void Game::CreateDeviceDependentResources()
 // Allocate all memory resources that change on a window SizeChanged event.
 void Game::CreateWindowSizeDependentResources()
 {
-    auto viewport = m_deviceResources->GetScreenViewport();
+    auto const viewport = m_deviceResources->GetScreenViewport();
 
     m_spriteBatch->SetViewport(viewport);
     m_spriteBatchSampler->SetViewport(viewport);

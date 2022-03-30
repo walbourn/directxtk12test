@@ -674,7 +674,8 @@ void Game::CreateDeviceDependentResources()
 
     m_states = std::make_unique<CommonStates>(device);
 
-    RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), m_deviceResources->GetDepthBufferFormat());
+    const RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(),
+        m_deviceResources->GetDepthBufferFormat());
 
 #ifdef GAMMA_CORRECT_RENDERING
     m_cup = CreateModelFromOBJ(device, L"cup._obj", false, ModelLoader_MaterialColorsSRGB);
@@ -726,22 +727,22 @@ void Game::CreateDeviceDependentResources()
         m_cup->LoadTextures(*m_modelResources, txtOffset);
 
 #ifdef LH_COORDS
-        auto& ncull = CommonStates::CullCounterClockwise;
-        auto& cull = CommonStates::CullClockwise;
+        auto const& ncull = CommonStates::CullCounterClockwise;
+        auto const& cull = CommonStates::CullClockwise;
 #else
-        auto& ncull = CommonStates::CullClockwise;
-        auto& cull = CommonStates::CullCounterClockwise;
+        auto const& ncull = CommonStates::CullClockwise;
+        auto const& cull = CommonStates::CullCounterClockwise;
 #endif
 
         {
-            EffectPipelineStateDescription pd(
+            const EffectPipelineStateDescription pd(
                 nullptr,
                 CommonStates::Opaque,
                 CommonStates::DepthDefault,
                 ncull,
                 rtState);
 
-            EffectPipelineStateDescription wireframe(
+            const EffectPipelineStateDescription wireframe(
                 nullptr,
                 CommonStates::Opaque,
                 CommonStates::DepthDefault,
@@ -785,7 +786,7 @@ void Game::CreateDeviceDependentResources()
             }
             m_cupInst->LoadTextures(*m_modelResources, txtOffset);
 
-            EffectPipelineStateDescription pd(
+            const EffectPipelineStateDescription pd(
                 nullptr,
                 CommonStates::Opaque,
                 CommonStates::DepthDefault,
@@ -802,7 +803,7 @@ void Game::CreateDeviceDependentResources()
         // Create VBO effects (no textures)
 
         {
-            EffectPipelineStateDescription pd(
+            const EffectPipelineStateDescription pd(
                 &VertexPositionNormalTexture::InputLayout,
                 CommonStates::Opaque,
                 CommonStates::DepthDefault,
@@ -827,7 +828,7 @@ void Game::CreateDeviceDependentResources()
         m_cupMesh->LoadTextures(*m_modelResources, txtOffset);
 
         {
-            EffectPipelineStateDescription pd(
+            const EffectPipelineStateDescription pd(
                 nullptr,
                 CommonStates::Opaque,
                 CommonStates::DepthDefault,
@@ -848,7 +849,7 @@ void Game::CreateDeviceDependentResources()
         m_tiny->LoadTextures(*m_modelResources, txtOffset);
 
         {
-            EffectPipelineStateDescription pd(
+            const EffectPipelineStateDescription pd(
                 nullptr,
                 CommonStates::Opaque,
                 CommonStates::DepthDefault,
@@ -869,7 +870,7 @@ void Game::CreateDeviceDependentResources()
         m_soldier->LoadTextures(*m_modelResources, txtOffset);
 
         {
-            EffectPipelineStateDescription pd(
+            const EffectPipelineStateDescription pd(
                 nullptr,
                 CommonStates::Opaque,
                 CommonStates::DepthDefault,
@@ -890,7 +891,7 @@ void Game::CreateDeviceDependentResources()
         m_dwarf->LoadTextures(*m_modelResources, txtOffset);
 
         {
-            EffectPipelineStateDescription pd(
+            const EffectPipelineStateDescription pd(
                 nullptr,
                 CommonStates::Opaque,
                 CommonStates::DepthDefault,
@@ -911,7 +912,7 @@ void Game::CreateDeviceDependentResources()
         m_lmap->LoadTextures(*m_modelResources, txtOffset);
 
         {
-            EffectPipelineStateDescription pd(
+            const EffectPipelineStateDescription pd(
                 nullptr,
                 CommonStates::Opaque,
                 CommonStates::DepthDefault,
@@ -932,7 +933,7 @@ void Game::CreateDeviceDependentResources()
         m_nmap->LoadTextures(*m_modelResources, txtOffset);
 
         {
-            EffectPipelineStateDescription pd(
+            const EffectPipelineStateDescription pd(
                 nullptr,
                 CommonStates::Opaque,
                 CommonStates::DepthDefault,
@@ -946,7 +947,7 @@ void Game::CreateDeviceDependentResources()
         m_teapot = Model::CreateFromCMO(device, L"teapot.cmo");
 
         {
-            EffectPipelineStateDescription pd(
+            const EffectPipelineStateDescription pd(
                 nullptr,
                 CommonStates::Opaque,
                 CommonStates::DepthDefault,
@@ -977,7 +978,7 @@ void Game::CreateDeviceDependentResources()
         m_gamelevel->LoadTextures(*m_modelResources, txtOffset);
 
         {
-            EffectPipelineStateDescription pd(
+            const EffectPipelineStateDescription pd(
                 nullptr,
                 CommonStates::Opaque,
                 CommonStates::DepthDefault,
@@ -998,7 +999,7 @@ void Game::CreateDeviceDependentResources()
         m_ship->LoadTextures(*m_modelResources, txtOffset);
 
         {
-            EffectPipelineStateDescription pd(
+            const EffectPipelineStateDescription pd(
                 nullptr,
                 CommonStates::Opaque,
                 CommonStates::DepthDefault,
@@ -1149,19 +1150,19 @@ void Game::CreateWindowSizeDependentResources()
 {
     static const XMVECTORF32 cameraPosition = { { { 0.f, 0.f, 6.f, 0.f } } };
 
-    auto size = m_deviceResources->GetOutputSize();
-    float aspect = (float)size.right / (float)size.bottom;
+    auto const size = m_deviceResources->GetOutputSize();
+    const float aspect = (float)size.right / (float)size.bottom;
 
 #ifdef LH_COORDS
     m_view = XMMatrixLookAtLH(cameraPosition, g_XMZero, XMVectorSet(0, 1, 0, 0));
     m_projection = XMMatrixPerspectiveFovLH(1, aspect, 1, 15);
-    float fogstart = -5;
-    float fogend = -8;
+    constexpr float fogstart = -5;
+    constexpr float fogend = -8;
 #else
     m_view = XMMatrixLookAtRH(cameraPosition, g_XMZero, XMVectorSet(0, 1, 0, 0));
     m_projection = XMMatrixPerspectiveFovRH(1, aspect, 1, 15);
-    float fogstart = 5;
-    float fogend = 8;
+    constexpr float fogstart = 5;
+    constexpr float fogend = 8;
 #endif
 
 #ifdef UWP
