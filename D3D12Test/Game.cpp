@@ -117,7 +117,7 @@ Game::Game() noexcept(false)
 
 #ifdef COMBO_GDK
     m_deviceResources = std::make_unique<DX::DeviceResources>(c_RenderFormat);
-#elif XBOX
+#elif defined(XBOX)
     m_deviceResources = std::make_unique<DX::DeviceResources>(
         c_RenderFormat, DXGI_FORMAT_D32_FLOAT, 2,
         DX::DeviceResources::c_Enable4K_UHD
