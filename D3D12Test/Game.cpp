@@ -115,7 +115,9 @@ Game::Game() noexcept(false)
     constexpr DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
 #endif
 
-#ifdef XBOX
+#ifdef COMBO_GDK
+    m_deviceResources = std::make_unique<DX::DeviceResources>(c_RenderFormat);
+#elif XBOX
     m_deviceResources = std::make_unique<DX::DeviceResources>(
         c_RenderFormat, DXGI_FORMAT_D32_FLOAT, 2,
         DX::DeviceResources::c_Enable4K_UHD
@@ -157,7 +159,10 @@ void Game::Initialize(
     m_gamePad = std::make_unique<GamePad>();
     m_keyboard = std::make_unique<Keyboard>();
 
-#ifdef XBOX
+#ifdef COMBO_GDK
+    UNREFERENCED_PARAMETER(rotation);
+    m_deviceResources->SetWindow(window, width, height);
+#elif defined(XBOX)
     UNREFERENCED_PARAMETER(rotation);
     UNREFERENCED_PARAMETER(width);
     UNREFERENCED_PARAMETER(height);
