@@ -1,13 +1,12 @@
-﻿# DirectX Tool Kit for DirectX 12 Header Inclusion Test
-#
-# Copyright (c) Microsoft Corporation.
+﻿# Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
-#
-# http://go.microsoft.com/fwlink/?LinkID=615561
 
 cmake_minimum_required (VERSION 3.11)
 
-project (headertest LANGUAGES CXX)
+project (headertest
+  DESCRIPTION "DirectX Tool Kit for DirectX 12 Header Inclusion Test"
+  HOMEPAGE_URL "http://go.microsoft.com/fwlink/?LinkID=615561"
+  LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -70,7 +69,7 @@ if ( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
     target_compile_options(headertest PRIVATE ${WarningsEXE})
 endif()
 if ( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
-    target_compile_options(headertest PRIVATE /permissive- /Zc:__cplusplus)
+    target_compile_options(headertest PRIVATE /sdl /permissive- /Zc:__cplusplus)
 
     set(WarningsEXE "/wd4061" "/wd4365" "/wd4514" "/wd4571" "/wd4668" "/wd4710" "/wd4820" "/wd5039" "/wd5045" "/wd5219")
     target_compile_options(headertest PRIVATE ${WarningsEXE})
