@@ -532,10 +532,88 @@ namespace
     }
 }
 
+template<class T>
+inline bool TestVertexType()
+{
+    if (T::InputLayout.NumElements == 0
+        || T::InputLayout.pInputElementDescs == nullptr)
+        return false;
+
+    if (T::InputLayout.NumElements > D3D12_IA_VERTEX_INPUT_STRUCTURE_ELEMENT_COUNT)
+        return false;
+
+    if (_stricmp(T::InputLayout.pInputElementDescs[0].SemanticName, "SV_Position") != 0)
+    {
+        return false;
+    }
+
+    for (size_t j = 0; j < T::InputLayout.NumElements; ++j)
+    {
+        if (T::InputLayout.pInputElementDescs[0].SemanticName == nullptr)
+            return false;
+    }
+
+    return true;
+}
+
 void Game::UnitTests()
 {
     bool success = true;
     OutputDebugStringA("*********** UINT TESTS BEGIN ***************\n");
+
+    if (!TestVertexType<VertexPosition>())
+    {
+        OutputDebugStringA("ERROR: Failed VertexPosition tests\n");
+        success = false;
+    }
+
+    if (!TestVertexType<VertexPositionColor>())
+    {
+        OutputDebugStringA("ERROR: Failed VertexPositionColor tests\n");
+        success = false;
+    }
+
+    if (!TestVertexType<VertexPositionTexture>())
+    {
+        OutputDebugStringA("ERROR: Failed VertexPositionTexture tests\n");
+        success = false;
+    }
+
+    if (!TestVertexType<VertexPositionDualTexture>())
+    {
+        OutputDebugStringA("ERROR: Failed VertexPositionDualTexture tests\n");
+        success = false;
+    }
+
+    if (!TestVertexType<VertexPositionNormal>())
+    {
+        OutputDebugStringA("ERROR: Failed VertexPositionNormal tests\n");
+        success = false;
+    }
+
+    if (!TestVertexType<VertexPositionColorTexture>())
+    {
+        OutputDebugStringA("ERROR: Failed VertexPositionColorTexture tests\n");
+        success = false;
+    }
+
+    if (!TestVertexType<VertexPositionNormalColor>())
+    {
+        OutputDebugStringA("ERROR: Failed VertexPositionNormalColor tests\n");
+        success = false;
+    }
+
+    if (!TestVertexType<VertexPositionNormalTexture>())
+    {
+        OutputDebugStringA("ERROR: Failed VertexPositionNormalTexture tests\n");
+        success = false;
+    }
+
+    if (!TestVertexType<VertexPositionNormalColorTexture>())
+    {
+        OutputDebugStringA("ERROR: Failed VertexPositionNormalColorTexture tests\n");
+        success = false;
+    }
 
     std::random_device rd;
     std::default_random_engine generator(rd());
