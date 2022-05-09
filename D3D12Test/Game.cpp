@@ -478,6 +478,8 @@ void Game::CreateDeviceDependentResources()
         pd.primitiveTopology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
         m_effectLine = std::make_unique<BasicEffect>(device, EffectFlags::VertexColor, pd);
     }
+
+    m_states = std::make_unique<CommonStates>(device);
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
@@ -499,6 +501,7 @@ void Game::OnDeviceLost()
     m_effectTri.reset();
     m_effectPoint.reset();
     m_effectLine.reset();
+    m_states.reset();
     m_graphicsMemory.reset();
 }
 
@@ -530,10 +533,85 @@ namespace
     {
         return (size / alignment) * alignment;
     }
+
+    bool TestBlendState(const D3D12_BLEND_DESC& state, const RenderTargetState& rtState, _In_ ID3D12Device* device)
+    {
+        EffectPipelineStateDescription pd(
+            &VertexPositionColor::InputLayout,
+            state,
+            CommonStates::DepthDefault,
+            CommonStates::CullNone,
+            rtState);
+
+        try
+        {
+            auto effect = std::make_unique<BasicEffect>(device, EffectFlags::None, pd);
+            if (!effect)
+            {
+                return false;
+            }
+        }
+        catch (...)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    bool TestDepthStencilState(const D3D12_DEPTH_STENCIL_DESC& state, const RenderTargetState& rtState, _In_ ID3D12Device* device)
+    {
+        EffectPipelineStateDescription pd(
+            &VertexPositionColor::InputLayout,
+            CommonStates::Opaque,
+            state,
+            CommonStates::CullNone,
+            rtState);
+
+        try
+        {
+            auto effect = std::make_unique<BasicEffect>(device, EffectFlags::None, pd);
+            if (!effect)
+            {
+                return false;
+            }
+        }
+        catch (...)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    bool TestRasterizerState(const D3D12_RASTERIZER_DESC& state, const RenderTargetState& rtState, _In_ ID3D12Device* device)
+    {
+        EffectPipelineStateDescription pd(
+            &VertexPositionColor::InputLayout,
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
+            state,
+            rtState);
+
+        try
+        {
+            auto effect = std::make_unique<BasicEffect>(device, EffectFlags::None, pd);
+            if (!effect)
+            {
+                return false;
+            }
+        }
+        catch (...)
+        {
+            return false;
+        }
+
+        return true;
+    }
 }
 
 template<class T>
-inline bool TestVertexType()
+inline bool TestVertexType(const RenderTargetState& rtState, _In_ ID3D12Device* device)
 {
     if (T::InputLayout.NumElements == 0
         || T::InputLayout.pInputElementDescs == nullptr)
@@ -553,6 +631,28 @@ inline bool TestVertexType()
             return false;
     }
 
+    {
+        EffectPipelineStateDescription pd(
+            &T::InputLayout,
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
+            CommonStates::CullNone,
+            rtState);
+
+        try
+        {
+            auto effect = std::make_unique<BasicEffect>(device, EffectFlags::None, pd);
+            if (!effect)
+            {
+                return false;
+            }
+        }
+        catch (...)
+        {
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -560,60 +660,6 @@ void Game::UnitTests()
 {
     bool success = true;
     OutputDebugStringA("*********** UINT TESTS BEGIN ***************\n");
-
-    if (!TestVertexType<VertexPosition>())
-    {
-        OutputDebugStringA("ERROR: Failed VertexPosition tests\n");
-        success = false;
-    }
-
-    if (!TestVertexType<VertexPositionColor>())
-    {
-        OutputDebugStringA("ERROR: Failed VertexPositionColor tests\n");
-        success = false;
-    }
-
-    if (!TestVertexType<VertexPositionTexture>())
-    {
-        OutputDebugStringA("ERROR: Failed VertexPositionTexture tests\n");
-        success = false;
-    }
-
-    if (!TestVertexType<VertexPositionDualTexture>())
-    {
-        OutputDebugStringA("ERROR: Failed VertexPositionDualTexture tests\n");
-        success = false;
-    }
-
-    if (!TestVertexType<VertexPositionNormal>())
-    {
-        OutputDebugStringA("ERROR: Failed VertexPositionNormal tests\n");
-        success = false;
-    }
-
-    if (!TestVertexType<VertexPositionColorTexture>())
-    {
-        OutputDebugStringA("ERROR: Failed VertexPositionColorTexture tests\n");
-        success = false;
-    }
-
-    if (!TestVertexType<VertexPositionNormalColor>())
-    {
-        OutputDebugStringA("ERROR: Failed VertexPositionNormalColor tests\n");
-        success = false;
-    }
-
-    if (!TestVertexType<VertexPositionNormalTexture>())
-    {
-        OutputDebugStringA("ERROR: Failed VertexPositionNormalTexture tests\n");
-        success = false;
-    }
-
-    if (!TestVertexType<VertexPositionNormalColorTexture>())
-    {
-        OutputDebugStringA("ERROR: Failed VertexPositionNormalColorTexture tests\n");
-        success = false;
-    }
 
     std::random_device rd;
     std::default_random_engine generator(rd());
@@ -818,6 +864,136 @@ void Game::UnitTests()
     auto uploadResourcesFinished = resourceUpload.End(m_deviceResources->GetCommandQueue());
     uploadResourcesFinished.wait();
 
+    // CommonStates.h
+    {
+        const RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(),
+            m_deviceResources->GetDepthBufferFormat());
+
+        if (!TestBlendState(CommonStates::Opaque, rtState, device)
+            || !TestBlendState(CommonStates::AlphaBlend, rtState, device)
+            || !TestBlendState(CommonStates::Additive, rtState, device)
+            || !TestBlendState(CommonStates::NonPremultiplied, rtState, device))
+        {
+            OutputDebugStringA("ERROR: Failed CommonStates blend state tests\n");
+            success = false;
+        }
+
+        if (!TestDepthStencilState(CommonStates::DepthNone, rtState, device)
+            || !TestDepthStencilState(CommonStates::DepthDefault, rtState, device)
+            || !TestDepthStencilState(CommonStates::DepthRead, rtState, device)
+            || !TestDepthStencilState(CommonStates::DepthReverseZ, rtState, device)
+            || !TestDepthStencilState(CommonStates::DepthReadReverseZ, rtState, device))
+        {
+            OutputDebugStringA("ERROR: Failed CommonStates depth/stencil state tests\n");
+            success = false;
+        }
+
+        if (!TestRasterizerState(CommonStates::CullNone, rtState, device)
+            || !TestRasterizerState(CommonStates::CullClockwise, rtState, device)
+            || !TestRasterizerState(CommonStates::CullCounterClockwise, rtState, device)
+            || !TestRasterizerState(CommonStates::Wireframe, rtState, device))
+        {
+            OutputDebugStringA("ERROR: Failed CommonStates rasterizer state tests\n");
+            success = false;
+        }
+
+        {
+            auto desc1 = CommonStates::StaticPointWrap(2);
+            auto desc2 = CommonStates::StaticPointClamp(3);
+            auto desc3 = CommonStates::StaticLinearWrap(1);
+            auto desc4 = CommonStates::StaticLinearClamp(8);
+            auto desc5 = CommonStates::StaticAnisotropicWrap(4);
+            auto desc6 = CommonStates::StaticAnisotropicClamp(6);
+            if (desc1.ShaderRegister != 2
+                || desc2.ShaderRegister != 3
+                || desc3.ShaderRegister != 1
+                || desc4.ShaderRegister != 8
+                || desc5.ShaderRegister != 4
+                || desc6.ShaderRegister != 6)
+            {
+                OutputDebugStringA("ERROR: Failed CommonStates static sampler state tests\n");
+                    success = false;
+            }
+        }
+
+        if (m_states->Heap() == nullptr
+            || m_states->PointWrap().ptr == 0
+            || m_states->PointClamp().ptr == 0
+            || m_states->LinearWrap().ptr == 0
+            || m_states->LinearClamp().ptr == 0
+            || m_states->AnisotropicWrap().ptr == 0
+            || m_states->AnisotropicClamp().ptr == 0)
+        {
+            OutputDebugStringA("ERROR: Failed CommonStates heap sampler state tests\n");
+            success = false;
+        }
+    }
+
+    // VertexTypes.h
+    {
+        const RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(),
+            m_deviceResources->GetDepthBufferFormat());
+
+        if (!TestVertexType<VertexPosition>(rtState, device))
+        {
+            OutputDebugStringA("ERROR: Failed VertexPosition tests\n");
+            success = false;
+        }
+
+        if (!TestVertexType<VertexPositionColor>(rtState, device))
+        {
+            OutputDebugStringA("ERROR: Failed VertexPositionColor tests\n");
+            success = false;
+        }
+
+        if (!TestVertexType<VertexPositionTexture>(rtState, device))
+        {
+            OutputDebugStringA("ERROR: Failed VertexPositionTexture tests\n");
+            success = false;
+        }
+
+        if (!TestVertexType<VertexPositionDualTexture>(rtState, device))
+        {
+            OutputDebugStringA("ERROR: Failed VertexPositionDualTexture tests\n");
+            success = false;
+        }
+
+        if (!TestVertexType<VertexPositionNormal>(rtState, device))
+        {
+            OutputDebugStringA("ERROR: Failed VertexPositionNormal tests\n");
+            success = false;
+        }
+
+        if (!TestVertexType<VertexPositionColorTexture>(rtState, device))
+        {
+            OutputDebugStringA("ERROR: Failed VertexPositionColorTexture tests\n");
+            success = false;
+        }
+
+        if (!TestVertexType<VertexPositionNormalColor>(rtState, device))
+        {
+            OutputDebugStringA("ERROR: Failed VertexPositionNormalColor tests\n");
+            success = false;
+        }
+
+        if (!TestVertexType<VertexPositionNormalTexture>(rtState, device))
+        {
+            OutputDebugStringA("ERROR: Failed VertexPositionNormalTexture tests\n");
+            success = false;
+        }
+
+        if (!TestVertexType<VertexPositionNormalColorTexture>(rtState, device))
+        {
+            OutputDebugStringA("ERROR: Failed VertexPositionNormalColorTexture tests\n");
+            success = false;
+        }
+    }
+
     OutputDebugStringA(success ? "Passed\n" : "Failed\n");
     OutputDebugStringA("***********  UNIT TESTS END  ***************\n");
+
+    if (!success)
+    {
+        throw std::runtime_error("Unit Tests Failed");
+    }
 }

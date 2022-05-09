@@ -103,6 +103,7 @@ private:
     std::unique_ptr<DirectX::BasicEffect>                                   m_effectLine;
     std::unique_ptr<DirectX::BasicEffect>                                   m_effectTri;
     std::unique_ptr<DirectX::PrimitiveBatch<DirectX::VertexPositionColor>>  m_batch;
+    std::unique_ptr<DirectX::CommonStates>                                  m_states;
 
     Microsoft::WRL::ComPtr<ID3D12Resource>  m_test1;
     Microsoft::WRL::ComPtr<ID3D12Resource>  m_test2;
