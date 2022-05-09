@@ -38,6 +38,16 @@ using namespace DirectX::SimpleMath;
 
 using Microsoft::WRL::ComPtr;
 
+//--------------------------------------------------------------------------------------
+
+static_assert(std::is_nothrow_move_constructible<DescriptorHeap>::value, "Move Ctor.");
+static_assert(std::is_nothrow_move_assignable<DescriptorHeap>::value, "Move Assign.");
+
+static_assert(std::is_nothrow_move_constructible<DescriptorPile>::value, "Move Ctor.");
+static_assert(std::is_nothrow_move_assignable<DescriptorPile>::value, "Move Assign.");
+
+//--------------------------------------------------------------------------------------
+
 // Constructor.
 Game::Game() noexcept(false) :
     m_frame(0),
@@ -603,6 +613,12 @@ void Game::CreateDeviceDependentResources()
 
         // View textures
         OutputDebugStringA("*********** UINT TESTS BEGIN ***************\n");
+
+        // DescriptorHeap.h
+        // TODO - ctor from existing
+        // TODO - ctor from DESC
+        // TODO - DefaultDesc
+        // TODO - WriteDescriptors x3
 
         m_resourceDescriptors = std::make_unique<DescriptorHeap>(device,
             Descriptors::Count);
@@ -1779,4 +1795,9 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
 
     OutputDebugStringA(success ? "Passed\n" : "Failed\n");
     OutputDebugStringA("***********  UNIT TESTS END  ***************\n");
+
+    if (!success)
+    {
+        throw std::runtime_error("Unit Tests Failed");
+    }
 }

@@ -92,12 +92,6 @@ static_assert(std::is_move_assignable<VertexPositionNormalColorTexture>::value, 
 static_assert(std::is_nothrow_move_constructible<CommonStates>::value, "Move Ctor.");
 static_assert(std::is_nothrow_move_assignable<CommonStates>::value, "Move Assign.");
 
-static_assert(std::is_nothrow_move_constructible<DescriptorHeap>::value, "Move Ctor.");
-static_assert(std::is_nothrow_move_assignable<DescriptorHeap>::value, "Move Assign.");
-
-static_assert(std::is_nothrow_move_constructible<DescriptorPile>::value, "Move Ctor.");
-static_assert(std::is_nothrow_move_assignable<DescriptorPile>::value, "Move Assign.");
-
 static_assert(std::is_nothrow_move_constructible<GraphicsMemory>::value, "Move Ctor.");
 static_assert(std::is_nothrow_move_assignable<GraphicsMemory>::value, "Move Assign.");
 
