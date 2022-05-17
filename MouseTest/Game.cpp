@@ -124,6 +124,14 @@ void Game::Initialize(
     m_mouse->SetMode(Mouse::MODE_RELATIVE);
 #endif
 
+#ifdef USING_COREWINDOW
+    OutputDebugStringA("INFO: Using CoreWindow\n");
+#elif defined(USING_GAMEINPUT)
+    OutputDebugStringA("INFO: Using GameInput\n");
+#else
+    OutputDebugStringA("INFO: Using Win32 messages\n");
+#endif
+
     // Singleton test
     {
         bool thrown = false;

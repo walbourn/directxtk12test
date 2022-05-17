@@ -20,6 +20,8 @@
 #include <GameInput.h>
 #elif defined(USING_WINDOWS_GAMING_INPUT)
 #include <Windows.UI.Core.h>
+#else
+#include <xinput.h>
 #endif
 
 extern void ExitGame() noexcept;
@@ -130,24 +132,36 @@ void Game::Initialize(
 
 #ifdef USING_GAMEINPUT
 
+    OutputDebugStringA("INFO: Using GameInput\n");
+
     m_ctrlChanged.Attach(CreateEvent(nullptr, FALSE, FALSE, nullptr));
     if (!m_ctrlChanged.IsValid())
     {
-        throw std::system_error(std::error_code(static_cast<int>(GetLastError()), std::system_category()), "CreateEventEx");
+        throw std::system_error(std::error_code(static_cast<int>(GetLastError()), std::system_category()), "CreateEvent");
     }
 
     m_gamePad->RegisterEvents(m_ctrlChanged.Get());
 
 #elif defined(USING_WINDOWS_GAMING_INPUT) || defined(_XBOX_ONE)
 
+#ifdef _XBOX_ONE
+    OutputDebugStringA("INFO: Using Windows::Xbox::Input\n");
+#else
+    OutputDebugStringA("INFO: Using Windows.Gaming.Input\n");
+#endif
+
     m_ctrlChanged.Attach(CreateEvent(nullptr, FALSE, FALSE, nullptr));
     m_userChanged.Attach(CreateEvent(nullptr, FALSE, FALSE, nullptr));
     if (!m_ctrlChanged.IsValid() || !m_userChanged.IsValid())
     {
-        throw std::system_error(std::error_code(static_cast<int>(GetLastError()), std::system_category()), "CreateEventEx");
+        throw std::system_error(std::error_code(static_cast<int>(GetLastError()), std::system_category()), "CreateEvent");
     }
 
     m_gamePad->RegisterEvents(m_ctrlChanged.Get(), m_userChanged.Get());
+
+#else
+
+    OutputDebugStringA("INFO: Using XInput (" XINPUT_DLL_A ")\n");
 
 #endif
 
@@ -221,7 +235,7 @@ void Game::Update(DX::StepTimer const&)
                     char idstr[128] = {};
                     for (size_t l = 0; l < APP_LOCAL_DEVICE_ID_SIZE; ++l)
                     {
-                        sprintf_s(idstr + l * 2, 128 - l*2, "%02x", caps.id.value[l]);
+                        sprintf_s(idstr + l * 2, 128 - l * 2, "%02x", caps.id.value[l]);
                     }
                     char buff[128] = {};
                     sprintf_s(buff, "Player %d -> connected (type %u, %04X/%04X, id %s)\n", j, caps.gamepadType, caps.vid, caps.pid, idstr);
@@ -586,7 +600,7 @@ void Game::Clear()
     // Clear the views.
     auto const rtvDescriptor = m_deviceResources->GetRenderTargetView();
 
-    XMVECTORF32 color;
+    XMVECTORF32 color = {};
 #ifdef GAMMA_CORRECT_RENDERING
     color.v = XMColorSRGBToRGB(Colors::CornflowerBlue);
 #else
