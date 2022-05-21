@@ -742,7 +742,8 @@ void Game::CreateWindowSizeDependentResources()
     auto const viewPort = m_deviceResources->GetScreenViewport();
     m_spriteBatch->SetViewport(viewPort);
 
-#ifdef XBOX
+#ifdef COMBO_GDK
+#elif defined(XBOX)
     unsigned int resflags = DX::DeviceResources::c_Enable4K_UHD;
 #if _GAMING_XBOX
     resflags |= DX::DeviceResources::c_EnableQHD;
