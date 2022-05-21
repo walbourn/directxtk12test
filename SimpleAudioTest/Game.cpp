@@ -207,15 +207,17 @@ Game::Game() noexcept(false) :
 #ifdef XBOX
     m_deviceResources = std::make_unique<DX::DeviceResources>(
         c_RenderFormat, DXGI_FORMAT_UNKNOWN, 2,
-        DX::DeviceResources::c_Enable4K_UHD
 #ifdef _GAMING_XBOX
-        | DX::DeviceResources::c_EnableQHD
+        DX::DeviceResources::c_EnableQHD
+#else
+        DX::DeviceResources::c_Enable4K_UHD
 #endif
         );
 #elif defined(UWP)
     m_deviceResources = std::make_unique<DX::DeviceResources>(
         c_RenderFormat, DXGI_FORMAT_UNKNOWN, 2, D3D_FEATURE_LEVEL_11_0,
-        DX::DeviceResources::c_Enable4K_Xbox);
+        DX::DeviceResources::c_EnableQHD_Xbox
+        );
 #else
     m_deviceResources = std::make_unique<DX::DeviceResources>(c_RenderFormat, DXGI_FORMAT_UNKNOWN);
 #endif

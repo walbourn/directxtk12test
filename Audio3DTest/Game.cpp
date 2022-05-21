@@ -80,9 +80,26 @@ Game::Game() noexcept(false) :
     m_deviceStr{}
 {
 #ifdef GAMMA_CORRECT_RENDERING
-    m_deviceResources = std::make_unique<DX::DeviceResources>(DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
+    constexpr DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
 #else
-    m_deviceResources = std::make_unique<DX::DeviceResources>();
+    constexpr DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
+#endif
+
+#ifdef XBOX
+    m_deviceResources = std::make_unique<DX::DeviceResources>(
+        c_RenderFormat, DXGI_FORMAT_D32_FLOAT, 2,
+        DX::DeviceResources::c_Enable4K_UHD
+    #ifdef _GAMING_XBOX
+        | DX::DeviceResources::c_EnableQHD
+    #endif
+        );
+#elif defined(UWP)
+    m_deviceResources = std::make_unique<DX::DeviceResources>(
+        c_RenderFormat, DXGI_FORMAT_D32_FLOAT, 2, D3D_FEATURE_LEVEL_11_0,
+        DX::DeviceResources::c_Enable4K_Xbox | DX::DeviceResources::c_EnableQHD_Xbox
+        );
+#else
+    m_deviceResources = std::make_unique<DX::DeviceResources>(c_RenderFormat);
 #endif
 
 #ifdef LOSTDEVICE

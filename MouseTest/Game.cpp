@@ -66,7 +66,8 @@ Game::Game() noexcept(false) :
 #elif defined(UWP)
     m_deviceResources = std::make_unique<DX::DeviceResources>(
         c_RenderFormat, DXGI_FORMAT_D24_UNORM_S8_UINT, 2, D3D_FEATURE_LEVEL_11_0,
-        DX::DeviceResources::c_Enable4K_Xbox);
+        DX::DeviceResources::c_Enable4K_Xbox | DX::DeviceResources::c_EnableQHD_Xbox
+        );
 #else
     m_deviceResources = std::make_unique<DX::DeviceResources>(c_RenderFormat);
 #endif
@@ -571,12 +572,16 @@ void Game::CreateWindowSizeDependentResources()
 #if defined(_XBOX_ONE) && defined(_TITLE)
     if (m_deviceResources->GetDeviceOptions() & DX::DeviceResources::c_Enable4K_UHD)
     {
-        Mouse::SetDpi(192.);
+        Mouse::SetDpi(192.f);
     }
 #elif defined(UWP)
     if (m_deviceResources->GetDeviceOptions() & DX::DeviceResources::c_Enable4K_Xbox)
     {
-        Mouse::SetDpi(192.);
+        Mouse::SetDpi(192.f);
+    }
+    else if (m_deviceResources->GetDeviceOptions() & DX::DeviceResources::c_EnableQHD_Xbox)
+    {
+        Mouse::SetDpi(128.f);
     }
 #endif
 
@@ -588,8 +593,27 @@ void Game::CreateWindowSizeDependentResources()
     auto const viewPort = m_deviceResources->GetScreenViewport();
     m_spriteBatch->SetViewport(viewPort);
 
-#ifdef UWP
-    m_spriteBatch->SetRotation(m_deviceResources->GetRotation());
+#ifdef XBOX
+    unsigned int resflags = DX::DeviceResources::c_Enable4K_UHD;
+#if _GAMING_XBOX
+    resflags |= DX::DeviceResources::c_EnableQHD;
+#endif
+    if (m_deviceResources->GetDeviceOptions() & resflags)
+    {
+        // Scale sprite batch rendering when running >1080p
+        static const D3D12_VIEWPORT s_vp1080 = { 0.f, 0.f, 1920.f, 1080.f, D3D12_MIN_DEPTH, D3D12_MAX_DEPTH };
+        m_spriteBatch->SetViewport(s_vp1080);
+    }
+#elif defined(UWP)
+    if (m_deviceResources->GetDeviceOptions() & (DX::DeviceResources::c_Enable4K_Xbox | DX::DeviceResources::c_EnableQHD_Xbox))
+    {
+        // Scale sprite batch rendering when running 4k or 1440p
+        static const D3D12_VIEWPORT s_vp1080 = { 0.f, 0.f, 1920.f, 1080.f, D3D12_MIN_DEPTH, D3D12_MAX_DEPTH };
+        m_spriteBatch->SetViewport(s_vp1080);
+    }
+
+    auto rotation = m_deviceResources->GetRotation();
+    m_spriteBatch->SetRotation(rotation);
 #endif
 }
 
