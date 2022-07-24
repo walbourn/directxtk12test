@@ -351,6 +351,10 @@ void DeviceResources::CreateDeviceResources()
 #if defined(USING_D3D12_AGILITY_SDK) || (defined(NTDDI_WIN10_FE) && (NTDDI_VERSION >= NTDDI_WIN10_FE))
     case D3D_SHADER_MODEL_6_7: shaderModelVer = "6.7"; break;
 #endif
+
+#if defined(USING_D3D12_AGILITY_SDK) || (defined(NTDDI_WIN10_CU) && (NTDDI_VERSION >= NTDDI_WIN10_CU))
+    case D3D_SHADER_MODEL_6_8: shaderModelVer = "6.8"; break;
+#endif
     }
 
     char buff[128] = {};
