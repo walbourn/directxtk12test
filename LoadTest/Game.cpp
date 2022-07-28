@@ -989,6 +989,7 @@ void Game::OnDeviceLost()
     m_test33.Reset();
     m_test34.Reset();
     m_test35.Reset();
+    m_test36.Reset();
 
     m_testA.Reset();
     m_testB.Reset();
@@ -1294,6 +1295,21 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     // DX12 version doesn't support auto-gen mips for 1D, 1D arrays, 2D arrays, or 3D. They throw an exception instead of being ignored like on DX11
 
     // sRGB test
+    DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, L"io_R8G8B8A8_UNORM_SRGB_SRV_DIMENSION_TEXTURE1D_MipOff.dds",
+        0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_IGNORE_SRGB, m_test36.ReleaseAndGetAddressOf()));
+
+    {
+        auto const desc = m_test36->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE1D
+            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
+            || desc.Width != 32
+            || desc.MipLevels != 1)
+        {
+            OutputDebugStringA("FAILED: io_R8G8B8A8_UNORM_SRGB_SRV_DIMENSION_TEXTURE1D_MipOff.dds desc unexpected for IGNORE_SRGB\n");
+            success = false;
+        }
+    }
+
     DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"cup_small.jpg", m_test9.ReleaseAndGetAddressOf(), false));
 
     {
