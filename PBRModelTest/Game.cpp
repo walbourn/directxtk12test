@@ -134,6 +134,10 @@ void Game::Initialize(
 // Executes the basic game loop.
 void Game::Tick()
 {
+#ifdef _GAMING_XBOX
+    m_deviceResources->WaitForOrigin();
+#endif
+
     m_timer.Tick([&]()
     {
         Update(m_timer);
