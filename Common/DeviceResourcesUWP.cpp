@@ -12,9 +12,6 @@ using Microsoft::WRL::ComPtr;
 
 #include "Gamingdeviceinformation.h"
 
-#include <libloaderapi2.h>
-extern "C" IMAGE_DOS_HEADER __ImageBase;
-
 #ifdef __clang__
 #pragma clang diagnostic ignored "-Wcovered-switch-default"
 #pragma clang diagnostic ignored "-Wswitch-enum"
@@ -117,78 +114,68 @@ DeviceResources::DeviceResources(
         throw std::out_of_range("minFeatureLevel too low");
     }
 
-    if (QueryOptionalDelayLoadedAPI(reinterpret_cast<HMODULE>(&__ImageBase),
-        "api-ms-win-gaming-deviceinformation-l1-1-0.dll",
-        "GetGamingDeviceModelInformation",
-        0))
+    GAMING_DEVICE_MODEL_INFORMATION info = {};
+    GetGamingDeviceModelInformation(&info);
+
+    if (info.vendorId == GAMING_DEVICE_VENDOR_ID_MICROSOFT)
     {
-        GAMING_DEVICE_MODEL_INFORMATION info = {};
-        GetGamingDeviceModelInformation(&info);
+    #ifndef NTDDI_WIN10_NI
+    #pragma warning(disable : 4063)
+    #define GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_S static_cast<GAMING_DEVICE_DEVICE_ID>(0x1D27FABB)
+    #define GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X static_cast<GAMING_DEVICE_DEVICE_ID>(0x2F7A3DFF)
+    #define GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X_DEVKIT static_cast<GAMING_DEVICE_DEVICE_ID>(0xDE8A5661)
+    #endif
 
-        if (info.vendorId == GAMING_DEVICE_VENDOR_ID_MICROSOFT)
+    #ifdef _DEBUG
+        switch (info.deviceId)
         {
-        #ifndef NTDDI_WIN10_NI
-        #pragma warning(disable : 4063)
-        #define GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_S static_cast<GAMING_DEVICE_DEVICE_ID>(0x1D27FABB)
-        #define GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X static_cast<GAMING_DEVICE_DEVICE_ID>(0x2F7A3DFF)
-        #define GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X_DEVKIT static_cast<GAMING_DEVICE_DEVICE_ID>(0xDE8A5661)
-        #endif
+        case GAMING_DEVICE_DEVICE_ID_XBOX_ONE: OutputDebugStringA("INFO: Running on Xbox One\n"); break;
+        case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_S: OutputDebugStringA("INFO: Running on Xbox One S\n"); break;
+        case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X: OutputDebugStringA("INFO: Running on Xbox One X\n"); break;
+        case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X_DEVKIT: OutputDebugStringA("INFO: Running on Xbox One X (DevKit)\n"); break;
+        case GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_S: OutputDebugStringA("INFO: Running on Xbox Series S\n"); break;
+        case GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X: OutputDebugStringA("INFO: Running on Xbox Series X\n"); break;
+        case GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X_DEVKIT: OutputDebugStringA("INFO: Running on Xbox Series X|S (DevKit)\n"); break;
+        default: OutputDebugStringA("INFO: Unknown Microsoft gaming device\n"); break;
+        }
+    #endif
 
-        #ifdef _DEBUG
-            switch (info.deviceId)
-            {
-            case GAMING_DEVICE_DEVICE_ID_XBOX_ONE: OutputDebugStringA("INFO: Running on Xbox One\n"); break;
-            case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_S: OutputDebugStringA("INFO: Running on Xbox One S\n"); break;
-            case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X: OutputDebugStringA("INFO: Running on Xbox One X\n"); break;
-            case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X_DEVKIT: OutputDebugStringA("INFO: Running on Xbox One X (DevKit)\n"); break;
-            case GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_S: OutputDebugStringA("INFO: Running on Xbox Series S\n"); break;
-            case GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X: OutputDebugStringA("INFO: Running on Xbox Series X\n"); break;
-            case GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X_DEVKIT: OutputDebugStringA("INFO: Running on Xbox Series X|S (DevKit)\n"); break;
-            default: OutputDebugStringA("INFO: Unknown Microsoft gaming device\n"); break;
-            }
-        #endif
+        switch (info.deviceId)
+        {
+        case GAMING_DEVICE_DEVICE_ID_XBOX_ONE:
+        case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_S:
+            m_options &= ~(c_Enable4K_Xbox | c_EnableQHD_Xbox);
+            break;
 
-            switch (info.deviceId)
-            {
-            case GAMING_DEVICE_DEVICE_ID_XBOX_ONE:
-            case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_S:
-                m_options &= ~(c_Enable4K_Xbox | c_EnableQHD_Xbox);
-                break;
+        case GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_S:
+            m_options &= ~c_Enable4K_Xbox;
+            break;
 
-            case GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_S:
-                m_options &= ~c_Enable4K_Xbox;
-                break;
+        case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X:
+        case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X_DEVKIT:
+        case GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X:
+        case GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X_DEVKIT:
+            break;
 
-            case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X:
-            case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X_DEVKIT:
-            case GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X:
-            case GAMING_DEVICE_DEVICE_ID_XBOX_SERIES_X_DEVKIT:
-                break;
+        default:
+            m_options &= ~(c_Enable4K_Xbox | c_EnableQHD_Xbox);
+            break;
+        }
 
-            default:
-                m_options &= ~(c_Enable4K_Xbox | c_EnableQHD_Xbox);
-                break;
-            }
-
-        #ifdef _DEBUG
-            if (m_options & c_Enable4K_Xbox)
-            {
-                OutputDebugStringA("INFO: Swapchain using 4k (3840 x 2160) on Xbox\n");
-            }
-            else if (m_options & c_EnableQHD_Xbox)
-            {
-                OutputDebugStringA("INFO: Swapchain using 1440p (2560 x 1440) on Xbox\n");
-            }
-            else
-            {
-                OutputDebugStringA("INFO: Swapchain using 1080p (1920 x 1080) on Xbox\n");
-            }
-        #endif
+    #ifdef _DEBUG
+        if (m_options & c_Enable4K_Xbox)
+        {
+            OutputDebugStringA("INFO: Swapchain using 4k (3840 x 2160) on Xbox\n");
+        }
+        else if (m_options & c_EnableQHD_Xbox)
+        {
+            OutputDebugStringA("INFO: Swapchain using 1440p (2560 x 1440) on Xbox\n");
         }
         else
         {
-            m_options &= ~(c_Enable4K_Xbox | c_EnableQHD_Xbox);
+            OutputDebugStringA("INFO: Swapchain using 1080p (1920 x 1080) on Xbox\n");
         }
+    #endif
     }
     else
     {
@@ -607,7 +594,7 @@ void DeviceResources::CreateWindowSizeDependentResources()
 
         D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
         depthOptimizedClearValue.Format = m_depthBufferFormat;
-        depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
+        depthOptimizedClearValue.DepthStencil.Depth = (m_options & c_ReverseDepth) ? 0.0f : 1.0f;
         depthOptimizedClearValue.DepthStencil.Stencil = 0;
 
         ThrowIfFailed(m_d3dDevice->CreateCommittedResource(
@@ -917,7 +904,7 @@ void DeviceResources::GetAdapter(IDXGIAdapter1** ppAdapter)
             }
 
             // Check to see if the adapter supports Direct3D 12, but don't create the actual device yet.
-            if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), m_d3dMinFeatureLevel, _uuidof(ID3D12Device), nullptr)))
+            if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), m_d3dMinFeatureLevel, __uuidof(ID3D12Device), nullptr)))
             {
 #ifdef _DEBUG
                 wchar_t buff[256] = {};
@@ -948,7 +935,7 @@ void DeviceResources::GetAdapter(IDXGIAdapter1** ppAdapter)
             }
 
             // Check to see if the adapter supports Direct3D 12, but don't create the actual device yet.
-            if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), m_d3dMinFeatureLevel, _uuidof(ID3D12Device), nullptr)))
+            if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), m_d3dMinFeatureLevel, __uuidof(ID3D12Device), nullptr)))
             {
 #ifdef _DEBUG
                 wchar_t buff[256] = {};
