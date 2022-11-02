@@ -54,9 +54,14 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
+#ifdef USING_WINDOWS_GAMING_INPUT
     Microsoft::WRL::Wrappers::RoInitializeWrapper initialize(RO_INIT_MULTITHREADED);
     if (FAILED(initialize))
         return 1;
+#else
+    if (FAILED(CoInitializeEx(nullptr, COINITBASE_MULTITHREADED)))
+        return 1;
+#endif
 
     ParseCommandLine(lpCmdLine);
 
@@ -132,7 +137,9 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     UnregisterDeviceNotification(g_hNewAudio);
 #endif
 
+#ifndef USING_WINDOWS_GAMING_INPUT
     CoUninitialize();
+#endif
 
     return static_cast<int>(msg.wParam);
 }
