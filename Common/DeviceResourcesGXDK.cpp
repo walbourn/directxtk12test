@@ -83,6 +83,14 @@ void DeviceResources::CreateDeviceResources()
     params.ComputeScratchMemorySizeBytes = static_cast<UINT>(D3D12XBOX_DEFAULT_SIZE_BYTES);
 #ifdef _GAMING_XBOX_SCARLETT
     params.CreateDeviceFlags = createDeviceFlags;
+
+#if (_GXDK_VER >= 0x585D070E /* GXDK Edition 221000 */)
+    if (m_options & c_AmplificationShaders)
+    {
+        params.AmplificationShaderIndirectArgsBufferSize = static_cast<UINT>(D3D12XBOX_DEFAULT_SIZE_BYTES);
+        params.AmplificationShaderPayloadBufferSize = static_cast<UINT>(D3D12XBOX_DEFAULT_SIZE_BYTES);
+    }
+#endif
 #endif
 
     HRESULT hr = D3D12XboxCreateDevice(
@@ -290,7 +298,7 @@ void DeviceResources::CreateWindowSizeDependentResources()
             rtvDesc.Format = m_gameDVRFormat;
             rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 
-            CD3DX12_CPU_DESCRIPTOR_HANDLE rtvDescriptorGameDVR(
+            const CD3DX12_CPU_DESCRIPTOR_HANDLE rtvDescriptorGameDVR(
                 m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
                 static_cast<INT>(m_backBufferCount + n), m_rtvDescriptorSize);
             m_d3dDevice->CreateRenderTargetView(m_renderTargetsGameDVR[n].Get(), &rtvDesc, rtvDescriptorGameDVR);
