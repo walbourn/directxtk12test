@@ -47,9 +47,9 @@ public:
     virtual void OnDeviceRestored() override;
 
     // Messages
-    void OnActivated();
-    void OnDeactivated();
-    void OnSuspending();
+    void OnActivated() {}
+    void OnDeactivated() {}
+    void OnSuspending() {}
     void OnResuming();
 
 #if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) 

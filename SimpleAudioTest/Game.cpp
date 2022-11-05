@@ -906,10 +906,8 @@ void Game::AudioRender()
 // Message handlers
 void Game::OnActivated()
 {
-}
-
-void Game::OnDeactivated()
-{
+    m_gamepadButtons.Reset();
+    m_keyboardButtons.Reset();
 }
 
 void Game::OnSuspending()

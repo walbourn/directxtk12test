@@ -842,10 +842,6 @@ void Game::OnActivated()
     m_keyboardButtons.Reset();
 }
 
-void Game::OnDeactivated()
-{
-}
-
 void Game::OnSuspending()
 {
     m_deviceResources->Suspend();

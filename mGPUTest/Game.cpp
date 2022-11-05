@@ -248,18 +248,6 @@ void Game::Clear()
 
 #pragma region Message Handlers
 // Message handlers
-void Game::OnActivated()
-{
-}
-
-void Game::OnDeactivated()
-{
-}
-
-void Game::OnSuspending()
-{
-}
-
 void Game::OnResuming()
 {
     m_timer.ResetElapsedTime();
