@@ -619,6 +619,10 @@ void Game::CreateDeviceDependentResources()
         m_resourceDescriptors = std::make_unique<DescriptorHeap>(device,
             Descriptors::Count);
 
+        m_renderDescriptors = std::make_unique<DescriptorHeap>(device,
+            D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+            RTDescriptors::RTCount);
+
         // Earth
 #ifndef USE_COPY_QUEUE
         DDS_ALPHA_MODE alphaMode = DDS_ALPHA_MODE_UNKNOWN;
@@ -986,6 +990,8 @@ void Game::OnDeviceLost()
     m_test34.Reset();
     m_test35.Reset();
     m_test36.Reset();
+    m_test37.Reset();
+    m_test38.Reset();
 
     m_testA.Reset();
     m_testB.Reset();
@@ -1002,6 +1008,7 @@ void Game::OnDeviceLost()
     m_cube.reset();
     m_effect.reset();
     m_resourceDescriptors.reset();
+    m_renderDescriptors.reset();
     m_states.reset();
     m_graphicsMemory.reset();
 
@@ -1804,6 +1811,48 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             success = false;
         }
     }
+
+    // UAV
+    DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"win95.bmp", 0,
+        D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+        WIC_LOADER_DEFAULT, m_test37.ReleaseAndGetAddressOf()));
+
+    {
+        auto const desc = m_test37->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
+            || desc.Width != 256
+            || desc.Height != 256
+            || desc.MipLevels != 1
+            || (desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) == 0)
+        {
+            OutputDebugStringA("FAILED: win95.bmp (UAV) desc unexpected\n");
+            success = false;
+        }
+    }
+
+    CreateUnorderedAccessView(device, m_test37.Get(), m_resourceDescriptors->GetCpuHandle(Win95_UAV));
+
+    // RTV
+    DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"win95.bmp", 0,
+        D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET,
+        WIC_LOADER_DEFAULT, m_test38.ReleaseAndGetAddressOf()));
+
+    {
+        auto const desc = m_test38->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
+            || desc.Width != 256
+            || desc.Height != 256
+            || desc.MipLevels != 1
+            || (desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) == 0)
+        {
+            OutputDebugStringA("FAILED: win95.bmp (RTV) desc unexpected\n");
+            success = false;
+        }
+    }
+
+    CreateRenderTargetView(device, m_test38.Get(), m_renderDescriptors->GetCpuHandle(Win95_RTV));
 
     OutputDebugStringA(success ? "Passed\n" : "Failed\n");
     OutputDebugStringA("***********  UNIT TESTS END  ***************\n");

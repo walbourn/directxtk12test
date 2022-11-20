@@ -104,6 +104,7 @@ private:
     std::unique_ptr<DirectX::BasicEffect>                                   m_effectTri;
     std::unique_ptr<DirectX::PrimitiveBatch<DirectX::VertexPositionColor>>  m_batch;
     std::unique_ptr<DirectX::CommonStates>                                  m_states;
+    std::unique_ptr<DirectX::DescriptorHeap>                                m_resourceDescriptors;
 
     Microsoft::WRL::ComPtr<ID3D12Resource>  m_test1;
     Microsoft::WRL::ComPtr<ID3D12Resource>  m_test2;

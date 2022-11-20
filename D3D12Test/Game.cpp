@@ -470,6 +470,8 @@ void Game::CreateDeviceDependentResources()
     }
 
     m_states = std::make_unique<CommonStates>(device);
+
+    m_resourceDescriptors = std::make_unique<DescriptorHeap>(device, 2);
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
@@ -492,6 +494,7 @@ void Game::OnDeviceLost()
     m_effectPoint.reset();
     m_effectLine.reset();
     m_states.reset();
+    m_resourceDescriptors.reset();
     m_graphicsMemory.reset();
 }
 
@@ -649,7 +652,7 @@ inline bool TestVertexType(const RenderTargetState& rtState, _In_ ID3D12Device* 
 void Game::UnitTests()
 {
     bool success = true;
-    OutputDebugStringA("*********** UINT TESTS BEGIN ***************\n");
+    OutputDebugStringA("*********** UNIT TESTS BEGIN ***************\n");
 
     std::random_device rd;
     std::default_random_engine generator(rd());
@@ -820,6 +823,10 @@ void Game::UnitTests()
             success = false;
         }
 
+        CreateBufferShaderResourceView(device, m_test1.Get(),
+            m_resourceDescriptors->GetFirstCpuHandle(),
+            sizeof(float));
+
         if (FAILED(CreateStaticBuffer(device, resourceUpload,
             s_vertexData, std::size(s_vertexData),
             D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
@@ -840,15 +847,20 @@ void Game::UnitTests()
             success = false;
         }
 
+        // UAV
         if (FAILED(CreateStaticBuffer(device, resourceUpload,
             verts,
             D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
             m_test4.ReleaseAndGetAddressOf(),
             D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS)))
         {
-            OutputDebugStringA("ERROR: Failed CreateStaticBuffer(4) test\n");
+            OutputDebugStringA("ERROR: Failed CreateStaticBuffer(UAV) test\n");
             success = false;
         }
+
+        CreateBufferUnorderedAccessView(device, m_test4.Get(),
+            m_resourceDescriptors->GetCpuHandle(1),
+            sizeof(VertexPositionColor));
     }
 
     auto uploadResourcesFinished = resourceUpload.End(m_deviceResources->GetCommandQueue());

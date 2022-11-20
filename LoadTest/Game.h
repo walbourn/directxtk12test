@@ -101,6 +101,7 @@ private:
     std::unique_ptr<DirectX::GraphicsMemory>        m_graphicsMemory;
     std::unique_ptr<DirectX::CommonStates>          m_states;
     std::unique_ptr<DirectX::DescriptorHeap>        m_resourceDescriptors;
+    std::unique_ptr<DirectX::DescriptorHeap>        m_renderDescriptors;
     std::unique_ptr<DirectX::BasicEffect>           m_effect;
     std::unique_ptr<DirectX::GeometricPrimitive>    m_cube;
 
@@ -147,6 +148,8 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_test34;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_test35;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_test36;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_test37;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_test38;
 
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_testA;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_testB;
@@ -169,7 +172,14 @@ private:
         DirectXLogo_BC1,
         Windows95,
         Windows95_sRGB,
+        Win95_UAV,
         Count
+    };
+
+    enum RTDescriptors
+    {
+        Win95_RTV,
+        RTCount
     };
 
     Microsoft::WRL::ComPtr<ID3D12Resource> m_screenshot;
