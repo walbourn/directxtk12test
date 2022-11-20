@@ -298,7 +298,7 @@ void DeviceResources::CreateDeviceResources()
     case D3D_FEATURE_LEVEL_11_1: featLevel = "11.1"; break;
     case D3D_FEATURE_LEVEL_12_0: featLevel = "12.0"; break;
     case D3D_FEATURE_LEVEL_12_1: featLevel = "12.1"; break;
-#if defined(USING_D3D12_AGILITY_SDK) || (defined(NTDDI_WIN10_FE) && (NTDDI_VERSION >= NTDDI_WIN10_FE))
+#if defined(USING_D3D12_AGILITY_SDK) || defined(NTDDI_WIN10_FE)
     case D3D_FEATURE_LEVEL_12_2: featLevel = "12.2"; break;
 #endif
     default: break;
@@ -317,10 +317,14 @@ void DeviceResources::CreateDeviceResources()
     {
     case D3D_ROOT_SIGNATURE_VERSION_1_0: rootSigVer = "1.0"; break;
     case D3D_ROOT_SIGNATURE_VERSION_1_1: rootSigVer = "1.1"; break;
+#if defined(NTDDI_WIN10_CU) && !defined(USING_D3D12_AGILITY_SDK)
+    // This is not yet in the Agility SDK
+    case D3D_ROOT_SIGNATURE_VERSION_1_2: rootSigVer = "1.2"; break;
+#endif
     }
 
     D3D12_FEATURE_DATA_SHADER_MODEL shaderModel = {};
-#if defined(USING_D3D12_AGILITY_SDK) || (defined(NTDDI_WIN10_FE) && (NTDDI_VERSION >= NTDDI_WIN10_FE))
+#if defined(USING_D3D12_AGILITY_SDK) || defined(NTDDI_WIN10_FE)
     shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_7;
 #else
     shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_6;
@@ -348,11 +352,11 @@ void DeviceResources::CreateDeviceResources()
     case D3D_SHADER_MODEL_6_5: shaderModelVer = "6.5"; break;
     case D3D_SHADER_MODEL_6_6: shaderModelVer = "6.6"; break;
 
-#if defined(USING_D3D12_AGILITY_SDK) || (defined(NTDDI_WIN10_FE) && (NTDDI_VERSION >= NTDDI_WIN10_FE))
+#if defined(USING_D3D12_AGILITY_SDK) || defined(NTDDI_WIN10_FE)
     case D3D_SHADER_MODEL_6_7: shaderModelVer = "6.7"; break;
 #endif
 
-#if defined(USING_D3D12_AGILITY_SDK) || (defined(NTDDI_WIN10_CU) && (NTDDI_VERSION >= NTDDI_WIN10_CU))
+#if defined(USING_D3D12_AGILITY_SDK) || defined(NTDDI_WIN10_CU)
     case D3D_SHADER_MODEL_6_8: shaderModelVer = "6.8"; break;
 #endif
     }
