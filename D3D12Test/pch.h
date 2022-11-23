@@ -95,10 +95,14 @@
 #include <tuple>
 #include <type_traits>
 
+#ifdef USE_LEGACY_PIX_EVENTS
+#include <pix.h>
+#else
 #pragma warning(push)
 #pragma warning(disable : 4100)
 #include <pix3.h>
 #pragma warning(pop)
+#endif
 
 #include "Audio.h"
 #include "BufferHelpers.h"
