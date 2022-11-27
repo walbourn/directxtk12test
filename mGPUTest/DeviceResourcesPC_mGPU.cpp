@@ -591,7 +591,7 @@ void DeviceResources::Present(D3D12_RESOURCE_STATES beforeState)
         ThrowIfFailed(m_pAdaptersD3D[adapterIdx].m_commandList->Close());
         m_pAdaptersD3D[adapterIdx].m_commandQueue->ExecuteCommandLists(1, CommandListCast(m_pAdaptersD3D[adapterIdx].m_commandList.GetAddressOf()));
     }
-    
+
     HRESULT hr;
     if (m_options & c_AllowTearing)
     {
@@ -689,7 +689,7 @@ void DeviceResources::GetAdapter(IDXGIAdapter1* ppAdapters[], unsigned int numAd
     }
 
     unsigned int numFoundAdapters = 0;
-    
+
     if (!s_debugForceWarp)
     {
         ComPtr<IDXGIFactory6> factory6;
@@ -713,7 +713,7 @@ void DeviceResources::GetAdapter(IDXGIAdapter1* ppAdapters[], unsigned int numAd
                 }
 
                 // Check to see if the adapter supports Direct3D 12, but don't create the actual device yet.
-                if (SUCCEEDED(D3D12CreateDevice(ppAdapters[numFoundAdapters], m_d3dMinFeatureLevel, _uuidof(ID3D12Device), nullptr)))
+                if (SUCCEEDED(D3D12CreateDevice(ppAdapters[numFoundAdapters], m_d3dMinFeatureLevel, __uuidof(ID3D12Device), nullptr)))
                 {
                     if (s_debugAdapterOrdinal == -1 || (s_debugAdapterOrdinal == int(adapterIndex)))
                     {
@@ -749,7 +749,7 @@ void DeviceResources::GetAdapter(IDXGIAdapter1* ppAdapters[], unsigned int numAd
                 }
 
                 // Check to see if the adapter supports Direct3D 12, but don't create the actual device yet.
-                if (SUCCEEDED(D3D12CreateDevice(ppAdapters[numFoundAdapters], m_d3dMinFeatureLevel, _uuidof(ID3D12Device), nullptr)))
+                if (SUCCEEDED(D3D12CreateDevice(ppAdapters[numFoundAdapters], m_d3dMinFeatureLevel, __uuidof(ID3D12Device), nullptr)))
                 {
                     if (s_debugAdapterOrdinal == -1 || (s_debugAdapterOrdinal == int(adapterIndex)))
                     {

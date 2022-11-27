@@ -259,7 +259,9 @@ void Game::Render()
 
     // Point
     {
+    #if defined(_PIX_H_) || defined(_PIX3_H_)
         ScopedPixEvent pix(commandList, 0, L"Points");
+    #endif
         m_effectPoint->Apply(commandList);
 
         m_batch->Begin(commandList);
@@ -284,7 +286,9 @@ void Game::Render()
 
     // Lines
     {
+    #if defined(_PIX_H_) || defined(_PIX3_H_)
         ScopedPixEvent pix(commandList, 0, L"Lines");
+    #endif
         m_effectLine->Apply(commandList);
 
         m_batch->Begin(commandList);
@@ -307,7 +311,9 @@ void Game::Render()
 
     // Triangle
     {
+    #if defined(_PIX_H_) || defined(_PIX3_H_)
         ScopedPixEvent pix(commandList, 0, L"Triangles");
+    #endif
         m_effectTri->Apply(commandList);
 
         m_batch->Begin(commandList);
