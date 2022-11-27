@@ -26,6 +26,9 @@
 #pragma warning(pop)
 
 #include <Windows.h>
+#ifdef __MINGW32__
+#include <unknwn.h>
+#endif
 #else // !WIN32
 #include <wsl/winadapter.h>
 #include <wsl/wrladapter.h>
