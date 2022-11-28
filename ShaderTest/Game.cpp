@@ -1615,7 +1615,12 @@ void Game::CreateDeviceDependentResources()
 
         {
             auto radiance = m_resourceDescriptors->GetGpuHandle(Descriptors::RadianceIBL);
+        #ifdef __MINGW32__
+            D3D12_RESOURCE_DESC diffuseDesc;
+            std::ignore = m_radianceIBL->GetDesc(&diffuseDesc);
+        #else
             auto diffuseDesc = m_radianceIBL->GetDesc();
+        #endif
             auto irradiance = m_resourceDescriptors->GetGpuHandle(Descriptors::IrradianceIBL);
 
             std::vector<std::unique_ptr<DirectX::PBREffect>> pbr;
@@ -1705,7 +1710,12 @@ void Game::CreateDeviceDependentResources()
 
         {
             auto radiance = m_resourceDescriptors->GetGpuHandle(Descriptors::RadianceIBL);
+        #ifdef __MINGW32__
+            D3D12_RESOURCE_DESC diffuseDesc;
+            std::ignore = m_radianceIBL->GetDesc(&diffuseDesc);
+        #else
             auto diffuseDesc = m_radianceIBL->GetDesc();
+        #endif
             auto irradiance = m_resourceDescriptors->GetGpuHandle(Descriptors::IrradianceIBL);
 
             std::vector<std::unique_ptr<DirectX::SkinnedPBREffect>> pbr;

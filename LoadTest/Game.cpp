@@ -635,7 +635,12 @@ void Game::CreateDeviceDependentResources()
                 success = false;
             }
 
+        #ifdef __MINGW32__
+            D3D12_RESOURCE_DESC desc;
+            std::ignore = m_earth->GetDesc(&desc);
+        #else
             auto const desc = m_earth->GetDesc();
+        #endif
             if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
                 || desc.Format != DXGI_FORMAT_R10G10B10A2_UNORM
                 || desc.Width != 512
@@ -655,7 +660,12 @@ void Game::CreateDeviceDependentResources()
             D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_MIP_AUTOGEN, m_earth2.ReleaseAndGetAddressOf()));
 
         {
+        #ifdef __MINGW32__
+            D3D12_RESOURCE_DESC desc;
+            std::ignore = m_earth2->GetDesc(&desc);
+        #else
             auto const desc = m_earth2->GetDesc();
+        #endif
             if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
                 || desc.Format != DXGI_FORMAT_R10G10B10A2_UNORM
                 || desc.Width != 512
@@ -682,7 +692,12 @@ void Game::CreateDeviceDependentResources()
         DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen_bgra.dds", m_dxlogo.ReleaseAndGetAddressOf(), true));
 
         {
+        #ifdef __MINGW32__
+            D3D12_RESOURCE_DESC desc;
+            std::ignore = m_dxlogo->GetDesc(&desc);
+        #else
             auto const desc = m_dxlogo->GetDesc();
+        #endif
             if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
                 || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM
                 || desc.Width != 256
@@ -707,7 +722,12 @@ void Game::CreateDeviceDependentResources()
         DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, L"dx5_logo.dds", 0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_FORCE_SRGB, m_dxlogo2.ReleaseAndGetAddressOf()));
 
         {
+        #ifdef __MINGW32__
+            D3D12_RESOURCE_DESC desc;
+            std::ignore = m_dxlogo2->GetDesc(&desc);
+        #else
             auto const desc = m_dxlogo2->GetDesc();
+        #endif
             if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
                 || desc.Format != DXGI_FORMAT_BC1_UNORM_SRGB
                 || desc.Width != 256
@@ -725,7 +745,12 @@ void Game::CreateDeviceDependentResources()
         DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"win95.bmp", m_win95.ReleaseAndGetAddressOf(), true));
 
         {
+        #ifdef __MINGW32__
+            D3D12_RESOURCE_DESC desc;
+            std::ignore = m_win95->GetDesc(&desc);
+        #else
             auto const desc = m_win95->GetDesc();
+        #endif
             if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
                 || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
                 || desc.Width != 256
@@ -751,7 +776,12 @@ void Game::CreateDeviceDependentResources()
             WIC_LOADER_FORCE_SRGB | WIC_LOADER_MIP_AUTOGEN, m_win95_2.ReleaseAndGetAddressOf()));
 
         {
+        #ifdef __MINGW32__
+            D3D12_RESOURCE_DESC desc;
+            std::ignore = m_win95_2->GetDesc(&desc);
+        #else
             auto const desc = m_win95_2->GetDesc();
+        #endif
             if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
                 || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
                 || desc.Width != 256
@@ -804,7 +834,12 @@ void Game::CreateDeviceDependentResources()
                 success = false;
             }
 
+        #ifdef __MINGW32__
+            D3D12_RESOURCE_DESC desc;
+            std::ignore = m_earth->GetDesc(&desc);
+        #else
             auto const desc = m_earth->GetDesc();
+        #endif
             if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
                 || desc.Format != DXGI_FORMAT_R10G10B10A2_UNORM
                 || desc.Width != 512
@@ -821,7 +856,12 @@ void Game::CreateDeviceDependentResources()
         DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"win95.bmp", m_copyTest.ReleaseAndGetAddressOf(), false));
 
         {
+        #ifdef __MINGW32__
+            D3D12_RESOURCE_DESC desc;
+            std::ignore = m_copyTest->GetDesc(&desc);
+        #else
             auto const desc = m_copyTest->GetDesc();
+        #endif
             if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
                 || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
                 || desc.Width != 256
@@ -859,7 +899,12 @@ void Game::CreateDeviceDependentResources()
             D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_MIP_AUTOGEN, m_earth2.ReleaseAndGetAddressOf()));
 
         {
+        #ifdef __MINGW32__
+            D3D12_RESOURCE_DESC desc;
+            std::ignore = m_earth2->GetDesc(&desc);
+        #else
             auto const desc = m_earth2->GetDesc();
+        #endif
             if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
                 || desc.Format != DXGI_FORMAT_R10G10B10A2_UNORM
                 || desc.Width != 512
@@ -884,7 +929,12 @@ void Game::CreateDeviceDependentResources()
         DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"win95.bmp", m_computeTest.ReleaseAndGetAddressOf(), true));
 
         {
+        #ifdef __MINGW32__
+            D3D12_RESOURCE_DESC desc;
+            std::ignore = m_computeTest->GetDesc(&desc);
+        #else
             auto const desc = m_computeTest->GetDesc();
+        #endif
             if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
                 || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
                 || desc.Width != 256
@@ -1039,7 +1089,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         DX::ThrowIfFailed(CreateTextureFromMemory(device, resourceUpload, 4u, DXGI_FORMAT_B8G8R8A8_UNORM, initData,
             m_testA.GetAddressOf()));
 
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_testA->GetDesc(&desc);
+    #else
         auto const desc = m_testA->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE1D
             || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM
             || desc.Width != 4
@@ -1062,7 +1117,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         DX::ThrowIfFailed(CreateTextureFromMemory(device, resourceUpload, 8u, 2u, DXGI_FORMAT_B8G8R8A8_UNORM, initData,
             m_testB.GetAddressOf()));
 
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_testB->GetDesc(&desc);
+    #else
         auto desc = m_testB->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM
             || desc.Width != 8
@@ -1078,7 +1138,11 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         DX::ThrowIfFailed(CreateTextureFromMemory(device, resourceUpload, 4u, 4u, DXGI_FORMAT_R8G8B8A8_UNORM, initData,
             m_testC.ReleaseAndGetAddressOf()));
 
+    #ifdef __MINGW32__
+        std::ignore = m_testC->GetDesc(&desc);
+    #else
         desc = m_testC->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
             || desc.Width != 4
@@ -1100,7 +1164,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         DX::ThrowIfFailed(CreateTextureFromMemory(device, resourceUpload, 256u, 256u, DXGI_FORMAT_R8G8B8A8_UNORM, initData,
             m_testD.GetAddressOf(), true));
 
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_testD->GetDesc(&desc);
+    #else
         auto const desc = m_testD->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
             || desc.Width != 256
@@ -1130,7 +1199,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         DX::ThrowIfFailed(CreateTextureFromMemory(device, resourceUpload, 2u, 2u, 4, DXGI_FORMAT_B8G8R8A8_UNORM, initData,
             m_testE.GetAddressOf()));
 
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_testE->GetDesc(&desc);
+    #else
         auto desc = m_testE->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE3D
             || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM
             || desc.Width != 2
@@ -1147,7 +1221,11 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         DX::ThrowIfFailed(CreateTextureFromMemory(device, resourceUpload, 4u, 2u, 2u, DXGI_FORMAT_R8G8B8A8_UNORM, initData,
             m_testF.ReleaseAndGetAddressOf()));
 
+    #ifdef __MINGW32__
+        std::ignore = m_testF->GetDesc(&desc);
+    #else
         desc = m_testF->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE3D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
             || desc.Width != 4
@@ -1163,7 +1241,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     // DirectX Logo (verify DDS for autogen has no mipmaps)
     DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen_bgra.dds", m_test1.ReleaseAndGetAddressOf(), false));
     {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test1->GetDesc(&desc);
+    #else
         auto const desc = m_test1->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM
             || desc.Width != 256
@@ -1179,7 +1262,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo.dds", m_test2.ReleaseAndGetAddressOf()));
 
     {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test2->GetDesc(&desc);
+    #else
         auto const desc = m_test2->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_BC1_UNORM
             || desc.Width != 256
@@ -1195,7 +1283,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"win95.bmp", m_test3.ReleaseAndGetAddressOf(), false));
 
     {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test3->GetDesc(&desc);
+    #else
         auto const desc = m_test3->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
             || desc.Width != 256
@@ -1218,7 +1311,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             success = false;
         }
 
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test4->GetDesc(&desc);
+    #else
         auto const desc = m_test4->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM
             || desc.Width != 304
@@ -1234,7 +1332,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"io_R8G8B8A8_UNORM_SRGB_SRV_DIMENSION_TEXTURE1D_MipOff.dds", m_test5.ReleaseAndGetAddressOf()));
 
     {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test5->GetDesc(&desc);
+    #else
         auto const desc = m_test5->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE1D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
             || desc.Width != 32
@@ -1249,7 +1352,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"io_R8G8B8A8_UNORM_SRGB_SRV_DIMENSION_TEXTURE1DArray_MipOff.dds", m_test6.ReleaseAndGetAddressOf()));
 
     {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test6->GetDesc(&desc);
+    #else
         auto const desc = m_test6->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE1D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
             || desc.Width != 32
@@ -1265,7 +1373,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"io_R8G8B8A8_UNORM_SRGB_SRV_DIMENSION_TEXTURE2DArray_MipOff.dds", m_test7.ReleaseAndGetAddressOf()));
 
     {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test7->GetDesc(&desc);
+    #else
         auto const desc = m_test7->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
             || desc.Width != 32
@@ -1282,7 +1395,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"io_R8G8B8A8_UNORM_SRGB_SRV_DIMENSION_TEXTURE3D_MipOff.dds", m_test8.ReleaseAndGetAddressOf()));
 
     {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test8->GetDesc(&desc);
+    #else
         auto const desc = m_test8->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE3D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
             || desc.Width != 32
@@ -1302,7 +1420,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_IGNORE_SRGB, m_test36.ReleaseAndGetAddressOf()));
 
     {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test36->GetDesc(&desc);
+    #else
         auto const desc = m_test36->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE1D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
             || desc.Width != 32
@@ -1316,7 +1439,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"cup_small.jpg", m_test9.ReleaseAndGetAddressOf(), false));
 
     {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test9->GetDesc(&desc);
+    #else
         auto const desc = m_test9->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
             || desc.Width != 512
@@ -1331,7 +1459,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"cup_small.jpg", m_test10.ReleaseAndGetAddressOf(), true));
 
     {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test10->GetDesc(&desc);
+    #else
         auto const desc = m_test10->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
             || desc.Width != 512
@@ -1355,7 +1488,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_FLAG_NONE, WIC_LOADER_IGNORE_SRGB, m_test11.ReleaseAndGetAddressOf()));
 
     {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test11->GetDesc(&desc);
+    #else
         auto const desc = m_test11->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
             || desc.Width != 512
@@ -1371,7 +1509,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_FLAG_NONE, WIC_LOADER_IGNORE_SRGB | WIC_LOADER_MIP_AUTOGEN, m_test12.ReleaseAndGetAddressOf()));
 
     {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test12->GetDesc(&desc);
+    #else
         auto const desc = m_test12->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
             || desc.Width != 512
@@ -1396,7 +1539,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"lenaNV12.dds", m_test13.ReleaseAndGetAddressOf()));
 
     {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test13->GetDesc(&desc);
+    #else
         auto const desc = m_test13->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_NV12
             || desc.Width != 200
@@ -1413,7 +1561,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen.dds", m_test14.ReleaseAndGetAddressOf()));
 
     {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test14->GetDesc(&desc);
+    #else
         auto const desc = m_test14->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
             || desc.Width != 256
@@ -1428,7 +1581,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen.dds", m_test15.ReleaseAndGetAddressOf(), true));
 
     {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test15->GetDesc(&desc);
+    #else
         auto const desc = m_test15->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
             || desc.Width != 256
@@ -1451,7 +1609,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen_srgb.dds", m_test16.ReleaseAndGetAddressOf()));
 
     {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test16->GetDesc(&desc);
+    #else
         auto const desc = m_test16->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
             || desc.Width != 256
@@ -1466,7 +1629,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen_srgb.dds", m_test17.ReleaseAndGetAddressOf(), true));
 
     {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test17->GetDesc(&desc);
+    #else
         auto const desc = m_test17->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
             || desc.Width != 256
@@ -1490,7 +1658,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"testpattern.png", m_test18.ReleaseAndGetAddressOf()));
 
     {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test18->GetDesc(&desc);
+    #else
         auto const desc = m_test18->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM_SRGB
             || desc.Width != 1280
@@ -1506,7 +1679,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"testpattern.png", m_test19.ReleaseAndGetAddressOf(), false, 1024));
 
     {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test19->GetDesc(&desc);
+    #else
         auto const desc = m_test19->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM_SRGB
             || desc.Width != 1024
@@ -1522,7 +1700,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"cup_small.jpg", m_test20.ReleaseAndGetAddressOf(), false, 256));
 
     {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test20->GetDesc(&desc);
+    #else
         auto const desc = m_test20->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
             || desc.Width != 191
@@ -1537,7 +1720,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     // DDS load with auto-gen request ignore (BC1 is not supported for GenerateMips)
     DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_nomips.dds", m_test21.ReleaseAndGetAddressOf(), true));
     {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test21->GetDesc(&desc);
+    #else
         auto const desc = m_test21->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_BC1_UNORM
             || desc.Width != 256
@@ -1552,7 +1740,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     // WIC load with auto-gen request ignore (16bpp is not usually supported for GenerateMips)
     DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"grad4d_a1r5g5b5.bmp", m_test22.ReleaseAndGetAddressOf(), true));
     {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test22->GetDesc(&desc);
+    #else
         auto const desc = m_test22->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_B5G5R5A1_UNORM
             || desc.Width != 32
@@ -1578,7 +1771,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     {
         // forceSRGB has no effect for 10:10:10:2
 
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test23->GetDesc(&desc);
+    #else
         auto const desc = m_test23->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R10G10B10A2_UNORM
             || desc.Width != 512
@@ -1594,7 +1792,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, L"windowslogo_r32f.dds",
         0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_MIP_AUTOGEN, m_test24.ReleaseAndGetAddressOf()));
     {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test24->GetDesc(&desc);
+    #else
         auto const desc = m_test24->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R32_FLOAT
             || desc.Width != 256
@@ -1613,7 +1816,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         DX::ThrowIfFailed(CreateDDSTextureFromMemory(device, resourceUpload, blob.data(), blob.size(), m_test25.ReleaseAndGetAddressOf()));
 
         {
+        #ifdef __MINGW32__
+            D3D12_RESOURCE_DESC desc;
+            std::ignore = m_test25->GetDesc(&desc);
+        #else
             auto const desc = m_test25->GetDesc();
+        #endif
             if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
                 || desc.Format != DXGI_FORMAT_BC1_UNORM
                 || desc.Width != 256
@@ -1632,7 +1840,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         DX::ThrowIfFailed(CreateWICTextureFromMemory(device, resourceUpload, blob.data(), blob.size(), m_test26.ReleaseAndGetAddressOf(), false));
 
         {
+        #ifdef __MINGW32__
+            D3D12_RESOURCE_DESC desc;
+            std::ignore = m_test26->GetDesc(&desc);
+        #else
             auto const desc = m_test26->GetDesc();
+        #endif
             if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
                 || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
                 || desc.Width != 256
@@ -1649,7 +1862,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     {
         DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"pentagon.tiff", m_test27.GetAddressOf()));
 
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test27->GetDesc(&desc);
+    #else
         auto desc = m_test27->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8_UNORM
             || desc.Width != 1024
@@ -1666,7 +1884,11 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             WIC_LOADER_FORCE_RGBA32,
             m_test28.GetAddressOf()));
 
+    #ifdef __MINGW32__
+        std::ignore = m_test28->GetDesc(&desc);
+    #else
         desc = m_test28->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
             || desc.Width != 1024
@@ -1686,7 +1908,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             WIC_LOADER_MAKE_SQUARE,
             m_test29.GetAddressOf()));
 
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test29->GetDesc(&desc);
+    #else
         auto const desc = m_test29->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
             || desc.Width != 683
@@ -1706,7 +1933,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             WIC_LOADER_FIT_POW2,
             m_test30.GetAddressOf()));
 
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test30->GetDesc(&desc);
+    #else
         auto const desc = m_test30->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
             || desc.Width != 256
@@ -1726,7 +1958,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             WIC_LOADER_FIT_POW2 | WIC_LOADER_MAKE_SQUARE,
             m_test31.GetAddressOf()));
 
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test31->GetDesc(&desc);
+    #else
         auto const desc = m_test31->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
             || desc.Width != 512
@@ -1746,7 +1983,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             WIC_LOADER_FORCE_RGBA32 | WIC_LOADER_SRGB_DEFAULT,
             m_test32.GetAddressOf()));
 
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test32->GetDesc(&desc);
+    #else
         auto const desc = m_test32->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
             || desc.Width != 1024
@@ -1766,7 +2008,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             WIC_LOADER_DEFAULT,
             m_test33.GetAddressOf()));
 
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test33->GetDesc(&desc);
+    #else
         auto desc = m_test33->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8_UNORM
             || desc.Width != 1512
@@ -1783,7 +2030,11 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             WIC_LOADER_FORCE_RGBA32 | WIC_LOADER_FIT_POW2,
             m_test34.GetAddressOf()));
 
+    #ifdef __MINGW32__
+        std::ignore = m_test34->GetDesc(&desc);
+    #else
         desc = m_test34->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
             || desc.Width != 1024
@@ -1800,7 +2051,11 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             WIC_LOADER_FORCE_RGBA32 | WIC_LOADER_FIT_POW2 | WIC_LOADER_MAKE_SQUARE,
             m_test35.GetAddressOf()));
 
+    #ifdef __MINGW32__
+        std::ignore = m_test35->GetDesc(&desc);
+    #else
         desc = m_test35->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
             || desc.Width != 1024
@@ -1818,7 +2073,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         WIC_LOADER_DEFAULT, m_test37.ReleaseAndGetAddressOf()));
 
     {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test37->GetDesc(&desc);
+    #else
         auto const desc = m_test37->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
             || desc.Width != 256
@@ -1839,7 +2099,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         WIC_LOADER_DEFAULT, m_test38.ReleaseAndGetAddressOf()));
 
     {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test38->GetDesc(&desc);
+    #else
         auto const desc = m_test38->GetDesc();
+    #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
             || desc.Width != 256

@@ -109,6 +109,7 @@ void DeviceResources::CreateDeviceResources()
             OutputDebugStringA("WARNING: Direct3D Debug Device is not available\n");
         }
 
+    #ifndef __MINGW32__
         ComPtr<IDXGIInfoQueue> dxgiInfoQueue;
         if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(dxgiInfoQueue.GetAddressOf()))))
         {
@@ -117,6 +118,7 @@ void DeviceResources::CreateDeviceResources()
             dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, true);
             dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, true);
         }
+    #endif
     }
 #endif
 
@@ -374,9 +376,14 @@ void DeviceResources::CreateWindowSizeDependentResources()
         rtvDesc.Format = m_backBufferFormat;
         rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 
-        const CD3DX12_CPU_DESCRIPTOR_HANDLE rtvDescriptor(
-            m_pAdaptersD3D[DT_Primary].m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
-            static_cast<INT>(n), m_pAdaptersD3D[DT_Primary].m_rtvDescriptorSize);
+    #ifdef __MINGW32__
+        D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
+        std::ignore = m_pAdaptersD3D[DT_Primary].m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(&cpuHandle);
+    #else
+        auto cpuHandle = m_pAdaptersD3D[DT_Primary].m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+    #endif
+
+        const CD3DX12_CPU_DESCRIPTOR_HANDLE rtvDescriptor(cpuHandle, static_cast<INT>(n), m_pAdaptersD3D[DT_Primary].m_rtvDescriptorSize);
         m_pAdaptersD3D[DT_Primary].m_d3dDevice->CreateRenderTargetView(m_pAdaptersD3D[DT_Primary].m_renderTargets[n].Get(), &rtvDesc, rtvDescriptor);
     }
 
@@ -412,13 +419,17 @@ void DeviceResources::CreateWindowSizeDependentResources()
             rtvDesc.Format = m_backBufferFormat;
             rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 
-            const CD3DX12_CPU_DESCRIPTOR_HANDLE rtvDescriptor(
-                m_pAdaptersD3D[adapterIdx].m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
-                static_cast<INT>(n), m_pAdaptersD3D[adapterIdx].m_rtvDescriptorSize);
+        #ifdef __MINGW32__
+            D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
+            std::ignore = m_pAdaptersD3D[adapterIdx].m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(&cpuHandle);
+        #else
+            auto cpuHandle = m_pAdaptersD3D[adapterIdx].m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+        #endif
+
+            const CD3DX12_CPU_DESCRIPTOR_HANDLE rtvDescriptor(cpuHandle, static_cast<INT>(n), m_pAdaptersD3D[adapterIdx].m_rtvDescriptorSize);
             m_pAdaptersD3D[adapterIdx].m_d3dDevice->CreateRenderTargetView(m_pAdaptersD3D[adapterIdx].m_renderTargets[n].Get(), &rtvDesc, rtvDescriptor);
         }
     }
-
 
     // Reset the index to the current back buffer.
     m_backBufferIndex = m_swapChain->GetCurrentBackBufferIndex();
@@ -431,19 +442,19 @@ void DeviceResources::CreateWindowSizeDependentResources()
             // on this surface.
             CD3DX12_HEAP_PROPERTIES depthHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
 
-        D3D12_RESOURCE_DESC depthStencilDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-            m_depthBufferFormat,
-            backBufferWidth,
-            backBufferHeight,
-            1, // This depth stencil view has only one texture.
-            1  // Use a single mipmap level.
+            D3D12_RESOURCE_DESC depthStencilDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+                m_depthBufferFormat,
+                backBufferWidth,
+                backBufferHeight,
+                1, // This depth stencil view has only one texture.
+                1  // Use a single mipmap level.
             );
-        depthStencilDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+            depthStencilDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
-            D3D12_CLEAR_VALUE depthOptimizedClearValue		= {};
-            depthOptimizedClearValue.Format					= m_depthBufferFormat;
-            depthOptimizedClearValue.DepthStencil.Depth		= 1.0f;
-            depthOptimizedClearValue.DepthStencil.Stencil	= 0;
+            D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
+            depthOptimizedClearValue.Format = m_depthBufferFormat;
+            depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
+            depthOptimizedClearValue.DepthStencil.Stencil = 0;
             ThrowIfFailed(m_pAdaptersD3D[adapterIdx].m_d3dDevice->CreateCommittedResource(
                 &depthHeapProperties,
                 D3D12_HEAP_FLAG_NONE,
@@ -451,13 +462,20 @@ void DeviceResources::CreateWindowSizeDependentResources()
                 D3D12_RESOURCE_STATE_DEPTH_WRITE,
                 &depthOptimizedClearValue,
                 IID_PPV_ARGS(m_pAdaptersD3D[adapterIdx].m_depthStencil.ReleaseAndGetAddressOf())
-                ));
+            ));
             m_pAdaptersD3D[adapterIdx].m_depthStencil->SetName(L"Depth stencil");
 
-            D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc			= {};
-            dsvDesc.Format									= m_depthBufferFormat;
-            dsvDesc.ViewDimension							= D3D12_DSV_DIMENSION_TEXTURE2D;
-            m_pAdaptersD3D[adapterIdx].m_d3dDevice->CreateDepthStencilView(m_pAdaptersD3D[adapterIdx].m_depthStencil.Get(), &dsvDesc, m_pAdaptersD3D[adapterIdx].m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+        #ifdef __MINGW32__
+            D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
+            std::ignore = m_pAdaptersD3D[adapterIdx].m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(&cpuHandle);
+        #else
+            auto cpuHandle = m_pAdaptersD3D[adapterIdx].m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+        #endif
+
+            D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+            dsvDesc.Format = m_depthBufferFormat;
+            dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+            m_pAdaptersD3D[adapterIdx].m_d3dDevice->CreateDepthStencilView(m_pAdaptersD3D[adapterIdx].m_depthStencil.Get(), &dsvDesc, cpuHandle);
         }
     }
 
@@ -534,8 +552,8 @@ void DeviceResources::HandleDeviceLost()
     m_swapChain.Reset();
     m_dxgiFactory.Reset();
 
-#ifdef _DEBUG
-    {
+#if defined(_DEBUG) && !defined(__MINGW32__)
+    { 
         ComPtr<IDXGIDebug1> dxgiDebug;
         if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiDebug))))
         {
