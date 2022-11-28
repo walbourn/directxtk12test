@@ -25,17 +25,21 @@ if(BUILD_XAUDIO_WIN10 OR BUILD_XAUDIO_REDIST)
 endif()
 
 # D3D12
+set(D3D_COMMON_FILES
+    Common/d3dx12.h
+    Common/DeviceResourcesPC.cpp
+    Common/DeviceResourcesPC.h
+    Common/DirectXTKTest.h
+    Common/MainPC.cpp
+    Common/StepTimer.h
+    )
+
 list(APPEND TEST_EXES d3d12test)
 add_executable(d3d12test WIN32
     D3D12Test/Game.cpp
     D3D12Test/Game.h
     D3D12Test/pch.h
-    Common/MainPC.cpp
-    Common/DeviceResourcesPC.cpp
-    Common/DeviceResourcesPC.h
-    Common/StepTimer.h
-    Common/d3dx12.h
-    Common/DirectXTKTest.h
+    ${D3D_COMMON_FILES}
     )
 target_compile_definitions(d3d12test PRIVATE USE_LEGACY_PIX_EVENTS)
 target_include_directories(d3d12test PRIVATE ./D3D12Test)
@@ -53,12 +57,7 @@ add_executable(effectstest WIN32
     EffectsTest/Game.cpp
     EffectsTest/Game.h
     EffectsTest/pch.h
-    Common/MainPC.cpp
-    Common/DeviceResourcesPC.cpp
-    Common/DeviceResourcesPC.h
-    Common/StepTimer.h
-    Common/d3dx12.h
-    Common/DirectXTKTest.h
+    ${D3D_COMMON_FILES}
     )
 target_include_directories(effectstest PRIVATE ./EffectsTest ../Src)
 if (NOT MINGW)
@@ -73,12 +72,7 @@ add_executable(primitivestest WIN32
     PrimitivesTest/Game.cpp
     PrimitivesTest/Game.h
     PrimitivesTest/pch.h
-    Common/MainPC.cpp
-    Common/DeviceResourcesPC.cpp
-    Common/DeviceResourcesPC.h
-    Common/StepTimer.h
-    Common/d3dx12.h
-    Common/DirectXTKTest.h
+    ${D3D_COMMON_FILES}
     )
 target_include_directories(primitivestest PRIVATE ./PrimitivesTest)
 if (NOT MINGW)
@@ -93,12 +87,7 @@ add_executable(spritebatchtest WIN32
     SpriteBatchTest/Game.cpp
     SpriteBatchTest/Game.h
     SpriteBatchTest/pch.h
-    Common/MainPC.cpp
-    Common/DeviceResourcesPC.cpp
-    Common/DeviceResourcesPC.h
-    Common/StepTimer.h
-    Common/d3dx12.h
-    Common/DirectXTKTest.h
+    ${D3D_COMMON_FILES}
     )
 target_include_directories(spritebatchtest PRIVATE ./SpriteBatchTest)
 if (NOT MINGW)
@@ -113,12 +102,7 @@ add_executable(spritefonttest WIN32
     SpriteFontTest/Game.cpp
     SpriteFontTest/Game.h
     SpriteFontTest/pch.h
-    Common/MainPC.cpp
-    Common/DeviceResourcesPC.cpp
-    Common/DeviceResourcesPC.h
-    Common/StepTimer.h
-    Common/d3dx12.h
-    Common/DirectXTKTest.h
+    ${D3D_COMMON_FILES}
     )
 target_include_directories(spritefonttest PRIVATE ./SpriteFontTest)
 if (NOT MINGW)
@@ -127,9 +111,57 @@ endif()
 add_test(NAME "spriteFont" COMMAND spritefonttest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/SpriteFontTest)
 set_tests_properties(spriteFont PROPERTIES TIMEOUT 60)
 
-# TODO: LoadTest
-# TODO: ModelTest
-# TODO: ShaderTest
+# LOAD TEST
+list(APPEND TEST_EXES loadtest)
+add_executable(loadtest WIN32
+    LoadTest/Game.cpp
+    LoadTest/Game.h
+    LoadTest/pch.h
+    Common/ReadData.h
+    ${D3D_COMMON_FILES}
+    )
+target_include_directories(loadtest PRIVATE ./LoadTest)
+if (NOT MINGW)
+  target_precompile_headers(loadtest PRIVATE LoadTest/pch.h)
+endif()
+add_test(NAME "loaders" COMMAND loadtest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/LoadTest)
+set_tests_properties(loaders PROPERTIES TIMEOUT 30)
+
+# MODEL TEST
+list(APPEND TEST_EXES modeltest)
+add_executable(modeltest WIN32
+    ModelTest/Game.cpp
+    ModelTest/Game.h
+    ModelTest/ModelLoadOBJ.cpp
+    ModelTest/pch.h
+    ModelTest/WaveFrontReader.h
+    Common/ReadData.h
+    ${D3D_COMMON_FILES}
+    )
+target_include_directories(modeltest PRIVATE ./ModelTest)
+if (NOT MINGW)
+  target_precompile_headers(modeltest PRIVATE ModelTest/pch.h)
+endif()
+add_test(NAME "models" COMMAND modeltest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ModelTest)
+set_tests_properties(models PROPERTIES TIMEOUT 30)
+
+# SHADER TEST
+list(APPEND TEST_EXES shadertest)
+add_executable(shadertest WIN32
+    ShaderTest/Game.cpp
+    ShaderTest/Game.h
+    ShaderTest/pch.h
+    Common/RenderTexture.cpp
+    Common/RenderTexture.h
+    ${D3D_COMMON_FILES}
+    )
+target_include_directories(shadertest PRIVATE ./ShaderTest ../Src)
+if (NOT MINGW)
+  target_precompile_headers(shadertest PRIVATE ShaderTest/pch.h)
+endif()
+add_test(NAME "shaders" COMMAND shadertest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ShaderTest)
+set_tests_properties(shaders PROPERTIES TIMEOUT 30)
+
 # TODO: AnimTest
 # TODO: HDRTest
 # TODO: PBRTest
@@ -166,7 +198,8 @@ endif()
 
 if (MSVC)
   foreach(t IN LISTS TEST_EXES)
-    target_compile_options(${t} PRIVATE "$<IF:$<STREQUAL:${t},headertest>,/Wall,/W4>" /GR- /fp:fast "$<$<NOT:$<CONFIG:DEBUG>>:/guard:cf>")
+    # Model requires RTTI (/GR)
+    target_compile_options(${t} PRIVATE "$<IF:$<STREQUAL:${t},headertest>,/Wall,/W4>" /GR /fp:fast "$<$<NOT:$<CONFIG:DEBUG>>:/guard:cf>")
     target_link_options(${t} PRIVATE /DYNAMICBASE /NXCOMPAT)
   endforeach()
 
