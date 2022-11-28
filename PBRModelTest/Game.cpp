@@ -287,17 +287,14 @@ void Game::Render()
     float yaw = time * 1.4f;
 
     XMMATRIX world;
-    XMVECTOR quat;
 
     if (m_spinning)
     {
         world = XMMatrixRotationRollPitchYaw(0, yaw, 0);
-        quat = XMQuaternionRotationRollPitchYaw(0, yaw, 0);
     }
     else
     {
         world = XMMatrixRotationRollPitchYaw(m_pitch, m_yaw, 0);
-        quat = XMQuaternionRotationRollPitchYaw(m_pitch, m_yaw, 0);
     }
 
     auto commandList = m_deviceResources->GetCommandList();
