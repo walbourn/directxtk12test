@@ -111,7 +111,7 @@ endif()
 add_test(NAME "spriteFont" COMMAND spritefonttest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/SpriteFontTest)
 set_tests_properties(spriteFont PROPERTIES TIMEOUT 60)
 
-# LOAD TEST
+# DDS/WIC TEXTURE LOADER
 list(APPEND TEST_EXES loadtest)
 add_executable(loadtest WIN32
     LoadTest/Game.cpp
@@ -127,7 +127,7 @@ endif()
 add_test(NAME "loaders" COMMAND loadtest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/LoadTest)
 set_tests_properties(loaders PROPERTIES TIMEOUT 30)
 
-# MODEL TEST
+# MODEL
 list(APPEND TEST_EXES modeltest)
 add_executable(modeltest WIN32
     ModelTest/Game.cpp
@@ -145,7 +145,7 @@ endif()
 add_test(NAME "models" COMMAND modeltest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ModelTest)
 set_tests_properties(models PROPERTIES TIMEOUT 60)
 
-# SHADER TEST
+# SHADER VALIDATION
 list(APPEND TEST_EXES shadertest)
 add_executable(shadertest WIN32
     ShaderTest/Game.cpp
@@ -162,7 +162,7 @@ endif()
 add_test(NAME "shaders" COMMAND shadertest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ShaderTest)
 set_tests_properties(shaders PROPERTIES TIMEOUT 40)
 
-# ANIMATION TEST
+# ANIMATION
 list(APPEND TEST_EXES animtest)
 add_executable(animtest WIN32
     AnimTest/Game.cpp
@@ -179,7 +179,7 @@ endif()
 add_test(NAME "animation" COMMAND animtest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/AnimTest)
 set_tests_properties(animation PROPERTIES TIMEOUT 40)
 
-# HDR TEST
+# HDR
 list(APPEND TEST_EXES hdrtest)
 add_executable(hdrtest WIN32
     HDRTest/Game.cpp
@@ -196,7 +196,7 @@ endif()
 add_test(NAME "hdr" COMMAND hdrtest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/HDRTest)
 set_tests_properties(hdr PROPERTIES TIMEOUT 40)
 
-# PBR TEST
+# PBR
 list(APPEND TEST_EXES pbrtest)
 add_executable(pbrtest WIN32
     PBRTest/Game.cpp
@@ -213,7 +213,7 @@ endif()
 add_test(NAME "pbrShaders" COMMAND pbrtest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/PBRTest)
 set_tests_properties(pbrShaders PROPERTIES TIMEOUT 40)
 
-# PBR MODEL TEST
+# PBR MODEL
 list(APPEND TEST_EXES pbrmodeltest)
 add_executable(pbrmodeltest WIN32
     PBRModelTest/Game.cpp
@@ -232,7 +232,7 @@ endif()
 add_test(NAME "modelsPBR" COMMAND pbrmodeltest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/PBRModelTest)
 set_tests_properties(modelsPBR PROPERTIES TIMEOUT 60)
 
-# POST-PROCESSING TEST
+# POST-PROCESSING
 list(APPEND TEST_EXES postprocesstest)
 add_executable(postprocesstest WIN32
     PostProcessTest/Game.cpp
@@ -247,7 +247,7 @@ endif()
 add_test(NAME "postProcess" COMMAND postprocesstest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/PostProcessTest)
 set_tests_properties(postProcess PROPERTIES TIMEOUT 180)
 
-# MULTI-GPU TEST
+# MULTI-GPU
 list(APPEND TEST_EXES mgputest)
 add_executable(mgputest WIN32
     mGPUTest/DeviceResourcesPC_mGPU.cpp
@@ -268,13 +268,86 @@ endif()
 add_test(NAME "mGPU" COMMAND mgputest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/mGPUTest)
 set_tests_properties(mGPU PROPERTIES TIMEOUT 30)
 
-# if(BUILD_XAUDIO_WIN10 OR BUILD_XAUDIO_REDIST)
-# TODO: Audio3DTest
-# TODO: SimpleAudioTest
+if(BUILD_XAUDIO_WIN10 OR BUILD_XAUDIO_REDIST)
+    # 3D AUDIO
+    list(APPEND TEST_EXES audio3dtest)
+    list(APPEND XAUDIO_TESTS audio3dtest)
+    add_executable(audio3dtest WIN32
+        Audio3DTest/Game.cpp
+        Audio3DTest/Game.h
+        Audio3DTest/pch.h
+        ${D3D_COMMON_FILES}
+        )
+    target_include_directories(audio3dtest PRIVATE ./Audio3DTest)
+    if (NOT MINGW)
+      target_precompile_headers(audio3dtest PRIVATE Audio3DTest/pch.h)
+    endif()
+    add_test(NAME "positionalAudio" COMMAND audio3dtest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Audio3DTest)
+    set_tests_properties(positionalAudio PROPERTIES TIMEOUT 40)
 
-# TODO: GamePadTest
-# TODO: KeyboardTest
-# TOOD: MouseTest
+    # SIMPLE AUDIO
+    list(APPEND TEST_EXES simpleaudiotest)
+    list(APPEND XAUDIO_TESTS simpleaudiotest)
+    add_executable(simpleaudiotest WIN32
+        SimpleAudioTest/Game.cpp
+        SimpleAudioTest/Game.h
+        SimpleAudioTest/pch.h
+        Common/TextConsole.cpp
+        Common/TextConsole.h
+        ${D3D_COMMON_FILES}
+        )
+    target_include_directories(simpleaudiotest PRIVATE ./SimpleAudioTest)
+    if (NOT MINGW)
+      target_precompile_headers(simpleaudiotest PRIVATE SimpleAudioTest/pch.h)
+    endif()
+    add_test(NAME "simpleAudio" COMMAND simpleaudiotest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/SimpleAudioTest)
+    set_tests_properties(simpleAudio PROPERTIES TIMEOUT 30)
+endif()
+
+# INPUT: GAMEPAD
+list(APPEND TEST_EXES gamepadtest)
+add_executable(gamepadtest WIN32
+    GamePadTest/Game.cpp
+    GamePadTest/Game.h
+    GamePadTest/pch.h
+    ${D3D_COMMON_FILES}
+    )
+target_include_directories(gamepadtest PRIVATE ./GamePadTest)
+if (NOT MINGW)
+  target_precompile_headers(gamepadtest PRIVATE GamePadTest/pch.h)
+endif()
+add_test(NAME "gamepadInput" COMMAND gamepadtest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/GamePadTest)
+set_tests_properties(gamepadInput PROPERTIES TIMEOUT 30)
+
+# INPUT: KEYBOARD
+list(APPEND TEST_EXES keyboardtest)
+add_executable(keyboardtest WIN32
+    KeyboardTest/Game.cpp
+    KeyboardTest/Game.h
+    KeyboardTest/pch.h
+    ${D3D_COMMON_FILES}
+    )
+target_include_directories(keyboardtest PRIVATE ./KeyboardTest)
+if (NOT MINGW)
+  target_precompile_headers(keyboardtest PRIVATE KeyboardTest/pch.h)
+endif()
+add_test(NAME "keyboardInput" COMMAND keyboardtest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/KeyboardTest)
+set_tests_properties(keyboardInput PROPERTIES TIMEOUT 30)
+
+# INPUT: MOUSE
+list(APPEND TEST_EXES mousetest)
+add_executable(mousetest WIN32
+    MouseTest/Game.cpp
+    MouseTest/Game.h
+    MouseTest/pch.h
+    ${D3D_COMMON_FILES}
+    )
+target_include_directories(mousetest PRIVATE ./MouseTest)
+if (NOT MINGW)
+  target_precompile_headers(mousetest PRIVATE MouseTest/pch.h)
+endif()
+add_test(NAME "mouseInput" COMMAND mousetest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/MouseTest)
+set_tests_properties(mouseInput PROPERTIES TIMEOUT 30)
 
 message("INFO: Enabled tests: ${TEST_EXES}")
 foreach(t IN LISTS TEST_EXES)
@@ -341,6 +414,9 @@ elseif(MINGW)
       target_compile_definitions(${t} PRIVATE $<IF:$<CONFIG:DEBUG>,_DEBUG,NDEBUG>)
       target_link_options(${t} PRIVATE -municode)
       target_link_libraries(${t} PRIVATE xinput1_4.lib)
+    endforeach()
+    foreach(t IN LISTS XAUDIO_TESTS)
+      target_link_libraries(${t} PRIVATE ksguid.lib)
     endforeach()
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     foreach(t IN LISTS TEST_EXES)
