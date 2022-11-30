@@ -53,7 +53,11 @@
 #endif
 #endif
 
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+#include <wrl.h>
+#else
 #include <wrl/client.h>
+#endif
 
 #define D3DX12_NO_STATE_OBJECT_HELPERS
 #define D3DX12_NO_CHECK_FEATURE_SUPPORT_CLASS
