@@ -17,7 +17,7 @@
 #pragma warning(push)
 #pragma warning(disable : 4005)
 #define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
+#define NOMINMAX 1
 #define NODRAWTEXT
 #define NOGDI
 #define NOMCX
@@ -26,6 +26,9 @@
 #pragma warning(pop)
 
 #include <Windows.h>
+#ifdef __MINGW32__
+#include <unknwn.h>
+#endif
 #else // !WIN32
 #include <wsl/winadapter.h>
 #include <wsl/wrladapter.h>

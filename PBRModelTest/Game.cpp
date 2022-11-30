@@ -287,17 +287,14 @@ void Game::Render()
     float yaw = time * 1.4f;
 
     XMMATRIX world;
-    XMVECTOR quat;
 
     if (m_spinning)
     {
         world = XMMatrixRotationRollPitchYaw(0, yaw, 0);
-        quat = XMQuaternionRotationRollPitchYaw(0, yaw, 0);
     }
     else
     {
         world = XMMatrixRotationRollPitchYaw(m_pitch, m_yaw, 0);
-        quat = XMQuaternionRotationRollPitchYaw(m_pitch, m_yaw, 0);
     }
 
     auto commandList = m_deviceResources->GetCommandList();
@@ -313,7 +310,12 @@ void Game::Render()
     //--- Set PBR lighting sources ---
     auto const radianceTex = m_resourceDescriptors->GetGpuHandle(Descriptors::RadianceIBL1 + size_t(m_ibl));
 
+#ifdef __MINGW32__
+    D3D12_RESOURCE_DESC diffuseDesc;
+    std::ignore = m_radianceIBL[0]->GetDesc(&diffuseDesc);
+#else
     auto const diffuseDesc = m_radianceIBL[0]->GetDesc();
+#endif
 
     auto const irradianceTex = m_resourceDescriptors->GetGpuHandle(Descriptors::IrradianceIBL1 + size_t(m_ibl));
 

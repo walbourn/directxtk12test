@@ -14,6 +14,8 @@
 #include "StepTimer.h"
 #include "TextConsole.h"
 
+constexpr uint32_t c_testTimeout = 5000;
+
 #ifdef XBOX
 #define TEST_XMA2
 #endif

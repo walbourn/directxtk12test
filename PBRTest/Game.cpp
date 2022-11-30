@@ -390,7 +390,12 @@ void Game::Render()
 
     auto const radianceTex = m_resourceDescriptors->GetGpuHandle(Descriptors::RadianceIBL1 + size_t(m_ibl));
 
+#ifdef __MINGW32__
+    D3D12_RESOURCE_DESC diffuseDesc;
+    std::ignore = m_radianceIBL[0]->GetDesc(&diffuseDesc);
+#else
     auto const diffuseDesc = m_radianceIBL[0]->GetDesc();
+#endif
 
     auto const irradianceTex = m_resourceDescriptors->GetGpuHandle(Descriptors::IrradianceIBL1 + size_t(m_ibl));
     m_pbr->SetIBLTextures(radianceTex, diffuseDesc.MipLevels, irradianceTex, m_states->AnisotropicClamp());

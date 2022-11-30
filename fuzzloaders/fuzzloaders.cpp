@@ -23,7 +23,17 @@
 
 #include <Windows.h>
 
+#ifdef __MINGW32__
+#include <unknwn.h>
+#endif
+
+#ifdef USING_DIRECTX_HEADERS
+#include <directx/dxgiformat.h>
+#include <directx/d3d12.h>
+#include <dxguids/dxguids.h>
+#else
 #include <d3d12.h>
+#endif
 #include <dxgi1_6.h>
 
 #include <algorithm>
@@ -105,7 +115,9 @@ const SValue g_pOptions [] =
 
 namespace
 {
+#ifdef _PREFAST_
 #pragma prefast(disable : 26018, "Only used with static internal arrays")
+#endif
 
     DWORD LookupByName(const wchar_t *pName, const SValue *pArray)
     {
@@ -118,19 +130,6 @@ namespace
         }
 
         return 0;
-    }
-
-    const wchar_t* LookupByValue(DWORD pValue, const SValue *pArray)
-    {
-        while (pArray->pName)
-        {
-            if (pValue == pArray->dwValue)
-                return pArray->pName;
-
-            pArray++;
-        }
-
-        return L"";
     }
 
     void SearchForFiles(const wchar_t* path, std::list<SConversion>& files, bool recursive)
@@ -251,7 +250,7 @@ HRESULT CreateDevice(ID3D12Device** pDev)
         }
 
         // Check to see if the adapter supports Direct3D 12, but don't create the actual device yet.
-        if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, _uuidof(ID3D12Device), nullptr)))
+        if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_ID3D12Device, nullptr)))
         {
             break;
         }
@@ -272,7 +271,9 @@ HRESULT CreateDevice(ID3D12Device** pDev)
 //--------------------------------------------------------------------------------------
 // Entry-point
 //--------------------------------------------------------------------------------------
+#ifdef _PREFAST_
 #pragma prefast(disable : 28198, "Command-line tool, frees all memory on exit")
+#endif
 
 int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 {

@@ -1137,7 +1137,7 @@ void Game::OnDeviceLost()
         m_dualPostProcess[j].reset();
     }
 
-    for (int j = 0; j < ToneMapCount; ++j)
+    for (size_t j = 0; j < ToneMapCount; ++j)
     {
         m_toneMapPostProcess[j].reset();
     }

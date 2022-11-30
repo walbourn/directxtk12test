@@ -77,14 +77,26 @@ namespace DX
 
         CD3DX12_CPU_DESCRIPTOR_HANDLE GetRenderTargetView(unsigned int idx = 0) const noexcept
         {
-            return CD3DX12_CPU_DESCRIPTOR_HANDLE(
-                m_pAdaptersD3D[idx].m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
-                static_cast<INT>(m_backBufferIndex), m_pAdaptersD3D[idx].m_rtvDescriptorSize);
+        #ifdef __MINGW32__
+            D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
+            std::ignore = m_pAdaptersD3D[idx].m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(&cpuHandle);
+        #else
+            auto cpuHandle = m_pAdaptersD3D[idx].m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+        #endif
+
+            return CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuHandle, static_cast<INT>(m_backBufferIndex), m_pAdaptersD3D[idx].m_rtvDescriptorSize);
         }
         
         CD3DX12_CPU_DESCRIPTOR_HANDLE GetDepthStencilView(unsigned int idx = 0) const noexcept
         {
-            return CD3DX12_CPU_DESCRIPTOR_HANDLE(m_pAdaptersD3D[idx].m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+        #ifdef __MINGW32__
+            D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
+            std::ignore = m_pAdaptersD3D[idx].m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(&cpuHandle);
+        #else
+            auto cpuHandle = m_pAdaptersD3D[idx].m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+        #endif
+
+            return CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuHandle);
         }
 
         static void DebugForceWarp(bool enable) noexcept
