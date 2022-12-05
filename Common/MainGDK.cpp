@@ -27,6 +27,8 @@ using namespace DirectX;
 namespace
 {
     std::unique_ptr<Game> g_game;
+    bool g_testTimer = false;
+
 #ifdef _GAMING_XBOX
     HANDLE g_plmSuspendComplete = nullptr;
     HANDLE g_plmSignalResume = nullptr;
@@ -36,11 +38,20 @@ namespace
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 void ExitGame() noexcept;
 
+namespace
+{
+    void ParseCommandLine(_In_ LPWSTR lpCmdLine)
+    {
+        if (wcsstr(lpCmdLine, L"-ctest") != nullptr)
+        {
+            g_testTimer = true;
+        }
+    }
+}
+
 // Entry point
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
 {
-    UNREFERENCED_PARAMETER(lpCmdLine);
-
     if (!XMVerifyCPUSupport())
     {
 #ifdef _DEBUG
@@ -72,6 +83,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR lp
     // Default main thread to CPU 0
     SetThreadAffinityMask(GetCurrentThread(), 0x1);
 #endif
+
+    ParseCommandLine(lpCmdLine);
 
     g_game = std::make_unique<Game>();
 
@@ -145,6 +158,11 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR lp
         GetClientRect(hwnd, &rc);
 
         g_game->Initialize(hwnd, rc.right - rc.left, rc.bottom - rc.top, DXGI_MODE_ROTATION_IDENTITY);
+
+        if (g_testTimer)
+        {
+            SetTimer(hwnd, 1, c_testTimeout, nullptr);
+        }
 
 #ifdef _GAMING_XBOX
         Mouse::SetResolution(uiScale);
@@ -420,6 +438,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         // to any mnemonic or accelerator key. Ignore so we don't produce an error beep.
         return MAKELRESULT(0, MNC_CLOSE);
 #endif
+
+    case WM_TIMER:
+        if (g_testTimer)
+        {
+            ExitGame();
+        }
     }
 
     return DefWindowProc(hWnd, message, wParam, lParam);

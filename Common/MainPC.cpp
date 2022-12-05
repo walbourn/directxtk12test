@@ -29,7 +29,54 @@ namespace
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 void ExitGame() noexcept;
-void ParseCommandLine(_In_ LPWSTR lpCmdLine);
+
+namespace
+{
+    void ParseCommandLine(_In_ LPWSTR lpCmdLine)
+    {
+        int argc = 0;
+        wchar_t** argv = CommandLineToArgvW(lpCmdLine, &argc);
+
+        for (int iArg = 0; iArg < argc; iArg++)
+        {
+            wchar_t* pArg = argv[iArg];
+
+            if (('-' == pArg[0]) || ('/' == pArg[0]))
+            {
+                pArg++;
+                wchar_t* pValue;
+
+                for (pValue = pArg; *pValue && (':' != *pValue); pValue++);
+
+                if (*pValue)
+                    *pValue++ = 0;
+
+                if (_wcsicmp(pArg, L"ctest") == 0)
+                {
+                    g_testTimer = true;
+                }
+                else if (_wcsicmp(pArg, L"forcewarp") == 0)
+                {
+                    DX::DeviceResources::DebugForceWarp(true);
+                }
+                else if (_wcsicmp(pArg, L"minpower") == 0)
+                {
+                    DX::DeviceResources::DebugPreferMinimumPower(true);
+                }
+                else if (_wcsicmp(pArg, L"adapter") == 0)
+                {
+                    if (pValue && *pValue != 0)
+                    {
+                        DX::DeviceResources::DebugSetAdapter(_wtoi(pValue));
+                    }
+                }
+
+            }
+        }
+
+        LocalFree(argv);
+    }
+}
 
 extern "C"
 {
@@ -396,51 +443,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
-void ParseCommandLine(_In_ LPWSTR lpCmdLine)
-{
-    int argc = 0;
-    wchar_t** argv = CommandLineToArgvW(lpCmdLine, &argc);
-
-    for (int iArg = 0; iArg < argc; iArg++)
-    {
-        wchar_t* pArg = argv[iArg];
-
-        if (('-' == pArg[0]) || ('/' == pArg[0]))
-        {
-            pArg++;
-            wchar_t* pValue;
-
-            for (pValue = pArg; *pValue && (':' != *pValue); pValue++);
-
-            if (*pValue)
-                *pValue++ = 0;
-
-            if (_wcsicmp(pArg, L"ctest") == 0)
-            {
-                g_testTimer = true;
-            }
-            else if (_wcsicmp(pArg, L"forcewarp") == 0)
-            {
-                DX::DeviceResources::DebugForceWarp(true);
-            }
-            else if (_wcsicmp(pArg, L"minpower") == 0)
-            {
-                DX::DeviceResources::DebugPreferMinimumPower(true);
-            }
-            else if (_wcsicmp(pArg, L"adapter") == 0)
-            {
-                if (pValue && *pValue != 0)
-                {
-                    DX::DeviceResources::DebugSetAdapter(_wtoi(pValue));
-                }
-            }
-
-        }
-    }
-
-    LocalFree(argv);
-}
-
 // Exit helper
 void ExitGame() noexcept
 {
@@ -450,7 +452,8 @@ void ExitGame() noexcept
     auto stats = graphicsMemory.GetStatistics();
 
     char buff[1024] = {};
-    sprintf_s(buff, "GraphicsMemory: committed %zu KB, total %zu KB (%zu pages)\n                peak commited %zu KB, peak total %zu KB (%zu pages)\n",
+    sprintf_s(buff, "GraphicsMemory: committed %zu KB, total %zu KB (%zu pages)\n"
+                    "                peak commited %zu KB, peak total %zu KB (%zu pages)\n",
         stats.committedMemory / 1024,
         stats.totalMemory / 1024,
         stats.totalPages,

@@ -26,6 +26,7 @@ using namespace DirectX;
 namespace
 {
     std::unique_ptr<Game> g_game;
+    bool g_testTimer = false;
     HANDLE g_plmSuspendComplete = nullptr;
     HANDLE g_plmSignalResume = nullptr;
 }
@@ -35,6 +36,17 @@ bool g_HDRMode = false;
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 void SetDisplayMode() noexcept;
 void ExitGame() noexcept;
+
+namespace
+{
+    void ParseCommandLine(_In_ LPWSTR lpCmdLine)
+    {
+        if (wcsstr(lpCmdLine, L"-ctest") != nullptr)
+        {
+            g_testTimer = true;
+        }
+    }
+}
 
 // Entry point
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
@@ -64,6 +76,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR lp
 
     // Microsoft GDKX supports UTF-8 everywhere
     assert(GetACP() == CP_UTF8);
+
+    ParseCommandLine(lpCmdLine);
 
     g_game = std::make_unique<Game>();
 
@@ -96,6 +110,11 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR lp
         SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(g_game.get()));
 
         g_game->Initialize(hwnd, 0, 0, DXGI_MODE_ROTATION_IDENTITY);
+
+        if (g_testTimer)
+        {
+            SetTimer(hwnd, 1, c_testTimeout, nullptr);
+        }
 
         g_plmSuspendComplete = CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
         g_plmSignalResume = CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
@@ -208,6 +227,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             SetDisplayMode();
         }
         break;
+
+    case WM_TIMER:
+        if (g_testTimer)
+        {
+            ExitGame();
+        }
     }
 
     return DefWindowProc(hWnd, message, wParam, lParam);

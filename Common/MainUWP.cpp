@@ -15,6 +15,7 @@ using namespace Windows::UI::Core;
 using namespace Windows::UI::Input;
 using namespace Windows::UI::ViewManagement;
 using namespace Windows::System;
+using namespace Windows::System::Threading;
 using namespace Windows::Foundation;
 using namespace Windows::Graphics::Display;
 using namespace DirectX;
@@ -226,6 +227,22 @@ protected:
                 CoreApplication::Exit();
                 return;
             }
+
+            auto const cmdLine = launchArgs->Arguments->Data();
+
+            if (wcsstr(cmdLine, L"-ctest") != nullptr)
+            {
+                auto handler = ref new TimerElapsedHandler(
+                    [this](ThreadPoolTimer ^timer)
+                    {
+                        ExitGame();
+                    });
+
+                TimeSpan delay;
+                delay.Duration = c_testTimeout * 10000;
+
+                m_Timer = ThreadPoolTimer::CreateTimer(ref new TimerElapsedHandler(handler), delay);
+            }
         }
 
         int w, h;
@@ -370,6 +387,8 @@ private:
 
     Windows::Graphics::Display::DisplayOrientations	m_nativeOrientation;
     Windows::Graphics::Display::DisplayOrientations	m_currentOrientation;
+
+    Windows::System::Threading::ThreadPoolTimer^ m_Timer;
 
 #ifdef AUDIO_WATCHER
     Windows::Devices::Enumeration::DeviceWatcher^ m_audioWatcher;
