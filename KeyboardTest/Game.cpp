@@ -29,6 +29,18 @@ namespace
     constexpr XMVECTORF32 ROOM_BOUNDS = { { { 8.f, 6.f, 12.f, 0.f } } };
 
     constexpr float MOVEMENT_GAIN = 0.07f;
+
+    constexpr int c_oemLowOffset = 0xBA;
+    constexpr const wchar_t* s_oemLow[] =
+    {
+        L"Semicolon",   // Oem 1
+        L"Plus",
+        L"Comma",
+        L"Minus",
+        L"Period",
+        L"Question",    // Oem 2
+        L"Tilde",       // Oem 3
+    };
 }
 
 static_assert(std::is_nothrow_move_constructible<Keyboard>::value, "Move Ctor.");
@@ -324,6 +336,20 @@ void Game::Update(DX::StepTimer const&)
         }
     }
 
+    for (int vk = 0xBA; vk <= 0xC0; ++vk)
+    {
+        if (m_tracker.IsKeyPressed(static_cast<DirectX::Keyboard::Keys>(vk)))
+        {
+            swprintf_s(m_lastStrBuff, L"Oem%ls was pressed", s_oemLow[vk - c_oemLowOffset]);
+            m_lastStr = m_lastStrBuff;
+        }
+        else if (m_tracker.IsKeyReleased(static_cast<DirectX::Keyboard::Keys>(vk)))
+        {
+            swprintf_s(m_lastStrBuff, L"Oem%ls was released", s_oemLow[vk - c_oemLowOffset]);
+            m_lastStr = m_lastStrBuff;
+        }
+    }
+
     Vector3 move = Vector3::Zero;
 
     if (kb.Up)
@@ -402,6 +428,7 @@ void Game::Render()
 
     const float width = XMVectorGetX(xsize);
     const float height = XMVectorGetY(xsize);
+    const float linespace = height * 1.5f;
 
     m_spriteBatch->Begin(commandList);
 
@@ -419,7 +446,7 @@ void Game::Render()
 
     // Row 1
     pos.x = 50;
-    pos.y += height * 2;
+    pos.y += linespace;
 
     for (int vk = 0x30; vk <= 0x39; ++vk)
     {
@@ -430,9 +457,7 @@ void Game::Render()
         pos.x += width * 2;
     }
 
-    // Row 2
-    pos.x = 50;
-    pos.y += height * 2;
+    pos.x += width * 2;
 
     m_comicFont->DrawString(m_spriteBatch.get(), L"Q", pos, m_kb.Q ? red : lightGray);
 
@@ -456,9 +481,9 @@ void Game::Render()
 
     m_comicFont->DrawString(m_spriteBatch.get(), L"Y", pos, m_kb.Y ? red : lightGray);
 
-    // Row 3
+    // Row 2
     pos.x = 50;
-    pos.y += height * 2;
+    pos.y += linespace;
 
     m_comicFont->DrawString(m_spriteBatch.get(), L"LeftShift", pos, m_kb.LeftShift ? red : lightGray);
 
@@ -481,9 +506,9 @@ void Game::Render()
         pos.x += width * 2;
     }
 
-    // Row 4
+    // Row 3
     pos.x = 50;
-    pos.y += height * 2;
+    pos.y += linespace;
 
     m_comicFont->DrawString(m_spriteBatch.get(), L"LeftCtrl", pos, m_kb.LeftControl ? red : lightGray);
 
@@ -506,9 +531,9 @@ void Game::Render()
         pos.x += width * 2;
     }
 
-    // Row 5
+    // Row 4
     pos.x = 50;
-    pos.y += height * 2;
+    pos.y += linespace;
 
     m_comicFont->DrawString(m_spriteBatch.get(), L"LeftAlt", pos, m_kb.LeftAlt ? red : lightGray);
 
@@ -531,9 +556,9 @@ void Game::Render()
         pos.x += width * 2;
     }
 
-    // Row 6
+    // Row 5
     pos.x = 50;
-    pos.y += height * 2;
+    pos.y += linespace;
 
     m_comicFont->DrawString(m_spriteBatch.get(), L"Space", pos, m_kb.Space ? red : lightGray);
 
@@ -549,10 +574,35 @@ void Game::Render()
 
     m_comicFont->DrawString(m_spriteBatch.get(), "0", pos, m_kb.IsKeyDown(DirectX::Keyboard::Keys::NumPad0) ? red : lightGray);
 
+    // Row 6
+    pos.x = 50;
+    pos.y += linespace;
+
+    for (int vk = 0xBA; vk <= 0xC0; ++vk)
+    {
+        wchar_t buff[16] = {};
+        swprintf_s(buff, L"Oem%ls", s_oemLow[vk - c_oemLowOffset]);
+
+        m_comicFont->DrawString(m_spriteBatch.get(), buff, pos, m_kb.IsKeyDown(static_cast<DirectX::Keyboard::Keys>(vk)) ? red : lightGray);
+
+        if (vk == 0xbd)
+        {
+            pos.x = 50;
+            pos.y += height;
+        }
+        else
+        {
+            pos.x += width * 10;
+        }
+    }
+
     // Row 7
+    pos.x = 50;
+    pos.y += height * 2;
+
     if (m_lastStr)
     {
-        m_comicFont->DrawString(m_spriteBatch.get(), m_lastStr, XMFLOAT2(50, 650), yellow);
+        m_comicFont->DrawString(m_spriteBatch.get(), m_lastStr, pos, yellow);
     }
 
     m_spriteBatch->End();
