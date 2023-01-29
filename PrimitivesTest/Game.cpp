@@ -64,10 +64,15 @@ Game::Game() noexcept(false) :
     constexpr DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
 #endif
 
+    unsigned int deviceOptions = 0;
+#ifdef REVERSEZ
+    deviceOptions |= DX::DeviceResources::c_ReverseDepth;
+#endif
+
 #ifdef XBOX
     m_deviceResources = std::make_unique<DX::DeviceResources>(
         c_RenderFormat, DXGI_FORMAT_D32_FLOAT, 2,
-        DX::DeviceResources::c_Enable4K_UHD
+        deviceOptions | DX::DeviceResources::c_Enable4K_UHD
 #ifdef _GAMING_XBOX
         | DX::DeviceResources::c_EnableQHD
 #endif
@@ -75,10 +80,13 @@ Game::Game() noexcept(false) :
 #elif defined(UWP)
     m_deviceResources = std::make_unique<DX::DeviceResources>(
         c_RenderFormat, DXGI_FORMAT_D32_FLOAT, 2, D3D_FEATURE_LEVEL_11_0,
-        DX::DeviceResources::c_Enable4K_Xbox | DX::DeviceResources::c_EnableQHD_Xbox
+        deviceOptions | DX::DeviceResources::c_Enable4K_Xbox | DX::DeviceResources::c_EnableQHD_Xbox
         );
 #else
-    m_deviceResources = std::make_unique<DX::DeviceResources>(c_RenderFormat);
+    m_deviceResources = std::make_unique<DX::DeviceResources>(c_RenderFormat,
+        DXGI_FORMAT_D32_FLOAT, 2, D3D_FEATURE_LEVEL_11_0,
+        deviceOptions
+        );
 #endif
 
 #ifdef LOSTDEVICE
