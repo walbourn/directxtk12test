@@ -184,6 +184,12 @@ namespace
         TestCompressedVertex::InstancedInputElements,
         TestCompressedVertex::InstancedInputElementCount
     };
+
+#ifdef GAMMA_CORRECT_RENDERING
+    const XMVECTORF32 c_clearColor = { { { 0.127437726f, 0.300543845f, 0.846873462f, 1.f } } };
+#else
+    const XMVECTORF32 c_clearColor = Colors::CornflowerBlue;
+#endif
 }  // anonymous namespace
 
 Game::Game() noexcept(false) :
@@ -216,6 +222,10 @@ Game::Game() noexcept(false) :
         );
 #else
     m_deviceResources = std::make_unique<DX::DeviceResources>(c_RenderFormat);
+#endif
+
+#ifdef _GAMING_XBOX
+    m_deviceResources->SetClearColor(c_clearColor);
 #endif
 
 #ifdef LOSTDEVICE
@@ -812,16 +822,9 @@ void Game::Clear()
     auto const rtvDescriptor = m_deviceResources->GetRenderTargetView();
     auto const dsvDescriptor = m_deviceResources->GetDepthStencilView();
 
-    XMVECTORF32 color;
-#ifdef GAMMA_CORRECT_RENDERING
-    color.v = XMColorSRGBToRGB(Colors::CornflowerBlue);
-#else
-    color.v = Colors::CornflowerBlue;
-#endif
-
     D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptors[2] = { rtvDescriptor, m_renderDescriptors->GetCpuHandle(RTDescriptors::RTVelocityBuffer) };
     commandList->OMSetRenderTargets(2, rtvDescriptors, FALSE, &dsvDescriptor);
-    commandList->ClearRenderTargetView(rtvDescriptor, color, 0, nullptr);
+    commandList->ClearRenderTargetView(rtvDescriptor, c_clearColor, 0, nullptr);
     commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
     // Set the viewport and scissor rect.

@@ -101,6 +101,8 @@ namespace
         auto tris = reinterpret_cast<const uint16_t*>(blob.data() + sizeof(VBO::header_t) + vertSize);
         memcpy_s(indices.data(), indices.size() * sizeof(uint16_t), tris, indexSize);
     }
+
+    const XMVECTORF32 c_clearColor = { { { 0.127437726f, 0.300543845f, 0.846873462f, 1.f } } };
 }
 
 Game::Game() noexcept(false) :
@@ -144,16 +146,17 @@ Game::Game() noexcept(false) :
         deviceOptions);
 #endif
 
+#ifdef _GAMING_XBOX
+    m_deviceResources->SetClearColor(c_clearColor);
+#endif
+
 #ifdef LOSTDEVICE
     m_deviceResources->RegisterDeviceNotify(this);
 #endif
 
     // Set up for HDR rendering.
     m_hdrScene = std::make_unique<DX::RenderTexture>(DXGI_FORMAT_R16G16B16A16_FLOAT);
-
-    XMVECTORF32 color;
-    color.v = XMColorSRGBToRGB(Colors::CornflowerBlue);
-    m_hdrScene->SetClearColor(color);
+    m_hdrScene->SetClearColor(c_clearColor);
 }
 
 Game::~Game()
@@ -719,10 +722,8 @@ void Game::Clear()
     auto const rtvDescriptor = m_renderDescriptors->GetCpuHandle(RTDescriptors::HDRScene);
     auto const dsvDescriptor = m_deviceResources->GetDepthStencilView();
 
-    XMVECTORF32 color;
-    color.v = XMColorSRGBToRGB(Colors::CornflowerBlue);
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, &dsvDescriptor);
-    commandList->ClearRenderTargetView(rtvDescriptor, color, 0, nullptr);
+    commandList->ClearRenderTargetView(rtvDescriptor, c_clearColor, 0, nullptr);
     commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
     // Set the viewport and scissor rect.

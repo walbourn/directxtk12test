@@ -21,6 +21,12 @@
 
 #define REVERSEZ
 
+extern void ExitGame() noexcept;
+
+using namespace DirectX;
+
+using Microsoft::WRL::ComPtr;
+
 namespace
 {
     constexpr float rowtop = 4.f;
@@ -40,13 +46,13 @@ namespace
     constexpr float col8 = 4.25f;
     constexpr float col9 = 5.75f;
     constexpr float col10 = 7.5f;
+
+#ifdef GAMMA_CORRECT_RENDERING
+    const XMVECTORF32 c_clearColor = { { { 0.127437726f, 0.300543845f, 0.846873462f, 1.f } } };
+#else
+    const XMVECTORF32 c_clearColor = Colors::CornflowerBlue;
+#endif
 }
-
-extern void ExitGame() noexcept;
-
-using namespace DirectX;
-
-using Microsoft::WRL::ComPtr;
 
 static_assert(std::is_nothrow_move_constructible<GeometricPrimitive>::value, "Move Ctor.");
 static_assert(std::is_nothrow_move_assignable<GeometricPrimitive>::value, "Move Assign.");
@@ -87,6 +93,10 @@ Game::Game() noexcept(false) :
         DXGI_FORMAT_D32_FLOAT, 2, D3D_FEATURE_LEVEL_11_0,
         deviceOptions
         );
+#endif
+
+#ifdef _GAMING_XBOX
+    m_deviceResources->SetClearColor(c_clearColor);
 #endif
 
 #ifdef LOSTDEVICE
@@ -593,13 +603,6 @@ void Game::Clear()
     auto const rtvDescriptor = m_deviceResources->GetRenderTargetView();
     auto const dsvDescriptor = m_deviceResources->GetDepthStencilView();
 
-    XMVECTORF32 color;
-#ifdef GAMMA_CORRECT_RENDERING
-    color.v = XMColorSRGBToRGB(Colors::CornflowerBlue);
-#else
-    color.v = Colors::CornflowerBlue;
-#endif
-
 #ifdef REVERSEZ
     constexpr float c_zclear = 0.f;
 #else
@@ -607,7 +610,7 @@ void Game::Clear()
 #endif
 
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, &dsvDescriptor);
-    commandList->ClearRenderTargetView(rtvDescriptor, color, 0, nullptr);
+    commandList->ClearRenderTargetView(rtvDescriptor, c_clearColor, 0, nullptr);
     commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, c_zclear, 0, 0, nullptr);
 
     // Set the viewport and scissor rect.
@@ -811,15 +814,7 @@ void Game::CreateDeviceDependentResources()
         m_effectFog->SetFogStart(6);
         m_effectFog->SetFogEnd(8);
 #endif
-
-        XMVECTORF32 color;
-#ifdef GAMMA_CORRECT_RENDERING
-        color.v = XMColorSRGBToRGB(Colors::CornflowerBlue);
-#else
-        color.v = Colors::CornflowerBlue;
-#endif
-
-        m_effectFog->SetFogColor(color);
+        m_effectFog->SetFogColor(c_clearColor);
     }
 
     {
@@ -855,14 +850,7 @@ void Game::CreateDeviceDependentResources()
         m_instancedEffect->SetFogEnd(10);
 #endif
 
-        XMVECTORF32 color;
-#ifdef GAMMA_CORRECT_RENDERING
-        color.v = XMColorSRGBToRGB(Colors::CornflowerBlue);
-#else
-        color.v = Colors::CornflowerBlue;
-#endif
-
-        m_instancedEffect->SetFogColor(color);
+        m_instancedEffect->SetFogColor(c_clearColor);
 
         // Create instance transforms.
         size_t j = 0;

@@ -60,6 +60,7 @@ DeviceResources::DeviceResources(
         m_depthBufferFormat(depthBufferFormat),
         m_backBufferCount(backBufferCount),
         m_d3dMinFeatureLevel(minFeatureLevel),
+        m_clearColor{},
         m_window(nullptr),
         m_d3dFeatureLevel(D3D_FEATURE_LEVEL_11_0),
         m_dxgiFactoryFlags(0),
@@ -397,20 +398,12 @@ void DeviceResources::CreateWindowSizeDependentResources()
     }
 
     // Second adapter if there is one
-    XMVECTORF32 color;
-#define GAMMA_CORRECT_RENDERING
-
-#ifdef GAMMA_CORRECT_RENDERING
-    color.v = XMColorSRGBToRGB(Colors::CornflowerBlue);
-#else
-    color.v = Colors::CornflowerBlue;
-#endif
     for (unsigned int adapterIdx = 1; adapterIdx != m_deviceCount; ++adapterIdx)
     {
         for (UINT n = 0; n < m_backBufferCount; n++)
         {
             // Create an intermediate render target and view on the secondary adapter.
-            const CD3DX12_CLEAR_VALUE clearValue(m_backBufferFormat, color);
+            const CD3DX12_CLEAR_VALUE clearValue(m_backBufferFormat, m_clearColor);
             D3D12_RESOURCE_DESC renderTargetDesc = CD3DX12_RESOURCE_DESC::Tex2D(
                 m_backBufferFormat, backBufferWidth, backBufferHeight, 1, 1, 1, 0,
                 D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, D3D12_TEXTURE_LAYOUT_UNKNOWN, 0);

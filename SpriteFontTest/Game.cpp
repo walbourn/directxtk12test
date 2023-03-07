@@ -21,19 +21,25 @@
 
 #pragma warning(disable : 4061)
 
-namespace
-{
-    constexpr float SWAP_TIME = 3.f;
-
-    constexpr float EPSILON = 0.000001f;
-}
-
 extern void ExitGame() noexcept;
 
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
 using Microsoft::WRL::ComPtr;
+
+namespace
+{
+    constexpr float SWAP_TIME = 3.f;
+
+    constexpr float EPSILON = 0.000001f;
+
+#ifdef GAMMA_CORRECT_RENDERING
+    const XMVECTORF32 c_clearColor = { { { 0.127437726f, 0.300543845f, 0.846873462f, 1.f } } };
+#else
+    const XMVECTORF32 c_clearColor = Colors::CornflowerBlue;
+#endif
+}
 
 static_assert(std::is_nothrow_move_constructible<SpriteFont>::value, "Move Ctor.");
 static_assert(std::is_nothrow_move_assignable<SpriteFont>::value, "Move Assign.");
@@ -65,6 +71,10 @@ Game::Game() noexcept(false) :
         );
 #else
     m_deviceResources = std::make_unique<DX::DeviceResources>(c_RenderFormat, DXGI_FORMAT_UNKNOWN);
+#endif
+
+#ifdef _GAMING_XBOX
+    m_deviceResources->SetClearColor(c_clearColor);
 #endif
 
 #ifdef LOSTDEVICE
@@ -418,14 +428,8 @@ void Game::Clear()
     // Clear the views.
     auto const rtvDescriptor = m_deviceResources->GetRenderTargetView();
 
-    XMVECTORF32 color;
-#ifdef GAMMA_CORRECT_RENDERING
-    color.v = XMColorSRGBToRGB(Colors::CornflowerBlue);
-#else
-    color.v = Colors::CornflowerBlue;
-#endif
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, nullptr);
-    commandList->ClearRenderTargetView(rtvDescriptor, color, 0, nullptr);
+    commandList->ClearRenderTargetView(rtvDescriptor, c_clearColor, 0, nullptr);
 
     // Set the viewport and scissor rect.
     auto const viewport = m_deviceResources->GetScreenViewport();

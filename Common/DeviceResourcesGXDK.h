@@ -1,6 +1,8 @@
 //
 // DeviceResources.h - A wrapper for the Direct3D 12.X device and swapchain
 //
+// Explicit HDR10+GameDVR rendering variant.
+//
 
 #pragma once
 
@@ -14,7 +16,10 @@ namespace DX
         static constexpr unsigned int c_EnableQHD            = 0x2;
         static constexpr unsigned int c_EnableHDR            = 0x4;
         static constexpr unsigned int c_ReverseDepth         = 0x8;
-        static constexpr unsigned int c_AmplificationShaders = 0x10;
+        static constexpr unsigned int c_GeometryShaders      = 0x10;
+        static constexpr unsigned int c_TessellationShaders  = 0x20;
+        static constexpr unsigned int c_AmplificationShaders = 0x40;
+        static constexpr unsigned int c_EnableDXR            = 0x80;
 
         DeviceResources(DXGI_FORMAT backBufferFormat = DXGI_FORMAT_B8G8R8A8_UNORM,
                         DXGI_FORMAT depthBufferFormat = DXGI_FORMAT_D32_FLOAT,
@@ -43,6 +48,9 @@ namespace DX
         void Resume();
         void WaitForGpu() noexcept;
         void WaitForOrigin();
+
+        // Direct3D Properties.
+        void SetClearColor(_In_reads_(4) const float* rgba) noexcept { memcpy(m_clearColor, rgba, sizeof(m_clearColor)); }
 
         // Device Accessors.
         RECT GetOutputSize() const noexcept { return m_outputSize; }
@@ -76,8 +84,8 @@ namespace DX
         }
 
         // Direct3D HDR Game DVR support for Xbox One.
-        ID3D12Resource*             GetGameDVRRenderTarget() const noexcept { return m_renderTargetsGameDVR[m_backBufferIndex].Get(); }
-        DXGI_FORMAT                 GetGameDVRFormat() const noexcept { return m_gameDVRFormat; }
+        ID3D12Resource* GetGameDVRRenderTarget() const noexcept { return m_renderTargetsGameDVR[m_backBufferIndex].Get(); }
+        DXGI_FORMAT GetGameDVRFormat() const noexcept { return m_gameDVRFormat; }
 
         CD3DX12_CPU_DESCRIPTOR_HANDLE GetGameDVRRenderTargetView() const noexcept
         {
@@ -94,8 +102,13 @@ namespace DX
         UINT                                                m_backBufferIndex;
 
         // Direct3D objects.
-        Microsoft::WRL::ComPtr<ID3D12Device>                m_d3dDevice;
+#ifdef _GAMING_XBOX_SCARLETT
+        Microsoft::WRL::ComPtr<ID3D12Device8>               m_d3dDevice;
+        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList6>  m_commandList;
+#else
+        Microsoft::WRL::ComPtr<ID3D12Device2>               m_d3dDevice;
         Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>   m_commandList;
+#endif
         Microsoft::WRL::ComPtr<ID3D12CommandQueue>          m_commandQueue;
         Microsoft::WRL::ComPtr<ID3D12CommandAllocator>      m_commandAllocators[MAX_BACK_BUFFER_COUNT];
 
@@ -120,6 +133,7 @@ namespace DX
         DXGI_FORMAT                                         m_backBufferFormat;
         DXGI_FORMAT                                         m_depthBufferFormat;
         UINT                                                m_backBufferCount;
+        float                                               m_clearColor[4];
 
         // Cached device properties.
         HWND                                                m_window;

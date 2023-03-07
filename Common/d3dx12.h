@@ -2611,7 +2611,7 @@ inline HRESULT D3DX12SerializeVersionedRootSignature(
                     return D3D12SerializeRootSignature(&pRootSignatureDesc->Desc_1_0, D3D_ROOT_SIGNATURE_VERSION_1, ppBlob, ppErrorBlob);
 
                 case D3D_ROOT_SIGNATURE_VERSION_1_1:
-#if defined(NTDDI_WIN10_CU)
+#if defined(NTDDI_WIN10_CU) && !defined(USING_D3D12_AGILITY_SDK)
                 case D3D_ROOT_SIGNATURE_VERSION_1_2:
 #endif
                 {
@@ -2704,7 +2704,7 @@ inline HRESULT D3DX12SerializeVersionedRootSignature(
             break;
 
         case D3D_ROOT_SIGNATURE_VERSION_1_1:
-#if defined(NTDDI_WIN10_CU)
+#if defined(NTDDI_WIN10_CU) && !defined(USING_D3D12_AGILITY_SDK)
         case D3D_ROOT_SIGNATURE_VERSION_1_2:
 #endif
             return D3D12SerializeVersionedRootSignature(pRootSignatureDesc, ppBlob, ppErrorBlob);

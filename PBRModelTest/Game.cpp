@@ -27,20 +27,22 @@
 
 #pragma warning(disable : 4061)
 
-namespace
-{
-    constexpr float rowtop = 6.f;
-    constexpr float row0 = 1.5f;
-    constexpr float row1 = 0.f;
-    constexpr float row2 = -1.5f;
-}
-
 extern void ExitGame() noexcept;
 
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
 using Microsoft::WRL::ComPtr;
+
+namespace
+{
+    constexpr float rowtop = 6.f;
+    constexpr float row0 = 1.5f;
+    constexpr float row1 = 0.f;
+    constexpr float row2 = -1.5f;
+
+    constexpr XMVECTORF32 c_clearColor = { { { 0.127437726f, 0.300543845f, 0.846873462f, 1.f } } };
+}
 
 // Constructor.
 Game::Game() noexcept(false) :
@@ -81,16 +83,17 @@ Game::Game() noexcept(false) :
         );
 #endif
 
+#ifdef _GAMING_XBOX
+    m_deviceResources->SetClearColor(c_clearColor);
+#endif
+
 #ifdef LOSTDEVICE
     m_deviceResources->RegisterDeviceNotify(this);
 #endif
 
     // Set up for HDR rendering.
     m_hdrScene = std::make_unique<DX::RenderTexture>(DXGI_FORMAT_R16G16B16A16_FLOAT);
-
-    XMVECTORF32 color;
-    color.v = XMColorSRGBToRGB(Colors::CornflowerBlue);
-    m_hdrScene->SetClearColor(color);
+    m_hdrScene->SetClearColor(c_clearColor);
 }
 
 Game::~Game()
@@ -531,10 +534,8 @@ void Game::Clear()
     constexpr float c_zclear = 1.f;
 #endif
 
-    XMVECTORF32 color;
-    color.v = XMColorSRGBToRGB(Colors::CornflowerBlue);
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, &dsvDescriptor);
-    commandList->ClearRenderTargetView(rtvDescriptor, color, 0, nullptr);
+    commandList->ClearRenderTargetView(rtvDescriptor, c_clearColor, 0, nullptr);
     commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, c_zclear, 0, 0, nullptr);
 
     // Set the viewport and scissor rect.
