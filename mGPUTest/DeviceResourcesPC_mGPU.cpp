@@ -453,10 +453,8 @@ void DeviceResources::CreateWindowSizeDependentResources()
             );
             depthStencilDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
-            D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
-            depthOptimizedClearValue.Format = m_depthBufferFormat;
-            depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
-            depthOptimizedClearValue.DepthStencil.Stencil = 0;
+            const CD3DX12_CLEAR_VALUE depthOptimizedClearValue(m_depthBufferFormat, 1.0f, 0u);
+
             ThrowIfFailed(m_pAdaptersD3D[adapterIdx].m_d3dDevice->CreateCommittedResource(
                 &depthHeapProperties,
                 D3D12_HEAP_FLAG_NONE,

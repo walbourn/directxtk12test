@@ -92,6 +92,7 @@ DeviceResources::DeviceResources(
         m_depthBufferFormat(depthBufferFormat),
         m_backBufferCount(backBufferCount),
         m_d3dMinFeatureLevel(minFeatureLevel),
+        m_clearColor{},
         m_window(nullptr),
         m_d3dFeatureLevel(D3D_FEATURE_LEVEL_11_0),
         m_rotation(DXGI_MODE_ROTATION_IDENTITY),
@@ -445,7 +446,7 @@ void DeviceResources::CreateWindowSizeDependentResources()
         for (UINT n = 0; n < m_backBufferCount; n++)
         {
             // Create an intermediate render target and view on the secondary adapter.
-            const CD3DX12_CLEAR_VALUE clearValue(m_backBufferFormat, Colors::CornflowerBlue);
+            const CD3DX12_CLEAR_VALUE clearValue(m_backBufferFormat, m_clearColor);
             D3D12_RESOURCE_DESC renderTargetDesc = CD3DX12_RESOURCE_DESC::Tex2D(m_backBufferFormat, backBufferWidth, backBufferHeight, 1, 1, 1, 0,
                                                                                 D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, D3D12_TEXTURE_LAYOUT_UNKNOWN, 0);
 
@@ -489,21 +490,18 @@ void DeviceResources::CreateWindowSizeDependentResources()
             );
         depthStencilDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
-        D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
-        depthOptimizedClearValue.Format = m_depthBufferFormat;
-        depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
-        depthOptimizedClearValue.DepthStencil.Stencil = 0;
+        const CD3DX12_CLEAR_VALUE depthOptimizedClearValue(m_depthBufferFormat, 1.0f, 0u);
 
-            ThrowIfFailed(m_pAdaptersD3D[adapterIdx].m_d3dDevice->CreateCommittedResource(
-                &depthHeapProperties,
-                D3D12_HEAP_FLAG_NONE,
-                &depthStencilDesc,
-                D3D12_RESOURCE_STATE_DEPTH_WRITE,
-                &depthOptimizedClearValue,
-                IID_PPV_ARGS(m_pAdaptersD3D[adapterIdx].m_depthStencil.ReleaseAndGetAddressOf())
-                ));
+        ThrowIfFailed(m_pAdaptersD3D[adapterIdx].m_d3dDevice->CreateCommittedResource(
+            &depthHeapProperties,
+            D3D12_HEAP_FLAG_NONE,
+            &depthStencilDesc,
+            D3D12_RESOURCE_STATE_DEPTH_WRITE,
+            &depthOptimizedClearValue,
+            IID_PPV_ARGS(m_pAdaptersD3D[adapterIdx].m_depthStencil.ReleaseAndGetAddressOf())
+            ));
 
-            m_pAdaptersD3D[adapterIdx].m_depthStencil->SetName(L"Depth stencil");
+        m_pAdaptersD3D[adapterIdx].m_depthStencil->SetName(L"Depth stencil");
 
         D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
         dsvDesc.Format = m_depthBufferFormat;

@@ -52,6 +52,9 @@ namespace DX
         void WaitForGpu() noexcept;
         void UpdateColorSpace();
 
+        // Direct3D Properties.
+        void SetClearColor(_In_reads_(4) const float* rgba) noexcept { memcpy(m_clearColor, rgba, sizeof(m_clearColor)); }
+
         // Device Accessors.
         RECT GetOutputSize() const noexcept             { return m_outputSize; }
         DXGI_MODE_ROTATION GetRotation() const noexcept { return m_rotation; }
@@ -112,6 +115,7 @@ namespace DX
         DXGI_FORMAT                                         m_depthBufferFormat;
         UINT                                                m_backBufferCount;
         D3D_FEATURE_LEVEL                                   m_d3dMinFeatureLevel;
+        float                                               m_clearColor[4];
 
         // Cached device properties.
         IUnknown*                                           m_window;
