@@ -50,7 +50,7 @@ namespace
 }
 
 // Entry point
-int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
+int TestMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
 {
     if (!XMVerifyCPUSupport())
     {
@@ -223,6 +223,26 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPWSTR lp
     CoUninitialize();
 
     return static_cast<int>(msg.wParam);
+}
+
+int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
+{
+    try
+    {
+        return TestMain(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
+    }
+    catch (const std::exception& e)
+    {
+        OutputDebugStringA("*** ERROR: Unhandled C++ exception thrown: ");
+        OutputDebugStringA(e.what());
+        OutputDebugStringA(" *** \n");
+        return 1;
+    }
+    catch (...)
+    {
+        OutputDebugStringA("*** ERROR: Unknown unhandled C++ exception thrown ***\n");
+        return 1;
+    }
 }
 
 // Windows procedure
