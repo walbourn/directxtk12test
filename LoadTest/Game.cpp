@@ -1047,6 +1047,7 @@ void Game::OnDeviceLost()
     m_test36.Reset();
     m_test37.Reset();
     m_test38.Reset();
+    m_test39.Reset();
 
     m_testA.Reset();
     m_testB.Reset();
@@ -2123,6 +2124,32 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     }
 
     CreateRenderTargetView(device, m_test38.Get(), m_renderDescriptors->GetCpuHandle(Win95_RTV));
+
+    // WIC Force RGAB32+AUTOGEN
+    {
+        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"pentagon.tiff",
+            0,
+            D3D12_RESOURCE_FLAG_NONE,
+            WIC_LOADER_MIP_AUTOGEN | WIC_LOADER_FORCE_RGBA32,
+            m_test39.GetAddressOf()));
+
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test39->GetDesc(&desc);
+    #else
+        auto const desc = m_test39->GetDesc();
+    #endif
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
+            || desc.Width != 1024
+            || desc.Height != 1024
+            || desc.MipLevels == 1)
+        {
+            OutputDebugStringA("FAILED: pentagon.tiff res desc rgba32+autogen unexpected\n");
+            success = false;
+        }
+    }
+
 
     OutputDebugStringA(success ? "Passed\n" : "Failed\n");
     OutputDebugStringA("***********  UNIT TESTS END  ***************\n");
