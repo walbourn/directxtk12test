@@ -115,4 +115,6 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource>  m_test6;
     Microsoft::WRL::ComPtr<ID3D12Resource>  m_test7;
     Microsoft::WRL::ComPtr<ID3D12Resource>  m_test8;
+    Microsoft::WRL::ComPtr<ID3D12Resource>  m_test9;
+    Microsoft::WRL::ComPtr<ID3D12Resource>  m_test10;
 };

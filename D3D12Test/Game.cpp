@@ -505,6 +505,8 @@ void Game::OnDeviceLost()
     m_test6.Reset();
     m_test7.Reset();
     m_test8.Reset();
+    m_test9.Reset();
+    m_test10.Reset();
 
     m_batch.reset();
     m_effectTri.reset();
@@ -870,6 +872,24 @@ void Game::UnitTests()
             OutputDebugStringA("ERROR: Failed CreateUploadBuffer(DSR) test\n");
             success = false;
         }
+
+        // No data
+        if (FAILED(CreateUploadBuffer(device,
+            nullptr, 14, sizeof(VertexPositionDualTexture),
+            m_test5.ReleaseAndGetAddressOf())))
+        {
+            OutputDebugStringA("ERROR: Failed CreateUploadBuffer(no data) test\n");
+            success = false;
+        }
+    }
+
+    // CreateUAVBuffer
+    if (FAILED(CreateUAVBuffer(device,
+        sizeof(VertexPositionNormalColorTexture),
+        m_test6.ReleaseAndGetAddressOf())))
+    {
+        OutputDebugStringA("ERROR: Failed CreateUAVBuffer test\n");
+        success = false;
     }
 
     ResourceUploadBatch resourceUpload(device);
@@ -888,20 +908,20 @@ void Game::UnitTests()
         if (FAILED(CreateStaticBuffer(device, resourceUpload,
             s_vertexData, std::size(s_vertexData), sizeof(VertexPositionColor),
             D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
-            m_test5.ReleaseAndGetAddressOf())))
+            m_test7.ReleaseAndGetAddressOf())))
         {
             OutputDebugStringA("ERROR: Failed CreateStaticBuffer(1) test\n");
             success = false;
         }
 
-        CreateBufferShaderResourceView(device, m_test5.Get(),
+        CreateBufferShaderResourceView(device, m_test7.Get(),
             m_resourceDescriptors->GetCpuHandle(1),
             sizeof(float));
 
         if (FAILED(CreateStaticBuffer(device, resourceUpload,
             s_vertexData, std::size(s_vertexData),
             D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
-            m_test6.ReleaseAndGetAddressOf())))
+            m_test8.ReleaseAndGetAddressOf())))
         {
             OutputDebugStringA("ERROR: Failed CreateStaticBuffer(2) test\n");
             success = false;
@@ -912,7 +932,7 @@ void Game::UnitTests()
         if (FAILED(CreateStaticBuffer(device, resourceUpload,
             verts,
             D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
-            m_test7.ReleaseAndGetAddressOf())))
+            m_test9.ReleaseAndGetAddressOf())))
         {
             OutputDebugStringA("ERROR: Failed CreateStaticBuffer(3) test\n");
             success = false;
@@ -922,14 +942,14 @@ void Game::UnitTests()
         if (FAILED(CreateStaticBuffer(device, resourceUpload,
             verts,
             D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
-            m_test8.ReleaseAndGetAddressOf(),
+            m_test10.ReleaseAndGetAddressOf(),
             D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS)))
         {
             OutputDebugStringA("ERROR: Failed CreateStaticBuffer(UAV) test\n");
             success = false;
         }
 
-        CreateBufferUnorderedAccessView(device, m_test8.Get(),
+        CreateBufferUnorderedAccessView(device, m_test10.Get(),
             m_resourceDescriptors->GetCpuHandle(2),
             sizeof(VertexPositionColor));
     }
