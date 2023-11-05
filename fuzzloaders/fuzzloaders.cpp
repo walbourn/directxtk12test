@@ -41,8 +41,10 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cwchar>
+#include <iterator>
 #include <list>
 #include <memory>
+#include <tuple>
 #include <vector>
 
 #include "DDSTextureLoader.h"
@@ -65,56 +67,54 @@ namespace
     struct find_closer { void operator()(HANDLE h) { assert(h != INVALID_HANDLE_VALUE); if (h) FindClose(h); } };
 
     using ScopedFindHandle = std::unique_ptr<void, find_closer>;
-}
 
+#ifndef FUZZING_BUILD_MODE
 
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////
 
-enum OPTIONS
-{
-    OPT_RECURSIVE = 1,
-    OPT_DDS,
-    OPT_WAV,
-    OPT_WIC,
-    OPT_XWB,
-    OPT_MAX
-};
+    enum OPTIONS
+    {
+        OPT_RECURSIVE = 1,
+        OPT_DDS,
+        OPT_WAV,
+        OPT_WIC,
+        OPT_XWB,
+        OPT_MAX
+    };
 
-static_assert(OPT_MAX <= 32, "dwOptions is a DWORD bitfield");
+    static_assert(OPT_MAX <= 32, "dwOptions is a DWORD bitfield");
 
-struct SConversion
-{
-    wchar_t szSrc[MAX_PATH];
-};
+    struct SConversion
+    {
+        wchar_t szSrc[MAX_PATH];
+    };
 
-struct SValue
-{
-    LPCWSTR pName;
-    DWORD dwValue;
-};
+    struct SValue
+    {
+        LPCWSTR pName;
+        DWORD dwValue;
+    };
 
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////
 
-const SValue g_pOptions [] =
-{
-    { L"r",         OPT_RECURSIVE },
-    { L"dds",       OPT_DDS },
-    { L"wav",       OPT_WAV },
-    { L"wic",       OPT_WIC },
-    { L"xwb",       OPT_XWB },
-    { nullptr,      0 }
-};
+    const SValue g_pOptions [] =
+    {
+        { L"r",         OPT_RECURSIVE },
+        { L"dds",       OPT_DDS },
+        { L"wav",       OPT_WAV },
+        { L"wic",       OPT_WIC },
+        { L"xwb",       OPT_XWB },
+        { nullptr,      0 }
+    };
 
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////
 
-namespace
-{
 #ifdef _PREFAST_
 #pragma prefast(disable : 26018, "Only used with static internal arrays")
 #endif
@@ -217,60 +217,64 @@ namespace
         wprintf(L"   -wic                force use of WICTextureLoader\n");
         wprintf(L"   -xwb                force use of WaveBankReader\n");
     }
-}
 
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
+#endif // !FUZZING_BUILD_MODE
 
-HRESULT CreateDevice(ID3D12Device** pDev)
-{
-    HRESULT hr = E_FAIL;
+    //////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////
 
-    static IDXGIFactory4* s_dxgiFactory = nullptr;
-
-    if (!s_dxgiFactory)
+    HRESULT CreateDevice(ID3D12Device** pDev)
     {
-        hr = CreateDXGIFactory1(IID_PPV_ARGS(&s_dxgiFactory));
-        if (FAILED(hr))
-            return hr;
-    }
+        HRESULT hr = E_FAIL;
 
-    ComPtr<IDXGIAdapter1> adapter;
-    for (UINT adapterIndex = 0; DXGI_ERROR_NOT_FOUND != s_dxgiFactory->EnumAdapters1(adapterIndex, adapter.ReleaseAndGetAddressOf()); ++adapterIndex)
-    {
-        DXGI_ADAPTER_DESC1 desc;
-        if (SUCCEEDED(adapter->GetDesc1(&desc)))
+        static IDXGIFactory4* s_dxgiFactory = nullptr;
+
+        if (!s_dxgiFactory)
         {
-            if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+            hr = CreateDXGIFactory1(IID_PPV_ARGS(&s_dxgiFactory));
+            if (FAILED(hr))
+                return hr;
+        }
+
+        ComPtr<IDXGIAdapter1> adapter;
+        for (UINT adapterIndex = 0; DXGI_ERROR_NOT_FOUND != s_dxgiFactory->EnumAdapters1(adapterIndex, adapter.ReleaseAndGetAddressOf()); ++adapterIndex)
+        {
+            DXGI_ADAPTER_DESC1 desc;
+            if (SUCCEEDED(adapter->GetDesc1(&desc)))
             {
-                // Don't select the Basic Render Driver adapter.
-                continue;
+                if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+                {
+                    // Don't select the Basic Render Driver adapter.
+                    continue;
+                }
+            }
+
+            // Check to see if the adapter supports Direct3D 12, but don't create the actual device yet.
+            if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_ID3D12Device, nullptr)))
+            {
+                break;
             }
         }
 
-        // Check to see if the adapter supports Direct3D 12, but don't create the actual device yet.
-        if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_ID3D12Device, nullptr)))
+        if (!adapter)
         {
-            break;
+            // Try WARP12 instead
+            if (FAILED(s_dxgiFactory->EnumWarpAdapter(IID_PPV_ARGS(adapter.ReleaseAndGetAddressOf()))))
+            {
+                return E_FAIL;
+            }
         }
-    }
 
-    if (!adapter)
-    {
-        // Try WARP12 instead
-        if (FAILED(s_dxgiFactory->EnumWarpAdapter(IID_PPV_ARGS(adapter.ReleaseAndGetAddressOf()))))
-        {
-            return E_FAIL;
-        }
+        return D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(pDev));
     }
-
-    return D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(pDev));
 }
 
 //--------------------------------------------------------------------------------------
 // Entry-point
 //--------------------------------------------------------------------------------------
+#ifndef FUZZING_BUILD_MODE
+
 #ifdef _PREFAST_
 #pragma prefast(disable : 28198, "Command-line tool, frees all memory on exit")
 #endif
@@ -419,7 +423,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
             else
             {
-                wprintf(SUCCEEDED(hr) ? L"*" : L".");
+                wprintf(L"%ls", SUCCEEDED(hr) ? L"*" : L".");
             }
         }
         else if (usewav)
@@ -443,7 +447,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
             else
             {
-                wprintf(SUCCEEDED(hr) ? L"*" : L".");
+                wprintf(L"%ls", SUCCEEDED(hr) ? L"*" : L".");
             }
         }
         else if (usexwb)
@@ -495,7 +499,7 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
             }
             else
             {
-                wprintf(SUCCEEDED(hr) ? L"*" : L".");
+                wprintf(L"%ls", SUCCEEDED(hr) ? L"*" : L".");
             }
         }
         fflush(stdout);
@@ -505,3 +509,86 @@ int __cdecl wmain(_In_ int argc, _In_z_count_(argc) wchar_t* argv[])
 
     return 0;
 }
+
+#else // FUZZING_BUILD_MODE
+
+
+//--------------------------------------------------------------------------------------
+// Libfuzzer entry-point
+//--------------------------------------------------------------------------------------
+BOOL WINAPI InitializeDevice(PINIT_ONCE, PVOID, PVOID *idevice) noexcept
+{
+    HRESULT hr = CreateDevice(reinterpret_cast<ID3D12Device**>(idevice));
+    if (SUCCEEDED(hr))
+    {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+
+extern "C" __declspec(dllexport) int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
+{
+    static INIT_ONCE s_initOnce = INIT_ONCE_STATIC_INIT;
+
+    ID3D12Device* device = nullptr;
+    if (!InitOnceExecuteOnce(
+        &s_initOnce,
+        InitializeDevice,
+        nullptr,
+        reinterpret_cast<LPVOID*>(&device)))
+    {
+        return 0;
+    }
+
+    // Memory version
+    {
+        ComPtr<ID3D12Resource> tex;
+        std::vector<D3D12_SUBRESOURCE_DATA> texRes;
+        std::ignore = DirectX::LoadDDSTextureFromMemory(device, data, size, tex.GetAddressOf(), texRes, 0, nullptr, nullptr);
+    }
+
+    // Disk version
+    wchar_t tempFileName[MAX_PATH] = {};
+    wchar_t tempPath[MAX_PATH] = {};
+
+    if (!GetTempPathW(MAX_PATH, tempPath))
+        return 0;
+
+    if (!GetTempFileNameW(tempPath, L"fuzz", 0, tempFileName))
+        return 0;
+
+    {
+        ScopedHandle hFile(safe_handle(CreateFileW(tempFileName, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS,
+                FILE_ATTRIBUTE_NORMAL, nullptr)));
+        if (!hFile)
+            return 0;
+
+        DWORD bytesWritten = 0;
+        if (!WriteFile(hFile.get(), data, static_cast<DWORD>(size), &bytesWritten, nullptr))
+            return 0;
+    }
+
+    {
+        ComPtr<ID3D12Resource> tex;
+        std::unique_ptr<uint8_t[]> texData;
+        std::vector<D3D12_SUBRESOURCE_DATA> texRes;
+        std::ignore = DirectX::LoadDDSTextureFromFile(device, tempFileName, tex.GetAddressOf(), texData, texRes, 0, nullptr, nullptr);
+    }
+
+    {
+        std::unique_ptr<uint8_t[]> wavData;
+        DirectX::WAVData result = {};
+        std::ignore = DirectX::LoadWAVAudioFromFileEx(tempFileName, wavData, result);
+    }
+
+    {
+        auto wb = std::make_unique<DirectX::WaveBankReader>();
+        std::ignore = wb->Open(tempFileName);
+    }
+
+    return 0;
+}
+
+#endif // FUZZING_BUILD_MODE
