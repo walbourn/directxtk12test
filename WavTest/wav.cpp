@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------------------------
 // wav.cpp
-//  
+//
 // Copyright (c) Microsoft Corporation.
 //-------------------------------------------------------------------------------------
 
@@ -54,10 +54,11 @@ namespace
         { WAVE_FORMAT_IEEE_FLOAT, 2, 32, 22050, 0, 0, L"SimpleAudioTest\\Alarm01_float.wav", {0xb1,0x22,0xcc,0xed,0x38,0xe5,0x74,0xa6,0x47,0x3a,0x80,0x8b,0x0e,0x68,0x4c,0xe8} },
         { WAVE_FORMAT_XMA2, 2, 16, 22050, 1, 0, L"SimpleAudioTest\\Alarm01_xma.wav", {0x49,0x4e,0x2a,0x0c,0x33,0xa8,0x85,0x16,0x42,0xc7,0x2c,0x45,0x11,0x96,0x47,0x4f} },
         { WAVE_FORMAT_WMAUDIO2, 2, 16, 32000, 15, 0, L"SimpleAudioTest\\Alarm01_xwma.wav", {0x45,0x3c,0x89,0x3c,0xa0,0x8e,0xcb,0xe5,0xac,0x00,0xe2,0xf0,0xb5,0x76,0x45,0x56} },
-        { WAVE_FORMAT_PCM, 2, 8, 48000, 0, 0, L"SimpleAudioTest\\tada.wav", {0x36,0x00,0xd8,0x82,0xa7,0x51,0x75,0xd6,0x44,0x61,0x14,0x6a,0x99,0x71,0xee,0xe0} },        
+        { WAVE_FORMAT_PCM, 2, 8, 48000, 0, 0, L"SimpleAudioTest\\tada.wav", {0x36,0x00,0xd8,0x82,0xa7,0x51,0x75,0xd6,0x44,0x61,0x14,0x6a,0x99,0x71,0xee,0xe0} },
         { WAVE_FAIL_CASE, 0, 0, 0, 0, 0, L"WavTest\\crash-2fa7e302c14e1801282c6377c5c1db0c37393210.wav", {} },
         { WAVE_FAIL_CASE, 0, 0, 0, 0, 0, L"WavTest\\crash-3917a73fa8d28811c1fd16b106844a3b0c2f8860.wav", {} },
         { WAVE_FAIL_CASE, 0, 0, 0, 0, 0, L"WavTest\\crash-6dbfd0730b2b3e39ffb0f13b4518e28543df5c8a.wav", {} },
+        { WAVE_FAIL_CASE, 0, 0, 0, 0, 0, L"WavTest\\crash-16ddb25a6080f6f5a40e30d521b8e5b476ab8c10.wav", {} },
     };
 
 #define printdigest(str,digest) printf( "%s:\n0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x\n", str, \
@@ -122,7 +123,7 @@ namespace
 extern HRESULT MD5Checksum( _In_reads_(dataSize) const uint8_t *data, size_t dataSize, _Out_bytecap_x_(16) uint8_t *digest );
 
 //-------------------------------------------------------------------------------------
-// 
+//
 bool Test01()
 {
     bool success = true;
