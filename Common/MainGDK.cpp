@@ -24,6 +24,8 @@ using namespace DirectX;
 
 #pragma warning(disable : 4061)
 
+//#define TRACE_WINDOWS_MESSAGES
+
 namespace
 {
     std::unique_ptr<Game> g_game;
@@ -33,6 +35,262 @@ namespace
     HANDLE g_plmSuspendComplete = nullptr;
     HANDLE g_plmSignalResume = nullptr;
 #endif
+
+#ifdef TRACE_WINDOWS_MESSAGES
+#define TRACE_ID(iD) case iD: return L## #iD;
+
+    const WCHAR* WINAPI DXUTTraceWindowsMessage(_In_ UINT uMsg)
+    {
+        switch (uMsg)
+        {
+            TRACE_ID(WM_NULL);
+            TRACE_ID(WM_CREATE);
+            TRACE_ID(WM_DESTROY);
+            TRACE_ID(WM_MOVE);
+            TRACE_ID(WM_SIZE);
+            TRACE_ID(WM_ACTIVATE);
+            TRACE_ID(WM_SETFOCUS);
+            TRACE_ID(WM_KILLFOCUS);
+            TRACE_ID(WM_ENABLE);
+            TRACE_ID(WM_SETREDRAW);
+            TRACE_ID(WM_SETTEXT);
+            TRACE_ID(WM_GETTEXT);
+            TRACE_ID(WM_GETTEXTLENGTH);
+            TRACE_ID(WM_PAINT);
+            TRACE_ID(WM_CLOSE);
+            TRACE_ID(WM_QUERYENDSESSION);
+            TRACE_ID(WM_QUERYOPEN);
+            TRACE_ID(WM_ENDSESSION);
+            TRACE_ID(WM_QUIT);
+            TRACE_ID(WM_ERASEBKGND);
+            TRACE_ID(WM_SYSCOLORCHANGE);
+            TRACE_ID(WM_SHOWWINDOW);
+            TRACE_ID(WM_WININICHANGE);
+            TRACE_ID(WM_DEVMODECHANGE);
+            TRACE_ID(WM_ACTIVATEAPP);
+            TRACE_ID(WM_FONTCHANGE);
+            TRACE_ID(WM_TIMECHANGE);
+            TRACE_ID(WM_CANCELMODE);
+            TRACE_ID(WM_SETCURSOR);
+            TRACE_ID(WM_MOUSEACTIVATE);
+            TRACE_ID(WM_CHILDACTIVATE);
+            TRACE_ID(WM_QUEUESYNC);
+            TRACE_ID(WM_GETMINMAXINFO);
+            TRACE_ID(WM_PAINTICON);
+            TRACE_ID(WM_ICONERASEBKGND);
+            TRACE_ID(WM_NEXTDLGCTL);
+            TRACE_ID(WM_SPOOLERSTATUS);
+            TRACE_ID(WM_DRAWITEM);
+            TRACE_ID(WM_MEASUREITEM);
+            TRACE_ID(WM_DELETEITEM);
+            TRACE_ID(WM_VKEYTOITEM);
+            TRACE_ID(WM_CHARTOITEM);
+            TRACE_ID(WM_SETFONT);
+            TRACE_ID(WM_GETFONT);
+            TRACE_ID(WM_SETHOTKEY);
+            TRACE_ID(WM_GETHOTKEY);
+            TRACE_ID(WM_QUERYDRAGICON);
+            TRACE_ID(WM_COMPAREITEM);
+            TRACE_ID(WM_GETOBJECT);
+            TRACE_ID(WM_COMPACTING);
+            TRACE_ID(WM_COMMNOTIFY);
+            TRACE_ID(WM_WINDOWPOSCHANGING);
+            TRACE_ID(WM_WINDOWPOSCHANGED);
+            TRACE_ID(WM_POWER);
+            TRACE_ID(WM_COPYDATA);
+            TRACE_ID(WM_CANCELJOURNAL);
+            TRACE_ID(WM_NOTIFY);
+            TRACE_ID(WM_INPUTLANGCHANGEREQUEST);
+            TRACE_ID(WM_INPUTLANGCHANGE);
+            TRACE_ID(WM_TCARD);
+            TRACE_ID(WM_HELP);
+            TRACE_ID(WM_USERCHANGED);
+            TRACE_ID(WM_NOTIFYFORMAT);
+            TRACE_ID(WM_CONTEXTMENU);
+            TRACE_ID(WM_STYLECHANGING);
+            TRACE_ID(WM_STYLECHANGED);
+            TRACE_ID(WM_DISPLAYCHANGE);
+            TRACE_ID(WM_GETICON);
+            TRACE_ID(WM_SETICON);
+            TRACE_ID(WM_NCCREATE);
+            TRACE_ID(WM_NCDESTROY);
+            TRACE_ID(WM_NCCALCSIZE);
+            TRACE_ID(WM_NCHITTEST);
+            TRACE_ID(WM_NCPAINT);
+            TRACE_ID(WM_NCACTIVATE);
+            TRACE_ID(WM_GETDLGCODE);
+            TRACE_ID(WM_SYNCPAINT);
+            TRACE_ID(WM_NCMOUSEMOVE);
+            TRACE_ID(WM_NCLBUTTONDOWN);
+            TRACE_ID(WM_NCLBUTTONUP);
+            TRACE_ID(WM_NCLBUTTONDBLCLK);
+            TRACE_ID(WM_NCRBUTTONDOWN);
+            TRACE_ID(WM_NCRBUTTONUP);
+            TRACE_ID(WM_NCRBUTTONDBLCLK);
+            TRACE_ID(WM_NCMBUTTONDOWN);
+            TRACE_ID(WM_NCMBUTTONUP);
+            TRACE_ID(WM_NCMBUTTONDBLCLK);
+            TRACE_ID(WM_NCXBUTTONDOWN);
+            TRACE_ID(WM_NCXBUTTONUP);
+            TRACE_ID(WM_NCXBUTTONDBLCLK);
+            TRACE_ID(WM_INPUT_DEVICE_CHANGE);
+            TRACE_ID(WM_INPUT);
+            TRACE_ID(WM_KEYDOWN);
+            TRACE_ID(WM_KEYUP);
+            TRACE_ID(WM_CHAR);
+            TRACE_ID(WM_DEADCHAR);
+            TRACE_ID(WM_SYSKEYDOWN);
+            TRACE_ID(WM_SYSKEYUP);
+            TRACE_ID(WM_SYSCHAR);
+            TRACE_ID(WM_SYSDEADCHAR);
+            TRACE_ID(WM_UNICHAR);
+            TRACE_ID(WM_IME_STARTCOMPOSITION);
+            TRACE_ID(WM_IME_ENDCOMPOSITION);
+            TRACE_ID(WM_IME_COMPOSITION);
+            TRACE_ID(WM_INITDIALOG);
+            TRACE_ID(WM_COMMAND);
+            TRACE_ID(WM_SYSCOMMAND);
+            TRACE_ID(WM_TIMER);
+            TRACE_ID(WM_HSCROLL);
+            TRACE_ID(WM_VSCROLL);
+            TRACE_ID(WM_INITMENU);
+            TRACE_ID(WM_INITMENUPOPUP);
+            TRACE_ID(WM_GESTURE);
+            TRACE_ID(WM_GESTURENOTIFY);
+            TRACE_ID(WM_MENUSELECT);
+            TRACE_ID(WM_MENUCHAR);
+            TRACE_ID(WM_ENTERIDLE);
+            TRACE_ID(WM_MENURBUTTONUP);
+            TRACE_ID(WM_MENUDRAG);
+            TRACE_ID(WM_MENUGETOBJECT);
+            TRACE_ID(WM_UNINITMENUPOPUP);
+            TRACE_ID(WM_MENUCOMMAND);
+            TRACE_ID(WM_CHANGEUISTATE);
+            TRACE_ID(WM_UPDATEUISTATE);
+            TRACE_ID(WM_QUERYUISTATE);
+            TRACE_ID(WM_CTLCOLORMSGBOX);
+            TRACE_ID(WM_CTLCOLOREDIT);
+            TRACE_ID(WM_CTLCOLORLISTBOX);
+            TRACE_ID(WM_CTLCOLORBTN);
+            TRACE_ID(WM_CTLCOLORDLG);
+            TRACE_ID(WM_CTLCOLORSCROLLBAR);
+            TRACE_ID(WM_CTLCOLORSTATIC);
+            TRACE_ID(MN_GETHMENU);
+            TRACE_ID(WM_MOUSEMOVE);
+            TRACE_ID(WM_LBUTTONDOWN);
+            TRACE_ID(WM_LBUTTONUP);
+            TRACE_ID(WM_LBUTTONDBLCLK);
+            TRACE_ID(WM_RBUTTONDOWN);
+            TRACE_ID(WM_RBUTTONUP);
+            TRACE_ID(WM_RBUTTONDBLCLK);
+            TRACE_ID(WM_MBUTTONDOWN);
+            TRACE_ID(WM_MBUTTONUP);
+            TRACE_ID(WM_MBUTTONDBLCLK);
+            TRACE_ID(WM_MOUSEWHEEL);
+            TRACE_ID(WM_XBUTTONDOWN);
+            TRACE_ID(WM_XBUTTONUP);
+            TRACE_ID(WM_XBUTTONDBLCLK);
+            TRACE_ID(WM_MOUSEHWHEEL);
+            TRACE_ID(WM_PARENTNOTIFY);
+            TRACE_ID(WM_ENTERMENULOOP);
+            TRACE_ID(WM_EXITMENULOOP);
+            TRACE_ID(WM_NEXTMENU);
+            TRACE_ID(WM_SIZING);
+            TRACE_ID(WM_CAPTURECHANGED);
+            TRACE_ID(WM_MOVING);
+            TRACE_ID(WM_POWERBROADCAST);
+            TRACE_ID(WM_DEVICECHANGE);
+            TRACE_ID(WM_MDICREATE);
+            TRACE_ID(WM_MDIDESTROY);
+            TRACE_ID(WM_MDIACTIVATE);
+            TRACE_ID(WM_MDIRESTORE);
+            TRACE_ID(WM_MDINEXT);
+            TRACE_ID(WM_MDIMAXIMIZE);
+            TRACE_ID(WM_MDITILE);
+            TRACE_ID(WM_MDICASCADE);
+            TRACE_ID(WM_MDIICONARRANGE);
+            TRACE_ID(WM_MDIGETACTIVE);
+            TRACE_ID(WM_MDISETMENU);
+            TRACE_ID(WM_ENTERSIZEMOVE);
+            TRACE_ID(WM_EXITSIZEMOVE);
+            TRACE_ID(WM_DROPFILES);
+            TRACE_ID(WM_MDIREFRESHMENU);
+            TRACE_ID(WM_POINTERDEVICECHANGE);
+            TRACE_ID(WM_POINTERDEVICEINRANGE);
+            TRACE_ID(WM_POINTERDEVICEOUTOFRANGE);
+            TRACE_ID(WM_TOUCH);
+            TRACE_ID(WM_NCPOINTERUPDATE);
+            TRACE_ID(WM_NCPOINTERDOWN);
+            TRACE_ID(WM_NCPOINTERUP);
+            TRACE_ID(WM_POINTERUPDATE);
+            TRACE_ID(WM_POINTERDOWN);
+            TRACE_ID(WM_POINTERUP);
+            TRACE_ID(WM_POINTERENTER);
+            TRACE_ID(WM_POINTERLEAVE);
+            TRACE_ID(WM_POINTERACTIVATE);
+            TRACE_ID(WM_POINTERCAPTURECHANGED);
+            TRACE_ID(WM_TOUCHHITTESTING);
+            TRACE_ID(WM_POINTERWHEEL);
+            TRACE_ID(WM_POINTERHWHEEL);
+            TRACE_ID(DM_POINTERHITTEST);
+            TRACE_ID(WM_POINTERROUTEDTO);
+            TRACE_ID(WM_POINTERROUTEDAWAY);
+            TRACE_ID(WM_POINTERROUTEDRELEASED);
+            TRACE_ID(WM_IME_SETCONTEXT);
+            TRACE_ID(WM_IME_NOTIFY);
+            TRACE_ID(WM_IME_CONTROL);
+            TRACE_ID(WM_IME_COMPOSITIONFULL);
+            TRACE_ID(WM_IME_SELECT);
+            TRACE_ID(WM_IME_CHAR);
+            TRACE_ID(WM_IME_REQUEST);
+            TRACE_ID(WM_IME_KEYDOWN);
+            TRACE_ID(WM_IME_KEYUP);
+            TRACE_ID(WM_MOUSEHOVER);
+            TRACE_ID(WM_MOUSELEAVE);
+            TRACE_ID(WM_NCMOUSEHOVER);
+            TRACE_ID(WM_NCMOUSELEAVE);
+            TRACE_ID(WM_WTSSESSION_CHANGE);
+            TRACE_ID(WM_DPICHANGED);
+            TRACE_ID(WM_CUT);
+            TRACE_ID(WM_COPY);
+            TRACE_ID(WM_PASTE);
+            TRACE_ID(WM_CLEAR);
+            TRACE_ID(WM_UNDO);
+            TRACE_ID(WM_RENDERFORMAT);
+            TRACE_ID(WM_RENDERALLFORMATS);
+            TRACE_ID(WM_DESTROYCLIPBOARD);
+            TRACE_ID(WM_DRAWCLIPBOARD);
+            TRACE_ID(WM_PAINTCLIPBOARD);
+            TRACE_ID(WM_VSCROLLCLIPBOARD);
+            TRACE_ID(WM_SIZECLIPBOARD);
+            TRACE_ID(WM_ASKCBFORMATNAME);
+            TRACE_ID(WM_CHANGECBCHAIN);
+            TRACE_ID(WM_HSCROLLCLIPBOARD);
+            TRACE_ID(WM_QUERYNEWPALETTE);
+            TRACE_ID(WM_PALETTEISCHANGING);
+            TRACE_ID(WM_PALETTECHANGED);
+            TRACE_ID(WM_HOTKEY);
+            TRACE_ID(WM_PRINT);
+            TRACE_ID(WM_PRINTCLIENT);
+            TRACE_ID(WM_APPCOMMAND);
+            TRACE_ID(WM_THEMECHANGED);
+            TRACE_ID(WM_CLIPBOARDUPDATE);
+            TRACE_ID(WM_DWMCOMPOSITIONCHANGED);
+            TRACE_ID(WM_DWMNCRENDERINGCHANGED);
+            TRACE_ID(WM_DWMCOLORIZATIONCOLORCHANGED);
+            TRACE_ID(WM_DWMWINDOWMAXIMIZEDCHANGE);
+            TRACE_ID(WM_DWMSENDICONICTHUMBNAIL);
+            TRACE_ID(WM_DWMSENDICONICLIVEPREVIEWBITMAP);
+            TRACE_ID(WM_GETTITLEBARINFOEX);
+            TRACE_ID(WM_APP);
+            TRACE_ID(WM_USER);
+        default:
+            return L"Unknown";
+        }
+    }
+
+#undef TRACE_ID
+#endif // TRACE_WINDOWS_MESSAGES
 }
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -253,6 +511,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     static bool s_in_suspend = false;
     static bool s_minimized = false;
     static bool s_fullscreen = false;
+#endif
+
+#ifdef TRACE_WINDOWS_MESSAGES
+    OutputDebugStringW(DXUTTraceWindowsMessage(message));
+    OutputDebugStringA("\n");
 #endif
 
     auto game = reinterpret_cast<Game*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
