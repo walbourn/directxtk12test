@@ -32,17 +32,17 @@ namespace
 
     struct TestVertex
     {
-        TestVertex(FXMVECTOR position, FXMVECTOR normal, FXMVECTOR textureCoordinate, uint32_t color)
+        TestVertex(FXMVECTOR iposition, FXMVECTOR inormal, FXMVECTOR itextureCoordinate, uint32_t icolor)
         {
-            XMStoreFloat3(&this->position, position);
-            XMStoreFloat3(&this->normal, normal);
-            XMStoreFloat2(&this->textureCoordinate, textureCoordinate);
-            XMStoreFloat2(&this->textureCoordinate2, XMVectorScale(textureCoordinate, 3.f));
+            XMStoreFloat3(&this->position, iposition);
+            XMStoreFloat3(&this->normal, inormal);
+            XMStoreFloat2(&this->textureCoordinate, itextureCoordinate);
+            XMStoreFloat2(&this->textureCoordinate2, XMVectorScale(itextureCoordinate, 3.f));
             XMStoreUByte4(&this->blendIndices, XMVectorSet(0, 0, 0, 0));
 
             XMStoreFloat4(&this->blendWeight, XMVectorSet(1.f, 0.f, 0.f, 0.f));
 
-            XMVECTOR clr = XMLoadUByteN4(reinterpret_cast<XMUBYTEN4*>(&color));
+            XMVECTOR clr = XMLoadUByteN4(reinterpret_cast<XMUBYTEN4*>(&icolor));
             XMStoreFloat4(&this->color, clr);
         }
 
