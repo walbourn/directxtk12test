@@ -19,6 +19,7 @@
 
 #include <cstdint>
 #include <cstdio>
+#include <iterator>
 #include <memory>
 
 //-------------------------------------------------------------------------------------
