@@ -832,7 +832,7 @@ void Game::UnitTests()
         if (FAILED(CreateUploadBuffer(device,
             s_vertexData, std::size(s_vertexData), sizeof(VertexPositionColor),
             m_test1.ReleaseAndGetAddressOf(),
-            D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER)))
+            D3D12_RESOURCE_STATE_GENERIC_READ)))
         {
             OutputDebugStringA("ERROR: Failed CreateUploadBuffer(1) test\n");
             success = false;
@@ -845,7 +845,7 @@ void Game::UnitTests()
         if (FAILED(CreateUploadBuffer(device,
             s_vertexData, std::size(s_vertexData),
             m_test2.ReleaseAndGetAddressOf(),
-            D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER)))
+            D3D12_RESOURCE_STATE_GENERIC_READ)))
         {
             OutputDebugStringA("ERROR: Failed CreateUploadBuffer(2) test\n");
             success = false;
@@ -856,7 +856,7 @@ void Game::UnitTests()
         if (FAILED(CreateUploadBuffer(device,
             verts,
             m_test3.ReleaseAndGetAddressOf(),
-            D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER)))
+            D3D12_RESOURCE_STATE_GENERIC_READ)))
         {
             OutputDebugStringA("ERROR: Failed CreateUploadBuffer(3) test\n");
             success = false;
@@ -866,7 +866,7 @@ void Game::UnitTests()
         if (FAILED(CreateUploadBuffer(device,
             verts,
             m_test4.ReleaseAndGetAddressOf(),
-            D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+            D3D12_RESOURCE_STATE_GENERIC_READ,
             D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE)))
         {
             OutputDebugStringA("ERROR: Failed CreateUploadBuffer(DSR) test\n");
