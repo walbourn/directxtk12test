@@ -334,7 +334,10 @@ void DeviceResources::CreateDeviceResources()
     }
 
     D3D12_FEATURE_DATA_SHADER_MODEL shaderModel = {};
-#if defined(D3D12_SDK_VERSION) && (D3D12_SDK_VERSION >= 606)
+
+#if defined(D3D12_SDK_VERSION) && (D3D12_SDK_VERSION >= 613)
+    shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_9;
+#elif defined(D3D12_SDK_VERSION) && (D3D12_SDK_VERSION >= 606)
     shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_8;
 #elif defined(D3D12_SDK_VERSION) && (D3D12_SDK_VERSION >= 3)
     shaderModel.HighestShaderModel = D3D_SHADER_MODEL_6_7;
@@ -368,6 +371,10 @@ void DeviceResources::CreateDeviceResources()
 #endif
 #if defined(D3D12_SDK_VERSION) && (D3D12_SDK_VERSION >= 606)
     case D3D_SHADER_MODEL_6_8: shaderModelVer = "6.8"; break;
+#endif
+#if defined(D3D12_SDK_VERSION) && (D3D12_SDK_VERSION >= 613)
+    case D3D_SHADER_MODEL_6_9: shaderModelVer = "6.9"; break;
+    case D3D_SHADER_MODEL_NONE: shaderModelVer = "Unknown"; break;
 #endif
     }
 
