@@ -863,7 +863,6 @@ void Game::UnitTests()
         if (FAILED(CreateUploadBuffer(device,
             verts,
             m_test4.ReleaseAndGetAddressOf(),
-            D3D12_RESOURCE_STATE_GENERIC_READ,
             D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE)))
         {
             OutputDebugStringA("ERROR: Failed CreateUploadBuffer(DSR) test\n");
