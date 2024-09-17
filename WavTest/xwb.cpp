@@ -135,7 +135,12 @@ bool Test02()
                     HANDLE async = wb->GetAsyncHandle();
 
                     OVERLAPPED request = {};
-                    request.hEvent = CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
+                    request.hEvent = CreateEventExW(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
+                    if (!request.hEvent)
+                    {
+                        printf( "Fatal error: CreateEventEx failed (HRESULT %08X)\n", HRESULT_FROM_WIN32(GetLastError()) );
+                        return false;
+                    }
                     request.Offset = metadata.offsetBytes;
 
                     bool pass = true;
