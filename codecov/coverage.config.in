@@ -3,7 +3,7 @@
     <CodeCoverage>
         <Sources>
             <Exclude>
-                <Source>.*\\DirectXTK\\Tests\\.*</Source>
+                <Source>.*\\DirectXTK12\\Tests\\.*</Source>
             </Exclude>
         </Sources>
     </CodeCoverage>
