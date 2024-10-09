@@ -2,8 +2,10 @@
 <Configuration>
     <CodeCoverage>
         <Sources>
-            <Exclude>
+            <Include>
                 <Source>.*\\DirectXTK12\\Audio\\.*</Source>
+            </Include>
+            <Exclude>
                 <Source>.*\\DirectXTK12\\Src\\GamePad.*</Source>
                 <Source>.*\\DirectXTK12\\Src\\Keyboard.*</Source>
                 <Source>.*\\DirectXTK12\\Src\\Mouse.*</Source>
