@@ -253,7 +253,7 @@ void Game::Render()
 
     // Prepare the command list to render a new frame.
     m_deviceResources->Prepare((m_state == State::NOMSAA) ? D3D12_RESOURCE_STATE_PRESENT : D3D12_RESOURCE_STATE_RENDER_TARGET);
-        // Note for MSAA, this doesn't actully put the backbuffer into RT state; it just assumes it's already in it and thus skips the barrier
+        // Note for MSAA, this doesn't actually put the backbuffer into RT state; it just assumes it's already in it and thus skips the barrier
 
     auto commandList = m_deviceResources->GetCommandList();
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Render");
@@ -278,7 +278,54 @@ void Game::Render()
 
     Clear();
 
-    // TODO: Add your rendering code here.
+    // Set the descriptor heaps
+    ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap(), m_states->Heap() };
+    commandList->SetDescriptorHeaps(static_cast<UINT>(std::size(heaps)), heaps);
+
+    switch (m_state)
+    {
+    case State::MSAA2X:
+        m_effect2->Apply(commandList);
+        break;
+
+    case State::MSAA4X:
+        m_effect4->Apply(commandList);
+        break;
+
+    case State::MSAA8X:
+        m_effect8->Apply(commandList);
+        break;
+
+    default:
+        m_effect->Apply(commandList);
+        break;
+    }
+
+    m_batch->Begin(commandList);
+
+    {
+        Vertex v1(Vector3(0.f, 0.5f, 0.5f), Vector2(0, 0));
+        Vertex v2(Vector3(0.5f, -0.5f, 0.5f), Vector2(1, 1));
+        Vertex v3(Vector3(-0.5f, -0.5f, 0.5f), Vector2(0, 1));
+
+        m_batch->DrawTriangle(v1, v2, v3);
+    }
+
+#if 0
+    {
+        Vertex quad[] =
+        {
+            { Vector3(0.75f, 0.75f, 0.5), Vector2(0, 0) },
+            { Vector3(0.95f, 0.75f, 0.5), Vector2(0, 1) },
+            { Vector3(0.95f, -0.75f, 0.5), Vector2(1, 0) },
+            { Vector3(0.75f, -0.75f, 0.5), Vector2(1, 1) },
+        };
+
+        m_batch->DrawQuad(quad[0], quad[1], quad[2], quad[3]);
+    }
+#endif
+
+    m_batch->End();
 
     unsigned int sampleCount = 1;
 
@@ -569,11 +616,92 @@ void Game::CreateDeviceDependentResources()
     auto device = m_deviceResources->GetD3DDevice();
 
     m_graphicsMemory = std::make_unique<GraphicsMemory>(device);
+    m_states = std::make_unique<CommonStates>(device);
+    m_resourceDescriptors = std::make_unique<DescriptorHeap>(device, Descriptors::Count);
+    m_batch = std::make_unique<PrimitiveBatch<Vertex>>(device);
 
     // Set the MSAA device. Note this updates updates GetSampleCount.
     m_msaaHelper2->SetDevice(device);
     m_msaaHelper4->SetDevice(device);
     m_msaaHelper8->SetDevice(device);
+
+    {
+        const RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(),
+            m_deviceResources->GetDepthBufferFormat());
+
+        EffectPipelineStateDescription pd(
+            &Vertex::InputLayout,
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
+            CommonStates::CullCounterClockwise,
+            rtState);
+
+        m_effect = std::make_unique<BasicEffect>(device, EffectFlags::Texture, pd);
+        m_effect->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Texture), m_states->LinearClamp());
+    }
+
+    {
+        RenderTargetState rtState(m_msaaHelper2->GetBackBufferFormat(),
+            m_msaaHelper2->GetDepthBufferFormat(),
+            m_msaaHelper2->GetSampleCount());
+
+        EffectPipelineStateDescription pd(
+            &Vertex::InputLayout,
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
+            CommonStates::CullCounterClockwise,
+            rtState);
+
+        m_effect2 = std::make_unique<BasicEffect>(device, EffectFlags::Texture, pd);
+        m_effect2->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Texture), m_states->LinearClamp());
+    }
+
+    {
+        RenderTargetState rtState(m_msaaHelper4->GetBackBufferFormat(),
+            m_msaaHelper4->GetDepthBufferFormat(),
+            m_msaaHelper4->GetSampleCount());
+
+        EffectPipelineStateDescription pd(
+            &Vertex::InputLayout,
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
+            CommonStates::CullCounterClockwise,
+            rtState);
+
+        m_effect4 = std::make_unique<BasicEffect>(device, EffectFlags::Texture, pd);
+        m_effect4->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Texture), m_states->LinearClamp());
+    }
+
+    {
+        RenderTargetState rtState(m_msaaHelper8->GetBackBufferFormat(),
+            m_msaaHelper8->GetDepthBufferFormat(),
+            m_msaaHelper8->GetSampleCount());
+
+        EffectPipelineStateDescription pd(
+            &Vertex::InputLayout,
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
+            CommonStates::CullCounterClockwise,
+            rtState);
+
+        m_effect8 = std::make_unique<BasicEffect>(device, EffectFlags::Texture, pd);
+        m_effect8->SetTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Texture), m_states->LinearClamp());
+    }
+
+    {
+        ResourceUploadBatch resourceUpload(device);
+
+        resourceUpload.Begin();
+
+        DX::ThrowIfFailed(
+            CreateDDSTextureFromFile(device, resourceUpload, L"reftexture.dds", m_texture.ReleaseAndGetAddressOf())
+            );
+
+        auto uploadResourcesFinished = resourceUpload.End(m_deviceResources->GetCommandQueue());
+        uploadResourcesFinished.wait();
+    }
+
+    CreateShaderResourceView(device, m_texture.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Texture));
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
@@ -585,20 +713,28 @@ void Game::CreateWindowSizeDependentResources()
     m_msaaHelper2->SetWindow(size);
     m_msaaHelper4->SetWindow(size);
     m_msaaHelper8->SetWindow(size);
-
-    //m_batch->SetViewport(m_deviceResources->GetScreenViewport());
 }
 
 #ifdef LOSTDEVICE
 void Game::OnDeviceLost()
 {
     m_graphicsMemory.reset();
+    m_states.reset();
+    m_resourceDescriptors.reset();
+
+    m_effect.reset();
+    m_effect2.reset();
+    m_effect4.reset();
+    m_effect8.reset();
+
+    m_batch.reset();
 
     // Release MSAA resources.
     m_msaaHelper2->ReleaseDevice();
     m_msaaHelper4->ReleaseDevice();
     m_msaaHelper8->ReleaseDevice();
 
+    m_texture.Reset();
     m_screenshot.Reset();
 }
 

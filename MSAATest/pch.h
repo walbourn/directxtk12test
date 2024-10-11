@@ -102,14 +102,21 @@
 #include <system_error>
 #include <tuple>
 
+#include "CommonStates.h"
 #include "DDSTextureLoader.h"
+#include "DescriptorHeap.h"
+#include "DirectXHelpers.h"
+#include "Effects.h"
 #include "GamePad.h"
 #include "GraphicsMemory.h"
 #include "Keyboard.h"
 #include "Mouse.h"
+#include "PrimitiveBatch.h"
 #include "RenderTargetState.h"
+#include "ResourceUploadBatch.h"
 #include "ScreenGrab.h"
 #include "SimpleMath.h"
+#include "VertexTypes.h"
 
 #include <wincodec.h>
 

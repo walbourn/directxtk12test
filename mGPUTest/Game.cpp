@@ -160,10 +160,13 @@ void Game::Render()
         m_batch[adapterIdx]->Begin(commandList);
 
         {
-            VertexPositionColor points[] = {{ Vector3(-0.75f, -0.75f, 0.5f), red },			{ Vector3(-0.75f, -0.5f,  0.5f), green },
-                                            { Vector3(-0.75f, -0.25f, 0.5f), blue },		{ Vector3(-0.75f,  0.0f,  0.5f), yellow },
-                                            { Vector3(-0.75f,  0.25f, 0.5f), magenta },		{ Vector3(-0.75f,  0.5f,  0.5f), cyan },
-                                            { Vector3(-0.75f,  0.75f, 0.5f), Colors::White} };
+            Vertex points[] =
+            {
+                { Vector3(-0.75f, -0.75f, 0.5f), red },			{ Vector3(-0.75f, -0.5f,  0.5f), green },
+                { Vector3(-0.75f, -0.25f, 0.5f), blue },		{ Vector3(-0.75f,  0.0f,  0.5f), yellow },
+                { Vector3(-0.75f,  0.25f, 0.5f), magenta },		{ Vector3(-0.75f,  0.5f,  0.5f), cyan },
+                { Vector3(-0.75f,  0.75f, 0.5f), Colors::White }
+            };
 
             m_batch[adapterIdx]->Draw(D3D_PRIMITIVE_TOPOLOGY_POINTLIST, points, static_cast<UINT>(std::size(points)));
         }
@@ -176,9 +179,12 @@ void Game::Render()
         m_batch[adapterIdx]->Begin(commandList);
 
         {
-            VertexPositionColor lines[] = { { Vector3(-0.75f, -0.85f, 0.5f), red },			{ Vector3(0.75f, -0.85f, 0.5f), dred },
-                                            { Vector3(-0.75f, -0.90f, 0.5f), green },		{ Vector3(0.75f, -0.90f, 0.5f), dgreen },
-                                            { Vector3(-0.75f, -0.95f, 0.5f), blue },		{ Vector3(0.75f, -0.95f, 0.5f), dblue }};
+            Vertex lines[] =
+            {
+                { Vector3(-0.75f, -0.85f, 0.5f), red },			{ Vector3(0.75f, -0.85f, 0.5f), dred },
+                { Vector3(-0.75f, -0.90f, 0.5f), green },		{ Vector3(0.75f, -0.90f, 0.5f), dgreen },
+                { Vector3(-0.75f, -0.95f, 0.5f), blue },		{ Vector3(0.75f, -0.95f, 0.5f), dblue }
+            };
 
             m_batch[adapterIdx]->DrawLine(lines[0], lines[1]);
             m_batch[adapterIdx]->DrawLine(lines[2], lines[3]);
@@ -192,15 +198,21 @@ void Game::Render()
 
         m_batch[adapterIdx]->Begin(commandList);
 
-        VertexPositionColor tri[]   = {{ Vector3(0.f, 0.5f, 0.5f), red},                    {Vector3(0.5f, -0.5f, 0.5f), green},
-                                       { Vector3(-0.5f, -0.5f, 0.5f), blue}};
+        Vertex tri[] =
+        {
+            { Vector3(0.f, 0.5f, 0.5f), red},                    {Vector3(0.5f, -0.5f, 0.5f), green},
+            { Vector3(-0.5f, -0.5f, 0.5f), blue}
+        };
         
         m_batch[adapterIdx]->DrawTriangle(tri[0], tri[1], tri[2]);
 
         // Quad (same type as triangle)
         
-        VertexPositionColor quad[]  = {{ Vector3(0.75f, 0.75f, 0.5), gray },				{ Vector3(0.95f, 0.75f, 0.5), gray },
-                                       { Vector3(0.95f, -0.75f, 0.5), dgray },			    { Vector3(0.75f, -0.75f, 0.5), dgray }};
+        Vertex quad[] =
+        {
+            { Vector3(0.75f, 0.75f, 0.5), gray },				{ Vector3(0.95f, 0.75f, 0.5), gray },
+            { Vector3(0.95f, -0.75f, 0.5), dgray },			    { Vector3(0.75f, -0.75f, 0.5), dgray }
+        };
 
         m_batch[adapterIdx]->DrawQuad(quad[0], quad[1], quad[2], quad[3]);
     
@@ -303,14 +315,14 @@ void Game::GetDefaultSize(int& width, int& height) const
 void Game::CreateDeviceDependentResources()
 {
     RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), m_deviceResources->GetDepthBufferFormat());
-    EffectPipelineStateDescription pd(&VertexPositionColor::InputLayout, CommonStates::Opaque, CommonStates::DepthDefault, CommonStates::CullNone, rtState);
+    EffectPipelineStateDescription pd(&Vertex::InputLayout, CommonStates::Opaque, CommonStates::DepthDefault, CommonStates::CullNone, rtState);
 
     for (unsigned int adapterIdx = 0; adapterIdx < m_deviceResources->GetDeviceCount() && adapterIdx < MAX_DEVICES; ++adapterIdx)
     {
         auto device						= m_deviceResources->GetD3DDevice(adapterIdx);
 
         m_graphicsMemory[adapterIdx]	= std::make_unique<GraphicsMemory>(device);
-        m_batch[adapterIdx]				= std::make_unique<PrimitiveBatch<VertexPositionColor>>(device);
+        m_batch[adapterIdx]				= std::make_unique<PrimitiveBatch<Vertex>>(device);
        
         pd.primitiveTopology            = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
         m_effectTri[adapterIdx]			= std::make_unique<BasicEffect>(device, EffectFlags::VertexColor, pd);

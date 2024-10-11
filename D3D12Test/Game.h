@@ -99,13 +99,16 @@ private:
     std::unique_ptr<DirectX::Keyboard>      m_keyboard;
 
     // DirectXTK Test Objects
-    std::unique_ptr<DirectX::GraphicsMemory>                                m_graphicsMemory;
-    std::unique_ptr<DirectX::BasicEffect>                                   m_effectPoint;
-    std::unique_ptr<DirectX::BasicEffect>                                   m_effectLine;
-    std::unique_ptr<DirectX::BasicEffect>                                   m_effectTri;
-    std::unique_ptr<DirectX::PrimitiveBatch<DirectX::VertexPositionColor>>  m_batch;
-    std::unique_ptr<DirectX::CommonStates>                                  m_states;
-    std::unique_ptr<DirectX::DescriptorHeap>                                m_resourceDescriptors;
+    std::unique_ptr<DirectX::GraphicsMemory>            m_graphicsMemory;
+    std::unique_ptr<DirectX::BasicEffect>               m_effectPoint;
+    std::unique_ptr<DirectX::BasicEffect>               m_effectLine;
+    std::unique_ptr<DirectX::BasicEffect>               m_effectTri;
+
+    using Vertex = DirectX::VertexPositionColor;
+    std::unique_ptr<DirectX::PrimitiveBatch<Vertex>>    m_batch;
+
+    std::unique_ptr<DirectX::CommonStates>              m_states;
+    std::unique_ptr<DirectX::DescriptorHeap>            m_resourceDescriptors;
 
     Microsoft::WRL::ComPtr<ID3D12Resource>  m_test1;
     Microsoft::WRL::ComPtr<ID3D12Resource>  m_test2;

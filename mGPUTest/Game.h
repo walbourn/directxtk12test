@@ -92,9 +92,11 @@ private:
     // DirectXTK Test Objects
     static constexpr size_t MAX_DEVICES = 3;
 
-    std::unique_ptr<DirectX::GraphicsMemory>                                m_graphicsMemory[MAX_DEVICES];
-    std::unique_ptr<DirectX::BasicEffect>                                   m_effectPoint[MAX_DEVICES];
-    std::unique_ptr<DirectX::BasicEffect>                                   m_effectLine[MAX_DEVICES];
-    std::unique_ptr<DirectX::BasicEffect>                                   m_effectTri[MAX_DEVICES];
-    std::unique_ptr<DirectX::PrimitiveBatch<DirectX::VertexPositionColor>>  m_batch[MAX_DEVICES];
+    std::unique_ptr<DirectX::GraphicsMemory>            m_graphicsMemory[MAX_DEVICES];
+    std::unique_ptr<DirectX::BasicEffect>               m_effectPoint[MAX_DEVICES];
+    std::unique_ptr<DirectX::BasicEffect>               m_effectLine[MAX_DEVICES];
+    std::unique_ptr<DirectX::BasicEffect>               m_effectTri[MAX_DEVICES];
+
+    using Vertex = DirectX::VertexPositionColor;
+    std::unique_ptr<DirectX::PrimitiveBatch<Vertex>>    m_batch[MAX_DEVICES];
 };
