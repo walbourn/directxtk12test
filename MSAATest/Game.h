@@ -1,7 +1,7 @@
 //--------------------------------------------------------------------------------------
 // File: Game.h
 //
-// Developer unit test for DirectXTK ?
+// Developer unit test for DirectXTK MSAATest
 //
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
@@ -12,6 +12,7 @@
 
 #include "DirectXTKTest.h"
 #include "StepTimer.h"
+#include "MSAAHelper.h"
 
 constexpr uint32_t c_testTimeout = 5000;
 
@@ -96,6 +97,36 @@ private:
     std::unique_ptr<DirectX::GamePad>       m_gamePad;
     std::unique_ptr<DirectX::Keyboard>      m_keyboard;
 
+    DirectX::GamePad::ButtonStateTracker        m_gamePadButtons;
+    DirectX::Keyboard::KeyboardStateTracker     m_keyboardButtons;
+
     // DirectXTK Test Objects
     std::unique_ptr<DirectX::GraphicsMemory>    m_graphicsMemory;
+
+    // MSAA resources
+    std::unique_ptr<DX::MSAAHelper> m_msaaHelper2;
+    std::unique_ptr<DX::MSAAHelper> m_msaaHelper4;
+    std::unique_ptr<DX::MSAAHelper> m_msaaHelper8;
+
+    enum State
+    {
+        NOMSAA,
+        MSAA2X,
+        MSAA4X,
+        MSAA8X,
+        COUNT,
+    };
+
+    int m_state;
+
+    enum Descriptors
+    {
+        MyFont,
+        Count
+    };
+
+    float m_delay;
+    uint64_t m_frame;
+
+    Microsoft::WRL::ComPtr<ID3D12Resource> m_screenshot;
 };

@@ -102,12 +102,17 @@
 #include <system_error>
 #include <tuple>
 
+#include "DDSTextureLoader.h"
 #include "GamePad.h"
 #include "GraphicsMemory.h"
 #include "Keyboard.h"
 #include "Mouse.h"
 #include "RenderTargetState.h"
+#include "ScreenGrab.h"
 #include "SimpleMath.h"
+
+#include <wincodec.h>
+
 
 namespace DX
 {
