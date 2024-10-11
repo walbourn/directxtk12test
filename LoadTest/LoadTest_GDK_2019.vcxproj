@@ -385,7 +385,7 @@
     <CopyFileToFolders Include="..\Common\LargeLogo.png" />
   </ItemGroup>
   <ItemGroup>
-    <MGCCompile Include="MicrosoftGame.Config" />
+    <MGCCompile Include="MicrosoftGameConfig.mgc" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\DirectXTK_GDK_2019.vcxproj">
