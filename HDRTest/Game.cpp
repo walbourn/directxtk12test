@@ -66,7 +66,8 @@ extern bool g_HDRMode;
 
 Game::Game() noexcept(false) :
     m_toneMapMode(ToneMapPostProcess::Reinhard),
-    m_hdr10Rotation(ToneMapPostProcess::HDTV_to_UHDTV)
+    m_hdr10Rotation(ToneMapPostProcess::HDTV_to_UHDTV),
+    m_frame(0)
 {
 #if defined(TEST_HDR_LINEAR) && !defined(XBOX)
     constexpr DXGI_FORMAT c_DisplayFormat = DXGI_FORMAT_R16G16B16A16_FLOAT;
@@ -155,16 +156,21 @@ void Game::Initialize(
 // Executes the basic game loop.
 void Game::Tick()
 {
+    PIXBeginEvent(PIX_COLOR_DEFAULT, L"Frame %llu", m_frame);
+
 #ifdef _GAMING_XBOX
     m_deviceResources->WaitForOrigin();
 #endif
 
     m_timer.Tick([&]()
-    {
-        Update(m_timer);
-    });
+        {
+            Update(m_timer);
+        });
 
     Render();
+
+    PIXEndEvent();
+    ++m_frame;
 }
 
 // Updates the world.

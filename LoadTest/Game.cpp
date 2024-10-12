@@ -159,6 +159,8 @@ void Game::Initialize(
 // Executes the basic game loop.
 void Game::Tick()
 {
+    PIXBeginEvent(PIX_COLOR_DEFAULT, L"Frame %llu", m_frame);
+
 #ifdef _GAMING_XBOX
     m_deviceResources->WaitForOrigin();
 #endif
@@ -170,6 +172,7 @@ void Game::Tick()
 
     Render();
 
+    PIXEndEvent();
     ++m_frame;
 }
 
@@ -1309,7 +1312,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     // Alpha mode test
     DDS_ALPHA_MODE alphaMode = DDS_ALPHA_MODE_UNKNOWN;
     DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"tree02S_pmalpha.dds", m_test4.ReleaseAndGetAddressOf(), false, 0, &alphaMode));
-    
+
     {
         if (alphaMode != DDS_ALPHA_MODE_PREMULTIPLIED)
         {

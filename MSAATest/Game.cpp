@@ -168,7 +168,7 @@ void Game::Tick()
     Render();
 
     PIXEndEvent();
-    m_frame++;
+    ++m_frame;
 }
 
 // Updates the world.

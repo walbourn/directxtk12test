@@ -154,12 +154,13 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_radianceIBL[s_nIBL];
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_irradianceIBL[s_nIBL];
 
-    uint32_t m_ibl;
-    bool m_spinning;
-    bool m_showDebug;
-    DirectX::DebugEffect::Mode m_debugMode;
-    float m_pitch;
-    float m_yaw;
+    uint32_t                    m_ibl;
+    bool                        m_spinning;
+    bool                        m_showDebug;
+    DirectX::DebugEffect::Mode  m_debugMode;
+    float                       m_pitch;
+    float                       m_yaw;
+    uint64_t                    m_frame;
 
     enum Descriptors
     {

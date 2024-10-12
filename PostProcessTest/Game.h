@@ -159,5 +159,6 @@ private:
         RTCount
     };
 
-    float                                           m_delay;
+    float       m_delay;
+    uint64_t    m_frame;
 };

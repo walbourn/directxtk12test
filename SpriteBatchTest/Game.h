@@ -118,4 +118,6 @@ private:
         D,
         Count
     };
+
+    uint64_t m_frame;
 };

@@ -199,7 +199,8 @@ static_assert(std::is_nothrow_move_assignable<PBREffectFactory>::value, "Move As
 Game::Game() noexcept(false) :
     m_indexCount(0),
     m_vertexBufferView{},
-    m_indexBufferView{}
+    m_indexBufferView{},
+    m_frame(0)
 {
 #ifdef GAMMA_CORRECT_RENDERING
     constexpr DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
@@ -280,16 +281,21 @@ void Game::Initialize(
 // Executes the basic game loop.
 void Game::Tick()
 {
+    PIXBeginEvent(PIX_COLOR_DEFAULT, L"Frame %llu", m_frame);
+
 #ifdef _GAMING_XBOX
     m_deviceResources->WaitForOrigin();
 #endif
 
     m_timer.Tick([&]()
-    {
-        Update(m_timer);
-    });
+        {
+            Update(m_timer);
+        });
 
     Render();
+
+    PIXEndEvent();
+    ++m_frame;
 }
 
 // Updates the world.

@@ -133,6 +133,8 @@ void Game::Initialize(
 // Executes the basic game loop.
 void Game::Tick()
 {
+    PIXBeginEvent(PIX_COLOR_DEFAULT, L"Frame %llu", m_frame);
+
 #ifdef _GAMING_XBOX
     m_deviceResources->WaitForOrigin();
 #endif
@@ -144,6 +146,7 @@ void Game::Tick()
 
     Render();
 
+    PIXEndEvent();
     ++m_frame;
 }
 

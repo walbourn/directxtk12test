@@ -153,7 +153,8 @@ private:
 
     wchar_t m_deviceStr[256];
 
-    bool m_gamepadPresent;
+    bool        m_gamepadPresent;
+    uint64_t    m_frame;
 
     DirectX::SoundStreamInstance* GetCurrentStream(unsigned int);
     void UpdateCurrentStream(bool isplay);

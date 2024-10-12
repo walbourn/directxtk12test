@@ -98,4 +98,6 @@ private:
 
     // DirectXTK Test Objects
     std::unique_ptr<DirectX::GraphicsMemory>    m_graphicsMemory;
+
+    uint64_t m_frame;
 };

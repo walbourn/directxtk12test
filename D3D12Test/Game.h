@@ -120,4 +120,6 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource>  m_test8;
     Microsoft::WRL::ComPtr<ID3D12Resource>  m_test9;
     Microsoft::WRL::ComPtr<ID3D12Resource>  m_test10;
+
+    uint64_t m_frame;
 };

@@ -178,4 +178,6 @@ private:
         BrickSpecular,
         Count
     };
+
+    uint64_t m_frame;
 };

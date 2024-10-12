@@ -99,4 +99,6 @@ private:
 
     using Vertex = DirectX::VertexPositionColor;
     std::unique_ptr<DirectX::PrimitiveBatch<Vertex>>    m_batch[MAX_DEVICES];
+
+    uint64_t m_frame;
 };

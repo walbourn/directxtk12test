@@ -114,8 +114,9 @@ private:
         Count
     };
 
-    Microsoft::WRL::Wrappers::Event                 m_ctrlChanged;
-    Microsoft::WRL::Wrappers::Event                 m_userChanged;
+    Microsoft::WRL::Wrappers::Event     m_ctrlChanged;
+    Microsoft::WRL::Wrappers::Event     m_userChanged;
 
-    const wchar_t *                                 m_lastStr;
+    uint64_t                            m_frame;
+    const wchar_t *                     m_lastStr;
 };

@@ -195,7 +195,7 @@ namespace Microsoft
 #ifdef __MINGW32__
 constexpr UINT PIX_COLOR_DEFAULT = 0;
 
-inline void PIXBeginEvent(UINT64, PCWSTR) {}
+inline void PIXBeginEvent(UINT64, PCWSTR, ...) {}
 
 template<typename T>
 inline void PIXBeginEvent(T*, UINT64, PCWSTR) {}

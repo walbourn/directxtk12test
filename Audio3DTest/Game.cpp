@@ -88,6 +88,7 @@ Game::Game() noexcept(false) :
     m_critError(false),
     m_retrydefault(false),
     m_newAudio(false),
+    m_frame(0),
     m_deviceStr{}
 {
 #ifdef GAMMA_CORRECT_RENDERING
@@ -227,18 +228,23 @@ void Game::Initialize(
 // Executes the basic game loop.
 void Game::Tick()
 {
+    PIXBeginEvent(PIX_COLOR_DEFAULT, L"Frame %llu", m_frame);
+
 #ifdef _GAMING_XBOX
     m_deviceResources->WaitForOrigin();
 #endif
 
     m_timer.Tick([&]()
-    {
-        Update(m_timer);
-    });
+        {
+            Update(m_timer);
+        });
 
     AudioRender();
 
     Render();
+
+    PIXEndEvent();
+    ++m_frame;
 }
 
 // Updates the world.

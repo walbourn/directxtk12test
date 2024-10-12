@@ -57,6 +57,7 @@ static_assert(std::is_nothrow_move_assignable<Keyboard::KeyboardStateTracker>::v
 
 Game::Game() noexcept(false) :
     m_kb{},
+    m_frame(0),
     m_lastStr(nullptr),
     m_lastStrBuff{}
 {
@@ -178,16 +179,21 @@ void Game::Initialize(
 // Executes the basic game loop.
 void Game::Tick()
 {
+    PIXBeginEvent(PIX_COLOR_DEFAULT, L"Frame %llu", m_frame);
+
 #ifdef _GAMING_XBOX
     m_deviceResources->WaitForOrigin();
 #endif
 
     m_timer.Tick([&]()
-    {
-        Update(m_timer);
-    });
+        {
+            Update(m_timer);
+        });
 
     Render();
+
+    PIXEndEvent();
+    ++m_frame;
 }
 
 // Updates the world.

@@ -179,6 +179,7 @@ private:
 
     unsigned int                                    m_renderMode;
     float                                           m_delay;
+    uint64_t                                        m_frame;
 
     enum Descriptors
     {

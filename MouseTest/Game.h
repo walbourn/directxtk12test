@@ -121,10 +121,11 @@ private:
         Count
     };
 
-    float                                               m_pitch;
-    float                                               m_yaw;
+    float                           m_pitch;
+    float                           m_yaw;
+    uint64_t                        m_frame;
 
-    DirectX::SimpleMath::Vector3                        m_cameraPos;
+    DirectX::SimpleMath::Vector3    m_cameraPos;
 
-    const wchar_t *                                     m_lastStr;
+    const wchar_t *                 m_lastStr;
 };

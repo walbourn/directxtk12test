@@ -130,4 +130,6 @@ private:
         DefaultTex = 0,
         Reserve
     };
+
+    uint64_t m_frame;
 };

@@ -186,7 +186,6 @@ private:
 
     Microsoft::WRL::ComPtr<ID3D12Resource> m_screenshot;
 
-    uint64_t m_frame;
-
-    bool m_firstFrame;
+    uint64_t    m_frame;
+    bool        m_firstFrame;
 };

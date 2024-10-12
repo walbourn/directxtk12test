@@ -44,7 +44,8 @@ static_assert(std::is_nothrow_move_assignable<SpriteBatch>::value, "Move Assign.
 static_assert(std::is_nothrow_move_constructible<SpriteBatchPipelineStateDescription>::value, "Move Ctor.");
 static_assert(std::is_nothrow_move_assignable<SpriteBatchPipelineStateDescription>::value, "Move Assign.");
 
-Game::Game() noexcept(false)
+Game::Game() noexcept(false) :
+    m_frame(0)
 {
 #ifdef GAMMA_CORRECT_RENDERING
     constexpr DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
@@ -126,16 +127,21 @@ void Game::Initialize(
 // Executes the basic game loop.
 void Game::Tick()
 {
+    PIXBeginEvent(PIX_COLOR_DEFAULT, L"Frame %llu", m_frame);
+
 #ifdef _GAMING_XBOX
     m_deviceResources->WaitForOrigin();
 #endif
 
     m_timer.Tick([&]()
-    {
-        Update(m_timer);
-    });
+        {
+            Update(m_timer);
+        });
 
     Render();
+
+    PIXEndEvent();
+    ++m_frame;
 }
 
 // Updates the world.
