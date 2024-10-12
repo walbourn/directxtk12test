@@ -17,6 +17,11 @@
 // Build for LH vs. RH coords
 //#define LH_COORDS
 
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+#include <Windows.ApplicationModel.h>
+#include <Windows.Storage.h>
+#endif
+
 extern void ExitGame() noexcept;
 
 using namespace DirectX;
@@ -341,8 +346,7 @@ void Game::Render()
         sampleCount = m_msaaHelper4->GetSampleCount();
         if (m_frame == 10)
         {
-            // TOOD: wrong state until I render?
-            // m_screenshot = m_msaaHelper4->GetMSAARenderTarget();
+            m_screenshot = m_msaaHelper4->GetMSAARenderTarget();
         }
         break;
 
@@ -375,11 +379,42 @@ void Game::Render()
 
         bool success = true;
 
-    #if (defined(_XBOX_ONE) && defined(_TITLE)) || defined(_GAMING_XBOX)
+    #ifdef XBOX
         const wchar_t sspath[MAX_PATH] = L"T:\\";
+    #elif defined(UWP)
+        wchar_t sspath[MAX_PATH] = {};
+
+        using namespace Microsoft::WRL;
+        using namespace Microsoft::WRL::Wrappers;
+        using namespace ABI::Windows::Foundation;
+
+        ComPtr<ABI::Windows::Storage::IApplicationDataStatics> appStatics;
+        DX::ThrowIfFailed(GetActivationFactory(HStringReference(RuntimeClass_Windows_Storage_ApplicationData).Get(), appStatics.GetAddressOf()));
+
+        ComPtr<ABI::Windows::Storage::IApplicationData> appData;
+        DX::ThrowIfFailed(appStatics->get_Current(appData.GetAddressOf()));
+
+        // Temporary folder
+        {
+            ComPtr<ABI::Windows::Storage::IStorageFolder> folder;
+            DX::ThrowIfFailed(appData->get_TemporaryFolder(folder.GetAddressOf()));
+
+            ComPtr<ABI::Windows::Storage::IStorageItem> item;
+            DX::ThrowIfFailed(folder.As(&item));
+
+            HString folderName;
+            DX::ThrowIfFailed(item->get_Path(folderName.GetAddressOf()));
+
+            unsigned int len;
+            PCWSTR szPath = folderName.GetRawBuffer(&len);
+            if (wcscpy_s(sspath, MAX_PATH, szPath) > 0
+                || wcscat_s(sspath, L"\\") > 0)
+            {
+                throw std::runtime_error("TemporaryFolder");
+            }
+        }
     #else
-        wchar_t sspath[MAX_PATH];
-        ExpandEnvironmentStringsW(L"%TEMP%\\", sspath, MAX_PATH);
+        const wchar_t sspath[MAX_PATH] = L".";
     #endif
 
         OutputDebugStringA("Output path: ");
@@ -409,7 +444,7 @@ void Game::Render()
 
         DX::ThrowIfFailed(SaveWICTextureToFile(m_deviceResources->GetCommandQueue(), m_screenshot.Get(),
             GUID_ContainerFormatPng, sspng,
-            D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET));
+            D3D12_RESOURCE_STATE_RESOLVE_SOURCE, D3D12_RESOURCE_STATE_RESOLVE_SOURCE));
 
         if (GetFileAttributesW(sspng) != INVALID_FILE_ATTRIBUTES)
         {
@@ -423,7 +458,7 @@ void Game::Render()
 
         DX::ThrowIfFailed(SaveWICTextureToFile(m_deviceResources->GetCommandQueue(), m_screenshot.Get(),
             GUID_ContainerFormatJpeg, ssjpg,
-            D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET));
+            D3D12_RESOURCE_STATE_RESOLVE_SOURCE, D3D12_RESOURCE_STATE_RESOLVE_SOURCE));
 
         if (GetFileAttributesW(ssjpg) != INVALID_FILE_ATTRIBUTES)
         {
@@ -437,7 +472,7 @@ void Game::Render()
 
         DX::ThrowIfFailed(SaveWICTextureToFile(m_deviceResources->GetCommandQueue(), m_screenshot.Get(),
             GUID_ContainerFormatBmp, ssbmp,
-            D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET,
+            D3D12_RESOURCE_STATE_RESOLVE_SOURCE, D3D12_RESOURCE_STATE_RESOLVE_SOURCE,
             &GUID_WICPixelFormat16bppBGR565));
 
         if (GetFileAttributesW(ssbmp) != INVALID_FILE_ATTRIBUTES)
@@ -452,7 +487,7 @@ void Game::Render()
 
         DX::ThrowIfFailed(SaveWICTextureToFile(m_deviceResources->GetCommandQueue(), m_screenshot.Get(),
             GUID_ContainerFormatTiff, sstif,
-            D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET,
+            D3D12_RESOURCE_STATE_RESOLVE_SOURCE, D3D12_RESOURCE_STATE_RESOLVE_SOURCE,
             nullptr,
             [&](IPropertyBag2* props)
             {
@@ -481,7 +516,7 @@ void Game::Render()
         }
 
         DX::ThrowIfFailed(SaveDDSTextureToFile(m_deviceResources->GetCommandQueue(), m_screenshot.Get(), ssdds,
-            D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET));
+            D3D12_RESOURCE_STATE_RESOLVE_SOURCE, D3D12_RESOURCE_STATE_RESOLVE_SOURCE));
 
         if (GetFileAttributesW(ssdds) != INVALID_FILE_ATTRIBUTES)
         {
