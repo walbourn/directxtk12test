@@ -81,6 +81,7 @@ void MSAAHelper::SetDevice(_In_ ID3D12Device* device)
         }
     }
 
+    if (m_depthBufferFormat != DXGI_FORMAT_UNKNOWN)
     {
         D3D12_FEATURE_DATA_FORMAT_SUPPORT formatSupport = { m_depthBufferFormat, D3D12_FORMAT_SUPPORT1_NONE, D3D12_FORMAT_SUPPORT2_NONE };
         if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &formatSupport, sizeof(formatSupport))))
@@ -299,6 +300,19 @@ void MSAAHelper::Resolve(_In_ ID3D12GraphicsCommandList* commandList,
         const D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
             backBuffer,
             D3D12_RESOURCE_STATE_RESOLVE_DEST,
+            afterState);
+        commandList->ResourceBarrier(1, &barrier);
+    }
+}
+
+
+void MSAAHelper::Transition(_In_ ID3D12GraphicsCommandList* commandList, D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState)
+{
+    if (beforeState != afterState)
+    {
+        const D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+            m_msaaRenderTarget.Get(),
+            beforeState,
             afterState);
         commandList->ResourceBarrier(1, &barrier);
     }

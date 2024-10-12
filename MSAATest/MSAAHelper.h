@@ -44,6 +44,8 @@ namespace DX
             D3D12_RESOURCE_STATES beforeState = D3D12_RESOURCE_STATE_RENDER_TARGET,
             D3D12_RESOURCE_STATES afterState = D3D12_RESOURCE_STATE_PRESENT);
 
+        void Transition(_In_ ID3D12GraphicsCommandList* commandList, D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState);
+
         void SetWindow(const RECT& rect);
 
         ID3D12Resource* GetMSAARenderTarget() const noexcept { return m_msaaRenderTarget.Get(); }
