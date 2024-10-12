@@ -176,6 +176,7 @@ private:
     bool                                    m_spinning;
     float                                   m_pitch;
     float                                   m_yaw;
+    uint64_t                                m_frame;
 
     DX::AnimationCMO                        m_teapotAnim;
 };

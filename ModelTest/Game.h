@@ -161,10 +161,11 @@ private:
     std::unique_ptr<DirectX::XMFLOAT3X4[]>          m_instanceTransforms;
     DirectX::ModelBone::TransformArray              m_bones;
 
-    bool m_spinning;
-    bool m_firstFrame;
-    float m_pitch;
-    float m_yaw;
+    bool        m_spinning;
+    bool        m_firstFrame;
+    float       m_pitch;
+    float       m_yaw;
+    uint64_t    m_frame;
 
     Microsoft::WRL::ComPtr<ID3D12CommandQueue>      m_copyQueue;
     Microsoft::WRL::ComPtr<ID3D12CommandQueue>      m_computeQueue;

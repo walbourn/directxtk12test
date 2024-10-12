@@ -203,7 +203,8 @@ Game::Game() noexcept(false) :
     m_retrydefault(false),
     m_newAudio(false),
     m_deviceStr{},
-    m_gamepadPresent(false)
+    m_gamepadPresent(false),
+    m_frame(0)
 {
 #ifdef GAMMA_CORRECT_RENDERING
     constexpr DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
@@ -470,19 +471,25 @@ void Game::Initialize(
 // Executes the basic game loop.
 void Game::Tick()
 {
+    PIXBeginEvent(PIX_COLOR_DEFAULT, L"Frame %llu", m_frame);
+
 #ifdef _GAMING_XBOX
     m_deviceResources->WaitForOrigin();
 #endif
 
     m_timer.Tick([&]()
-    {
-        Update(m_timer);
-    });
+        {
+            Update(m_timer);
+        });
 
     AudioRender();
 
     Render();
+
+    PIXEndEvent();
+    ++m_frame;
 }
+
 
 // Updates the world.
 void Game::Update(DX::StepTimer const&)

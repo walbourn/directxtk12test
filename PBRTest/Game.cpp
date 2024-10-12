@@ -117,7 +117,8 @@ Game::Game() noexcept(false) :
     m_showDebug(false),
     m_debugMode(DebugEffect::Mode_Default),
     m_pitch(0),
-    m_yaw(0)
+    m_yaw(0),
+    m_frame(0)
 {
 #if defined(TEST_HDR_LINEAR) && !defined(XBOX)
     constexpr DXGI_FORMAT c_DisplayFormat = DXGI_FORMAT_R16G16B16A16_FLOAT;
@@ -206,16 +207,21 @@ void Game::Initialize(
 // Executes the basic game loop.
 void Game::Tick()
 {
+    PIXBeginEvent(PIX_COLOR_DEFAULT, L"Frame %llu", m_frame);
+
 #ifdef _GAMING_XBOX
     m_deviceResources->WaitForOrigin();
 #endif
 
     m_timer.Tick([&]()
-    {
-        Update(m_timer);
-    });
+        {
+            Update(m_timer);
+        });
 
     Render();
+
+    PIXEndEvent();
+    ++m_frame;
 }
 
 // Updates the world.
@@ -523,7 +529,7 @@ void Game::Render()
         }
     }
 
-    //--- PBREffect (constant) -------------------------------------------------------------   
+    //--- PBREffect (constant) -------------------------------------------------------------
     m_pbrConstant->SetAlpha(1.f);
     m_pbrConstant->SetWorld(world * XMMatrixTranslation(col0, row1, 0));
     m_pbrConstant->SetConstantAlbedo(Colors::Blue);

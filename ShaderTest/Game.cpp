@@ -95,7 +95,7 @@ namespace
         TestVertex::InputElements,
         TestVertex::InputElementCount
     };
-    
+
     const D3D12_INPUT_LAYOUT_DESC TestVertex::InstancedInputLayout =
     {
         TestVertex::InstancedInputElements,
@@ -199,7 +199,8 @@ Game::Game() noexcept(false) :
     m_vertexBufferViewBn{},
     m_indexBufferView{},
     m_renderMode(Render_Normal),
-    m_delay(0)
+    m_delay(0),
+    m_frame(0)
 {
 #ifdef GAMMA_CORRECT_RENDERING
     const DXGI_FORMAT c_RenderFormat = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
@@ -285,16 +286,21 @@ void Game::Initialize(
 // Executes the basic game loop.
 void Game::Tick()
 {
+    PIXBeginEvent(PIX_COLOR_DEFAULT, L"Frame %llu", m_frame);
+
 #ifdef _GAMING_XBOX
     m_deviceResources->WaitForOrigin();
 #endif
 
     m_timer.Tick([&]()
-    {
-        Update(m_timer);
-    });
+        {
+            Update(m_timer);
+        });
 
     Render();
+
+    PIXEndEvent();
+    ++m_frame;
 }
 
 // Updates the world.

@@ -53,6 +53,7 @@ Game::Game() noexcept(false) :
     m_lastMode(Mouse::MODE_ABSOLUTE),
     m_pitch(0),
     m_yaw(0),
+    m_frame(0),
     m_lastStr(nullptr)
 {
     m_cameraPos = START_POSITION.v;
@@ -184,20 +185,25 @@ void Game::Initialize(
 // Executes the basic game loop.
 void Game::Tick()
 {
+    PIXBeginEvent(PIX_COLOR_DEFAULT, L"Frame %llu", m_frame);
+
 #ifdef _GAMING_XBOX
     m_deviceResources->WaitForOrigin();
 #endif
 
     m_timer.Tick([&]()
-    {
-        Update(m_timer);
-    });
+        {
+            Update(m_timer);
+        });
 
 #ifndef RELY_ON_AUTO_RESET
     m_mouse->EndOfInputFrame();
 #endif
 
     Render();
+
+    PIXEndEvent();
+    ++m_frame;
 }
 
 // Updates the world.

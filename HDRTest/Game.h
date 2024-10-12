@@ -151,6 +151,7 @@ private:
         RTCount
     };
 
-    int                                             m_toneMapMode;
-    int                                             m_hdr10Rotation;
+    int         m_toneMapMode;
+    int         m_hdr10Rotation;
+    uint64_t    m_frame;
 };

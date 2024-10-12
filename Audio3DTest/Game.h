@@ -121,9 +121,10 @@ private:
     DirectX::SimpleMath::Matrix m_listenerMatrix;
     DirectX::SimpleMath::Matrix m_emitterMatrix;
 
-    bool m_critError;
-    bool m_retrydefault;
-    bool m_newAudio;
+    bool        m_critError;
+    bool        m_retrydefault;
+    bool        m_newAudio;
+    uint64_t    m_frame;
 
-    wchar_t m_deviceStr[256];
+    wchar_t     m_deviceStr[256];
 };

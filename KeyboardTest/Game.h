@@ -113,8 +113,10 @@ private:
         Count
     };
 
-    DirectX::SimpleMath::Vector3                        m_cameraPos;
+    DirectX::SimpleMath::Vector3    m_cameraPos;
 
-    const wchar_t *                                     m_lastStr;
-    wchar_t                                             m_lastStrBuff[128];
+    uint64_t                        m_frame;
+
+    const wchar_t *                 m_lastStr;
+    wchar_t                         m_lastStrBuff[128];
 };

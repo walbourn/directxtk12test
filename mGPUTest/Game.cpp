@@ -30,7 +30,8 @@ namespace
 }
 
 // Constructor.
-Game::Game() noexcept(false)
+Game::Game() noexcept(false) :
+    m_frame(0)
 {
 #ifdef GAMMA_CORRECT_RENDERING
     DXGI_FORMAT s_format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
@@ -83,12 +84,17 @@ void Game::Initialize(
 // Executes the basic game loop.
 void Game::Tick()
 {
+    PIXBeginEvent(PIX_COLOR_DEFAULT, L"Frame %llu", m_frame);
+
     m_timer.Tick([&]()
-    {
-        Update(m_timer);
-    });
+        {
+            Update(m_timer);
+        });
 
     Render();
+
+    PIXEndEvent();
+    ++m_frame;
 }
 
 // Updates the world.

@@ -45,7 +45,8 @@ static_assert(std::is_nothrow_move_assignable<ToneMapPostProcess>::value, "Move 
 
 Game::Game() noexcept(false)  :
     m_scene(0),
-    m_delay(0)
+    m_delay(0),
+    m_frame(0)
 {
 #ifdef XBOX
     m_deviceResources = std::make_unique<DX::DeviceResources>(
@@ -119,16 +120,21 @@ void Game::Initialize(
 // Executes the basic game loop.
 void Game::Tick()
 {
+    PIXBeginEvent(PIX_COLOR_DEFAULT, L"Frame %llu", m_frame);
+
 #ifdef _GAMING_XBOX
     m_deviceResources->WaitForOrigin();
 #endif
 
     m_timer.Tick([&]()
-    {
-        Update(m_timer);
-    });
+        {
+            Update(m_timer);
+        });
 
     Render();
+
+    PIXEndEvent();
+    ++m_frame;
 }
 
 // Updates the world.

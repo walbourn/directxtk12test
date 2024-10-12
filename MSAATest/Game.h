@@ -135,8 +135,8 @@ private:
         Count
     };
 
-    float m_delay;
-    uint64_t m_frame;
+    float       m_delay;
+    uint64_t    m_frame;
 
     Microsoft::WRL::ComPtr<ID3D12Resource>  m_texture;
     Microsoft::WRL::ComPtr<ID3D12Resource>  m_screenshot;
