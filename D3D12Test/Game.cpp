@@ -280,7 +280,7 @@ void Game::Render()
         m_batch->Begin(commandList);
 
         {
-            VertexPositionColor points[]
+            Vertex points[]
             {
                 { Vector3(-0.75f, -0.75f, 0.5f), red },
                 { Vector3(-0.75f, -0.5f,  0.5f), green },
@@ -307,7 +307,7 @@ void Game::Render()
         m_batch->Begin(commandList);
 
         {
-            VertexPositionColor lines[] =
+            Vertex lines[] =
             {
                 { Vector3(-0.75f, -0.85f, 0.5f), red },{ Vector3(0.75f, -0.85f, 0.5f), dred },
                 { Vector3(-0.75f, -0.90f, 0.5f), green },{ Vector3(0.75f, -0.90f, 0.5f), dgreen },
@@ -332,16 +332,16 @@ void Game::Render()
         m_batch->Begin(commandList);
 
         {
-            VertexPositionColor v1(Vector3(0.f, 0.5f, 0.5f), red);
-            VertexPositionColor v2(Vector3(0.5f, -0.5f, 0.5f), green);
-            VertexPositionColor v3(Vector3(-0.5f, -0.5f, 0.5f), blue);
+            Vertex v1(Vector3(0.f, 0.5f, 0.5f), red);
+            Vertex v2(Vector3(0.5f, -0.5f, 0.5f), green);
+            Vertex v3(Vector3(-0.5f, -0.5f, 0.5f), blue);
 
             m_batch->DrawTriangle(v1, v2, v3);
         }
 
         // Quad (same type as triangle)
         {
-            VertexPositionColor quad[] =
+            Vertex quad[] =
             {
                 { Vector3(0.75f, 0.75f, 0.5), gray },
                 { Vector3(0.95f, 0.75f, 0.5), gray },
@@ -460,14 +460,14 @@ void Game::CreateDeviceDependentResources()
 
     m_graphicsMemory = std::make_unique<GraphicsMemory>(device);
 
-    m_batch = std::make_unique<PrimitiveBatch<VertexPositionColor>>(device);
+    m_batch = std::make_unique<PrimitiveBatch<Vertex>>(device);
 
     const RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(),
         m_deviceResources->GetDepthBufferFormat());
 
     {
         EffectPipelineStateDescription pd(
-            &VertexPositionColor::InputLayout,
+            &Vertex::InputLayout,
             CommonStates::Opaque,
             CommonStates::DepthDefault,
             CommonStates::CullNone,

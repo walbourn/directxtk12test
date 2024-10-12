@@ -1,7 +1,7 @@
 //--------------------------------------------------------------------------------------
 // File: Game.h
 //
-// Developer unit test for basic Direct3D 12 support
+// Developer unit test for DirectXTK MSAATest
 //
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
@@ -12,6 +12,7 @@
 
 #include "DirectXTKTest.h"
 #include "StepTimer.h"
+#include "MSAAHelper.h"
 
 constexpr uint32_t c_testTimeout = 5000;
 
@@ -73,8 +74,8 @@ public:
 
     // Properties
     void GetDefaultSize( int& width, int& height ) const;
-    const wchar_t* GetAppName() const { return L"D3D12Test (DirectX 12)"; }
-    bool RequestHDRMode() const { return false; }
+    const wchar_t* GetAppName() const { return L"MSAATest (DirectX 12)"; }
+    bool RequestHDRMode() const { return m_deviceResources ? (m_deviceResources->GetDeviceOptions() & DX::DeviceResources::c_EnableHDR) != 0 : false; }
 
 private:
 
@@ -86,8 +87,6 @@ private:
     void CreateDeviceDependentResources();
     void CreateWindowSizeDependentResources();
 
-    void UnitTests();
-
     // Device resources.
     std::unique_ptr<DX::DeviceResources>    m_deviceResources;
 
@@ -98,26 +97,47 @@ private:
     std::unique_ptr<DirectX::GamePad>       m_gamePad;
     std::unique_ptr<DirectX::Keyboard>      m_keyboard;
 
-    // DirectXTK Test Objects
-    std::unique_ptr<DirectX::GraphicsMemory>            m_graphicsMemory;
-    std::unique_ptr<DirectX::BasicEffect>               m_effectPoint;
-    std::unique_ptr<DirectX::BasicEffect>               m_effectLine;
-    std::unique_ptr<DirectX::BasicEffect>               m_effectTri;
+    DirectX::GamePad::ButtonStateTracker        m_gamePadButtons;
+    DirectX::Keyboard::KeyboardStateTracker     m_keyboardButtons;
 
-    using Vertex = DirectX::VertexPositionColor;
+    // DirectXTK Test Objects
+    std::unique_ptr<DirectX::GraphicsMemory>    m_graphicsMemory;
+
+    std::unique_ptr<DirectX::CommonStates>      m_states;
+    std::unique_ptr<DirectX::DescriptorHeap>    m_resourceDescriptors;
+    std::unique_ptr<DirectX::BasicEffect>       m_effect;
+    std::unique_ptr<DirectX::BasicEffect>       m_effect2;
+    std::unique_ptr<DirectX::BasicEffect>       m_effect4;
+    std::unique_ptr<DirectX::BasicEffect>       m_effect8;
+
+    using Vertex = DirectX::VertexPositionTexture;
     std::unique_ptr<DirectX::PrimitiveBatch<Vertex>>    m_batch;
 
-    std::unique_ptr<DirectX::CommonStates>              m_states;
-    std::unique_ptr<DirectX::DescriptorHeap>            m_resourceDescriptors;
+    // MSAA resources
+    std::unique_ptr<DX::MSAAHelper> m_msaaHelper2;
+    std::unique_ptr<DX::MSAAHelper> m_msaaHelper4;
+    std::unique_ptr<DX::MSAAHelper> m_msaaHelper8;
 
-    Microsoft::WRL::ComPtr<ID3D12Resource>  m_test1;
-    Microsoft::WRL::ComPtr<ID3D12Resource>  m_test2;
-    Microsoft::WRL::ComPtr<ID3D12Resource>  m_test3;
-    Microsoft::WRL::ComPtr<ID3D12Resource>  m_test4;
-    Microsoft::WRL::ComPtr<ID3D12Resource>  m_test5;
-    Microsoft::WRL::ComPtr<ID3D12Resource>  m_test6;
-    Microsoft::WRL::ComPtr<ID3D12Resource>  m_test7;
-    Microsoft::WRL::ComPtr<ID3D12Resource>  m_test8;
-    Microsoft::WRL::ComPtr<ID3D12Resource>  m_test9;
-    Microsoft::WRL::ComPtr<ID3D12Resource>  m_test10;
+    enum State
+    {
+        NOMSAA,
+        MSAA2X,
+        MSAA4X,
+        MSAA8X,
+        COUNT,
+    };
+
+    int m_state;
+
+    enum Descriptors
+    {
+        Texture,
+        Count
+    };
+
+    float m_delay;
+    uint64_t m_frame;
+
+    Microsoft::WRL::ComPtr<ID3D12Resource>  m_texture;
+    Microsoft::WRL::ComPtr<ID3D12Resource>  m_screenshot;
 };

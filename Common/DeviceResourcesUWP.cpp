@@ -442,6 +442,10 @@ void DeviceResources::CreateDeviceResources()
 #if defined(D3D12_SDK_VERSION) && (D3D12_SDK_VERSION >= 606)
     case D3D_SHADER_MODEL_6_8: shaderModelVer = "6.8"; break;
 #endif
+#if defined(D3D12_SDK_VERSION) && (D3D12_SDK_VERSION >= 612)
+    case D3D_SHADER_MODEL_6_9: shaderModelVer = "6.9"; break;
+    case D3D_SHADER_MODEL_NONE: shaderModelVer = "Unknown"; break;
+#endif
     }
 
     char buff[128] = {};

@@ -52,12 +52,28 @@ target_compile_definitions(d3d12test PRIVATE USE_LEGACY_PIX_EVENTS)
 target_include_directories(d3d12test PRIVATE ./D3D12Test)
 if(NOT MINGW)
   target_precompile_headers(d3d12test PRIVATE D3D12Test/pch.h)
-else()
-  target_compile_definitions(d3d12test PRIVATE USE_LEGACY_PIX_EVENTS)
 endif()
 add_test(NAME "d3d12" COMMAND d3d12test -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/D3D12Test)
 set_tests_properties(d3d12 PROPERTIES LABELS "Graphics")
 set_tests_properties(d3d12 PROPERTIES TIMEOUT 30)
+
+# MSAA
+list(APPEND TEST_EXES msaatest)
+add_executable(msaatest WIN32
+    MSAATest/Game.cpp
+    MSAATest/Game.h
+    MSAATest/pch.h
+    MSAATest/MSAAHelper.cpp
+    MSAATest/MSAAHelper.h
+    ${D3D_COMMON_FILES}
+    )
+target_include_directories(msaatest PRIVATE ./MSAATest)
+if(NOT MINGW)
+  target_precompile_headers(msaatest PRIVATE MSAATest/pch.h)
+endif()
+add_test(NAME "msaa" COMMAND msaatest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/MSAATest)
+set_tests_properties(msaa PROPERTIES LABELS "Graphics")
+set_tests_properties(msaa PROPERTIES TIMEOUT 30)
 
 # EFFECTS
 list(APPEND TEST_EXES effectstest)
