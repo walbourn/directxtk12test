@@ -21,7 +21,9 @@
 #include "DDSTextureLoader.h"
 
 #include <cstdio>
+#include <cstdint>
 #include <cwchar>
+#include <memory>
 #include <stdexcept>
 #include <vector>
 
@@ -78,6 +80,7 @@ namespace
         { 2160, 1080, 1, 12, DXGI_FORMAT_BC6H_UF16, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, L"HDRTest\\HDR_112_River_Road_2_Ref.dds", {} },
 
         { 256, 256, 1, 9, DXGI_FORMAT_BC3_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, L"KeyboardTest\\texture.dds", {} },
+
         { 256, 256, 1, 9, DXGI_FORMAT_BC1_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, L"LoadTest\\dx5_logo.dds", {} },
         { 256, 256, 1, 1, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, L"LoadTest\\dx5_logo_autogen.dds", {} },
         { 512, 256, 1, 10, DXGI_FORMAT_R10G10B10A2_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, L"LoadTest\\earth_A2B10G10R10.dds", {} },
@@ -86,7 +89,9 @@ namespace
         { 32, 128, 6, 1, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, L"LoadTest\\io_R8G8B8A8_UNORM_SRGB_SRV_DIMENSION_TEXTURE2DArray_MipOff.dds", {} },
         { 32, 128, 32, 1, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, D3D12_RESOURCE_DIMENSION_TEXTURE3D, false, DDS_ALPHA_MODE_UNKNOWN, L"LoadTest\\io_R8G8B8A8_UNORM_SRGB_SRV_DIMENSION_TEXTURE3D_MipOff.dds", {} },
         { 200, 200, 1, 1, DXGI_FORMAT_NV12, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, L"LoadTest\\lenaNV12.dds", {} },
-        { 304, 268, 1, 9, DXGI_FORMAT_B8G8R8A8_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, 0, DDS_ALPHA_MODE_PREMULTIPLIED, DXTEX_MEDIA_PATH L"tree02S_pmalpha.dds", {} },
+        { 304, 268, 1, 9, DXGI_FORMAT_B8G8R8A8_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, 0, DDS_ALPHA_MODE_PREMULTIPLIED, L"LoadTest\\tree02S_pmalpha.dds", {} },
+        { 8192, 4096, 1, 14, DXGI_FORMAT_BC1_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, L"LoadTest\\world8192.dds", {} },
+
         { 512, 512, 1, 10, DXGI_FORMAT_BC1_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, L"ModelTest\\Armor.dds", {} },
         { 512, 512, 1, 10, DXGI_FORMAT_BC1_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, L"ModelTest\\Body.dds", {} },
         { 1024, 1024, 1, 11, DXGI_FORMAT_BC1_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, L"ModelTest\\Cement.dds", {} },
@@ -102,6 +107,7 @@ namespace
         { 512, 512, 1, 10, DXGI_FORMAT_BC1_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, L"ModelTest\\Text001LightingMap.dds", {} },
         { 256, 256, 1, 1, DXGI_FORMAT_B8G8R8X8_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, L"ModelTest\\Tiny_skin.dds", {} },
         { 512, 512, 1, 10, DXGI_FORMAT_BC1_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, L"ModelTest\\Weapons.dds", {} },
+
         { 2048, 2048, 1, 12, DXGI_FORMAT_BC7_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, L"PBRModelTest\\BrokenCube_baseColor.dds", {} },
         { 2048, 2048, 1, 12, DXGI_FORMAT_BC7_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, L"PBRModelTest\\BrokenCube_emissive.dds", {} },
         { 2048, 2048, 1, 12, DXGI_FORMAT_BC5_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, L"PBRModelTest\\BrokenCube_normal.dds", {} },
@@ -122,14 +128,17 @@ namespace
         { 1024, 1024, 1, 11, DXGI_FORMAT_BC7_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, L"PBRModelTest\\SphereMat_baseColor.dds", {} },
         { 1024, 1024, 1, 11, DXGI_FORMAT_BC5_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, L"PBRModelTest\\SphereMat_normal.dds", {} },
         { 1024, 1024, 1, 11, DXGI_FORMAT_BC7_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, L"PBRModelTest\\SphereMat_occlusionRoughnessMetallic.dds", {} },
+
         { 128, 128, 6, 8, DXGI_FORMAT_BC6H_UF16, D3D12_RESOURCE_DIMENSION_TEXTURE2D, true, DDS_ALPHA_MODE_UNKNOWN, L"PBRTest\\Atrium_diffuseIBL.dds", {} },
         { 1024, 1024, 6, 11, DXGI_FORMAT_BC6H_UF16, D3D12_RESOURCE_DIMENSION_TEXTURE2D, true, DDS_ALPHA_MODE_UNKNOWN, L"PBRTest\\Atrium_specularIBL.dds", {} },
         { 128, 128, 6, 8, DXGI_FORMAT_BC6H_UF16, D3D12_RESOURCE_DIMENSION_TEXTURE2D, true, DDS_ALPHA_MODE_UNKNOWN, L"PBRTest\\Garage_diffuseIBL.dds", {} },
         { 1024, 1024, 6, 11, DXGI_FORMAT_BC6H_UF16, D3D12_RESOURCE_DIMENSION_TEXTURE2D, true, DDS_ALPHA_MODE_UNKNOWN, L"PBRTest\\Garage_specularIBL.dds", {} },
         { 128, 128, 6, 8, DXGI_FORMAT_BC6H_UF16, D3D12_RESOURCE_DIMENSION_TEXTURE2D, true, DDS_ALPHA_MODE_UNKNOWN, L"PBRTest\\SunSubMixer_diffuseIBL.dds", {} },
         { 1024, 1024, 6, 11, DXGI_FORMAT_BC6H_UF16, D3D12_RESOURCE_DIMENSION_TEXTURE2D, true, DDS_ALPHA_MODE_UNKNOWN, L"PBRTest\\SunSubMixer_specularIBL.dds", {} },
+
         { 256, 256, 1, 9, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, L"PrimitivesTest\\normalMap.dds", {} },
         { 256, 256, 1, 9, DXGI_FORMAT_B8G8R8A8_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, L"PrimitivesTest\\reftexture.dds", {} },
+
         { 43, 32, 1, 1, DXGI_FORMAT_B8G8R8A8_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, L"SpriteBatchTest\\a.dds", {} },
         { 43, 32, 1, 1, DXGI_FORMAT_B8G8R8A8_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, L"SpriteBatchTest\\b.dds", {} },
         { 43, 32, 1, 1, DXGI_FORMAT_B8G8R8A8_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, L"SpriteBatchTest\\c.dds", {} },
@@ -167,7 +176,6 @@ namespace
         { 256, 256, 1, 1, DXGI_FORMAT_B5G5R5A1_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, DXTEX_MEDIA_PATH L"windowslogo_A1R5G5B5.dds", {} }, // D3DFMT_A1R5G5B5
         { 256, 256, 1, 1, DXGI_FORMAT_B4G4R4A4_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, DXTEX_MEDIA_PATH L"windowslogo_A4R4G4B4.dds", {} }, // D3DFMT_A4R4G4B4
 
-        { 8192, 4096, 1, 14, DXGI_FORMAT_BC1_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, DXTEX_MEDIA_PATH L"world8192.dds", {} },
         { 1024, 512, 1, 11, DXGI_FORMAT_B8G8R8A8_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, DXTEX_MEDIA_PATH L"earthdiffuse.dds", {} },
         { 800, 800, 1, 1, DXGI_FORMAT_B8G8R8A8_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, DXTEX_MEDIA_PATH L"SplashScreen2.dds", {} },
         { 756, 512, 1, 10, DXGI_FORMAT_BC1_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, DXTEX_MEDIA_PATH L"grydirt1.dds", {} },
@@ -780,14 +788,52 @@ namespace
             break;
         }
     }
+
+    bool IsMetadataCorrect(_In_ ID3D12Resource* res, const D3D12_RESOURCE_DESC& expected, const wchar_t* szPath)
+    {
+    #if defined(_MSC_VER) || !defined(_WIN32)
+        const auto desc = res->GetDesc();
+    #else
+        D3D12_RESOURCE_DESC tmpDesc;
+        const auto& desc = *res->GetDesc(&tmpDesc);
+    #endif
+
+        if (desc.Dimension != expected.Dimension)
+        {
+            printf( "ERROR: Unexpected resource dimension (%u..%u)\n%ls\n", desc.Dimension, expected.Dimension, szPath );
+            return false;
+        }
+
+        if (desc.Width != expected.Width
+            || desc.Height != expected.Height
+            || desc.MipLevels != expected.MipLevels
+            || desc.DepthOrArraySize != expected.DepthOrArraySize
+            || desc.Format != expected.Format)
+        {
+            printf( "ERROR: Unexpected resource metadata\n%ls\n", szPath );
+            printdesc(desc);
+            printf("...\n");
+            printdesc(expected);
+            return false;
+        }
+        else
+        {
+            // TODO: md5?
+            return true;
+        }
+    }
 }
 
 //-------------------------------------------------------------------------------------
 
 extern HRESULT MD5Checksum( _In_reads_(dataSize) const uint8_t *data, size_t dataSize, _Out_bytecap_x_(16) uint8_t *digest );
 
+using Blob = std::unique_ptr<uint8_t[]>;
+
+extern HRESULT LoadBlobFromFile(_In_z_ const wchar_t *szFile, Blob &blob, size_t &blobSize);
+
 //-------------------------------------------------------------------------------------
-//
+// LoadDDSTextureFromFileEx
 bool Test01(_In_ ID3D12Device* pDevice)
 {
     bool success = true;
@@ -858,32 +904,117 @@ bool Test01(_In_ ID3D12Device* pDevice)
         }
         else
         {
-            bool pass = false;
-
-        #if defined(_MSC_VER) || !defined(_WIN32)
-            const auto desc = res->GetDesc();
-        #else
-            D3D12_RESOURCE_DESC tmpDesc;
-            const auto& desc = *res->GetDesc(&tmpDesc);
-        #endif
-
-            if (desc.Dimension != g_TestMedia[index].dimension)
+            const D3D12_RESOURCE_DESC expected = {
+                g_TestMedia[index].dimension,
+                0,
+                g_TestMedia[index].width, g_TestMedia[index].height,
+                g_TestMedia[index].depthOrArray,
+                g_TestMedia[index].mipLevels,
+                g_TestMedia[index].format, {},
+                D3D12_TEXTURE_LAYOUT_UNKNOWN,
+                D3D12_RESOURCE_FLAG_NONE };
+            if (IsMetadataCorrect(res.Get(), expected, szPath))
+            {
+                ++npass;
+            }
+            else
             {
                 success = false;
-                printf( "ERROR: Unexpected resource dimension (%u..%u)\n%ls\n", desc.Dimension, g_TestMedia[index].dimension, szPath );
+            }
+        }
+
+        ++ncount;
+    }
+
+    if (skipped)
+    {
+        printf("\nSkipped DIRECTX_TEX_MEDIA cases...\n");
+    }
+
+    printf("%zu files tested, %zu files passed ", ncount, npass );
+
+    return success;
+}
+
+//-------------------------------------------------------------------------------------
+// LoadDDSTextureFromMemoryEx
+bool Test02(_In_ ID3D12Device* pDevice)
+{
+    bool success = true;
+
+    size_t ncount = 0;
+    size_t npass = 0;
+
+    for( size_t index=0; index < std::size(g_TestMedia); ++index )
+    {
+        wchar_t szPath[MAX_PATH] = {};
+        DWORD ret = ExpandEnvironmentStringsW(g_TestMedia[index].fname, szPath, MAX_PATH);
+        if ( !ret || ret > MAX_PATH )
+        {
+            printf( "ERROR: ExpandEnvironmentStrings FAILED\n" );
+            return false;
+        }
+
+#ifdef _DEBUG
+        OutputDebugString(szPath);
+        OutputDebugStringA("\n");
+#endif
+
+        Blob blob;
+        size_t blobSize;
+        HRESULT hr = LoadBlobFromFile(szPath, blob, blobSize);
+        if (FAILED(hr))
+        {
+            if (((hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND)) || (hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)))
+                && wcsstr(g_TestMedia[index].fname, DXTEX_MEDIA_PATH) != nullptr)
+            {
+                // DIRECTX_TEX_MEDIA test cases are optional
+                continue;
             }
 
-            if (desc.Width != g_TestMedia[index].width
-                || desc.Height != g_TestMedia[index].height
-                || desc.MipLevels != g_TestMedia[index].mipLevels
-                || desc.DepthOrArraySize != g_TestMedia[index].depthOrArray
-                || desc.Format != g_TestMedia[index].format)
+            success = false;
+            printf( "ERROR: Failed loading dds from file (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath );
+        }
+        else
+        {
+            ComPtr<ID3D12Resource> res;
+            std::unique_ptr<uint8_t[]> data;
+            std::vector<D3D12_SUBRESOURCE_DATA> subResources;
+            DDS_ALPHA_MODE alpha = DDS_ALPHA_MODE_UNKNOWN;
+            bool isCubeMap = false;
+            hr = LoadDDSTextureFromMemoryEx(
+                pDevice,
+                blob.get(),
+                blobSize,
+                0,
+                D3D12_RESOURCE_FLAG_NONE,
+                DDS_LOADER_DEFAULT,
+                res.GetAddressOf(),
+                subResources,
+                &alpha,
+                &isCubeMap);
+            if ( FAILED(hr) )
             {
                 success = false;
-                printf( "ERROR: Unexpected resource metadata\n%ls\n", szPath );
-                printdesc(desc);
-                printf("...\n");
-
+                printf( "ERROR: Failed loading dds from memory (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath );
+            }
+            else if (!res.Get())
+            {
+                success = false;
+                printf( "ERROR: Failed to return resource (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath );
+            }
+            else if (alpha != g_TestMedia[index].alphaMode)
+            {
+                success = false;
+                printf( "ERROR: Failed to return expected alpha mode (%u...%u):\n%ls\n", alpha, g_TestMedia[index].alphaMode, szPath );
+            }
+            else if (isCubeMap != g_TestMedia[index].isCubeMap)
+            {
+                success = false;
+                printf( "ERROR: Failed to return expected cubemap boolean (%u...%u):\n%ls\n", isCubeMap ? 1 : 0, g_TestMedia[index].isCubeMap ? 1 : 0, szPath );
+            }
+            else
+            {
                 const D3D12_RESOURCE_DESC expected = {
                     g_TestMedia[index].dimension,
                     0,
@@ -893,24 +1024,18 @@ bool Test01(_In_ ID3D12Device* pDevice)
                     g_TestMedia[index].format, {},
                     D3D12_TEXTURE_LAYOUT_UNKNOWN,
                     D3D12_RESOURCE_FLAG_NONE };
-                printdesc(expected);
+                if (IsMetadataCorrect(res.Get(), expected, szPath))
+                {
+                    ++npass;
+                }
+                else
+                {
+                    success = false;
+                }
             }
-            else
-            {
-                // TODO: md5?
-                pass = true;
-            }
-
-            if (pass)
-                ++npass;
         }
 
         ++ncount;
-    }
-
-    if (skipped)
-    {
-        printf("\nSkipped DIRECTX_TEX_MEDIA cases...\n");
     }
 
     printf("%zu files tested, %zu files passed ", ncount, npass );

@@ -1051,6 +1051,8 @@ void Game::OnDeviceLost()
     m_test37.Reset();
     m_test38.Reset();
     m_test39.Reset();
+    m_test40.Reset();
+    m_test41.Reset();
 
     m_testA.Reset();
     m_testB.Reset();
@@ -1418,6 +1420,49 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             || desc.DepthOrArraySize != 32)
         {
             OutputDebugStringA("FAILED: io_R8G8B8A8_UNORM_SRGB_SRV_DIMENSION_TEXTURE3D_MipOff.dds desc unexpected\n");
+            success = false;
+        }
+    }
+
+    // SkipMips
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"world8192.dds", m_test40.ReleaseAndGetAddressOf()));
+
+    {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test40->GetDesc(&desc);
+    #else
+        auto const desc = m_test40->GetDesc();
+    #endif
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_BC1_UNORM
+            || desc.Width != 8192
+            || desc.Height != 4096
+            || desc.MipLevels != 14
+            || desc.DepthOrArraySize != 1)
+        {
+            OutputDebugStringA("FAILED: world8192.dds desc unexpected\n");
+            success = false;
+        }
+    }
+
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"world8192.dds", m_test41.ReleaseAndGetAddressOf(), false, 2048));
+
+    {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test41->GetDesc(&desc);
+    #else
+        auto const desc = m_test41->GetDesc();
+    #endif
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_BC1_UNORM
+            || desc.Width != 2048
+            || desc.Height != 1024
+            || desc.MipLevels != 12
+            || desc.DepthOrArraySize != 1)
+        {
+            OutputDebugStringA("FAILED: world8192.dds skipmips desc unexpected\n");
             success = false;
         }
     }

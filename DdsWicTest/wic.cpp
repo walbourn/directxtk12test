@@ -21,7 +21,9 @@
 #include "WICTextureLoader.h"
 
 #include <cstdio>
+#include <cstdint>
 #include <cwchar>
+#include <memory>
 #include <stdexcept>
 
 using namespace DirectX;
@@ -325,22 +327,58 @@ namespace
         // For WIC, MipLevels=ArraySize=1 and MiscFlags=0
         printf("%llux%u format %u\n", desc.Width, desc.Height, desc.Format);
     }
+
+    bool IsMetadataCorrect(_In_ ID3D12Resource* res, const D3D12_RESOURCE_DESC& expected, const wchar_t* szPath)
+    {
+    #if defined(_MSC_VER) || !defined(_WIN32)
+        const auto desc = res->GetDesc();
+    #else
+        D3D12_RESOURCE_DESC tmpDesc;
+        const auto& desc = *res->GetDesc(&tmpDesc);
+    #endif
+
+        if (desc.Dimension != expected.Dimension)
+        {
+            printf( "ERROR: Unexpected resource dimension (%u..%u)\n%ls\n", desc.Dimension, expected.Dimension, szPath );
+            return false;
+        }
+
+        if (desc.Width != expected.Width
+            || desc.Height != expected.Height
+            || desc.MipLevels != expected.MipLevels
+            || desc.DepthOrArraySize != expected.DepthOrArraySize
+            || desc.Format != expected.Format)
+        {
+            printf( "ERROR: Unexpected resource metadata\n%ls\n", szPath );
+            printdesc(desc);
+            printf("...\n");
+            printdesc(expected);
+            return false;
+        }
+        else
+        {
+            // TODO: md5?
+            return true;
+        }
+    }
 }
 
 //-------------------------------------------------------------------------------------
 
 extern HRESULT MD5Checksum( _In_reads_(dataSize) const uint8_t *data, size_t dataSize, _Out_bytecap_x_(16) uint8_t *digest );
 
+using Blob = std::unique_ptr<uint8_t[]>;
+
+extern HRESULT LoadBlobFromFile(_In_z_ const wchar_t *szFile, Blob &blob, size_t &blobSize);
+
 //-------------------------------------------------------------------------------------
-//
-bool Test02(_In_ ID3D12Device* pDevice)
+// LoadWICTextureFromFileEx
+bool Test03(_In_ ID3D12Device* pDevice)
 {
     bool success = true;
 
     size_t ncount = 0;
     size_t npass = 0;
-
-    bool skipped = false;
 
     for( size_t index=0; index < std::size(g_TestMedia); ++index )
     {
@@ -375,7 +413,6 @@ bool Test02(_In_ ID3D12Device* pDevice)
                 && wcsstr(g_TestMedia[index].fname, DXTEX_MEDIA_PATH) != nullptr)
             {
                 // DIRECTX_TEX_MEDIA test cases are optional
-                skipped = true;
                 continue;
             }
 
@@ -389,32 +426,99 @@ bool Test02(_In_ ID3D12Device* pDevice)
         }
         else
         {
-            bool pass = false;
-
-        #if defined(_MSC_VER) || !defined(_WIN32)
-            const auto desc = res->GetDesc();
-        #else
-            D3D12_RESOURCE_DESC tmpDesc;
-            const auto& desc = *res->GetDesc(&tmpDesc);
-        #endif
-
-            if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D)
+            const D3D12_RESOURCE_DESC expected = {
+                D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+                0,
+                g_TestMedia[index].width, g_TestMedia[index].height,
+                1,
+                1,
+                g_TestMedia[index].format, {},
+                D3D12_TEXTURE_LAYOUT_UNKNOWN,
+                D3D12_RESOURCE_FLAG_NONE };
+            if (IsMetadataCorrect(res.Get(), expected, szPath))
+            {
+                ++npass;
+            }
+            else
             {
                 success = false;
-                printf( "ERROR: Unexpected resource dimension (%u..3)\n%ls\n", desc.Dimension, szPath );
+            }
+        }
+
+        ++ncount;
+    }
+
+    printf("%zu files tested, %zu files passed ", ncount, npass );
+
+    return success;
+}
+
+//-------------------------------------------------------------------------------------
+// LoadWICTextureFromMemoryEx
+bool Test04(_In_ ID3D12Device* pDevice)
+{
+    bool success = true;
+
+    size_t ncount = 0;
+    size_t npass = 0;
+
+    for( size_t index=0; index < std::size(g_TestMedia); ++index )
+    {
+        wchar_t szPath[MAX_PATH] = {};
+        DWORD ret = ExpandEnvironmentStringsW(g_TestMedia[index].fname, szPath, MAX_PATH);
+        if ( !ret || ret > MAX_PATH )
+        {
+            printf( "ERROR: ExpandEnvironmentStrings FAILED\n" );
+            return false;
+        }
+
+#ifdef _DEBUG
+        OutputDebugString(szPath);
+        OutputDebugStringA("\n");
+#endif
+
+        Blob blob;
+        size_t blobSize;
+        HRESULT hr = LoadBlobFromFile(szPath, blob, blobSize);
+        if (FAILED(hr))
+        {
+            if (((hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND)) || (hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)))
+                && wcsstr(g_TestMedia[index].fname, DXTEX_MEDIA_PATH) != nullptr)
+            {
+                // DIRECTX_TEX_MEDIA test cases are optional
+                continue;
             }
 
-            if (desc.Width != g_TestMedia[index].width
-                || desc.Height != g_TestMedia[index].height
-                || desc.MipLevels != 1
-                || desc.DepthOrArraySize != 1
-                || desc.Format != g_TestMedia[index].format)
+            success = false;
+            printf( "ERROR: Failed loading dds from file (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath );
+        }
+        else
+        {
+            ComPtr<ID3D12Resource> res;
+            std::unique_ptr<uint8_t[]> data;
+            D3D12_SUBRESOURCE_DATA subResource;
+            hr = LoadWICTextureFromMemoryEx(
+                pDevice,
+                blob.get(),
+                blobSize,
+                0,
+                D3D12_RESOURCE_FLAG_NONE,
+                WIC_LOADER_DEFAULT,
+                res.GetAddressOf(),
+                data,
+                subResource);
+            if ( FAILED(hr) )
             {
                 success = false;
-                printf( "ERROR: Unexpected resource metadata\n%ls\n", szPath );
-                printdesc(desc);
-                printf("...\n");
-
+                printf( "ERROR: Failed loading WIC from memory (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath );
+            }
+            else if (!res.Get())
+            {
+                success = false;
+                printf( "ERROR: Failed to return resource (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath );
+            }
+            else
+            {
                 const D3D12_RESOURCE_DESC expected = {
                     D3D12_RESOURCE_DIMENSION_TEXTURE2D,
                     0,
@@ -424,24 +528,18 @@ bool Test02(_In_ ID3D12Device* pDevice)
                     g_TestMedia[index].format, {},
                     D3D12_TEXTURE_LAYOUT_UNKNOWN,
                     D3D12_RESOURCE_FLAG_NONE };
-                printdesc(expected);
+                if (IsMetadataCorrect(res.Get(), expected, szPath))
+                {
+                    ++npass;
+                }
+                else
+                {
+                    success = false;
+                }
             }
-            else
-            {
-                // TODO: md5?
-                pass = true;
-            }
-
-            if (pass)
-                ++npass;
         }
 
         ++ncount;
-    }
-
-    if (skipped)
-    {
-        printf("\nSkipped DIRECTX_TEX_MEDIA cases...\n");
     }
 
     printf("%zu files tested, %zu files passed ", ncount, npass );
