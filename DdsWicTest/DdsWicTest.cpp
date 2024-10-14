@@ -1,8 +1,7 @@
 //-------------------------------------------------------------------------------------
-// WavTest.cpp
+// DdsWicTest.cpp
 //
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
 //-------------------------------------------------------------------------------------
 
 #pragma warning(push)
@@ -18,6 +17,11 @@
 
 #include <Windows.h>
 
+#include <d3d12.h>
+#include <dxgi1_4.h>
+
+#include <wrl/client.h>
+
 #include <cstdint>
 #include <cstdio>
 #include <iterator>
@@ -26,7 +30,7 @@
 //-------------------------------------------------------------------------------------
 // Types and globals
 
-using TestFN = bool (*)();
+using TestFN = bool (*)(ID3D12Device* pDevice);
 
 struct TestInfo
 {
@@ -34,18 +38,70 @@ struct TestInfo
     TestFN func;
 };
 
-extern bool Test01();
-extern bool Test02();
+extern bool Test01(_In_ ID3D12Device* pDevice);
+extern bool Test02(_In_ ID3D12Device* pDevice);
 
 TestInfo g_Tests[] =
 {
-    { "WAVFileReader", Test01 },
-    { "WaveBankReader", Test02 },
+    { "DDSTextureLoader", Test01 },
+    { "WICTextureLoader", Test02 },
 };
 
+using Microsoft::WRL::ComPtr;
+
+namespace
+{
+    HRESULT CreateDevice(_Outptr_ ID3D12Device** pDevice)
+    {
+        if (!pDevice)
+            return E_INVALIDARG;
+
+        *pDevice = nullptr;
+
+        ComPtr<IDXGIFactory4> dxgiFactory;
+
+        HRESULT hr;
+
+    #ifdef _DEBUG
+        // Enable the debug layer (only available if the Graphics Tools feature-on-demand is enabled).
+        {
+            ComPtr<ID3D12Debug> debugController;
+            if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(debugController.GetAddressOf()))))
+            {
+                debugController->EnableDebugLayer();
+
+            #ifdef ENABLE_GPU_VALIDATION
+                ComPtr<ID3D12Debug1> debugController1;
+                if (SUCCEEDED(debugController.As(&debugController1)))
+                {
+                    debugController1->SetEnableGPUBasedValidation(true);
+                }
+            #endif
+            }
+
+            hr = CreateDXGIFactory2(DXGI_CREATE_FACTORY_DEBUG, IID_PPV_ARGS(dxgiFactory.GetAddressOf()));
+            if (FAILED(hr))
+                return hr;
+        }
+    #else
+        hr = CreateDXGIFactory1(IID_PPV_ARGS(dxgiFactory.GetAddressOf()));
+        if (FAILED(hr))
+            return hr;
+    #endif
+
+        ComPtr<IDXGIAdapter1> adapter;
+        hr = dxgiFactory->EnumWarpAdapter(IID_PPV_ARGS(adapter.GetAddressOf()));
+        if (FAILED(hr))
+            return hr;
+
+        hr = D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_ID3D12Device, reinterpret_cast<void**>(pDevice));
+
+        return hr;
+    }
+}
 
 //-------------------------------------------------------------------------------------
-bool RunTests()
+bool RunTests(_In_ ID3D12Device* pDevice)
 {
     size_t nPass = 0;
     size_t nFail = 0;
@@ -54,7 +110,7 @@ bool RunTests()
     {
         printf("%s: ", g_Tests[i].name );
 
-        if ( g_Tests[i].func() )
+        if ( g_Tests[i].func(pDevice) )
         {
             ++nPass;
             printf("PASS\n");
@@ -76,10 +132,25 @@ bool RunTests()
 int __cdecl wmain()
 {
     printf("**************************************************************\n");
-    printf("*** WavTest\n" );
+    printf("*** DdsWicTest\n" );
     printf("**************************************************************\n");
 
-    if ( !RunTests() )
+    HRESULT hr = CoInitializeEx(nullptr, COINITBASE_MULTITHREADED);
+    if (FAILED(hr))
+    {
+        printf("ERROR: Failed to initialize COM (%08X)\n", static_cast<unsigned int>(hr));
+        return -1;
+    }
+
+    ComPtr<ID3D12Device> d3dDevice;
+    hr = CreateDevice(d3dDevice.GetAddressOf());
+    if (FAILED(hr))
+    {
+        printf("ERROR: Failed to create required Direct3D device (%08X)\n", static_cast<unsigned int>(hr));
+        return -1;
+    }
+
+    if ( !RunTests(d3dDevice.Get()) )
         return -1;
 
     return 0;

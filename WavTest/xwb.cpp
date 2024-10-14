@@ -1,7 +1,8 @@
 //-------------------------------------------------------------------------------------
 // xwb.cpp
-//  
+//
 // Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 //-------------------------------------------------------------------------------------
 
 #pragma warning(push)
@@ -72,7 +73,7 @@ namespace
 extern HRESULT MD5Checksum( _In_reads_(dataSize) const uint8_t *data, size_t dataSize, _Out_bytecap_x_(16) uint8_t *digest );
 
 //-------------------------------------------------------------------------------------
-// 
+//
 bool Test02()
 {
     bool success = true;
@@ -216,7 +217,7 @@ bool Test02()
                     printf( "Failed get wave data for entry 0 (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath );
                 }
                 else
-                {                
+                {
                     uint8_t digest[16];
                     hr = MD5Checksum( wavData, audioBytes, digest );
                     if ( FAILED(hr) )
