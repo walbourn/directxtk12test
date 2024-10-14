@@ -31,6 +31,13 @@ if((BUILD_XAUDIO_WIN10 OR BUILD_XAUDIO_REDIST) AND (NOT NO_WCHAR_T))
   add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/fuzzloaders)
 endif()
 
+# ddswictest
+list(APPEND TEST_EXES ddswictest)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/DdsWicTest)
+add_test(NAME "ddswictest" COMMAND ddswictest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+set_tests_properties(ddswictest PROPERTIES LABELS "ImageFormats")
+set_tests_properties(ddswictest PROPERTIES TIMEOUT 30)
+
 # D3D12
 set(D3D_COMMON_FILES
     Common/d3dx12.h
