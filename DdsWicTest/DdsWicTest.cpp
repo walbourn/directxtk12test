@@ -20,6 +20,10 @@
 #include <d3d12.h>
 #include <dxgi1_4.h>
 
+#ifdef _DEBUG
+#include <d3d12sdklayers.h>
+#endif
+
 #include <wrl/client.h>
 
 #include <cstdint>
