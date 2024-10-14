@@ -21,7 +21,9 @@
 #include "DDSTextureLoader.h"
 
 #include <cstdio>
+#include <cstdint>
 #include <cwchar>
+#include <memory>
 #include <stdexcept>
 #include <vector>
 
@@ -780,14 +782,52 @@ namespace
             break;
         }
     }
+
+    bool IsMetadataCorrect(_In_ ID3D12Resource* res, const D3D12_RESOURCE_DESC& expected, const wchar_t* szPath)
+    {
+    #if defined(_MSC_VER) || !defined(_WIN32)
+        const auto desc = res->GetDesc();
+    #else
+        D3D12_RESOURCE_DESC tmpDesc;
+        const auto& desc = *res->GetDesc(&tmpDesc);
+    #endif
+
+        if (desc.Dimension != expected.Dimension)
+        {
+            printf( "ERROR: Unexpected resource dimension (%u..%u)\n%ls\n", desc.Dimension, expected.Dimension, szPath );
+            return false;
+        }
+
+        if (desc.Width != expected.Width
+            || desc.Height != expected.Height
+            || desc.MipLevels != expected.MipLevels
+            || desc.DepthOrArraySize != expected.DepthOrArraySize
+            || desc.Format != expected.Format)
+        {
+            printf( "ERROR: Unexpected resource metadata\n%ls\n", szPath );
+            printdesc(desc);
+            printf("...\n");
+            printdesc(expected);
+            return false;
+        }
+        else
+        {
+            // TODO: md5?
+            return true;
+        }
+    }
 }
 
 //-------------------------------------------------------------------------------------
 
 extern HRESULT MD5Checksum( _In_reads_(dataSize) const uint8_t *data, size_t dataSize, _Out_bytecap_x_(16) uint8_t *digest );
 
+using Blob = std::unique_ptr<uint8_t[]>;
+
+extern HRESULT LoadBlobFromFile(_In_z_ const wchar_t *szFile, Blob &blob, size_t &blobSize);
+
 //-------------------------------------------------------------------------------------
-//
+// LoadDDSTextureFromFileEx
 bool Test01(_In_ ID3D12Device* pDevice)
 {
     bool success = true;
@@ -858,51 +898,23 @@ bool Test01(_In_ ID3D12Device* pDevice)
         }
         else
         {
-            bool pass = false;
-
-        #if defined(_MSC_VER) || !defined(_WIN32)
-            const auto desc = res->GetDesc();
-        #else
-            D3D12_RESOURCE_DESC tmpDesc;
-            const auto& desc = *res->GetDesc(&tmpDesc);
-        #endif
-
-            if (desc.Dimension != g_TestMedia[index].dimension)
+            const D3D12_RESOURCE_DESC expected = {
+                g_TestMedia[index].dimension,
+                0,
+                g_TestMedia[index].width, g_TestMedia[index].height,
+                g_TestMedia[index].depthOrArray,
+                g_TestMedia[index].mipLevels,
+                g_TestMedia[index].format, {},
+                D3D12_TEXTURE_LAYOUT_UNKNOWN,
+                D3D12_RESOURCE_FLAG_NONE };
+            if (IsMetadataCorrect(res.Get(), expected, szPath))
             {
-                success = false;
-                printf( "ERROR: Unexpected resource dimension (%u..%u)\n%ls\n", desc.Dimension, g_TestMedia[index].dimension, szPath );
-            }
-
-            if (desc.Width != g_TestMedia[index].width
-                || desc.Height != g_TestMedia[index].height
-                || desc.MipLevels != g_TestMedia[index].mipLevels
-                || desc.DepthOrArraySize != g_TestMedia[index].depthOrArray
-                || desc.Format != g_TestMedia[index].format)
-            {
-                success = false;
-                printf( "ERROR: Unexpected resource metadata\n%ls\n", szPath );
-                printdesc(desc);
-                printf("...\n");
-
-                const D3D12_RESOURCE_DESC expected = {
-                    g_TestMedia[index].dimension,
-                    0,
-                    g_TestMedia[index].width, g_TestMedia[index].height,
-                    g_TestMedia[index].depthOrArray,
-                    g_TestMedia[index].mipLevels,
-                    g_TestMedia[index].format, {},
-                    D3D12_TEXTURE_LAYOUT_UNKNOWN,
-                    D3D12_RESOURCE_FLAG_NONE };
-                printdesc(expected);
+                ++npass;
             }
             else
             {
-                // TODO: md5?
-                pass = true;
+                success = false;
             }
-
-            if (pass)
-                ++npass;
         }
 
         ++ncount;
