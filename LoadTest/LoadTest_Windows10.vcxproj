@@ -305,6 +305,7 @@
     <Image Include="tree02S_pmalpha.dds" />
     <Image Include="win95.bmp" />
     <Image Include="windowslogo_r32f.dds" />
+    <Image Include="World8192.dds" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="PackageUWP.appxmanifest" />
