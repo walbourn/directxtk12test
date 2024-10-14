@@ -929,3 +929,110 @@ bool Test01(_In_ ID3D12Device* pDevice)
 
     return success;
 }
+
+//-------------------------------------------------------------------------------------
+// LoadDDSTextureFromMemoryEx
+bool Test02(_In_ ID3D12Device* pDevice)
+{
+    bool success = true;
+
+    size_t ncount = 0;
+    size_t npass = 0;
+
+    for( size_t index=0; index < std::size(g_TestMedia); ++index )
+    {
+        wchar_t szPath[MAX_PATH] = {};
+        DWORD ret = ExpandEnvironmentStringsW(g_TestMedia[index].fname, szPath, MAX_PATH);
+        if ( !ret || ret > MAX_PATH )
+        {
+            printf( "ERROR: ExpandEnvironmentStrings FAILED\n" );
+            return false;
+        }
+
+#ifdef _DEBUG
+        OutputDebugString(szPath);
+        OutputDebugStringA("\n");
+#endif
+
+        Blob blob;
+        size_t blobSize;
+        HRESULT hr = LoadBlobFromFile(szPath, blob, blobSize);
+        if (FAILED(hr))
+        {
+            if (((hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND)) || (hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)))
+                && wcsstr(g_TestMedia[index].fname, DXTEX_MEDIA_PATH) != nullptr)
+            {
+                // DIRECTX_TEX_MEDIA test cases are optional
+                continue;
+            }
+
+            success = false;
+            printf( "ERROR: Failed loading dds from file (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath );
+        }
+        else
+        {
+            ComPtr<ID3D12Resource> res;
+            std::unique_ptr<uint8_t[]> data;
+            std::vector<D3D12_SUBRESOURCE_DATA> subResources;
+            DDS_ALPHA_MODE alpha = DDS_ALPHA_MODE_UNKNOWN;
+            bool isCubeMap = false;
+            hr = LoadDDSTextureFromMemoryEx(
+                pDevice,
+                blob.get(),
+                blobSize,
+                0,
+                D3D12_RESOURCE_FLAG_NONE,
+                DDS_LOADER_DEFAULT,
+                res.GetAddressOf(),
+                subResources,
+                &alpha,
+                &isCubeMap);
+            if ( FAILED(hr) )
+            {
+                success = false;
+                printf( "ERROR: Failed loading dds from memory (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath );
+            }
+            else if (!res.Get())
+            {
+                success = false;
+                printf( "ERROR: Failed to return resource (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath );
+            }
+            else if (alpha != g_TestMedia[index].alphaMode)
+            {
+                success = false;
+                printf( "ERROR: Failed to return expected alpha mode (%u...%u):\n%ls\n", alpha, g_TestMedia[index].alphaMode, szPath );
+            }
+            else if (isCubeMap != g_TestMedia[index].isCubeMap)
+            {
+                success = false;
+                printf( "ERROR: Failed to return expected cubemap boolean (%u...%u):\n%ls\n", isCubeMap ? 1 : 0, g_TestMedia[index].isCubeMap ? 1 : 0, szPath );
+            }
+            else
+            {
+                const D3D12_RESOURCE_DESC expected = {
+                    g_TestMedia[index].dimension,
+                    0,
+                    g_TestMedia[index].width, g_TestMedia[index].height,
+                    g_TestMedia[index].depthOrArray,
+                    g_TestMedia[index].mipLevels,
+                    g_TestMedia[index].format, {},
+                    D3D12_TEXTURE_LAYOUT_UNKNOWN,
+                    D3D12_RESOURCE_FLAG_NONE };
+                if (IsMetadataCorrect(res.Get(), expected, szPath))
+                {
+                    ++npass;
+                }
+                else
+                {
+                    success = false;
+                }
+            }
+        }
+
+        ++ncount;
+    }
+
+    printf("%zu files tested, %zu files passed ", ncount, npass );
+
+    return success;
+}

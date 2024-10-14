@@ -51,9 +51,9 @@ extern bool Test04(_In_ ID3D12Device* pDevice);
 TestInfo g_Tests[] =
 {
     { "DDSTextureLoader (File)", Test01 },
-//    { "DDSTextureLoader (Memory)", Test02 },
+    { "DDSTextureLoader (Memory)", Test02 },
     { "WICTextureLoader (File)", Test03 },
-//    { "WICTextureLoader (Memory)", Test04 },
+    { "WICTextureLoader (Memory)", Test04 },
 };
 
 using Microsoft::WRL::ComPtr;
