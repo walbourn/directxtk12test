@@ -762,6 +762,7 @@ namespace
 #endif
 
         // YUV test images
+        { 200, 200, 1, 1, DXGI_FORMAT_YUY2, D3D12_RESOURCE_DIMENSION_TEXTURE2D, 0, DDS_ALPHA_MODE_UNKNOWN, DXTEX_MEDIA_PATH L"lenaYUY2.dds", {} },
         { 1280, 1024, 1, 1, DXGI_FORMAT_YUY2, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, DXTEX_MEDIA_PATH L"testpatternYUY2.dds", {} },
 
         #ifdef _M_X64
@@ -858,6 +859,13 @@ bool Test01(_In_ ID3D12Device* pDevice)
         OutputDebugStringA("\n");
 #endif
 
+        DDS_LOADER_FLAGS flags = DDS_LOADER_DEFAULT;
+        if (g_TestMedia[index].format == DXGI_FORMAT_YUY2)
+        {
+            // Miplevels are not supported for this format for the null device.
+            flags |= DDS_LOADER_IGNORE_MIPS;
+        }
+
         ComPtr<ID3D12Resource> res;
         std::unique_ptr<uint8_t[]> data;
         std::vector<D3D12_SUBRESOURCE_DATA> subResources;
@@ -868,7 +876,7 @@ bool Test01(_In_ ID3D12Device* pDevice)
             szPath,
             0,
             D3D12_RESOURCE_FLAG_NONE,
-            DDS_LOADER_DEFAULT,
+            flags,
             res.GetAddressOf(),
             data,
             subResources,
@@ -977,6 +985,12 @@ bool Test02(_In_ ID3D12Device* pDevice)
         }
         else
         {
+            DDS_LOADER_FLAGS flags = DDS_LOADER_DEFAULT;
+            if (g_TestMedia[index].format == DXGI_FORMAT_YUY2)
+            {
+                flags |= DDS_LOADER_IGNORE_MIPS;
+            }
+
             ComPtr<ID3D12Resource> res;
             std::unique_ptr<uint8_t[]> data;
             std::vector<D3D12_SUBRESOURCE_DATA> subResources;
@@ -988,7 +1002,7 @@ bool Test02(_In_ ID3D12Device* pDevice)
                 blobSize,
                 0,
                 D3D12_RESOURCE_FLAG_NONE,
-                DDS_LOADER_DEFAULT,
+                flags,
                 res.GetAddressOf(),
                 subResources,
                 &alpha,
