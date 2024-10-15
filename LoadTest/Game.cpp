@@ -1053,6 +1053,7 @@ void Game::OnDeviceLost()
     m_test39.Reset();
     m_test40.Reset();
     m_test41.Reset();
+    m_test42.Reset();
 
     m_testA.Reset();
     m_testB.Reset();
@@ -1463,6 +1464,32 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             || desc.DepthOrArraySize != 1)
         {
             OutputDebugStringA("FAILED: world8192.dds skipmips desc unexpected\n");
+            success = false;
+        }
+    }
+
+    // Ignore mips
+    DX::ThrowIfFailed(CreateDDSTextureFromFileEx(
+        device, resourceUpload, L"world8192.dds",
+        0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_IGNORE_MIPS,
+        m_test42.ReleaseAndGetAddressOf())
+        );
+
+    {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test42->GetDesc(&desc);
+    #else
+        auto const desc = m_test42->GetDesc();
+    #endif
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_BC1_UNORM
+            || desc.Width != 8192
+            || desc.Height != 4096
+            || desc.MipLevels != 1
+            || desc.DepthOrArraySize != 1)
+        {
+            OutputDebugStringA("FAILED: world8192.dds desc unexpected\n");
             success = false;
         }
     }

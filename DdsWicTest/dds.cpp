@@ -183,6 +183,10 @@ namespace
         { 512, 512, 1, 10, DXGI_FORMAT_BC1_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, DXTEX_MEDIA_PATH L"TooBig1.dds", {} },
         { 512, 512, 1, 10, DXGI_FORMAT_BC1_UNORM_SRGB, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, DXTEX_MEDIA_PATH L"TooBig2.dds", {} },
 
+        // FL 10.1 Cubemap Array
+        { 512, 512, 12, 1, DXGI_FORMAT_BC1_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, true, DDS_ALPHA_MODE_UNKNOWN, DXTEX_MEDIA_PATH L"cubeMapArray.dds", {} },
+        { 512, 512, 12, 10, DXGI_FORMAT_BC1_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, true, DDS_ALPHA_MODE_UNKNOWN, DXTEX_MEDIA_PATH L"cubeMapArrayMips.dds", {} },
+
         // Luminance
         { 256, 256, 1, 1, DXGI_FORMAT_R8G8_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, DXTEX_MEDIA_PATH L"windowslogo_A8L8.dds", {} }, // D3DFMT_A8L8
         { 256, 256, 1, 1, DXGI_FORMAT_R8_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, DXTEX_MEDIA_PATH L"windowslogo_L8.dds", {} }, // D3DFMT_L8
@@ -762,6 +766,7 @@ namespace
 #endif
 
         // YUV test images
+        { 200, 200, 1, 1, DXGI_FORMAT_YUY2, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, DXTEX_MEDIA_PATH L"lenaYUY2.dds", {} },
         { 1280, 1024, 1, 1, DXGI_FORMAT_YUY2, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, DXTEX_MEDIA_PATH L"testpatternYUY2.dds", {} },
 
         #ifdef _M_X64
@@ -858,6 +863,13 @@ bool Test01(_In_ ID3D12Device* pDevice)
         OutputDebugStringA("\n");
 #endif
 
+        DDS_LOADER_FLAGS flags = DDS_LOADER_DEFAULT;
+        if (g_TestMedia[index].format == DXGI_FORMAT_YUY2)
+        {
+            // Miplevels are not supported for this format for the null device.
+            flags |= DDS_LOADER_IGNORE_MIPS;
+        }
+
         ComPtr<ID3D12Resource> res;
         std::unique_ptr<uint8_t[]> data;
         std::vector<D3D12_SUBRESOURCE_DATA> subResources;
@@ -868,7 +880,7 @@ bool Test01(_In_ ID3D12Device* pDevice)
             szPath,
             0,
             D3D12_RESOURCE_FLAG_NONE,
-            DDS_LOADER_DEFAULT,
+            flags,
             res.GetAddressOf(),
             data,
             subResources,
@@ -977,6 +989,12 @@ bool Test02(_In_ ID3D12Device* pDevice)
         }
         else
         {
+            DDS_LOADER_FLAGS flags = DDS_LOADER_DEFAULT;
+            if (g_TestMedia[index].format == DXGI_FORMAT_YUY2)
+            {
+                flags |= DDS_LOADER_IGNORE_MIPS;
+            }
+
             ComPtr<ID3D12Resource> res;
             std::unique_ptr<uint8_t[]> data;
             std::vector<D3D12_SUBRESOURCE_DATA> subResources;
@@ -988,7 +1006,7 @@ bool Test02(_In_ ID3D12Device* pDevice)
                 blobSize,
                 0,
                 D3D12_RESOURCE_FLAG_NONE,
-                DDS_LOADER_DEFAULT,
+                flags,
                 res.GetAddressOf(),
                 subResources,
                 &alpha,
