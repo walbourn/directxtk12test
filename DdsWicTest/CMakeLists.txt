@@ -20,9 +20,12 @@ add_executable(${PROJECT_NAME}
   DdsWicTest.cpp
   dds.cpp
   wic.cpp
+  ../Common/d3dx12.h
   )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE DirectXTK12 bcrypt.lib d3d12.lib dxgi.lib)
+
+target_include_directories(${PROJECT_NAME} PRIVATE ../Common)
 
 if(MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /W4 /EHsc /GR)

@@ -18,13 +18,53 @@
 #include <Windows.h>
 #include <wrl/client.h>
 
+#ifdef __MINGW32__
+namespace Microsoft
+{
+    namespace WRL
+    {
+        namespace Wrappers
+        {
+            class Event
+            {
+            public:
+                Event() noexcept : m_handle{} {}
+                explicit Event(HANDLE h) noexcept : m_handle{ h } {}
+                ~Event() { if (m_handle) { ::CloseHandle(m_handle); m_handle = nullptr; } }
+
+                void Attach(HANDLE h) noexcept
+                {
+                    if (h != m_handle)
+                    {
+                        if (m_handle) ::CloseHandle(m_handle);
+                        m_handle = h;
+                    }
+                }
+
+                bool IsValid() const { return m_handle != nullptr; }
+                HANDLE Get() const { return m_handle; }
+
+            private:
+                HANDLE m_handle;
+            };
+        }
+    }
+}
+#else
+#include <wrl/event.h>
+#endif
+
 #include "DDSTextureLoader.h"
+#include "ScreenGrab.h"
+
+#include <d3dx12.h>
 
 #include <cstdio>
 #include <cstdint>
 #include <cwchar>
 #include <memory>
 #include <stdexcept>
+#include <tuple>
 #include <vector>
 
 using namespace DirectX;
@@ -948,6 +988,7 @@ bool Test01(_In_ ID3D12Device* pDevice)
     return success;
 }
 
+
 //-------------------------------------------------------------------------------------
 // LoadDDSTextureFromMemoryEx
 bool Test02(_In_ ID3D12Device* pDevice)
@@ -1051,6 +1092,260 @@ bool Test02(_In_ ID3D12Device* pDevice)
                     success = false;
                 }
             }
+        }
+
+        ++ncount;
+    }
+
+    printf("%zu files tested, %zu files passed ", ncount, npass );
+
+    return success;
+}
+
+
+//-------------------------------------------------------------------------------------
+// SaveDDSTextureToFile
+bool Test05(_In_ ID3D12Device* pDevice)
+{
+    bool success = true;
+
+    D3D12_COMMAND_QUEUE_DESC queueDesc = {};
+    queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+    queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+
+    ComPtr<ID3D12CommandQueue> commandQueue;
+    HRESULT hr = pDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(commandQueue.GetAddressOf()));
+    if(FAILED(hr))
+    {
+        printf("ERROR: Failed to create command queue (%08X))\n", static_cast<unsigned int>(hr));
+        return 1;
+    }
+    commandQueue->SetName(L"Test05");
+
+    ComPtr<ID3D12CommandAllocator> commandAllocator;
+    hr = pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(commandAllocator.GetAddressOf()));
+    if (FAILED(hr))
+    {
+        printf("ERROR: Failed to create command allocator (%08X))\n", static_cast<unsigned int>(hr));
+        return 1;
+    }
+    commandAllocator->SetName(L"Test05");
+
+    Microsoft::WRL::Wrappers::Event fenceEvent;
+    fenceEvent.Attach(CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE));
+    if (!fenceEvent.IsValid())
+    {
+        printf("ERROR: Failed to create event (%08X))\n", static_cast<unsigned int>(HRESULT_FROM_WIN32(GetLastError())));
+        return 1;
+    }
+
+    ComPtr<ID3D12GraphicsCommandList> commandList;
+    hr = pDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(commandList.GetAddressOf()));
+    if (FAILED(hr))
+    {
+        printf("ERROR: Failed to create command list (%08X))\n", static_cast<unsigned int>(hr));
+        return 1;
+    }
+    commandList->SetName(L"Test05");
+
+    ComPtr<ID3D12Fence> fence;
+    hr = pDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(fence.GetAddressOf()));
+    if (FAILED(hr))
+    {
+        printf("ERROR: Failed to create fence (%08X))\n", static_cast<unsigned int>(hr));
+        return 1;
+    }
+    fence->SetName(L"Test05");
+    uint64_t fenceValue = 1;
+
+    size_t ncount = 0;
+    size_t npass = 0;
+
+    for( size_t index=0; index < std::size(g_TestMedia); ++index )
+    {
+        if (g_TestMedia[index].dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D)
+        {
+            // ScreenGrab only supports 2D textures
+            continue;
+        }
+
+        const UINT numberOfPlanes = D3D12GetFormatPlaneCount(pDevice, g_TestMedia[index].format);
+        if (numberOfPlanes != 1)
+        {
+            // ScreenGrab does not yet support planar formats
+            continue;
+        }
+
+        wchar_t szPath[MAX_PATH] = {};
+        DWORD ret = ExpandEnvironmentStringsW(g_TestMedia[index].fname, szPath, MAX_PATH);
+        if ( !ret || ret > MAX_PATH )
+        {
+            printf( "ERROR: ExpandEnvironmentStrings FAILED\n" );
+            return false;
+        }
+
+#ifdef _DEBUG
+        OutputDebugString(szPath);
+        OutputDebugStringA("\n");
+#endif
+
+        DDS_LOADER_FLAGS flags = DDS_LOADER_DEFAULT;
+        if (g_TestMedia[index].format == DXGI_FORMAT_YUY2)
+        {
+            // Miplevels are not supported for this format for the null device.
+            flags |= DDS_LOADER_IGNORE_MIPS;
+        }
+
+        ComPtr<ID3D12Resource> res;
+        std::unique_ptr<uint8_t[]> data;
+        std::vector<D3D12_SUBRESOURCE_DATA> subResources;
+        hr = LoadDDSTextureFromFileEx(
+            pDevice,
+            szPath,
+            0,
+            D3D12_RESOURCE_FLAG_NONE,
+            flags,
+            res.GetAddressOf(),
+            data,
+            subResources);
+        if ( FAILED(hr) )
+        {
+            if (((hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND)) || (hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)))
+                && wcsstr(g_TestMedia[index].fname, DXTEX_MEDIA_PATH) != nullptr)
+            {
+                // DIRECTX_TEX_MEDIA test cases are optional
+                continue;
+            }
+
+            success = false;
+            printf( "ERROR: Failed loading dds from file (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath );
+        }
+        else if (!res.Get())
+        {
+            success = false;
+            printf( "ERROR: Failed to return resource (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath );
+        }
+        else
+        {
+        #if defined(_MSC_VER) || !defined(_WIN32)
+            auto expected = res->GetDesc();
+        #else
+            D3D12_RESOURCE_DESC tmpDesc;
+            auto& expected = *res->GetDesc(&tmpDesc);
+        #endif
+
+            if (expected.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D)
+            {
+                // ScreenGrab only supports 2D textures
+                success = false;
+                printf( "ERROR: Unexpected resource dimension (%u..3)\n%ls\n", expected.Dimension, szPath );
+                continue;
+            }
+
+            // Upload data into resource
+            {
+                const UINT64 uploadBufferSize = GetRequiredIntermediateSize(res.Get(), 0, static_cast<UINT>(subResources.size()));
+                CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
+
+                auto desc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
+
+                ComPtr<ID3D12Resource> uploadRes;
+                hr = pDevice->CreateCommittedResource(
+                    &heapProps,
+                    D3D12_HEAP_FLAG_NONE,
+                    &desc,
+                    D3D12_RESOURCE_STATE_GENERIC_READ,
+                    nullptr,
+                    IID_PPV_ARGS(uploadRes.GetAddressOf()));
+                if (FAILED(hr))
+                {
+                    success = false;
+                    printf("ERROR: Failed to create upload texture (%08X)):\n%ls\n", static_cast<unsigned int>(hr), szPath);
+                    continue;
+                }
+
+                UpdateSubresources(commandList.Get(), res.Get(), uploadRes.Get(),
+                    0, 0, static_cast<UINT>(subResources.size()), subResources.data());
+
+                commandList->Close();
+
+                commandQueue->ExecuteCommandLists(1, CommandListCast(commandList.GetAddressOf()));
+
+                hr = commandQueue->Signal(fence.Get(), fenceValue);
+                if (FAILED(hr))
+                {
+                    printf("ERROR: Failed to signal fence (%08X))\n", static_cast<unsigned int>(hr));
+                    return 1;
+                }
+
+                hr = fence->SetEventOnCompletion(fenceValue, fenceEvent.Get());
+                ++fenceValue;
+
+                std::ignore = WaitForSingleObjectEx(fenceEvent.Get(), INFINITE, FALSE);
+            }
+
+            // Capture
+            wchar_t tempFileName[MAX_PATH] = {};
+            wchar_t tempPath[MAX_PATH] = {};
+
+            if (!GetTempPathW(MAX_PATH, tempPath))
+            {
+                success = false;
+                printf("ERROR: Getting temp path failed (%08X)\n", HRESULT_FROM_WIN32(GetLastError()));
+                continue;
+            }
+
+            if (!GetTempFileNameW(tempPath, L"screenGrab", 0, tempFileName))
+            {
+                success = false;
+                printf("ERROR: Getting temp file failed (%08X)\n", HRESULT_FROM_WIN32(GetLastError()));
+                continue;
+            }
+
+            hr = SaveDDSTextureToFile(commandQueue.Get(), res.Get(), tempFileName, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
+            if (FAILED(hr))
+            {
+                success = false;
+                printf( "ERROR: Failed saving dds to file (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath );
+            }
+            else
+            {
+                expected.MipLevels = 1;
+                expected.DepthOrArraySize = 1;
+
+                std::unique_ptr<uint8_t[]> data2;
+                std::vector<D3D12_SUBRESOURCE_DATA> subResources2;
+                ComPtr<ID3D12Resource> res2;
+                hr = LoadDDSTextureFromFile(pDevice, tempFileName, res2.GetAddressOf(), data2, subResources2);
+                if (FAILED(hr))
+                {
+                    success = false;
+                    printf( "ERROR: Failed reading dds from temp (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), tempFileName );
+                }
+                else if (IsMetadataCorrect(res2.Get(), expected, szPath))
+                {
+                    ++npass;
+                }
+                else
+                {
+                    success = false;
+                }
+            }
+
+            hr = commandQueue->Signal(fence.Get(), fenceValue);
+            if (SUCCEEDED(hr))
+            {
+                hr = fence->SetEventOnCompletion(fenceValue, fenceEvent.Get());
+                ++fenceValue;
+
+                if (SUCCEEDED(hr))
+                {
+                    std::ignore = WaitForSingleObjectEx(fenceEvent.Get(), INFINITE, FALSE);
+                }
+            }
+
+            commandAllocator->Reset();
+            commandList->Reset(commandAllocator.Get(), nullptr);
         }
 
         ++ncount;
