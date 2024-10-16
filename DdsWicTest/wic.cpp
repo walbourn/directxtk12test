@@ -18,13 +18,57 @@
 #include <Windows.h>
 #include <wrl/client.h>
 
+#ifdef __MINGW32__
+namespace Microsoft
+{
+    namespace WRL
+    {
+        namespace Wrappers
+        {
+            class Event
+            {
+            public:
+                Event() noexcept : m_handle{} {}
+                explicit Event(HANDLE h) noexcept : m_handle{ h } {}
+                ~Event() { if (m_handle) { ::CloseHandle(m_handle); m_handle = nullptr; } }
+
+                void Attach(HANDLE h) noexcept
+                {
+                    if (h != m_handle)
+                    {
+                        if (m_handle) ::CloseHandle(m_handle);
+                        m_handle = h;
+                    }
+                }
+
+                bool IsValid() const { return m_handle != nullptr; }
+                HANDLE Get() const { return m_handle; }
+
+            private:
+                HANDLE m_handle;
+            };
+        }
+    }
+}
+#else
+#include <wrl/event.h>
+#endif
+
 #include "WICTextureLoader.h"
+#include "ScreenGrab.h"
+#include "DDSTextureLoader.h"
+
+#include <d3dx12.h>
 
 #include <cstdio>
 #include <cstdint>
 #include <cwchar>
 #include <memory>
 #include <stdexcept>
+#include <tuple>
+#include <vector>
+
+#include <wincodec.h>
 
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
@@ -321,6 +365,86 @@ namespace
         #endif
     };
 
+    struct SaveMedia
+    {
+        const wchar_t *fname;
+        DXGI_FORMAT reloadFormat[4];
+    };
+
+    struct Container
+    {
+        GUID guid;
+        const wchar_t* ext;
+    };
+
+    Container s_ContainerGUID[4] =
+    {
+        { GUID_ContainerFormatBmp, L"bmp" },
+        { GUID_ContainerFormatPng, L"png" },
+        { GUID_ContainerFormatJpeg, L"jpg" },
+        { GUID_ContainerFormatTiff, L"tif" },
+    };
+
+    const SaveMedia g_SaveMedia[] =
+    {
+        // Width | Height | Filename | ReloadFormat (BMP, PNG, JPG, TIF)
+        { L"AnimTest\\default.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
+        { L"AnimTest\\head_diff.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
+        { L"AnimTest\\jacket_diff.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
+        { L"AnimTest\\pants_diff.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
+        { L"AnimTest\\upBody_diff.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
+
+        { L"DGSLTest\\_USERS_CHUCKW.WINGROUP_DESKTOP_VS 3D STARTER KIT_STARTERKIT_ASSETS_CUBEUVIMAGE.PNG.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB } },
+        { L"DGSLTest\\_Users_Shaun_Desktop_Transfer_Model Generation_CMO_Ships_StarFire_25ab10e8-621a-47d4-a63d-f65a00bc1549__texture__01.png.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB } },
+        { L"DGSLTest\\_Users_Shaun_Desktop_Transfer_Model Generation_CMO_Ships_StarFire_25ab10e8-621a-47d4-a63d-f65a00bc1549__texture__03.png.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB } },
+        { L"DGSLTest\\_Users_Shaun_Desktop_Transfer_Model Generation_CMO_Ships_StarFire_25ab10e8-621a-47d4-a63d-f65a00bc1549__texture__04.png.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB } },
+
+        { L"EffectsTest\\cat.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
+        { L"EffectsTest\\cubemap.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
+        { L"EffectsTest\\dualparabola.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
+        { L"EffectsTest\\opaqueCat.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
+        { L"EffectsTest\\overlay.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
+
+        { L"LoadTest\\dx5_logo_autogen.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
+        { L"LoadTest\\earth_A2B10G10R10.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
+        { L"LoadTest\\tree02S_pmalpha.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
+
+        { L"ModelTest\\smoothMap.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
+        { L"ModelTest\\Tiny_skin.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
+
+        { L"PrimitivesTest\\normalMap.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
+        { L"PrimitivesTest\\reftexture.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
+
+        { L"SpriteBatchTest\\a.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
+        { L"SpriteBatchTest\\b.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
+        { L"SpriteBatchTest\\c.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
+
+        // DirectXTex test corpus (optional)
+        { DXTEX_MEDIA_PATH L"test8888.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
+        { DXTEX_MEDIA_PATH L"alphaedge.dds",{ DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8_UNORM, DXGI_FORMAT_R8_UNORM, DXGI_FORMAT_R8_UNORM } },
+
+        { DXTEX_MEDIA_PATH L"windowslogo_X8R8G8B8.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
+        { DXTEX_MEDIA_PATH L"windowslogo_r16f.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8_UNORM, DXGI_FORMAT_R8_UNORM, DXGI_FORMAT_R8_UNORM } },
+        { DXTEX_MEDIA_PATH L"windowslogo_r32f.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8_UNORM, DXGI_FORMAT_R8_UNORM, DXGI_FORMAT_R8_UNORM } },
+        { DXTEX_MEDIA_PATH L"windowslogo_rgba16.dds", { DXGI_FORMAT_R16G16B16A16_FLOAT, DXGI_FORMAT_R16G16B16A16_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R16G16B16A16_UNORM } },
+        { DXTEX_MEDIA_PATH L"windowslogo_rgba16f.dds", { DXGI_FORMAT_R16G16B16A16_FLOAT, DXGI_FORMAT_R16G16B16A16_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R16G16B16A16_UNORM } },
+        { DXTEX_MEDIA_PATH L"windowslogo_rgba32f.dds", { DXGI_FORMAT_R16G16B16A16_FLOAT, DXGI_FORMAT_R16G16B16A16_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R16G16B16A16_UNORM } },
+        { DXTEX_MEDIA_PATH L"windowslogo_R5G6B5.dds", { DXGI_FORMAT_B5G6R5_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
+        { DXTEX_MEDIA_PATH L"windowslogo_rgb565.dds", { DXGI_FORMAT_B5G6R5_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
+        { DXTEX_MEDIA_PATH L"windowslogo_A1R5G5B5.dds", { DXGI_FORMAT_B5G5R5A1_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
+
+        // Luminance
+        { DXTEX_MEDIA_PATH L"windowslogo_L8.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8_UNORM, DXGI_FORMAT_R8_UNORM, DXGI_FORMAT_R8_UNORM } },
+        { DXTEX_MEDIA_PATH L"windowslogo_L16.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8_UNORM, DXGI_FORMAT_R8_UNORM, DXGI_FORMAT_R8_UNORM } },
+
+        // HDR formats
+        { DXTEX_MEDIA_PATH L"SnowPano_4k_Ref.DDS", { DXGI_FORMAT_R16G16B16A16_FLOAT, DXGI_FORMAT_R16G16B16A16_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R16G16B16A16_UNORM } },
+        { DXTEX_MEDIA_PATH L"yucca.dds", { DXGI_FORMAT_R16G16B16A16_FLOAT, DXGI_FORMAT_R16G16B16A16_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R16G16B16A16_UNORM } },
+
+        // Normal maps
+        { DXTEX_MEDIA_PATH L"normals.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
+    };
+
     void printdesc(const D3D12_RESOURCE_DESC & desc)
     {
         // For WIC, MipLevels=ArraySize=1 and MiscFlags=0
@@ -396,7 +520,7 @@ bool Test03(_In_ ID3D12Device* pDevice)
 
         ComPtr<ID3D12Resource> res;
         std::unique_ptr<uint8_t[]> data;
-        D3D12_SUBRESOURCE_DATA subResource;
+        D3D12_SUBRESOURCE_DATA subResource = {};
         HRESULT hr = LoadWICTextureFromFileEx(
             pDevice,
             szPath,
@@ -495,7 +619,7 @@ bool Test04(_In_ ID3D12Device* pDevice)
         {
             ComPtr<ID3D12Resource> res;
             std::unique_ptr<uint8_t[]> data;
-            D3D12_SUBRESOURCE_DATA subResource;
+            D3D12_SUBRESOURCE_DATA subResource = {};
             hr = LoadWICTextureFromMemoryEx(
                 pDevice,
                 blob.get(),
@@ -536,6 +660,257 @@ bool Test04(_In_ ID3D12Device* pDevice)
                     success = false;
                 }
             }
+        }
+
+        ++ncount;
+    }
+
+    printf("%zu files tested, %zu files passed ", ncount, npass );
+
+    return success;
+}
+
+
+//-------------------------------------------------------------------------------------
+// SaveWICTextureToFile
+bool Test06(_In_ ID3D12Device* pDevice)
+{
+    bool success = true;
+
+    D3D12_COMMAND_QUEUE_DESC queueDesc = {};
+    queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+    queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+
+    ComPtr<ID3D12CommandQueue> commandQueue;
+    HRESULT hr = pDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(commandQueue.GetAddressOf()));
+    if(FAILED(hr))
+    {
+        printf("ERROR: Failed to create command queue (%08X))\n", static_cast<unsigned int>(hr));
+        return 1;
+    }
+    commandQueue->SetName(L"Test05");
+
+    ComPtr<ID3D12CommandAllocator> commandAllocator;
+    hr = pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(commandAllocator.GetAddressOf()));
+    if (FAILED(hr))
+    {
+        printf("ERROR: Failed to create command allocator (%08X))\n", static_cast<unsigned int>(hr));
+        return 1;
+    }
+    commandAllocator->SetName(L"Test05");
+
+    Microsoft::WRL::Wrappers::Event fenceEvent;
+    fenceEvent.Attach(CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE));
+    if (!fenceEvent.IsValid())
+    {
+        printf("ERROR: Failed to create event (%08X))\n", static_cast<unsigned int>(HRESULT_FROM_WIN32(GetLastError())));
+        return 1;
+    }
+
+    ComPtr<ID3D12GraphicsCommandList> commandList;
+    hr = pDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(commandList.GetAddressOf()));
+    if (FAILED(hr))
+    {
+        printf("ERROR: Failed to create command list (%08X))\n", static_cast<unsigned int>(hr));
+        return 1;
+    }
+    commandList->SetName(L"Test05");
+
+    ComPtr<ID3D12Fence> fence;
+    hr = pDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(fence.GetAddressOf()));
+    if (FAILED(hr))
+    {
+        printf("ERROR: Failed to create fence (%08X))\n", static_cast<unsigned int>(hr));
+        return 1;
+    }
+    fence->SetName(L"Test05");
+    uint64_t fenceValue = 1;
+
+    size_t ncount = 0;
+    size_t npass = 0;
+
+    for( size_t index=0; index < std::size(g_SaveMedia); ++index )
+    {
+        wchar_t szPath[MAX_PATH] = {};
+        DWORD ret = ExpandEnvironmentStringsW(g_SaveMedia[index].fname, szPath, MAX_PATH);
+        if ( !ret || ret > MAX_PATH )
+        {
+            printf( "ERROR: ExpandEnvironmentStrings FAILED\n" );
+            return false;
+        }
+
+#ifdef _DEBUG
+        OutputDebugString(szPath);
+        OutputDebugStringA("\n");
+#endif
+
+        ComPtr<ID3D12Resource> res;
+        std::unique_ptr<uint8_t[]> data;
+        std::vector<D3D12_SUBRESOURCE_DATA> subResources;
+        hr = LoadDDSTextureFromFile(
+            pDevice,
+            szPath,
+            res.GetAddressOf(),
+            data,
+            subResources);
+        if ( FAILED(hr) )
+        {
+            if (((hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND)) || (hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)))
+                && wcsstr(g_SaveMedia[index].fname, DXTEX_MEDIA_PATH) != nullptr)
+            {
+                // DIRECTX_TEX_MEDIA test cases are optional
+                continue;
+            }
+
+            success = false;
+            printf( "ERROR: Failed loading dds from file (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath );
+        }
+        else if (!res.Get())
+        {
+            success = false;
+            printf( "ERROR: Failed to return resource (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath );
+        }
+        else
+        {
+        #if defined(_MSC_VER) || !defined(_WIN32)
+            auto expected = res->GetDesc();
+        #else
+            D3D12_RESOURCE_DESC tmpDesc;
+            auto& expected = *res->GetDesc(&tmpDesc);
+        #endif
+
+            if (expected.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D)
+            {
+                // ScreenGrab only supports 2D textures
+                success = false;
+                printf( "ERROR: Unexpected resource dimension (%u..3)\n%ls\n", expected.Dimension, szPath );
+                continue;
+            }
+
+            // Upload data into resource
+            {
+                const UINT64 uploadBufferSize = GetRequiredIntermediateSize(res.Get(), 0, static_cast<UINT>(subResources.size()));
+                CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
+
+                auto desc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
+
+                ComPtr<ID3D12Resource> uploadRes;
+                hr = pDevice->CreateCommittedResource(
+                    &heapProps,
+                    D3D12_HEAP_FLAG_NONE,
+                    &desc,
+                    D3D12_RESOURCE_STATE_GENERIC_READ,
+                    nullptr,
+                    IID_PPV_ARGS(uploadRes.GetAddressOf()));
+                if (FAILED(hr))
+                {
+                    success = false;
+                    printf("ERROR: Failed to create upload texture (%08X)):\n%ls\n", static_cast<unsigned int>(hr), szPath);
+                    continue;
+                }
+
+                UpdateSubresources(commandList.Get(), res.Get(), uploadRes.Get(),
+                    0, 0, static_cast<UINT>(subResources.size()), subResources.data());
+
+                commandList->Close();
+
+                commandQueue->ExecuteCommandLists(1, CommandListCast(commandList.GetAddressOf()));
+
+                hr = commandQueue->Signal(fence.Get(), fenceValue);
+                if (FAILED(hr))
+                {
+                    printf("ERROR: Failed to signal fence (%08X))\n", static_cast<unsigned int>(hr));
+                    return 1;
+                }
+
+                hr = fence->SetEventOnCompletion(fenceValue, fenceEvent.Get());
+                ++fenceValue;
+
+                std::ignore = WaitForSingleObjectEx(fenceEvent.Get(), INFINITE, FALSE);
+            }
+
+            bool pass = false;
+
+            expected.MipLevels = 1;
+            expected.DepthOrArraySize = 1;
+
+            // Capture
+            for(size_t container = 0; container < std::size(s_ContainerGUID); ++container)
+            {
+                if (g_SaveMedia[index].reloadFormat[container] == DXGI_FORMAT_UNKNOWN)
+                {
+                    // Skipping container
+                    continue;
+                }
+
+                wchar_t tempFileName[MAX_PATH] = {};
+                wchar_t tempPath[MAX_PATH] = {};
+
+                if (!GetTempPathW(MAX_PATH, tempPath))
+                {
+                    success = false;
+                    printf("ERROR: Getting temp path failed (%08X)\n", HRESULT_FROM_WIN32(GetLastError()));
+                    continue;
+                }
+
+                if (!GetTempFileNameW(tempPath, L"screenGrab", static_cast<UINT>(container), tempFileName))
+                {
+                    success = false;
+                    printf("ERROR: Getting temp file failed (%08X)\n", HRESULT_FROM_WIN32(GetLastError()));
+                    continue;
+                }
+
+                hr = SaveWICTextureToFile(commandQueue.Get(), res.Get(), s_ContainerGUID[container].guid, tempFileName, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
+                if (FAILED(hr))
+                {
+                    success = false;
+                    printf( "ERROR: Failed saving wic to file %ls (HRESULT %08X):\n%ls\n", s_ContainerGUID[container].ext, static_cast<unsigned int>(hr), szPath );
+                }
+                else
+                {
+                    std::unique_ptr<uint8_t[]> data2;
+                    D3D12_SUBRESOURCE_DATA subResource2 = {};
+                    ComPtr<ID3D12Resource> res2;
+                    hr = LoadWICTextureFromFile(pDevice, tempFileName, res2.GetAddressOf(), data2, subResource2);
+                    if (FAILED(hr))
+                    {
+                        success = false;
+                        printf( "ERROR: Failed reading wic from temp %ls (HRESULT %08X):\n%ls\n", s_ContainerGUID[container].ext, static_cast<unsigned int>(hr), tempFileName );
+                    }
+                    else
+                    {
+                        D3D12_RESOURCE_DESC expected2 = expected;
+                        expected2.Format = g_SaveMedia[index].reloadFormat[container];
+                        if (IsMetadataCorrect(res2.Get(), expected2, szPath))
+                        {
+                            pass = true;
+                        }
+                        else
+                        {
+                            success = false;
+                            printf("  -- %ls %ls\n", s_ContainerGUID[container].ext, tempFileName);
+                        }
+                    }
+                }
+            }
+
+            if(pass)
+                ++npass;
+
+            hr = commandQueue->Signal(fence.Get(), fenceValue);
+            if (SUCCEEDED(hr))
+            {
+                hr = fence->SetEventOnCompletion(fenceValue, fenceEvent.Get());
+                ++fenceValue;
+
+                if (SUCCEEDED(hr))
+                {
+                    std::ignore = WaitForSingleObjectEx(fenceEvent.Get(), INFINITE, FALSE);
+                }
+            }
+
+            commandAllocator->Reset();
+            commandList->Reset(commandAllocator.Get(), nullptr);
         }
 
         ++ncount;

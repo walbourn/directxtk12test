@@ -1189,27 +1189,15 @@ bool Test05(_In_ ID3D12Device* pDevice)
         OutputDebugStringA("\n");
 #endif
 
-        DDS_LOADER_FLAGS flags = DDS_LOADER_DEFAULT;
-        if (g_TestMedia[index].format == DXGI_FORMAT_YUY2)
-        {
-            // Miplevels are not supported for this format for the null device.
-            flags |= DDS_LOADER_IGNORE_MIPS;
-        }
-
         ComPtr<ID3D12Resource> res;
         std::unique_ptr<uint8_t[]> data;
         std::vector<D3D12_SUBRESOURCE_DATA> subResources;
-        hr = LoadDDSTextureFromFileEx(
+        hr = LoadDDSTextureFromFile(
             pDevice,
             szPath,
-            0,
-            D3D12_RESOURCE_FLAG_NONE,
-            flags,
             res.GetAddressOf(),
             data,
-            subResources,
-            nullptr,
-            nullptr);
+            subResources);
         if ( FAILED(hr) )
         {
             if (((hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND)) || (hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)))

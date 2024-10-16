@@ -57,7 +57,7 @@ TestInfo g_Tests[] =
     { "WICTextureLoader (File)", Test03 },
     { "WICTextureLoader (Memory)", Test04 },
     { "ScreenGrab (DDS)", Test05 },
-//    { "ScreenGrab (WIC)", Test06 },    
+    { "ScreenGrab (WIC)", Test06 },
 };
 
 using Microsoft::WRL::ComPtr;
