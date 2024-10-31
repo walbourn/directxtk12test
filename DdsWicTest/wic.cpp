@@ -443,7 +443,7 @@ namespace
     void printdesc(const D3D12_RESOURCE_DESC & desc)
     {
         // For WIC, MipLevels=ArraySize=1 and MiscFlags=0
-        printf("%llux%u format %u\n", desc.Width, desc.Height, desc.Format);
+        printf("%llux%u format %d\n", desc.Width, desc.Height, desc.Format);
     }
 
     bool IsMetadataCorrect(_In_ ID3D12Resource* res, const D3D12_RESOURCE_DESC& expected, const wchar_t* szPath)
@@ -457,7 +457,7 @@ namespace
 
         if (desc.Dimension != expected.Dimension)
         {
-            printf( "ERROR: Unexpected resource dimension (%u..%u)\n%ls\n", desc.Dimension, expected.Dimension, szPath );
+            printf( "ERROR: Unexpected resource dimension (%d..%d)\n%ls\n", desc.Dimension, expected.Dimension, szPath );
             return false;
         }
 
@@ -778,7 +778,7 @@ bool Test06(_In_ ID3D12Device* pDevice)
             {
                 // ScreenGrab only supports 2D textures
                 success = false;
-                printf( "ERROR: Unexpected resource dimension (%u..3)\n%ls\n", expected.Dimension, szPath );
+                printf( "ERROR: Unexpected resource dimension (%d..3)\n%ls\n", expected.Dimension, szPath );
                 continue;
             }
 

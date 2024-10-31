@@ -821,13 +821,13 @@ namespace
         switch(desc.Dimension)
         {
         case D3D12_RESOURCE_DIMENSION_TEXTURE1D:
-            printf("%llu mips %u array %u format %u\n", desc.Width, desc.MipLevels, desc.DepthOrArraySize, desc.Format);
+            printf("%llu mips %u array %u format %d\n", desc.Width, desc.MipLevels, desc.DepthOrArraySize, desc.Format);
             break;
         case D3D12_RESOURCE_DIMENSION_TEXTURE2D:
-            printf("%llux%u mips %u array %u format %u\n", desc.Width, desc.Height, desc.MipLevels, desc.DepthOrArraySize, desc.Format);
+            printf("%llux%u mips %u array %u format %d\n", desc.Width, desc.Height, desc.MipLevels, desc.DepthOrArraySize, desc.Format);
             break;
         case D3D12_RESOURCE_DIMENSION_TEXTURE3D:
-            printf("%llux%ux%u mips %u format %u\n", desc.Width, desc.Height, desc.DepthOrArraySize, desc.MipLevels, desc.Format);
+            printf("%llux%ux%u mips %u format %d\n", desc.Width, desc.Height, desc.DepthOrArraySize, desc.MipLevels, desc.Format);
             break;
         default:
             break;
@@ -845,7 +845,7 @@ namespace
 
         if (desc.Dimension != expected.Dimension)
         {
-            printf( "ERROR: Unexpected resource dimension (%u..%u)\n%ls\n", desc.Dimension, expected.Dimension, szPath );
+            printf( "ERROR: Unexpected resource dimension (%d..%d)\n%ls\n", desc.Dimension, expected.Dimension, szPath );
             return false;
         }
 
@@ -952,7 +952,7 @@ bool Test01(_In_ ID3D12Device* pDevice)
         else if (isCubeMap != g_TestMedia[index].isCubeMap)
         {
             success = false;
-            printf( "ERROR: Failed to return expected cubemap boolean (%u...%u):\n%ls\n", isCubeMap ? 1 : 0, g_TestMedia[index].isCubeMap ? 1 : 0, szPath );
+            printf( "ERROR: Failed to return expected cubemap boolean (%d...%d):\n%ls\n", isCubeMap ? 1 : 0, g_TestMedia[index].isCubeMap ? 1 : 0, szPath );
         }
         else
         {
@@ -1070,7 +1070,7 @@ bool Test02(_In_ ID3D12Device* pDevice)
             else if (isCubeMap != g_TestMedia[index].isCubeMap)
             {
                 success = false;
-                printf( "ERROR: Failed to return expected cubemap boolean (%u...%u):\n%ls\n", isCubeMap ? 1 : 0, g_TestMedia[index].isCubeMap ? 1 : 0, szPath );
+                printf( "ERROR: Failed to return expected cubemap boolean (%d...%d):\n%ls\n", isCubeMap ? 1 : 0, g_TestMedia[index].isCubeMap ? 1 : 0, szPath );
             }
             else
             {
@@ -1238,7 +1238,7 @@ bool Test05(_In_ ID3D12Device* pDevice)
             {
                 // ScreenGrab only supports 2D textures
                 success = false;
-                printf( "ERROR: Unexpected resource dimension (%u..3)\n%ls\n", expected.Dimension, szPath );
+                printf( "ERROR: Unexpected resource dimension (%d..3)\n%ls\n", expected.Dimension, szPath );
                 continue;
             }
 
