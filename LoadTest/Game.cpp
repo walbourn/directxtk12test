@@ -616,7 +616,7 @@ void Game::CreateDeviceDependentResources()
         resourceUpload.Begin();
 
         // View textures
-        OutputDebugStringA("*********** UINT TESTS BEGIN ***************\n");
+        OutputDebugStringA("*********** UNIT TESTS BEGIN ***************\n");
 
         // DescriptorHeap.h
         // TODO - ctor from existing
