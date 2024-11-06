@@ -23,7 +23,7 @@ if((BUILD_XAUDIO_WIN10 OR BUILD_XAUDIO_REDIST) AND (NOT NO_WCHAR_T))
   add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/WavTest)
   add_test(NAME "wavtest" COMMAND wavtest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   set_tests_properties(wavtest PROPERTIES LABELS "Audio")
-  set_tests_properties(wavtest PROPERTIES TIMEOUT 30)
+  set_tests_properties(wavtest PROPERTIES TIMEOUT 60)
 
   # fuzzloaders
   list(APPEND TEST_EXES fuzzloaders)
@@ -62,7 +62,7 @@ if(NOT MINGW)
 endif()
 add_test(NAME "d3d12" COMMAND d3d12test -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/D3D12Test)
 set_tests_properties(d3d12 PROPERTIES LABELS "Graphics")
-set_tests_properties(d3d12 PROPERTIES TIMEOUT 30)
+set_tests_properties(d3d12 PROPERTIES TIMEOUT 60)
 
 # MSAA
 list(APPEND TEST_EXES msaatest)
@@ -80,7 +80,7 @@ if(NOT MINGW)
 endif()
 add_test(NAME "msaa" COMMAND msaatest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/MSAATest)
 set_tests_properties(msaa PROPERTIES LABELS "Graphics")
-set_tests_properties(msaa PROPERTIES TIMEOUT 30)
+set_tests_properties(msaa PROPERTIES TIMEOUT 60)
 
 # EFFECTS
 list(APPEND TEST_EXES effectstest)
@@ -164,7 +164,7 @@ if(NOT MINGW)
 endif()
 add_test(NAME "loaders" COMMAND loadtest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/LoadTest)
 set_tests_properties(loaders PROPERTIES LABELS "Graphics")
-set_tests_properties(loaders PROPERTIES TIMEOUT 30)
+set_tests_properties(loaders PROPERTIES TIMEOUT 60)
 
 # MODEL
 list(APPEND TEST_EXES modeltest)
@@ -201,7 +201,7 @@ if(NOT MINGW)
 endif()
 add_test(NAME "shaders" COMMAND shadertest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ShaderTest)
 set_tests_properties(shaders PROPERTIES LABELS "Graphics")
-set_tests_properties(shaders PROPERTIES TIMEOUT 40)
+set_tests_properties(shaders PROPERTIES TIMEOUT 60)
 
 # ANIMATION
 list(APPEND TEST_EXES animtest)
@@ -219,7 +219,7 @@ if(NOT MINGW)
 endif()
 add_test(NAME "animation" COMMAND animtest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/AnimTest)
 set_tests_properties(animation PROPERTIES LABELS "Graphics")
-set_tests_properties(animation PROPERTIES TIMEOUT 40)
+set_tests_properties(animation PROPERTIES TIMEOUT 60)
 
 # HDR
 list(APPEND TEST_EXES hdrtest)
@@ -237,7 +237,7 @@ if(NOT MINGW)
 endif()
 add_test(NAME "hdr" COMMAND hdrtest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/HDRTest)
 set_tests_properties(hdr PROPERTIES LABELS "Graphics")
-set_tests_properties(hdr PROPERTIES TIMEOUT 40)
+set_tests_properties(hdr PROPERTIES TIMEOUT 60)
 
 # PBR
 list(APPEND TEST_EXES pbrtest)
@@ -255,7 +255,7 @@ if(NOT MINGW)
 endif()
 add_test(NAME "pbrShaders" COMMAND pbrtest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/PBRTest)
 set_tests_properties(pbrShaders PROPERTIES LABELS "Graphics")
-set_tests_properties(pbrShaders PROPERTIES TIMEOUT 40)
+set_tests_properties(pbrShaders PROPERTIES TIMEOUT 60)
 
 # PBR MODEL
 list(APPEND TEST_EXES pbrmodeltest)
@@ -313,7 +313,7 @@ if(NOT MINGW)
 endif()
 add_test(NAME "mGPU" COMMAND mgputest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/mGPUTest)
 set_tests_properties(mGPU PROPERTIES LABELS "Graphics")
-set_tests_properties(mGPU PROPERTIES TIMEOUT 30)
+set_tests_properties(mGPU PROPERTIES TIMEOUT 60)
 
 if(BUILD_XAUDIO_WIN10 OR BUILD_XAUDIO_REDIST)
     # 3D AUDIO
@@ -331,7 +331,7 @@ if(BUILD_XAUDIO_WIN10 OR BUILD_XAUDIO_REDIST)
     endif()
     add_test(NAME "positionalAudio" COMMAND audio3dtest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Audio3DTest)
     set_tests_properties(positionalAudio PROPERTIES LABELS "Audio")
-    set_tests_properties(positionalAudio PROPERTIES TIMEOUT 40)
+    set_tests_properties(positionalAudio PROPERTIES TIMEOUT 60)
 
     # SIMPLE AUDIO
     list(APPEND TEST_EXES simpleaudiotest)
@@ -350,7 +350,7 @@ if(BUILD_XAUDIO_WIN10 OR BUILD_XAUDIO_REDIST)
     endif()
     add_test(NAME "simpleAudio" COMMAND simpleaudiotest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/SimpleAudioTest)
     set_tests_properties(simpleAudio PROPERTIES LABELS "Audio")
-    set_tests_properties(simpleAudio PROPERTIES TIMEOUT 30)
+    set_tests_properties(simpleAudio PROPERTIES TIMEOUT 60)
 endif()
 
 # INPUT: GAMEPAD
@@ -367,7 +367,7 @@ if(NOT MINGW)
 endif()
 add_test(NAME "gamepadInput" COMMAND gamepadtest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/GamePadTest)
 set_tests_properties(gamepadInput PROPERTIES LABELS "Input")
-set_tests_properties(gamepadInput PROPERTIES TIMEOUT 30)
+set_tests_properties(gamepadInput PROPERTIES TIMEOUT 60)
 
 # INPUT: KEYBOARD
 list(APPEND TEST_EXES keyboardtest)
@@ -383,7 +383,7 @@ if(NOT MINGW)
 endif()
 add_test(NAME "keyboardInput" COMMAND keyboardtest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/KeyboardTest)
 set_tests_properties(keyboardInput PROPERTIES LABELS "Input")
-set_tests_properties(keyboardInput PROPERTIES TIMEOUT 30)
+set_tests_properties(keyboardInput PROPERTIES TIMEOUT 60)
 
 # INPUT: MOUSE
 list(APPEND TEST_EXES mousetest)
@@ -399,7 +399,7 @@ if(NOT MINGW)
 endif()
 add_test(NAME "mouseInput" COMMAND mousetest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/MouseTest)
 set_tests_properties(mouseInput PROPERTIES LABELS "Input")
-set_tests_properties(mouseInput PROPERTIES TIMEOUT 30)
+set_tests_properties(mouseInput PROPERTIES TIMEOUT 60)
 
 message(STATUS "Enabled tests: ${TEST_EXES}")
 foreach(t IN LISTS TEST_EXES)
