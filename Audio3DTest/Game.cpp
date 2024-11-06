@@ -631,8 +631,7 @@ void Game::CreateWindowSizeDependentResources()
 namespace DirectX
 {
     // Internal function to validate
-    uint32_t GetDefaultChannelMask(int channels) noexcept;
-    bool IsValid(_In_ const WAVEFORMATEX* wfx) noexcept;
+    bool __cdecl IsValid(_In_ const WAVEFORMATEX* wfx) noexcept;
 }
 
 void Game::UnitTests()
