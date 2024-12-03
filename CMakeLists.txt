@@ -459,7 +459,6 @@ endif()
 
 if(MINGW)
     foreach(t IN LISTS TEST_EXES)
-      target_link_options(${t} PRIVATE -municode)
       target_link_libraries(${t} PRIVATE xinput1_4.lib)
     endforeach()
     foreach(t IN LISTS XAUDIO_TESTS)
