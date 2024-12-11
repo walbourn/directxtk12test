@@ -366,8 +366,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 #endif
 
 #ifdef USING_WINDOWS_GAMING_INPUT
-    Microsoft::WRL::Wrappers::RoInitializeWrapper initialize(RO_INIT_MULTITHREADED);
-    if (FAILED(initialize))
+    // RoUnitialize has been hanging in the tests.
+    if (FAILED(RoInitialize(RO_INIT_MULTITHREADED)))
         return 1;
 #else
     if (FAILED(CoInitializeEx(nullptr, COINITBASE_MULTITHREADED)))
@@ -704,6 +704,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         if (g_testTimer)
         {
             ExitGame();
+            OutputDebugStringA("WM_TIMER\n");
         }
     }
 
