@@ -589,7 +589,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             std::ignore = BeginPaint(hWnd, &ps);
             EndPaint(hWnd, &ps);
         }
-        break;
+        return 0;
 
     case WM_MOVE:
         if (game)
