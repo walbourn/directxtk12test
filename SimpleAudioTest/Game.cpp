@@ -779,9 +779,9 @@ void Game::Render()
         stats.allocatedVoicesOneShot, stats.allocatedVoicesIdle,
         stats.audioBytes, stats.streamingBytes);
 
-    auto const size = m_deviceResources->GetOutputSize();
+    const auto size = m_deviceResources->GetOutputSize();
 
-    auto const safeRect = Viewport::ComputeTitleSafeArea(UINT(size.right), UINT(size.bottom));
+    const auto safeRect = Viewport::ComputeTitleSafeArea(UINT(size.right), UINT(size.bottom));
 
     m_spriteBatch->Begin(commandList);
 
@@ -866,14 +866,14 @@ void Game::Clear()
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Clear");
 
     // Clear the views.
-    auto const rtvDescriptor = m_deviceResources->GetRenderTargetView();
+    const auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
 
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, nullptr);
     commandList->ClearRenderTargetView(rtvDescriptor, c_clearColor, 0, nullptr);
 
     // Set the viewport and scissor rect.
-    auto const viewport = m_deviceResources->GetScreenViewport();
-    auto const scissorRect = m_deviceResources->GetScissorRect();
+    const auto viewport = m_deviceResources->GetScreenViewport();
+    const auto scissorRect = m_deviceResources->GetScissorRect();
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissorRect);
 
@@ -945,7 +945,7 @@ void Game::OnResuming()
 #ifdef PC
 void Game::OnWindowMoved()
 {
-    auto const r = m_deviceResources->GetOutputSize();
+    const auto r = m_deviceResources->GetOutputSize();
     m_deviceResources->WindowSizeChanged(r.right, r.bottom);
 }
 #endif

@@ -399,16 +399,16 @@ void Game::Render()
     commandList->IASetIndexBuffer(&m_indexBufferView);
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    auto const radianceTex = m_resourceDescriptors->GetGpuHandle(Descriptors::RadianceIBL1 + size_t(m_ibl));
+    const auto radianceTex = m_resourceDescriptors->GetGpuHandle(Descriptors::RadianceIBL1 + size_t(m_ibl));
 
 #ifdef __MINGW32__
     D3D12_RESOURCE_DESC diffuseDesc;
     std::ignore = m_radianceIBL[0]->GetDesc(&diffuseDesc);
 #else
-    auto const diffuseDesc = m_radianceIBL[0]->GetDesc();
+    const auto diffuseDesc = m_radianceIBL[0]->GetDesc();
 #endif
 
-    auto const irradianceTex = m_resourceDescriptors->GetGpuHandle(Descriptors::IrradianceIBL1 + size_t(m_ibl));
+    const auto irradianceTex = m_resourceDescriptors->GetGpuHandle(Descriptors::IrradianceIBL1 + size_t(m_ibl));
     m_pbr->SetIBLTextures(radianceTex, diffuseDesc.MipLevels, irradianceTex, m_states->AnisotropicClamp());
     m_pbrConstant->SetIBLTextures(radianceTex, diffuseDesc.MipLevels, irradianceTex, m_states->LinearWrap());
     m_pbrEmissive->SetIBLTextures(radianceTex, diffuseDesc.MipLevels, irradianceTex, m_states->LinearWrap());
@@ -466,11 +466,11 @@ void Game::Render()
     }
     else
     {
-        auto const albedoTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::BaseColor1);
-        auto const normalTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::NormalMap1);
+        const auto albedoTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::BaseColor1);
+        const auto normalTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::NormalMap1);
 
-        auto const albedoTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::BaseColor2);
-        auto const normalTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::NormalMap2);
+        const auto albedoTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::BaseColor2);
+        const auto normalTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::NormalMap2);
 
         //--- NormalMap --------------------------------------------------------------------
         m_normalMapEffect->SetWorld(world * XMMatrixTranslation(col0, row0, 0));
@@ -487,7 +487,7 @@ void Game::Render()
 
         //--- PBREffect (basic) ------------------------------------------------------------
         {
-            auto const rmaTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::RMA1);
+            const auto rmaTex1 = m_resourceDescriptors->GetGpuHandle(Descriptors::RMA1);
 
             m_pbr->SetAlpha(1.f);
             m_pbr->SetWorld(world * XMMatrixTranslation(col1, row0, 0));
@@ -512,8 +512,8 @@ void Game::Render()
         commandList->IASetIndexBuffer(&m_indexBufferView);
 
         {
-            auto const rmaTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::RMA2);
-            auto const emissiveTex = m_resourceDescriptors->GetGpuHandle(Descriptors::EmissiveTexture2);
+            const auto rmaTex2 = m_resourceDescriptors->GetGpuHandle(Descriptors::RMA2);
+            const auto emissiveTex = m_resourceDescriptors->GetGpuHandle(Descriptors::EmissiveTexture2);
 
             m_pbrEmissive->SetAlpha(1.f);
             m_pbrEmissive->SetWorld(world * XMMatrixTranslation(col4, row0, 0));
@@ -686,7 +686,7 @@ void Game::Render()
 
     m_toneMap->Process(commandList);
 #else
-    auto const rtvDescriptor = m_deviceResources->GetRenderTargetView();
+    const auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, nullptr);
 
     switch (m_deviceResources->GetColorSpace())
@@ -725,16 +725,16 @@ void Game::Clear()
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Clear");
 
     // Clear the views.
-    auto const rtvDescriptor = m_renderDescriptors->GetCpuHandle(RTDescriptors::HDRScene);
-    auto const dsvDescriptor = m_deviceResources->GetDepthStencilView();
+    const auto rtvDescriptor = m_renderDescriptors->GetCpuHandle(RTDescriptors::HDRScene);
+    const auto dsvDescriptor = m_deviceResources->GetDepthStencilView();
 
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, &dsvDescriptor);
     commandList->ClearRenderTargetView(rtvDescriptor, c_clearColor, 0, nullptr);
     commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
     // Set the viewport and scissor rect.
-    auto const viewport = m_deviceResources->GetScreenViewport();
-    auto const scissorRect = m_deviceResources->GetScissorRect();
+    const auto viewport = m_deviceResources->GetScreenViewport();
+    const auto scissorRect = m_deviceResources->GetScissorRect();
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissorRect);
 
@@ -767,7 +767,7 @@ void Game::OnResuming()
 #ifdef PC
 void Game::OnWindowMoved()
 {
-    auto const r = m_deviceResources->GetOutputSize();
+    const auto r = m_deviceResources->GetOutputSize();
     m_deviceResources->WindowSizeChanged(r.right, r.bottom);
 }
 #endif
@@ -1067,7 +1067,7 @@ void Game::CreateWindowSizeDependentResources()
 {
     static const XMVECTORF32 cameraPosition = { { { 0.f, 0.f, 6.f, 0.f } } };
 
-    auto const size = m_deviceResources->GetOutputSize();
+    const auto size = m_deviceResources->GetOutputSize();
     const float aspect = (float)size.right / (float)size.bottom;
 
 #ifdef LH_COORDS

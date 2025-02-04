@@ -643,16 +643,16 @@ void Game::Clear()
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Clear");
 
     // Clear the views.
-    auto const rtvDescriptor = m_deviceResources->GetRenderTargetView();
-    auto const dsvDescriptor = m_deviceResources->GetDepthStencilView();
+    const auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
+    const auto dsvDescriptor = m_deviceResources->GetDepthStencilView();
 
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, &dsvDescriptor);
     commandList->ClearRenderTargetView(rtvDescriptor, c_clearColor, 0, nullptr);
     commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
     // Set the viewport and scissor rect.
-    auto const viewport = m_deviceResources->GetScreenViewport();
-    auto const scissorRect = m_deviceResources->GetScissorRect();
+    const auto viewport = m_deviceResources->GetScreenViewport();
+    const auto scissorRect = m_deviceResources->GetScissorRect();
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissorRect);
 
@@ -683,7 +683,7 @@ void Game::OnResuming()
 #ifdef PC
 void Game::OnWindowMoved()
 {
-    auto const r = m_deviceResources->GetOutputSize();
+    const auto r = m_deviceResources->GetOutputSize();
     m_deviceResources->WindowSizeChanged(r.right, r.bottom);
 }
 #endif
@@ -795,12 +795,12 @@ void Game::CreateDeviceDependentResources()
 // Allocate all memory resources that change on a window SizeChanged event.
 void Game::CreateWindowSizeDependentResources()
 {
-    auto const size = m_deviceResources->GetOutputSize();
-    auto const proj = Matrix::CreatePerspectiveFieldOfView(XMConvertToRadians(70.f), float(size.right) / float(size.bottom), 0.01f, 100.f);
+    const auto size = m_deviceResources->GetOutputSize();
+    const auto proj = Matrix::CreatePerspectiveFieldOfView(XMConvertToRadians(70.f), float(size.right) / float(size.bottom), 0.01f, 100.f);
 
     m_roomEffect->SetProjection(proj);
 
-    auto const viewPort = m_deviceResources->GetScreenViewport();
+    const auto viewPort = m_deviceResources->GetScreenViewport();
     m_spriteBatch->SetViewport(viewPort);
 
 #ifdef COMBO_GDK

@@ -498,7 +498,7 @@ void Game::Render()
     auto commandList = m_deviceResources->GetCommandList();
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Render");
 
-    auto const heap = m_resourceDescriptors->Heap();
+    const auto heap = m_resourceDescriptors->Heap();
     commandList->SetDescriptorHeaps(1, &heap);
 
     m_spriteBatch->Begin(commandList);
@@ -583,7 +583,7 @@ void Game::Render()
     rc.bottom = 525;
     rc.right = rc.left + int(((m_state.thumbSticks.leftX + 1.f) / 2.f) * 275);
 
-    auto const texSize = XMUINT2(1, 1);
+    const auto texSize = XMUINT2(1, 1);
     m_spriteBatch->Draw(m_resourceDescriptors->GetGpuHandle(Descriptors::DefaultTex), texSize, rc, &src);
 
     rc.top = 550;
@@ -629,14 +629,14 @@ void Game::Clear()
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Clear");
 
     // Clear the views.
-    auto const rtvDescriptor = m_deviceResources->GetRenderTargetView();
+    const auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
 
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, nullptr);
     commandList->ClearRenderTargetView(rtvDescriptor, c_clearColor, 0, nullptr);
 
     // Set the viewport and scissor rect.
-    auto const viewport = m_deviceResources->GetScreenViewport();
-    auto const scissorRect = m_deviceResources->GetScissorRect();
+    const auto viewport = m_deviceResources->GetScreenViewport();
+    const auto scissorRect = m_deviceResources->GetScissorRect();
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissorRect);
 
@@ -667,7 +667,7 @@ void Game::OnResuming()
 #ifdef PC
 void Game::OnWindowMoved()
 {
-    auto const r = m_deviceResources->GetOutputSize();
+    const auto r = m_deviceResources->GetOutputSize();
     m_deviceResources->WindowSizeChanged(r.right, r.bottom);
 }
 #endif
@@ -746,7 +746,7 @@ void Game::CreateDeviceDependentResources()
         m_resourceDescriptors->GetGpuHandle(Descriptors::ControllerFont));
 
     {
-        auto const desc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, 1, 1, 1, 1);
+        const auto desc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, 1, 1, 1, 1);
 
         const CD3DX12_HEAP_PROPERTIES defaultHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
 
@@ -788,7 +788,7 @@ void Game::CreateDeviceDependentResources()
 // Allocate all memory resources that change on a window SizeChanged event.
 void Game::CreateWindowSizeDependentResources()
 {
-    auto const viewPort = m_deviceResources->GetScreenViewport();
+    const auto viewPort = m_deviceResources->GetScreenViewport();
     m_spriteBatch->SetViewport(viewPort);
 
 #ifdef XBOX

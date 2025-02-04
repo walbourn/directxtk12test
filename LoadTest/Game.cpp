@@ -501,16 +501,16 @@ void Game::Clear()
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Clear");
 
     // Clear the views.
-    auto const rtvDescriptor = m_deviceResources->GetRenderTargetView();
-    auto const dsvDescriptor = m_deviceResources->GetDepthStencilView();
+    const auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
+    const auto dsvDescriptor = m_deviceResources->GetDepthStencilView();
 
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, &dsvDescriptor);
     commandList->ClearRenderTargetView(rtvDescriptor, c_clearColor, 0, nullptr);
     commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
     // Set the viewport and scissor rect.
-    auto const viewport = m_deviceResources->GetScreenViewport();
-    auto const scissorRect = m_deviceResources->GetScissorRect();
+    const auto viewport = m_deviceResources->GetScreenViewport();
+    const auto scissorRect = m_deviceResources->GetScissorRect();
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissorRect);
 
@@ -535,7 +535,7 @@ void Game::OnResuming()
 #ifdef PC
 void Game::OnWindowMoved()
 {
-    auto const r = m_deviceResources->GetOutputSize();
+    const auto r = m_deviceResources->GetOutputSize();
     m_deviceResources->WindowSizeChanged(r.right, r.bottom);
 }
 #endif
@@ -647,7 +647,7 @@ void Game::CreateDeviceDependentResources()
             D3D12_RESOURCE_DESC desc;
             std::ignore = m_earth->GetDesc(&desc);
         #else
-            auto const desc = m_earth->GetDesc();
+            const auto desc = m_earth->GetDesc();
         #endif
             if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
                 || desc.Format != DXGI_FORMAT_R10G10B10A2_UNORM
@@ -672,7 +672,7 @@ void Game::CreateDeviceDependentResources()
             D3D12_RESOURCE_DESC desc;
             std::ignore = m_earth2->GetDesc(&desc);
         #else
-            auto const desc = m_earth2->GetDesc();
+            const auto desc = m_earth2->GetDesc();
         #endif
             if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
                 || desc.Format != DXGI_FORMAT_R10G10B10A2_UNORM
@@ -704,7 +704,7 @@ void Game::CreateDeviceDependentResources()
             D3D12_RESOURCE_DESC desc;
             std::ignore = m_dxlogo->GetDesc(&desc);
         #else
-            auto const desc = m_dxlogo->GetDesc();
+            const auto desc = m_dxlogo->GetDesc();
         #endif
             if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
                 || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM
@@ -734,7 +734,7 @@ void Game::CreateDeviceDependentResources()
             D3D12_RESOURCE_DESC desc;
             std::ignore = m_dxlogo2->GetDesc(&desc);
         #else
-            auto const desc = m_dxlogo2->GetDesc();
+            const auto desc = m_dxlogo2->GetDesc();
         #endif
             if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
                 || desc.Format != DXGI_FORMAT_BC1_UNORM_SRGB
@@ -757,7 +757,7 @@ void Game::CreateDeviceDependentResources()
             D3D12_RESOURCE_DESC desc;
             std::ignore = m_win95->GetDesc(&desc);
         #else
-            auto const desc = m_win95->GetDesc();
+            const auto desc = m_win95->GetDesc();
         #endif
             if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
                 || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
@@ -788,7 +788,7 @@ void Game::CreateDeviceDependentResources()
             D3D12_RESOURCE_DESC desc;
             std::ignore = m_win95_2->GetDesc(&desc);
         #else
-            auto const desc = m_win95_2->GetDesc();
+            const auto desc = m_win95_2->GetDesc();
         #endif
             if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
                 || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
@@ -846,7 +846,7 @@ void Game::CreateDeviceDependentResources()
             D3D12_RESOURCE_DESC desc;
             std::ignore = m_earth->GetDesc(&desc);
         #else
-            auto const desc = m_earth->GetDesc();
+            const auto desc = m_earth->GetDesc();
         #endif
             if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
                 || desc.Format != DXGI_FORMAT_R10G10B10A2_UNORM
@@ -868,7 +868,7 @@ void Game::CreateDeviceDependentResources()
             D3D12_RESOURCE_DESC desc;
             std::ignore = m_copyTest->GetDesc(&desc);
         #else
-            auto const desc = m_copyTest->GetDesc();
+            const auto desc = m_copyTest->GetDesc();
         #endif
             if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
                 || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
@@ -911,7 +911,7 @@ void Game::CreateDeviceDependentResources()
             D3D12_RESOURCE_DESC desc;
             std::ignore = m_earth2->GetDesc(&desc);
         #else
-            auto const desc = m_earth2->GetDesc();
+            const auto desc = m_earth2->GetDesc();
         #endif
             if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
                 || desc.Format != DXGI_FORMAT_R10G10B10A2_UNORM
@@ -941,7 +941,7 @@ void Game::CreateDeviceDependentResources()
             D3D12_RESOURCE_DESC desc;
             std::ignore = m_computeTest->GetDesc(&desc);
         #else
-            auto const desc = m_computeTest->GetDesc();
+            const auto desc = m_computeTest->GetDesc();
         #endif
             if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
                 || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
@@ -979,7 +979,7 @@ void Game::CreateWindowSizeDependentResources()
     static const XMVECTORF32 At = { { { 0.0f, 1.0f, 0.0f, 0.0f } } };
     static const XMVECTORF32 Up = { { { 0.0f, 1.0f, 0.0f, 0.0f } } };
 
-    auto const size = m_deviceResources->GetOutputSize();
+    const auto size = m_deviceResources->GetOutputSize();
     const float aspect = (float)size.right / (float)size.bottom;
 
 #ifdef LH_COORDS
@@ -1105,7 +1105,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_testA->GetDesc(&desc);
     #else
-        auto const desc = m_testA->GetDesc();
+        const auto desc = m_testA->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE1D
             || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM
@@ -1180,7 +1180,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_testD->GetDesc(&desc);
     #else
-        auto const desc = m_testD->GetDesc();
+        const auto desc = m_testD->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
@@ -1257,7 +1257,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test1->GetDesc(&desc);
     #else
-        auto const desc = m_test1->GetDesc();
+        const auto desc = m_test1->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM
@@ -1278,7 +1278,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test2->GetDesc(&desc);
     #else
-        auto const desc = m_test2->GetDesc();
+        const auto desc = m_test2->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_BC1_UNORM
@@ -1299,7 +1299,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test3->GetDesc(&desc);
     #else
-        auto const desc = m_test3->GetDesc();
+        const auto desc = m_test3->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
@@ -1327,7 +1327,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test4->GetDesc(&desc);
     #else
-        auto const desc = m_test4->GetDesc();
+        const auto desc = m_test4->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM
@@ -1348,7 +1348,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test5->GetDesc(&desc);
     #else
-        auto const desc = m_test5->GetDesc();
+        const auto desc = m_test5->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE1D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
@@ -1368,7 +1368,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test6->GetDesc(&desc);
     #else
-        auto const desc = m_test6->GetDesc();
+        const auto desc = m_test6->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE1D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
@@ -1389,7 +1389,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test7->GetDesc(&desc);
     #else
-        auto const desc = m_test7->GetDesc();
+        const auto desc = m_test7->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
@@ -1411,7 +1411,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test8->GetDesc(&desc);
     #else
-        auto const desc = m_test8->GetDesc();
+        const auto desc = m_test8->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE3D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
@@ -1433,7 +1433,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test40->GetDesc(&desc);
     #else
-        auto const desc = m_test40->GetDesc();
+        const auto desc = m_test40->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_BC1_UNORM
@@ -1454,7 +1454,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test41->GetDesc(&desc);
     #else
-        auto const desc = m_test41->GetDesc();
+        const auto desc = m_test41->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_BC1_UNORM
@@ -1480,7 +1480,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test42->GetDesc(&desc);
     #else
-        auto const desc = m_test42->GetDesc();
+        const auto desc = m_test42->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_BC1_UNORM
@@ -1505,7 +1505,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test36->GetDesc(&desc);
     #else
-        auto const desc = m_test36->GetDesc();
+        const auto desc = m_test36->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE1D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
@@ -1524,7 +1524,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test9->GetDesc(&desc);
     #else
-        auto const desc = m_test9->GetDesc();
+        const auto desc = m_test9->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
@@ -1544,7 +1544,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test10->GetDesc(&desc);
     #else
-        auto const desc = m_test10->GetDesc();
+        const auto desc = m_test10->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
@@ -1573,7 +1573,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test11->GetDesc(&desc);
     #else
-        auto const desc = m_test11->GetDesc();
+        const auto desc = m_test11->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
@@ -1594,7 +1594,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test12->GetDesc(&desc);
     #else
-        auto const desc = m_test12->GetDesc();
+        const auto desc = m_test12->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
@@ -1624,7 +1624,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test13->GetDesc(&desc);
     #else
-        auto const desc = m_test13->GetDesc();
+        const auto desc = m_test13->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_NV12
@@ -1646,7 +1646,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test14->GetDesc(&desc);
     #else
-        auto const desc = m_test14->GetDesc();
+        const auto desc = m_test14->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
@@ -1666,7 +1666,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test15->GetDesc(&desc);
     #else
-        auto const desc = m_test15->GetDesc();
+        const auto desc = m_test15->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
@@ -1694,7 +1694,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test16->GetDesc(&desc);
     #else
-        auto const desc = m_test16->GetDesc();
+        const auto desc = m_test16->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
@@ -1714,7 +1714,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test17->GetDesc(&desc);
     #else
-        auto const desc = m_test17->GetDesc();
+        const auto desc = m_test17->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
@@ -1743,7 +1743,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test18->GetDesc(&desc);
     #else
-        auto const desc = m_test18->GetDesc();
+        const auto desc = m_test18->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM_SRGB
@@ -1764,7 +1764,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test19->GetDesc(&desc);
     #else
-        auto const desc = m_test19->GetDesc();
+        const auto desc = m_test19->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM_SRGB
@@ -1785,7 +1785,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test20->GetDesc(&desc);
     #else
-        auto const desc = m_test20->GetDesc();
+        const auto desc = m_test20->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
@@ -1805,7 +1805,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test21->GetDesc(&desc);
     #else
-        auto const desc = m_test21->GetDesc();
+        const auto desc = m_test21->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_BC1_UNORM
@@ -1825,7 +1825,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test22->GetDesc(&desc);
     #else
-        auto const desc = m_test22->GetDesc();
+        const auto desc = m_test22->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_B5G5R5A1_UNORM
@@ -1856,7 +1856,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test23->GetDesc(&desc);
     #else
-        auto const desc = m_test23->GetDesc();
+        const auto desc = m_test23->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R10G10B10A2_UNORM
@@ -1877,7 +1877,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test24->GetDesc(&desc);
     #else
-        auto const desc = m_test24->GetDesc();
+        const auto desc = m_test24->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R32_FLOAT
@@ -1901,7 +1901,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             D3D12_RESOURCE_DESC desc;
             std::ignore = m_test25->GetDesc(&desc);
         #else
-            auto const desc = m_test25->GetDesc();
+            const auto desc = m_test25->GetDesc();
         #endif
             if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
                 || desc.Format != DXGI_FORMAT_BC1_UNORM
@@ -1925,7 +1925,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             D3D12_RESOURCE_DESC desc;
             std::ignore = m_test26->GetDesc(&desc);
         #else
-            auto const desc = m_test26->GetDesc();
+            const auto desc = m_test26->GetDesc();
         #endif
             if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
                 || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
@@ -1993,7 +1993,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test29->GetDesc(&desc);
     #else
-        auto const desc = m_test29->GetDesc();
+        const auto desc = m_test29->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
@@ -2018,7 +2018,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test30->GetDesc(&desc);
     #else
-        auto const desc = m_test30->GetDesc();
+        const auto desc = m_test30->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
@@ -2043,7 +2043,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test31->GetDesc(&desc);
     #else
-        auto const desc = m_test31->GetDesc();
+        const auto desc = m_test31->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
@@ -2068,7 +2068,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test32->GetDesc(&desc);
     #else
-        auto const desc = m_test32->GetDesc();
+        const auto desc = m_test32->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
@@ -2158,7 +2158,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test37->GetDesc(&desc);
     #else
-        auto const desc = m_test37->GetDesc();
+        const auto desc = m_test37->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
@@ -2184,7 +2184,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test38->GetDesc(&desc);
     #else
-        auto const desc = m_test38->GetDesc();
+        const auto desc = m_test38->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM
@@ -2212,7 +2212,7 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         D3D12_RESOURCE_DESC desc;
         std::ignore = m_test39->GetDesc(&desc);
     #else
-        auto const desc = m_test39->GetDesc();
+        const auto desc = m_test39->GetDesc();
     #endif
         if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
             || desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM

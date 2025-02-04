@@ -248,18 +248,18 @@ void Game::Clear()
         PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Clear");
 
         // Clear the views.
-        auto const rtvDescriptor = m_deviceResources->GetRenderTargetView(adapterIdx);
-        auto const dsvDescriptor = m_deviceResources->GetDepthStencilView(adapterIdx);
+        const auto rtvDescriptor = m_deviceResources->GetRenderTargetView(adapterIdx);
+        const auto dsvDescriptor = m_deviceResources->GetDepthStencilView(adapterIdx);
 
         commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, &dsvDescriptor);
         commandList->ClearRenderTargetView(rtvDescriptor, c_clearColor, 0, nullptr);
         commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
         // Set the viewport and scissor rect.
-        auto const viewport = m_deviceResources->GetScreenViewport();
+        const auto viewport = m_deviceResources->GetScreenViewport();
         commandList->RSSetViewports(1, &viewport);
 
-        auto const scissorRect = m_deviceResources->GetScissorRect();
+        const auto scissorRect = m_deviceResources->GetScissorRect();
         commandList->RSSetScissorRects(1, &scissorRect);
 
         PIXEndEvent(commandList);
@@ -277,7 +277,7 @@ void Game::OnResuming()
 #if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) 
 void Game::OnWindowMoved()
 {
-    auto const r = m_deviceResources->GetOutputSize();
+    const auto r = m_deviceResources->GetOutputSize();
     m_deviceResources->WindowSizeChanged(r.right, r.bottom);
 }
 #endif

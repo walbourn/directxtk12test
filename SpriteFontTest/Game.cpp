@@ -429,14 +429,14 @@ void Game::Clear()
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Clear");
 
     // Clear the views.
-    auto const rtvDescriptor = m_deviceResources->GetRenderTargetView();
+    const auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
 
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, nullptr);
     commandList->ClearRenderTargetView(rtvDescriptor, c_clearColor, 0, nullptr);
 
     // Set the viewport and scissor rect.
-    auto const viewport = m_deviceResources->GetScreenViewport();
-    auto const scissorRect = m_deviceResources->GetScissorRect();
+    const auto viewport = m_deviceResources->GetScreenViewport();
+    const auto scissorRect = m_deviceResources->GetScissorRect();
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissorRect);
 
@@ -469,7 +469,7 @@ void Game::OnResuming()
 #ifdef PC
 void Game::OnWindowMoved()
 {
-    auto const r = m_deviceResources->GetOutputSize();
+    const auto r = m_deviceResources->GetOutputSize();
     m_deviceResources->WindowSizeChanged(r.right, r.bottom);
 }
 #endif
@@ -576,7 +576,7 @@ void Game::CreateDeviceDependentResources()
 // Allocate all memory resources that change on a window SizeChanged event.
 void Game::CreateWindowSizeDependentResources()
 {
-    auto const viewport = m_deviceResources->GetScreenViewport();
+    const auto viewport = m_deviceResources->GetScreenViewport();
     m_spriteBatch->SetViewport(viewport);
 
 #ifdef XBOX
@@ -664,7 +664,7 @@ void Game::UnitTests()
             success = false;
         }
 
-        auto const spriteSheet = m_comicFont->GetSpriteSheet();
+        const auto spriteSheet = m_comicFont->GetSpriteSheet();
 
         if (!spriteSheet.ptr)
         {
@@ -709,7 +709,7 @@ void Game::UnitTests()
 
     // Measure tests
     {
-        auto const spinText = L"Spinning\nlike a cat";
+        const auto spinText = L"Spinning\nlike a cat";
 
         auto drawSize = m_comicFont->MeasureString(spinText);
 

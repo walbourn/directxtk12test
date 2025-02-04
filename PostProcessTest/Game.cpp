@@ -249,7 +249,7 @@ void Game::Render()
     m_shape->Draw(commandList);
 
     {
-        auto const barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_sceneTex.Get(),
+        const auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_sceneTex.Get(),
             D3D12_RESOURCE_STATE_RENDER_TARGET,
             D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0);
         commandList->ResourceBarrier(1, &barrier);
@@ -355,7 +355,7 @@ void Game::Render()
             pp->Process(commandList);
 
             {
-                auto const barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                const auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
                     D3D12_RESOURCE_STATE_RENDER_TARGET,
                     D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0);
                 commandList->ResourceBarrier(1, &barrier);
@@ -372,7 +372,7 @@ void Game::Render()
             pp->Process(commandList);
 
             {
-                auto const barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                const auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
                     D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
                     D3D12_RESOURCE_STATE_RENDER_TARGET, 0);
                 commandList->ResourceBarrier(1, &barrier);
@@ -389,13 +389,13 @@ void Game::Render()
             pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex), m_sceneTex.Get());
             pp->SetBloomExtractParameter(0.25f);
 
-            auto const blurRT1 = m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur1RT);
+            const auto blurRT1 = m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur1RT);
             commandList->OMSetRenderTargets(1, &blurRT1, FALSE, nullptr);
 
             pp->Process(commandList);
 
             {
-                auto const barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                const auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
                     D3D12_RESOURCE_STATE_RENDER_TARGET,
                     D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0);
                 commandList->ResourceBarrier(1, &barrier);
@@ -406,13 +406,13 @@ void Game::Render()
             pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Blur1Tex), m_blur1Tex.Get());
             pp->SetBloomBlurParameters(false, 4.f, 1.f);
 
-            auto const rtvDescriptor = m_deviceResources->GetRenderTargetView();
+            const auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
             commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, nullptr);
 
             pp->Process(commandList);
 
             {
-                auto const barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                const auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
                     D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
                     D3D12_RESOURCE_STATE_RENDER_TARGET, 0);
                 commandList->ResourceBarrier(1, &barrier);
@@ -429,13 +429,13 @@ void Game::Render()
             pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex), m_sceneTex.Get());
             pp->SetBloomExtractParameter(0.25f);
 
-            auto const blurRT1 = m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur1RT);
+            const auto blurRT1 = m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur1RT);
             commandList->OMSetRenderTargets(1, &blurRT1, FALSE, nullptr);
 
             pp->Process(commandList);
 
             {
-                auto const barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                const auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
                     D3D12_RESOURCE_STATE_RENDER_TARGET,
                     D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0);
                 commandList->ResourceBarrier(1, &barrier);
@@ -446,13 +446,13 @@ void Game::Render()
             pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Blur1Tex), m_blur1Tex.Get());
             pp->SetBloomBlurParameters(true, 4.f, 1.f);
 
-            auto const blurRT2 = m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur2RT);
+            const auto blurRT2 = m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur2RT);
             commandList->OMSetRenderTargets(1, &blurRT2, FALSE, nullptr);
 
             pp->Process(commandList);
 
             {
-                auto const barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur2Tex.Get(),
+                const auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur2Tex.Get(),
                     D3D12_RESOURCE_STATE_RENDER_TARGET,
                     D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0);
                 commandList->ResourceBarrier(1, &barrier);
@@ -462,7 +462,7 @@ void Game::Render()
             pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Blur2Tex), m_blur2Tex.Get());
             pp->SetBloomBlurParameters(false, 4.f, 1.f);
 
-            auto const rtvDescriptor = m_deviceResources->GetRenderTargetView();
+            const auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
             commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, nullptr);
 
             pp->Process(commandList);
@@ -491,13 +491,13 @@ void Game::Render()
             pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex), m_sceneTex.Get());
             pp->SetBloomExtractParameter(0.25f);
 
-            auto const blurRT1 = m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur1RT);
+            const auto blurRT1 = m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur1RT);
             commandList->OMSetRenderTargets(1, &blurRT1, FALSE, nullptr);
 
             pp->Process(commandList);
 
             {
-                auto const barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                const auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
                     D3D12_RESOURCE_STATE_RENDER_TARGET,
                     D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0);
                 commandList->ResourceBarrier(1, &barrier);
@@ -508,7 +508,7 @@ void Game::Render()
             pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Blur1Tex), m_blur1Tex.Get());
             pp->SetBloomBlurParameters(true, 4.f, 1.f);
 
-            auto const blurRT2 = m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur2RT);
+            const auto blurRT2 = m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur2RT);
             commandList->OMSetRenderTargets(1, &blurRT2, FALSE, nullptr);
 
             pp->Process(commandList);
@@ -535,7 +535,7 @@ void Game::Render()
             pp->Process(commandList);
 
             {
-                auto const barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                const auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
                     D3D12_RESOURCE_STATE_RENDER_TARGET,
                     D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0);
                 commandList->ResourceBarrier(1, &barrier);
@@ -547,7 +547,7 @@ void Game::Render()
             dp->SetSourceTexture2(m_resourceDescriptors->GetGpuHandle(Descriptors::Blur1Tex));
             dp->SetBloomCombineParameters(1.25f, 1.f, 1.f, 1.f);
 
-            auto const rtvDescriptor = m_deviceResources->GetRenderTargetView();
+            const auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
             commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, nullptr);
 
             dp->Process(commandList);
@@ -576,13 +576,13 @@ void Game::Render()
             pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::SceneTex), m_sceneTex.Get());
             pp->SetBloomExtractParameter(0.25f);
 
-            auto const blurRT1 = m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur1RT);
+            const auto blurRT1 = m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur1RT);
             commandList->OMSetRenderTargets(1, &blurRT1, FALSE, nullptr);
 
             pp->Process(commandList);
 
             {
-                auto const barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                const auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
                     D3D12_RESOURCE_STATE_RENDER_TARGET,
                     D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0);
                 commandList->ResourceBarrier(1, &barrier);
@@ -593,7 +593,7 @@ void Game::Render()
             pp->SetSourceTexture(m_resourceDescriptors->GetGpuHandle(Descriptors::Blur1Tex), m_blur1Tex.Get());
             pp->SetBloomBlurParameters(true, 4.f, 1.f);
 
-            auto const blurRT2 = m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur2RT);
+            const auto blurRT2 = m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur2RT);
             commandList->OMSetRenderTargets(1, &blurRT2, FALSE, nullptr);
 
             pp->Process(commandList);
@@ -620,7 +620,7 @@ void Game::Render()
             pp->Process(commandList);
 
             {
-                auto const barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
+                const auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_blur1Tex.Get(),
                     D3D12_RESOURCE_STATE_RENDER_TARGET,
                     D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0);
                 commandList->ResourceBarrier(1, &barrier);
@@ -632,7 +632,7 @@ void Game::Render()
             dp->SetSourceTexture2(m_resourceDescriptors->GetGpuHandle(Descriptors::Blur1Tex));
             dp->SetBloomCombineParameters(2.f, 1.f, 2.f, 0.f);
 
-            auto const rtvDescriptor = m_deviceResources->GetRenderTargetView();
+            const auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
             commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, nullptr);
 
             dp->Process(commandList);
@@ -794,7 +794,7 @@ void Game::Render()
     }
 
     // Draw UI.
-    auto const safeRect = Viewport::ComputeTitleSafeArea(UINT(size.right), UINT(size.bottom));
+    const auto safeRect = Viewport::ComputeTitleSafeArea(UINT(size.right), UINT(size.bottom));
 
     m_spriteBatchUI->Begin(commandList);
     m_font->DrawString(m_spriteBatchUI.get(), descstr, XMFLOAT2(float(safeRect.left), float(safeRect.bottom - m_font->GetLineSpacing())));
@@ -804,7 +804,7 @@ void Game::Render()
 
     // Set scene texture for next frame
     {
-        auto const barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_sceneTex.Get(),
+        const auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_sceneTex.Get(),
             D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
             D3D12_RESOURCE_STATE_RENDER_TARGET, 0);
         commandList->ResourceBarrier(1, &barrier);
@@ -828,16 +828,16 @@ void Game::Clear()
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Clear");
 
     // Clear the views.
-    auto const rtvDescriptor = m_rtvDescriptors->GetCpuHandle(RTDescriptors::SceneRT);
-    auto const dsvDescriptor = m_deviceResources->GetDepthStencilView();
+    const auto rtvDescriptor = m_rtvDescriptors->GetCpuHandle(RTDescriptors::SceneRT);
+    const auto dsvDescriptor = m_deviceResources->GetDepthStencilView();
 
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, &dsvDescriptor);
     commandList->ClearRenderTargetView(rtvDescriptor, Colors::CornflowerBlue, 0, nullptr);
     commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
     // Set the viewport and scissor rect.
-    auto const viewport = m_deviceResources->GetScreenViewport();
-    auto const scissorRect = m_deviceResources->GetScissorRect();
+    const auto viewport = m_deviceResources->GetScreenViewport();
+    const auto scissorRect = m_deviceResources->GetScissorRect();
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissorRect);
 
@@ -873,7 +873,7 @@ void Game::OnResuming()
 #ifdef PC
 void Game::OnWindowMoved()
 {
-    auto const r = m_deviceResources->GetOutputSize();
+    const auto r = m_deviceResources->GetOutputSize();
     m_deviceResources->WindowSizeChanged(r.right, r.bottom);
 }
 #endif
@@ -1046,7 +1046,7 @@ void Game::CreateWindowSizeDependentResources()
     // Create scene render target
     auto device = m_deviceResources->GetD3DDevice();
 
-    auto const heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+    const auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
     {
         D3D12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(c_hdrFormat,

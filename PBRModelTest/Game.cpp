@@ -323,16 +323,16 @@ void Game::Render()
     commandList->SetDescriptorHeaps(static_cast<UINT>(std::size(heaps)), heaps);
 
     //--- Set PBR lighting sources ---
-    auto const radianceTex = m_resourceDescriptors->GetGpuHandle(Descriptors::RadianceIBL1 + size_t(m_ibl));
+    const auto radianceTex = m_resourceDescriptors->GetGpuHandle(Descriptors::RadianceIBL1 + size_t(m_ibl));
 
 #ifdef __MINGW32__
     D3D12_RESOURCE_DESC diffuseDesc;
     std::ignore = m_radianceIBL[0]->GetDesc(&diffuseDesc);
 #else
-    auto const diffuseDesc = m_radianceIBL[0]->GetDesc();
+    const auto diffuseDesc = m_radianceIBL[0]->GetDesc();
 #endif
 
-    auto const irradianceTex = m_resourceDescriptors->GetGpuHandle(Descriptors::IrradianceIBL1 + size_t(m_ibl));
+    const auto irradianceTex = m_resourceDescriptors->GetGpuHandle(Descriptors::IrradianceIBL1 + size_t(m_ibl));
 
     for (auto& it : m_cubeNormal)
     {
@@ -470,8 +470,8 @@ void Game::Render()
     }
 
     //--- Draw with skinning ---
-    auto const nbones = static_cast<uint32_t>(m_teapot->bones.size());
-    auto const bones = ModelBone::MakeArray(nbones);
+    const auto nbones = static_cast<uint32_t>(m_teapot->bones.size());
+    const auto bones = ModelBone::MakeArray(nbones);
     m_teapotAnim.Apply(*m_teapot, m_teapot->bones.size(), bones.get());
 
     local = XMMatrixMultiply(XMMatrixScaling(0.02f, 0.02f, 0.02f), XMMatrixTranslation(4.f, row1, 0.f));
@@ -492,7 +492,7 @@ void Game::Render()
 
     m_toneMap->Process(commandList);
 #else
-    auto const rtvDescriptor = m_deviceResources->GetRenderTargetView();
+    const auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, nullptr);
 
     switch (m_deviceResources->GetColorSpace())
@@ -531,8 +531,8 @@ void Game::Clear()
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Clear");
 
     // Clear the views.
-    auto const rtvDescriptor = m_renderDescriptors->GetCpuHandle(RTDescriptors::HDRScene);
-    auto const dsvDescriptor = m_deviceResources->GetDepthStencilView();
+    const auto rtvDescriptor = m_renderDescriptors->GetCpuHandle(RTDescriptors::HDRScene);
+    const auto dsvDescriptor = m_deviceResources->GetDepthStencilView();
 
 #ifdef REVERSEZ
     constexpr float c_zclear = 0.f;
@@ -545,8 +545,8 @@ void Game::Clear()
     commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, c_zclear, 0, 0, nullptr);
 
     // Set the viewport and scissor rect.
-    auto const viewport = m_deviceResources->GetScreenViewport();
-    auto const scissorRect = m_deviceResources->GetScissorRect();
+    const auto viewport = m_deviceResources->GetScreenViewport();
+    const auto scissorRect = m_deviceResources->GetScissorRect();
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissorRect);
 
@@ -579,7 +579,7 @@ void Game::OnResuming()
 #ifdef PC
 void Game::OnWindowMoved()
 {
-    auto const r = m_deviceResources->GetOutputSize();
+    const auto r = m_deviceResources->GetOutputSize();
     m_deviceResources->WindowSizeChanged(r.right, r.bottom);
 }
 #endif
@@ -875,7 +875,7 @@ void Game::CreateWindowSizeDependentResources()
 {
     static const XMVECTORF32 cameraPosition = { { { 0.f, 0.f, 6.f, 0.f } } };
 
-    auto const size = m_deviceResources->GetOutputSize();
+    const auto size = m_deviceResources->GetOutputSize();
     const float aspect = (float)size.right / (float)size.bottom;
 
 #ifdef REVERSEZ

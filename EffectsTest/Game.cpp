@@ -747,16 +747,16 @@ void Game::Clear()
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Clear");
 
     // Clear the views.
-    auto const rtvDescriptor = m_deviceResources->GetRenderTargetView();
-    auto const dsvDescriptor = m_deviceResources->GetDepthStencilView();
+    const auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
+    const auto dsvDescriptor = m_deviceResources->GetDepthStencilView();
 
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, &dsvDescriptor);
     commandList->ClearRenderTargetView(rtvDescriptor, c_clearColor, 0, nullptr);
     commandList->ClearDepthStencilView(dsvDescriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
     // Set the viewport and scissor rect.
-    auto const viewport = m_deviceResources->GetScreenViewport();
-    auto const scissorRect = m_deviceResources->GetScissorRect();
+    const auto viewport = m_deviceResources->GetScreenViewport();
+    const auto scissorRect = m_deviceResources->GetScissorRect();
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissorRect);
 
@@ -781,7 +781,7 @@ void Game::OnResuming()
 #ifdef PC
 void Game::OnWindowMoved()
 {
-    auto const r = m_deviceResources->GetOutputSize();
+    const auto r = m_deviceResources->GetOutputSize();
     m_deviceResources->WindowSizeChanged(r.right, r.bottom);
 }
 #endif
@@ -1119,9 +1119,9 @@ void Game::CreateDeviceDependentResources()
     uploadResourcesFinished.wait();
 
     // Set textures.
-    auto const opaqueCat = m_resourceDescriptors->GetGpuHandle(Descriptors::OpaqueCat);
+    const auto opaqueCat = m_resourceDescriptors->GetGpuHandle(Descriptors::OpaqueCat);
 
-    auto const sampler = m_states->LinearWrap();
+    const auto sampler = m_states->LinearWrap();
 
     m_skinnedEffect->SetTexture(opaqueCat, sampler);
     m_skinnedEffectFog->SetTexture(opaqueCat, sampler);
@@ -1129,9 +1129,9 @@ void Game::CreateDeviceDependentResources()
     m_skinnedEffectPPL->SetTexture(opaqueCat, sampler);
     m_skinnedEffectFogPPL->SetTexture(opaqueCat, sampler);
 
-    auto const cubemap = m_resourceDescriptors->GetGpuHandle(Descriptors::Cubemap);
+    const auto cubemap = m_resourceDescriptors->GetGpuHandle(Descriptors::Cubemap);
 
-    auto const ansitropic = m_states->AnisotropicWrap();
+    const auto ansitropic = m_states->AnisotropicWrap();
 
     m_envmap->SetTexture(opaqueCat, sampler);
     m_envmap->SetEnvironmentMap(cubemap, ansitropic);
@@ -1150,24 +1150,24 @@ void Game::CreateDeviceDependentResources()
     m_envmapNoFresnelPPL->SetTexture(opaqueCat, sampler);
     m_envmapNoFresnelPPL->SetEnvironmentMap(cubemap, ansitropic);
 
-    auto const defaultTex = m_resourceDescriptors->GetGpuHandle(Descriptors::DefaultTex);
+    const auto defaultTex = m_resourceDescriptors->GetGpuHandle(Descriptors::DefaultTex);
     m_spheremap->SetTexture(defaultTex, sampler);
     m_dparabolamap->SetTexture(defaultTex, sampler);
 
-    auto const spheremap = m_resourceDescriptors->GetGpuHandle(Descriptors::SphereMap);
+    const auto spheremap = m_resourceDescriptors->GetGpuHandle(Descriptors::SphereMap);
     m_spheremap->SetEnvironmentMap(spheremap, ansitropic);
 
-    auto const dualmap = m_resourceDescriptors->GetGpuHandle(Descriptors::DualParabolaMap);
+    const auto dualmap = m_resourceDescriptors->GetGpuHandle(Descriptors::DualParabolaMap);
     m_dparabolamap->SetEnvironmentMap(dualmap, ansitropic);
 
-    auto const overlay = m_resourceDescriptors->GetGpuHandle(Descriptors::Overlay);
+    const auto overlay = m_resourceDescriptors->GetGpuHandle(Descriptors::Overlay);
 
     m_dualTexture->SetTexture(opaqueCat, sampler);
     m_dualTexture->SetTexture2(overlay, sampler);
     m_dualTextureFog->SetTexture(opaqueCat, sampler);
     m_dualTextureFog->SetTexture2(overlay, sampler);
 
-    auto const cat = m_resourceDescriptors->GetGpuHandle(Descriptors::Cat);
+    const auto cat = m_resourceDescriptors->GetGpuHandle(Descriptors::Cat);
 
     m_alphaTest->SetTexture(cat, sampler);
     m_alphaTestFog->SetTexture(cat, sampler);
@@ -1205,7 +1205,7 @@ void Game::CreateWindowSizeDependentResources()
 {
     static const XMVECTORF32 cameraPosition = { { { 0.f, 0.f, 6.f, 0.f } } };
 
-    auto const size = m_deviceResources->GetOutputSize();
+    const auto size = m_deviceResources->GetOutputSize();
     const float aspect = (float)size.right / (float)size.bottom;
 
 #ifdef LH_COORDS

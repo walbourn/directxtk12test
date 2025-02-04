@@ -228,7 +228,7 @@ protected:
                 return;
             }
 
-            auto const cmdLine = launchArgs->Arguments->Data();
+            const auto cmdLine = launchArgs->Arguments->Data();
 
             if (wcsstr(cmdLine, L"-ctest") != nullptr)
             {

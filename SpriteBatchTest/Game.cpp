@@ -262,13 +262,13 @@ void Game::Render()
     m_spriteBatch->Draw(cat, catSize, XMFLOAT2(450, 10), nullptr, Colors::White, 0, XMFLOAT2(0, 0), 0.3f, SpriteEffects_FlipBoth);
 
     // Sorting.
-    auto const letterA = m_resourceDescriptors->GetGpuHandle(Descriptors::A);
+    const auto letterA = m_resourceDescriptors->GetGpuHandle(Descriptors::A);
     auto letterASize = GetTextureSize(m_letterA.Get());
 
-    auto const letterB = m_resourceDescriptors->GetGpuHandle(Descriptors::B);
+    const auto letterB = m_resourceDescriptors->GetGpuHandle(Descriptors::B);
     auto letterBSize = GetTextureSize(m_letterB.Get());
 
-    auto const letterC = m_resourceDescriptors->GetGpuHandle(Descriptors::C);
+    const auto letterC = m_resourceDescriptors->GetGpuHandle(Descriptors::C);
     auto letterCSize = GetTextureSize(m_letterC.Get());
 
     m_spriteBatch->Draw(letterA, letterASize, XMFLOAT2(10, 280), nullptr, Colors::White, 0, XMFLOAT2(0, 0), 1, SpriteEffects_None, 0.1f);
@@ -347,14 +347,14 @@ void Game::Clear()
     PIXBeginEvent(commandList, PIX_COLOR_DEFAULT, L"Clear");
 
     // Clear the views.
-    auto const rtvDescriptor = m_deviceResources->GetRenderTargetView();
+    const auto rtvDescriptor = m_deviceResources->GetRenderTargetView();
 
     commandList->OMSetRenderTargets(1, &rtvDescriptor, FALSE, nullptr);
     commandList->ClearRenderTargetView(rtvDescriptor, c_clearColor, 0, nullptr);
 
     // Set the viewport and scissor rect.
-    auto const viewport = m_deviceResources->GetScreenViewport();
-    auto const scissorRect = m_deviceResources->GetScissorRect();
+    const auto viewport = m_deviceResources->GetScreenViewport();
+    const auto scissorRect = m_deviceResources->GetScissorRect();
     commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &scissorRect);
 
@@ -379,7 +379,7 @@ void Game::OnResuming()
 #ifdef PC
 void Game::OnWindowMoved()
 {
-    auto const r = m_deviceResources->GetOutputSize();
+    const auto r = m_deviceResources->GetOutputSize();
     m_deviceResources->WindowSizeChanged(r.right, r.bottom);
 }
 #endif
@@ -450,7 +450,7 @@ void Game::CreateDeviceDependentResources()
     }
 
     {
-        auto const sampler = m_states->PointClamp();
+        const auto sampler = m_states->PointClamp();
 
         const SpriteBatchPipelineStateDescription pd(
             rtState,
@@ -502,7 +502,7 @@ void Game::CreateDeviceDependentResources()
 // Allocate all memory resources that change on a window SizeChanged event.
 void Game::CreateWindowSizeDependentResources()
 {
-    auto const viewport = m_deviceResources->GetScreenViewport();
+    const auto viewport = m_deviceResources->GetScreenViewport();
 
     m_spriteBatch->SetViewport(viewport);
     m_spriteBatchSampler->SetViewport(viewport);
