@@ -738,11 +738,11 @@ void Game::CreateDeviceDependentResources()
         m_cup->LoadTextures(*m_modelResources, txtOffset);
 
 #ifdef LH_COORDS
-        auto const& ncull = CommonStates::CullCounterClockwise;
-        auto const& cull = CommonStates::CullClockwise;
+        const auto& ncull = CommonStates::CullCounterClockwise;
+        const auto& cull = CommonStates::CullClockwise;
 #else
-        auto const& ncull = CommonStates::CullClockwise;
-        auto const& cull = CommonStates::CullCounterClockwise;
+        const auto& ncull = CommonStates::CullClockwise;
+        const auto& cull = CommonStates::CullCounterClockwise;
 #endif
 
         {
