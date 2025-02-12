@@ -844,14 +844,14 @@ bool Test06(_In_ ID3D12Device* pDevice)
                 if (!GetTempPathW(MAX_PATH, tempPath))
                 {
                     success = false;
-                    printf("ERROR: Getting temp path failed (%08X)\n", HRESULT_FROM_WIN32(GetLastError()));
+                    printf("ERROR: Getting temp path failed (%08X)\n", static_cast<unsigned int>(HRESULT_FROM_WIN32(GetLastError())));
                     continue;
                 }
 
                 if (!GetTempFileNameW(tempPath, L"screenGrab", static_cast<UINT>(container), tempFileName))
                 {
                     success = false;
-                    printf("ERROR: Getting temp file failed (%08X)\n", HRESULT_FROM_WIN32(GetLastError()));
+                    printf("ERROR: Getting temp file failed (%08X)\n", static_cast<unsigned int>(HRESULT_FROM_WIN32(GetLastError())));
                     continue;
                 }
 
