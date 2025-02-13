@@ -241,7 +241,7 @@ std::unique_ptr<Model> CreateModelFromOBJ(
         auto nit = it + 1;
         if (nit == obj->attributes.cend() || *nit != curmaterial)
         {
-            auto part = new ModelMeshPart(partIndex++);
+            auto part = std::make_unique<ModelMeshPart>(partIndex++);
 
             part->indexCount = static_cast<uint32_t>(nindices);
             part->startIndex = static_cast<uint32_t>(sindex);
@@ -256,11 +256,11 @@ std::unique_ptr<Model> CreateModelFromOBJ(
 
             if (isAlpha)
             {
-                mesh->alphaMeshParts.emplace_back(part);
+                mesh->alphaMeshParts.emplace_back(std::move(part));
             }
             else
             {
-                mesh->opaqueMeshParts.emplace_back(part);
+                mesh->opaqueMeshParts.emplace_back(std::move(part));
             }
 
             nindices = 0;
@@ -271,7 +271,7 @@ std::unique_ptr<Model> CreateModelFromOBJ(
     }
 
     // Create model
-    std::unique_ptr<Model> model(new Model());
+    auto model = std::make_unique<Model>();
     model->name = szFileName;
     model->meshes.emplace_back(mesh);
     model->materials = std::move(materials);
