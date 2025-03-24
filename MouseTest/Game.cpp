@@ -22,6 +22,13 @@
 // Remove call to Mouse::EndOfInputFrame by definining this.
 //#define RELY_ON_AUTO_RESET
 
+#ifdef USING_GAMEINPUT
+#include <GameInput.h>
+#ifndef GAMEINPUT_API_VERSION
+#define GAMEINPUT_API_VERSION 0
+#endif
+#endif
+
 extern void ExitGame() noexcept;
 
 using namespace DirectX;
@@ -143,7 +150,9 @@ void Game::Initialize(
 #ifdef USING_COREWINDOW
     OutputDebugStringA("INFO: Using CoreWindow\n");
 #elif defined(USING_GAMEINPUT)
-    OutputDebugStringA("INFO: Using GameInput\n");
+    char buff[64] = {};
+    sprintf_s(buff, "INFO: Using GameInput (API v%d)\n", GAMEINPUT_API_VERSION);
+    OutputDebugStringA(buff);
 #else
     OutputDebugStringA("INFO: Using Win32 messages\n");
 #endif
