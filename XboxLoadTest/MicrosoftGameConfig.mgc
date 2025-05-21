@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Game configVersion="0">
+
+  <Identity Name="592758ef-a613-4530-9b2f-b1cffc173b3c"
+            Publisher="CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
+            Version="1.0.0.0"/>
+
+  <ExecutableList>
+    <Executable Name="XboxLoadTest_x.exe"
+                Id="GameD"
+                TargetDeviceFamily="XboxOne"/>
+    <Executable Name="XboxLoadTest_xs.exe"
+                Id="GameS"
+                TargetDeviceFamily="Scarlett"/>
+  </ExecutableList>
+
+  <ShellVisuals DefaultDisplayName="XboxLoadTest (DirectX 12, GDK)"
+                PublisherDisplayName="Microsoft Corporation"
+                StoreLogo="StoreLogo.png"
+                Square480x480Logo="LargeLogo.png"
+                Square150x150Logo="Logo.png"
+                Square44x44Logo="SmallLogo.png"
+                Description="XboxLoadTest for DirectX Tool Kit for DirectX 12 (GDKX)"
+                ForegroundText="light"
+                BackgroundColor="#464646"
+                SplashScreenImage="SplashScreen.png"/>
+</Game>
