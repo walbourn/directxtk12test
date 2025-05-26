@@ -183,6 +183,7 @@ namespace
         { 43, 32, 1, 1, DXGI_FORMAT_B8G8R8A8_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, L"SpriteBatchTest\\b.dds", {} },
         { 43, 32, 1, 1, DXGI_FORMAT_B8G8R8A8_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, L"SpriteBatchTest\\c.dds", {} },
 
+    #ifndef BUILD_BVT_ONLY
         // DirectXTex test corpus (optional)
         { 32, 32, 1, 1, DXGI_FORMAT_B8G8R8A8_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, DXTEX_MEDIA_PATH L"test8888.dds", {} },
         { 32, 32, 4, 1, DXGI_FORMAT_B8G8R8A8_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE3D, false, DDS_ALPHA_MODE_UNKNOWN, DXTEX_MEDIA_PATH  L"testvol8888.dds", {} },
@@ -821,6 +822,7 @@ namespace
         #endif
 
         { 512, 512, 6, 10, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, true, DDS_ALPHA_MODE_UNKNOWN, DXTEX_MEDIA_PATH L"skybox.dds", {} },
+    #endif // !BUILD_BVT_ONLY
     };
 
     void printdesc(const D3D12_RESOURCE_DESC & desc)

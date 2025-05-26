@@ -117,6 +117,7 @@ namespace
 
         { 1512, 359, DXGI_FORMAT_R8_UNORM, L"LoadTest\\text.tif", {} },
 
+    #ifndef BUILD_BVT_ONLY
         // DirectXTex test corpus (optional)
         { 200, 200, DXGI_FORMAT_R8_UNORM, DXTEX_MEDIA_PATH L"fishingboat.jpg", {} },
         { 200, 200, DXGI_FORMAT_R8G8B8A8_UNORM, DXTEX_MEDIA_PATH L"lena.jpg", {} },
@@ -363,6 +364,8 @@ namespace
         // Very large images
         { 16384, 16384, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, DXTEX_MEDIA_PATH L"earth16kby16k.png", {} },
         #endif
+
+    #endif // !BUILD_BVT_ONLY
     };
 
     struct SaveMedia
@@ -414,6 +417,7 @@ namespace
         { L"SpriteBatchTest\\b.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
         { L"SpriteBatchTest\\c.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
 
+    #ifndef BUILD_BVT_ONLY
         // DirectXTex test corpus (optional)
         { DXTEX_MEDIA_PATH L"test8888.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
         { DXTEX_MEDIA_PATH L"alphaedge.dds",{ DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8_UNORM, DXGI_FORMAT_R8_UNORM, DXGI_FORMAT_R8_UNORM } },
@@ -438,6 +442,7 @@ namespace
 
         // Normal maps
         { DXTEX_MEDIA_PATH L"normals.dds", { DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM } },
+    #endif // !BUILD_BVT_ONLY
     };
 
     void printdesc(const D3D12_RESOURCE_DESC & desc)
