@@ -54,9 +54,6 @@ namespace
 #endif
 }
 
-static_assert(std::is_nothrow_move_constructible<GeometricPrimitive>::value, "Move Ctor.");
-static_assert(std::is_nothrow_move_assignable<GeometricPrimitive>::value, "Move Assign.");
-
 Game::Game() noexcept(false) :
     m_instanceCount(0),
     m_spinning(true),

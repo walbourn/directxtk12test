@@ -8,6 +8,7 @@
 //-------------------------------------------------------------------------------------
 
 #include "CommonStates.h"
+
 #include "Effects.h"
 #include "EffectPipelineStateDescription.h"
 #include "VertexTypes.h"
@@ -158,7 +159,7 @@ bool Test02(ID3D12Device* device)
             || desc6.ShaderRegister != 6)
         {
             printf("ERROR: Failed CommonStates static sampler state tests\n");
-                success = false;
+            success = false;
         }
     }
 

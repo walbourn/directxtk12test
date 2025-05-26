@@ -8,6 +8,7 @@
 //-------------------------------------------------------------------------------------
 
 #include "VertexTypes.h"
+
 #include "CommonStates.h"
 #include "EFfects.h"
 #include "EffectPipelineStateDescription.h"
@@ -132,7 +133,7 @@ namespace
     }
 }
 
-bool Test06(ID3D12Device* device)
+bool Test09(ID3D12Device* device)
 {
     bool success = true;
 

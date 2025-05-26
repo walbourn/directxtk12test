@@ -8,7 +8,9 @@
 //-------------------------------------------------------------------------------------
 
 #include <crtdbg.h>
+
 #include <cstdio>
+#include <exception>
 #include <iterator>
 
 #include "DirectXMath.h"
@@ -145,21 +147,30 @@ extern bool Test03(ID3D12Device *device);
 extern bool Test04(ID3D12Device *device);
 extern bool Test05(ID3D12Device *device);
 extern bool Test06(ID3D12Device *device);
+extern bool Test07(ID3D12Device *device);
+extern bool Test08(ID3D12Device *device);
+extern bool Test09(ID3D12Device *device);
 
 TestInfo g_Tests[] =
 {
     { "BufferHelpers", Test01 },
     { "CommonStates", Test02 },
     { "DirectXHelpers", Test03 },
-    { "GraphicsMemory", Test04 },
-    { "PrimitiveBatch", Test05 },
-    { "VertexTypes", Test06 },
+    { "GeometricPrimitive", Test04 },
+    { "GraphicsMemory", Test05 },
+    { "PrimitiveBatch", Test06 },
+    { "SpriteBatch", Test07 },
+    { "SpriteFont", Test08 },
+    { "VertexTypes", Test09 },
 };
 
 
 //-------------------------------------------------------------------------------------
 bool RunTests(ID3D12Device *device)
 {
+    if (!device)
+        return false;
+
     size_t nPass = 0;
     size_t nFail = 0;
 
@@ -167,7 +178,22 @@ bool RunTests(ID3D12Device *device)
     {
         printf("%s: ", g_Tests[i].name );
 
-        if ( g_Tests[i].func(device) )
+        bool passed = false;
+
+        try
+        {
+            passed = g_Tests[i].func(device);
+        }
+        catch(const std::exception& e)
+        {
+            printf("ERROR: Failed with a standard C++ exception: %s\n", e.what());
+        }
+        catch(...)
+        {
+            printf("ERROR: Failed with an unknown C++ exception\n");
+        }
+
+        if (passed)
         {
             ++nPass;
             printf("PASS\n");
@@ -210,6 +236,7 @@ int __cdecl wmain()
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
 
+    // The DirectX 12 version of the tool kit requires this singleton.
     std::unique_ptr<DirectX::GraphicsMemory> graphicsMemory;
     try
     {
@@ -217,8 +244,8 @@ int __cdecl wmain()
     }
     catch(const std::exception& e)
     {
-        printf("ERROR: Failed creating graphics object (except: %s)\n", e.what());
-        return false;
+        printf("ERROR: Failed creating graphics memory object (except: %s)\n", e.what());
+        return -1;
     }
 
     if ( !RunTests(device.Get()) )

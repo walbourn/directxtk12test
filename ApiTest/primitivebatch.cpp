@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------------------
-// File: primtitivebatch.cpp
+// File: primitivebatch.cpp
 //
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
@@ -8,6 +8,7 @@
 //-------------------------------------------------------------------------------------
 
 #include "PrimitiveBatch.h"
+
 #include "VertexTypes.h"
 
 #include <cstdio>
@@ -18,7 +19,7 @@ using namespace DirectX;
 static_assert(std::is_nothrow_move_constructible<PrimitiveBatch<VertexPositionColor>>::value, "Move Ctor.");
 static_assert(std::is_nothrow_move_assignable<PrimitiveBatch<VertexPositionColor>>::value, "Move Assign.");
 
-bool Test05(ID3D12Device* device)
+bool Test06(ID3D12Device* device)
 {
     using Vertex = DirectX::VertexPositionColor;
 

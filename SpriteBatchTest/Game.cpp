@@ -35,15 +35,6 @@ namespace
 #endif
 }
 
-static_assert(std::is_nothrow_move_constructible<ResourceUploadBatch>::value, "Move Ctor.");
-static_assert(std::is_nothrow_move_assignable<ResourceUploadBatch>::value, "Move Assign.");
-
-static_assert(std::is_nothrow_move_constructible<SpriteBatch>::value, "Move Ctor.");
-static_assert(std::is_nothrow_move_assignable<SpriteBatch>::value, "Move Assign.");
-
-static_assert(std::is_nothrow_move_constructible<SpriteBatchPipelineStateDescription>::value, "Move Ctor.");
-static_assert(std::is_nothrow_move_assignable<SpriteBatchPipelineStateDescription>::value, "Move Assign.");
-
 Game::Game() noexcept(false) :
     m_frame(0)
 {

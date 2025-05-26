@@ -8,6 +8,7 @@
 //-------------------------------------------------------------------------------------
 
 #include "DirectXHelpers.h"
+
 #include "BufferHelpers.h"
 #include "DescriptorHeap.h"
 #include "ResourceUploadBatch.h"
@@ -62,7 +63,7 @@ bool Test03(ID3D12Device* device)
     queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
 
     ComPtr<ID3D12CommandQueue> copyQueue;
-    HRESULT hr = device->CreateCommandQueue(&queueDesc, IID_GRAPHICS_PPV_ARGS(copyQueue.GetAddressOf()));
+    HRESULT hr = device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(copyQueue.GetAddressOf()));
     if (FAILED(hr))
     {
         printf("ERROR: Failed creating copy command queue (%08X)\n", static_cast<unsigned int>(hr));
@@ -218,11 +219,12 @@ bool Test03(ID3D12Device* device)
             { XMFLOAT3{ -0.5f, -0.5f,  0.5f }, XMFLOAT4{ 0.0f, 0.0f, 1.0f, 1.0f } }   // Left / Blue
         };
 
-        if (FAILED(CreateUploadBuffer(device,
+        hr = CreateUploadBuffer(device,
             s_vertexData, std::size(s_vertexData), sizeof(VertexPositionColor),
-            test1.ReleaseAndGetAddressOf())))
+            test1.ReleaseAndGetAddressOf());
+        if (FAILED(hr))
         {
-            printf("ERROR: Failed CreateUploadBuffer(1) test\n");
+            printf("ERROR: Failed CreateUploadBuffer(1) test (%08X)\n", static_cast<unsigned int>(hr));
             success = false;
         }
 
@@ -247,12 +249,14 @@ bool Test03(ID3D12Device* device)
     };
 
     {
-        if (FAILED(CreateStaticBuffer(device, resourceUpload,
+        hr = CreateStaticBuffer(device,
+            resourceUpload,
             s_vertexData, std::size(s_vertexData), sizeof(VertexPositionColor),
             D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
-            test2.ReleaseAndGetAddressOf())))
+            test2.ReleaseAndGetAddressOf());
+        if (FAILED(hr))
         {
-            printf("ERROR: Failed CreateStaticBuffer(1) test\n");
+            printf("ERROR: Failed CreateStaticBuffer(1) test (%08X)\n", static_cast<unsigned int>(hr));
             success = false;
         }
 
@@ -272,13 +276,14 @@ bool Test03(ID3D12Device* device)
     // CreateBufferUnorderedAccessView
     {
         // UAV
-        if (FAILED(CreateStaticBuffer(device, resourceUpload,
+        hr = CreateStaticBuffer(device, resourceUpload,
             s_vertexData, std::size(s_vertexData), sizeof(VertexPositionColor),
             D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
             test3.ReleaseAndGetAddressOf(),
-            D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS)))
+            D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+        if (FAILED(hr))
         {
-            printf("ERROR: Failed CreateStaticBuffer(UAV) test\n");
+            printf("ERROR: Failed CreateStaticBuffer(UAV) test (%08X)\n", static_cast<unsigned int>(hr));
             success = false;
         }
 
@@ -295,8 +300,16 @@ bool Test03(ID3D12Device* device)
         }
     }
 
-    auto uploadResourcesFinished = resourceUpload.End(copyQueue.Get());
-    uploadResourcesFinished.wait();
+    try
+    {
+        auto uploadResourcesFinished = resourceUpload.End(copyQueue.Get());
+        uploadResourcesFinished.wait();
+    }
+    catch(const std::exception& e)
+    {
+        printf("ERROR: Failed doing resource upload via copy command queue (except: %s)\n", e.what());
+        return false;
+    }
 
     return success;
 }

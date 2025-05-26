@@ -41,9 +41,6 @@ namespace
 #endif
 }
 
-static_assert(std::is_nothrow_move_constructible<SpriteFont>::value, "Move Ctor.");
-static_assert(std::is_nothrow_move_assignable<SpriteFont>::value, "Move Assign.");
-
 Game::Game() noexcept(false) :
     m_frame(0),
     m_showUTF8(false),

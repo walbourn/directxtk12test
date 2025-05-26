@@ -8,6 +8,7 @@
 //-------------------------------------------------------------------------------------
 
 #include "BufferHelpers.h"
+
 #include "DirectXHelpers.h"
 #include "ResourceUploadBatch.h"
 #include "VertexTypes.h"
@@ -28,7 +29,7 @@ bool Test01(ID3D12Device* device)
     queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
 
     ComPtr<ID3D12CommandQueue> copyQueue;
-    HRESULT hr = device->CreateCommandQueue(&queueDesc, IID_GRAPHICS_PPV_ARGS(copyQueue.GetAddressOf()));
+    HRESULT hr = device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(copyQueue.GetAddressOf()));
     if (FAILED(hr))
     {
         printf("ERROR: Failed creating copy command queue (%08X)\n", static_cast<unsigned int>(hr));
@@ -57,58 +58,64 @@ bool Test01(ID3D12Device* device)
             { XMFLOAT3{ -0.5f, -0.5f,  0.5f }, XMFLOAT4{ 0.0f, 0.0f, 1.0f, 1.0f } }   // Left / Blue
         };
 
-        if (FAILED(CreateUploadBuffer(device,
+        hr = CreateUploadBuffer(device,
             s_vertexData, std::size(s_vertexData), sizeof(VertexPositionColor),
-            test1.ReleaseAndGetAddressOf())))
+            test1.ReleaseAndGetAddressOf());
+        if (FAILED(hr))
         {
-            printf("ERROR: Failed CreateUploadBuffer(1) test\n");
+            printf("ERROR: Failed CreateUploadBuffer(1) test (%08X)\n", static_cast<unsigned int>(hr));
             success = false;
         }
 
-        if (FAILED(CreateUploadBuffer(device,
+        hr = CreateUploadBuffer(device,
             s_vertexData, std::size(s_vertexData),
-            test2.ReleaseAndGetAddressOf())))
+            test2.ReleaseAndGetAddressOf());
+        if (FAILED(hr))
         {
-            printf("ERROR: Failed CreateUploadBuffer(2) test\n");
+            printf("ERROR: Failed CreateUploadBuffer(2) test (%08X)\n", static_cast<unsigned int>(hr));
             success = false;
         }
 
         std::vector<VertexPositionColor> verts(s_vertexData, s_vertexData + std::size(s_vertexData));
 
-        if (FAILED(CreateUploadBuffer(device,
+        hr = CreateUploadBuffer(device,
             verts,
-            test3.ReleaseAndGetAddressOf())))
+            test3.ReleaseAndGetAddressOf());
+        if (FAILED(hr))
         {
-            printf("ERROR: Failed CreateUploadBuffer(3) test\n");
+            printf("ERROR: Failed CreateUploadBuffer(3) test (%08X)\n", static_cast<unsigned int>(hr));
             success = false;
         }
 
         // DSR
-        if (FAILED(CreateUploadBuffer(device,
+        hr = CreateUploadBuffer(device,
             verts,
             test4.ReleaseAndGetAddressOf(),
-            D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE)))
+            D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE);
+        if (FAILED(hr))
         {
-            printf("ERROR: Failed CreateUploadBuffer(DSR) test\n");
+            printf("ERROR: Failed CreateUploadBuffer(DSR) test (%08X)\n", static_cast<unsigned int>(hr));
             success = false;
         }
 
         // No data
-        if (FAILED(CreateUploadBuffer(device,
+        hr = CreateUploadBuffer(device,
             nullptr, 14, sizeof(VertexPositionDualTexture),
-            test5.ReleaseAndGetAddressOf())))
+            test5.ReleaseAndGetAddressOf());
+        if (FAILED(hr))
         {
-            printf("ERROR: Failed CreateUploadBuffer(no data) test\n");
+            printf("ERROR: Failed CreateUploadBuffer(no data) test (%08X)\n", static_cast<unsigned int>(hr));
             success = false;
         }
     }
 
     // CreateUAVBuffer
-    if (FAILED(CreateUAVBuffer(device,
+    hr = CreateUAVBuffer(device,
         sizeof(VertexPositionNormalColorTexture),
-        test6.ReleaseAndGetAddressOf())))
+        test6.ReleaseAndGetAddressOf());
+    if (FAILED(hr))
     {
-        printf("ERROR: Failed CreateUAVBuffer test\n");
+        printf("ERROR: Failed CreateUAVBuffer test (%08X)\n", static_cast<unsigned int>(hr));
         success = false;
     }
 
@@ -124,49 +131,65 @@ bool Test01(ID3D12Device* device)
             { XMFLOAT3{ -0.5f, -0.5f,  0.5f }, XMFLOAT4{ 0.0f, 0.0f, 1.0f, 1.0f } }   // Left / Blue
         };
 
-        if (FAILED(CreateStaticBuffer(device, resourceUpload,
+        hr = CreateStaticBuffer(device,
+            resourceUpload,
             s_vertexData, std::size(s_vertexData), sizeof(VertexPositionColor),
             D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
-            test7.ReleaseAndGetAddressOf())))
+            test7.ReleaseAndGetAddressOf());
+        if (FAILED(hr))
         {
-            printf("ERROR: Failed CreateStaticBuffer(1) test\n");
+            printf("ERROR: Failed CreateStaticBuffer(1) test (%08X)\n", static_cast<unsigned int>(hr));
             success = false;
         }
 
-        if (FAILED(CreateStaticBuffer(device, resourceUpload,
+        hr = CreateStaticBuffer(device,
+            resourceUpload,
             s_vertexData, std::size(s_vertexData),
             D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
-            test8.ReleaseAndGetAddressOf())))
+            test8.ReleaseAndGetAddressOf());
+        if (FAILED(hr))
         {
-            printf("ERROR: Failed CreateStaticBuffer(2) test\n");
+            printf("ERROR: Failed CreateStaticBuffer(2) test (%08X)\n", static_cast<unsigned int>(hr));
             success = false;
         }
 
         std::vector<VertexPositionColor> verts(s_vertexData, s_vertexData + std::size(s_vertexData));
 
-        if (FAILED(CreateStaticBuffer(device, resourceUpload,
+        hr = CreateStaticBuffer(device,
+            resourceUpload,
             verts,
             D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
-            test9.ReleaseAndGetAddressOf())))
+            test9.ReleaseAndGetAddressOf());
+        if (FAILED(hr))
         {
-            printf("ERROR: Failed CreateStaticBuffer(3) test\n");
+            printf("ERROR: Failed CreateStaticBuffer(3) test (%08X)\n", static_cast<unsigned int>(hr));
             success = false;
         }
 
         // UAV
-        if (FAILED(CreateStaticBuffer(device, resourceUpload,
+        hr = CreateStaticBuffer(device,
+            resourceUpload,
             verts,
             D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
             test10.ReleaseAndGetAddressOf(),
-            D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS)))
+            D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+        if (FAILED(hr))
         {
-            printf("ERROR: Failed CreateStaticBuffer(UAV) test\n");
+            printf("ERROR: Failed CreateStaticBuffer(UAV) test (%08X)\n", static_cast<unsigned int>(hr));
             success = false;
         }
     }
 
-    auto uploadResourcesFinished = resourceUpload.End(copyQueue.Get());
-    uploadResourcesFinished.wait();
+    try
+    {
+        auto uploadResourcesFinished = resourceUpload.End(copyQueue.Get());
+        uploadResourcesFinished.wait();
+    }
+    catch(const std::exception& e)
+    {
+        printf("ERROR: Failed doing resource upload via copy command queue (except: %s)\n", e.what());
+        return false;
+    }
 
     return success;
 }
