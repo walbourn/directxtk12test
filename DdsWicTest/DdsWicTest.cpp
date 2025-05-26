@@ -2,6 +2,8 @@
 // DdsWicTest.cpp
 //
 // Copyright (c) Microsoft Corporation.
+//
+// http://go.microsoft.com/fwlink/?LinkID=615561
 //-------------------------------------------------------------------------------------
 
 #pragma warning(push)
