@@ -97,7 +97,6 @@
 #include <exception>
 #include <iterator>
 #include <memory>
-#include <random>
 #include <stdexcept>
 #include <string>
 #include <system_error>
@@ -107,7 +106,6 @@
 #include "BufferHelpers.h"
 #include "CommonStates.h"
 #include "DDSTextureLoader.h"
-#include "DescriptorHeap.h"
 #include "Effects.h"
 #include "GamePad.h"
 #include "GeometricPrimitive.h"

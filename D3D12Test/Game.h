@@ -108,18 +108,6 @@ private:
     std::unique_ptr<DirectX::PrimitiveBatch<Vertex>>    m_batch;
 
     std::unique_ptr<DirectX::CommonStates>              m_states;
-    std::unique_ptr<DirectX::DescriptorHeap>            m_resourceDescriptors;
-
-    Microsoft::WRL::ComPtr<ID3D12Resource>  m_test1;
-    Microsoft::WRL::ComPtr<ID3D12Resource>  m_test2;
-    Microsoft::WRL::ComPtr<ID3D12Resource>  m_test3;
-    Microsoft::WRL::ComPtr<ID3D12Resource>  m_test4;
-    Microsoft::WRL::ComPtr<ID3D12Resource>  m_test5;
-    Microsoft::WRL::ComPtr<ID3D12Resource>  m_test6;
-    Microsoft::WRL::ComPtr<ID3D12Resource>  m_test7;
-    Microsoft::WRL::ComPtr<ID3D12Resource>  m_test8;
-    Microsoft::WRL::ComPtr<ID3D12Resource>  m_test9;
-    Microsoft::WRL::ComPtr<ID3D12Resource>  m_test10;
 
     uint64_t m_frame;
 };
