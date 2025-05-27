@@ -11,6 +11,7 @@
 
 #include "Effects.h"
 #include "EffectPipelineStateDescription.h"
+#include "RenderTargetState.h"
 #include "VertexTypes.h"
 
 #include <cstdio>

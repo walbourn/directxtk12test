@@ -13,6 +13,7 @@
 #include "CommonStates.h"
 #include "DescriptorHeap.h"
 #include "EffectPipelineStateDescription.h"
+#include "RenderTargetState.h"
 #include "ResourceUploadBatch.h"
 
 #include <cstdio>

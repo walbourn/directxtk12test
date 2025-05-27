@@ -12,6 +12,7 @@
 #include "CommonStates.h"
 #include "EFfects.h"
 #include "EffectPipelineStateDescription.h"
+#include "RenderTargetState.h"
 
 #include <cstdio>
 #include <type_traits>

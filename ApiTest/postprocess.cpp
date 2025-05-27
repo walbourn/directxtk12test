@@ -8,6 +8,7 @@
 //-------------------------------------------------------------------------------------
 
 #include "PostProcess.h"
+#include "RenderTargetState.h"
 
 #include <cstdio>
 #include <type_traits>

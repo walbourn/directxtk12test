@@ -11,6 +11,7 @@
 
 #include "CommonStates.h"
 #include "EffectPipelineStateDescription.h"
+#include "RenderTargetState.h"
 #include "VertexTypes.h"
 
 #include <cstdio>
@@ -131,7 +132,6 @@ namespace
     };
 }
 
-// BasicEffects
 _Success_(return)
 bool Test00(_In_ ID3D12Device *device)
 {
@@ -152,7 +152,7 @@ bool Test00(_In_ ID3D12Device *device)
     std::unique_ptr<BasicEffect> basic;
     try
     {
-        // TODO: None, Fog, Lighting, Texture
+        // TODO: Fog, VertexColor, Texture, Lighting, PerPixelLightingBit, BiasedVertexNormals
         basic = std::make_unique<BasicEffect>(device, EffectFlags::None, pd);
     }
     catch(const std::exception& e)
@@ -164,7 +164,7 @@ bool Test00(_In_ ID3D12Device *device)
     std::unique_ptr<AlphaTestEffect> alpha;
     try
     {
-        // TODO: None, Fog
+        // TODO: Fog, VertexColor, D3D12_COMPARISON_FUNC_EQUAL
         alpha = std::make_unique<AlphaTestEffect>(device, EffectFlags::None, pd);
     }
     catch(const std::exception& e)
@@ -183,7 +183,7 @@ bool Test00(_In_ ID3D12Device *device)
     std::unique_ptr<DualTextureEffect> dual;
     try
     {
-        // TODO: None, Fog
+        // TODO: Fog, VertexColor
         dual = std::make_unique<DualTextureEffect>(device, EffectFlags::None, pdTest);
     }
     catch(const std::exception& e)
@@ -195,7 +195,7 @@ bool Test00(_In_ ID3D12Device *device)
     std::unique_ptr<EnvironmentMapEffect> envmap;
     try
     {
-        // TODO: None, Fog
+        // TODO: Fog, Fresnel, PerPixelLightingBit, Specular, BiasedVertexNormals, Specular, Mapping_Sphere, Mapping_DualParabola
         envmap = std::make_unique<EnvironmentMapEffect>(device, EffectFlags::None, pd);
     }
     catch(const std::exception& e)
@@ -207,7 +207,7 @@ bool Test00(_In_ ID3D12Device *device)
     std::unique_ptr<SkinnedEffect> skin;
     try
     {
-        // TODO: None, Fog
+        // TODO: Fog, PerPixelLightingBit, BiasedVertexNormals
         skin = std::make_unique<SkinnedEffect>(device, EffectFlags::None, pdTest);
     }
     catch(const std::exception& e)
@@ -216,12 +216,119 @@ bool Test00(_In_ ID3D12Device *device)
         success = false;
     }
 
-    // TODO:
-    // NormalMapEffect
-    // SkinnedNormalMapEffect
-    // PBREffect
-    // SkinnedPBREffect
-    // DebugEffect
+    return success;
+}
+
+_Success_(return)
+bool Test11(_In_ ID3D12Device *device)
+{
+    if (!device)
+        return false;
+
+    bool success = true;
+
+    const RenderTargetState rtState(DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_D32_FLOAT);
+
+    EffectPipelineStateDescription pd(
+        &VertexPositionNormalTexture::InputLayout,
+        CommonStates::Opaque,
+        CommonStates::DepthDefault,
+        CommonStates::CullNone,
+        rtState);
+
+    std::unique_ptr<NormalMapEffect> nmap;
+    try
+    {
+        // TODO: Fog, Specular, BiasedVertexNormals, VertexColor, Instancing
+        nmap = std::make_unique<NormalMapEffect>(device, EffectFlags::None, pd);
+    }
+    catch(const std::exception& e)
+    {
+        printf("ERROR: Failed creating object (except: %s)\n", e.what());
+        success = false;
+    }
+
+    EffectPipelineStateDescription pdTest(
+        &TestVertex::InputLayout,
+        CommonStates::Opaque,
+        CommonStates::DepthDefault,
+        CommonStates::CullNone,
+        rtState);
+
+    std::unique_ptr<SkinnedNormalMapEffect> skin;
+    try
+    {
+        // TODO: Fog, Specular, BiasedVertexNormals
+        skin = std::make_unique<SkinnedNormalMapEffect>(device, EffectFlags::None, pdTest);
+    }
+    catch(const std::exception& e)
+    {
+        printf("ERROR: Failed creating skin object (except: %s)\n", e.what());
+        success = false;
+    }
+
+    std::unique_ptr<DebugEffect> dbg;
+    try
+    {
+        // TODO: Fog, VertexColor, BiasedVertexNormals, Instancing
+        dbg = std::make_unique<DebugEffect>(device, EffectFlags::None, pd);
+    }
+    catch(const std::exception& e)
+    {
+        printf("ERROR: Failed creating debug object (except: %s)\n", e.what());
+        success = false;
+    }
+
+    return success;
+}
+
+_Success_(return)
+bool Test12(_In_ ID3D12Device *device)
+{
+    if (!device)
+        return false;
+
+    bool success = true;
+
+    const RenderTargetState rtState(DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_D32_FLOAT);
+
+    EffectPipelineStateDescription pd(
+        &VertexPositionNormalTexture::InputLayout,
+        CommonStates::Opaque,
+        CommonStates::DepthDefault,
+        CommonStates::CullNone,
+        rtState);
+
+    std::unique_ptr<PBREffect> pbr;
+    try
+    {
+        // TODO: Texture, Emissive, BiasedVertexNormals, Instancing
+        pbr = std::make_unique<PBREffect>(device, EffectFlags::None, pd);
+    }
+    catch(const std::exception& e)
+    {
+        printf("ERROR: Failed creating object (except: %s)\n", e.what());
+        success = false;
+    }
+
+    EffectPipelineStateDescription pdTest(
+        &TestVertex::InputLayout,
+        CommonStates::Opaque,
+        CommonStates::DepthDefault,
+        CommonStates::CullNone,
+        rtState);
+
+    std::unique_ptr<SkinnedPBREffect> skin;
+    try
+    {
+        // TODO: Texture, Emissive, BiasedVertexNormals
+        skin = std::make_unique<SkinnedPBREffect>(device, EffectFlags::None, pdTest);
+    }
+    catch(const std::exception& e)
+    {
+        printf("ERROR: Failed creating skin object (except: %s)\n", e.what());
+        success = false;
+    }
 
     return success;
 }
