@@ -83,7 +83,7 @@ namespace
             XMStoreFloat3(&this->normal, inormal);
             XMStoreFloat2(&this->textureCoordinate, itextureCoordinate);
             XMStoreFloat2(&this->textureCoordinate2, XMVectorScale(itextureCoordinate, 3.f));
-            XMStoreUByte4(&this->blendIndices, XMVectorSet(0, 1, 2, 3));
+            PackedVector::XMStoreUByte4(&this->blendIndices, XMVectorSet(0, 1, 2, 3));
 
             float u = XMVectorGetX(itextureCoordinate) - 0.5f;
             float v = XMVectorGetY(itextureCoordinate) - 0.5f;
