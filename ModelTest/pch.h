@@ -101,7 +101,6 @@
 #include <string>
 #include <system_error>
 #include <tuple>
-#include <type_traits>
 
 #include "CommonStates.h"
 #include "DDSTextureLoader.h"
