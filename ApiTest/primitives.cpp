@@ -24,8 +24,12 @@ static_assert(std::is_nothrow_move_assignable<ResourceUploadBatch>::value, "Move
 static_assert(std::is_nothrow_move_constructible<GeometricPrimitive>::value, "Move Ctor.");
 static_assert(std::is_nothrow_move_assignable<GeometricPrimitive>::value, "Move Assign.");
 
-bool Test04(ID3D12Device *device)
+_Success_(return)
+bool Test04(_In_ ID3D12Device *device)
 {
+    if (!device)
+        return false;
+
     D3D12_COMMAND_QUEUE_DESC queueDesc = {};
     queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
     queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COPY;

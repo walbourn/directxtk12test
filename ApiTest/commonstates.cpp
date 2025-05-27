@@ -99,8 +99,12 @@ namespace
     }
 }
 
-bool Test02(ID3D12Device* device)
+_Success_(return)
+bool Test02(_In_ ID3D12Device* device)
 {
+    if (!device)
+        return false;
+
     std::unique_ptr<CommonStates> states;
     try
     {

@@ -23,8 +23,12 @@ static_assert(std::is_nothrow_move_assignable<SharedGraphicsResource>::value, "M
 static_assert(std::is_nothrow_move_constructible<GraphicsMemory>::value, "Move Ctor.");
 static_assert(std::is_nothrow_move_assignable<GraphicsMemory>::value, "Move Assign.");
 
-bool Test05(ID3D12Device*)
+_Success_(return)
+bool Test05(_In_ ID3D12Device* device)
 {
+    if (!device)
+        return false;
+
     //
     // GraphicsMemory is required for the test to run at all. See ApiTest.cpp
     //

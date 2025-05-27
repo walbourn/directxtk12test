@@ -45,8 +45,12 @@ namespace
     }
 }
 
-bool Test03(ID3D12Device* device)
+_Success_(return)
+bool Test03(_In_ ID3D12Device* device)
 {
+    if (!device)
+        return false;
+
     std::unique_ptr<DescriptorHeap> resourceDescriptors;
     try
     {

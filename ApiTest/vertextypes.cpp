@@ -87,6 +87,7 @@ static_assert(std::is_move_assignable<VertexPositionNormalColorTexture>::value, 
 namespace
 {
     template<class T>
+    _Success_(return)
     inline bool TestVertexType(const RenderTargetState& rtState, _In_ ID3D12Device* device)
     {
         if (T::InputLayout.NumElements == 0
@@ -133,8 +134,12 @@ namespace
     }
 }
 
-bool Test09(ID3D12Device* device)
+_Success_(return)
+bool Test10(_In_ ID3D12Device* device)
 {
+    if (!device)
+        return false;
+
     bool success = true;
 
     const RenderTargetState rtState(DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_D32_FLOAT);

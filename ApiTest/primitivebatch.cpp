@@ -19,8 +19,12 @@ using namespace DirectX;
 static_assert(std::is_nothrow_move_constructible<PrimitiveBatch<VertexPositionColor>>::value, "Move Ctor.");
 static_assert(std::is_nothrow_move_assignable<PrimitiveBatch<VertexPositionColor>>::value, "Move Assign.");
 
-bool Test06(ID3D12Device* device)
+_Success_(return)
+bool Test07(_In_ ID3D12Device* device)
 {
+    if (!device)
+        return false;
+
     using Vertex = DirectX::VertexPositionColor;
 
     std::unique_ptr<DirectX::PrimitiveBatch<Vertex>> batch;

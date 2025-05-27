@@ -22,8 +22,12 @@
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 
-bool Test01(ID3D12Device* device)
+_Success_(return)
+bool Test01(_In_ ID3D12Device* device)
 {
+    if (!device)
+        return false;
+
     D3D12_COMMAND_QUEUE_DESC queueDesc = {};
     queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
     queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
