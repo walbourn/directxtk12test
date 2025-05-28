@@ -7,13 +7,21 @@
 // http://go.microsoft.com/fwlink/?LinkID=615561
 //-------------------------------------------------------------------------------------
 
+#ifdef __MINGW32__
+#include <unknwn.h>
+#endif
+
 #include "GamePad.h"
 #include "Keyboard.h"
 #include "Mouse.h"
 
 #include <cstdio>
 
+#ifdef USING_DIRECTX_HEADERS
+#include <directx/d3d12.h>
+#else
 #include <d3d12.h>
+#endif
 
 using namespace DirectX;
 

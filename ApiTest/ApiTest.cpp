@@ -7,6 +7,10 @@
 // http://go.microsoft.com/fwlink/?LinkID=615561
 //-------------------------------------------------------------------------------------
 
+#ifdef __MINGW32__
+#include <unknwn.h>
+#endif
+
 #include <crtdbg.h>
 
 #include <cstdio>
@@ -15,8 +19,13 @@
 
 #include "DirectXMath.h"
 
+#ifdef USING_DIRECTX_HEADERS
+#include <directx/d3d12.h>
+#else
 #include <d3d12.h>
-#include <dxgi1_4.h>
+#endif
+
+#include <dxgi1_6.h>
 
 #include "GraphicsMemory.h"
 
