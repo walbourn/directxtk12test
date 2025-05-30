@@ -449,6 +449,18 @@ if(directx-headers_FOUND)
     endforeach()
 endif()
 
+if(NOT BUILD_BVT)
+    find_package(directx12-agility CONFIG QUIET)
+
+    if(directx12-agility_FOUND)
+        message(STATUS "Using DirectX12 Agility SDK")
+        foreach(t IN LISTS TEST_EXES)
+          target_link_libraries(${t} PUBLIC Microsoft::DirectX12-Agility)
+          target_compile_definitions(${t} PRIVATE USING_D3D12_AGILITY_SDK)
+        endforeach()
+    endif()
+endif()
+
 if(xaudio2redist_FOUND
    AND BUILD_XAUDIO_REDIST)
     foreach(t IN LISTS XAUDIO_TESTS)
@@ -581,5 +593,36 @@ if(ENABLE_CODE_COVERAGE)
       configure_file(${CMAKE_CURRENT_LIST_DIR}/codecov/MSVCCodeCovAudio.cmd.in ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/MSVCCodeCovAudio.cmd COPYONLY)
       configure_file(${CMAKE_CURRENT_LIST_DIR}/codecov/coverage-audio.config.in ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/coverage-audio.config COPYONLY)
     endif()
+  endif()
+endif()
+
+if(NOT BUILD_BVT)
+  if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.21)
+    if(BUILD_XAUDIO_REDIST)
+      add_custom_command(TARGET simpleaudiotest POST_BUILD
+          COMMAND ${CMAKE_COMMAND} -E $<IF:$<BOOL:$<TARGET_RUNTIME_DLLS:simpleaudiotest>>,copy,true>
+          $<TARGET_RUNTIME_DLLS:simpleaudiotest> $<TARGET_FILE_DIR:simpleaudiotest>
+          COMMAND_EXPAND_LISTS
+          )
+    endif()
+
+    if(BUILD_GAMEINPUT)
+      add_custom_command(TARGET gamepadtest POST_BUILD
+          COMMAND ${CMAKE_COMMAND} -E $<IF:$<BOOL:$<TARGET_RUNTIME_DLLS:gamepadtest>>,copy,true>
+          $<TARGET_RUNTIME_DLLS:gamepadtest> $<TARGET_FILE_DIR:gamepadtest>
+          COMMAND_EXPAND_LISTS
+          )
+    endif()
+  endif()
+
+  if(TARGET Microsoft::DirectX12-Agility)
+    file(MAKE_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/D3D12")
+    add_custom_command(TARGET d3d12test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PROPERTY:Microsoft::DirectX12-Core,IMPORTED_LOCATION_RELEASE> $<TARGET_FILE_DIR:d3d12test>/D3D12
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PROPERTY:Microsoft::DirectX12-Layers,IMPORTED_LOCATION_DEBUG> $<TARGET_FILE_DIR:d3d12test>/D3D12
+        COMMAND ${CMAKE_COMMAND} -E rm -f $<TARGET_FILE_DIR:d3d12test>/D3D12Core.dll
+        COMMAND ${CMAKE_COMMAND} -E rm -f $<TARGET_FILE_DIR:d3d12test>/d3d12SDKLayers.dll
+        COMMAND_EXPAND_LISTS
+        )
   endif()
 endif()
