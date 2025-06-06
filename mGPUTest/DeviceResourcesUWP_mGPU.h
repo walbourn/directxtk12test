@@ -101,7 +101,7 @@ namespace DX
         UINT                                                m_backBufferIndex;
 
         UINT                                                m_deviceCount;
-        
+
         // Swap chain objects.
         Microsoft::WRL::ComPtr<IDXGIFactory4>               m_dxgiFactory;
         Microsoft::WRL::ComPtr<IDXGISwapChain3>             m_swapChain;

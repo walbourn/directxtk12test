@@ -14,7 +14,7 @@
 
 #include <winapifamily.h>
 
-#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) 
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
 #include <winsdkver.h>
 #define _WIN32_WINNT 0x0A00
 #include <sdkddkver.h>

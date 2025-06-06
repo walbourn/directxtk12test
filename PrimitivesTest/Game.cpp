@@ -1083,7 +1083,7 @@ void Game::CreateWindowSizeDependentResources()
     m_effectLights->SetView(view);
     m_effectFog->SetView(view);
     m_instancedEffect->SetView(view);
-    
+
     m_effect->SetProjection(projection);
     m_effectWireframe->SetProjection(projection);
     m_effectTexture->SetProjection(projection);

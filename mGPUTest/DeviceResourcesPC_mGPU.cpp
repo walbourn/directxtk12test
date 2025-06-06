@@ -553,7 +553,7 @@ void DeviceResources::HandleDeviceLost()
     m_dxgiFactory.Reset();
 
 #if defined(_DEBUG) && !defined(__MINGW32__)
-    { 
+    {
         ComPtr<IDXGIDebug1> dxgiDebug;
         if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiDebug))))
         {

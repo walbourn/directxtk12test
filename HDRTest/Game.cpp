@@ -596,7 +596,7 @@ void Game::CreateDeviceDependentResources()
         m_brightEffect->SetLightDiffuseColor(1, c_VeryBrightWhite);
         m_brightEffect->SetLightDiffuseColor(2, Colors::White);
     }
-       
+
     m_states = std::make_unique<CommonStates>(device);
 
     ResourceUploadBatch resourceUpload(device);

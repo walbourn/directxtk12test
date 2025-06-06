@@ -673,7 +673,7 @@ void Game::Render()
             pp->Process(commandList);
         }
         break;
-       
+
     case 16:
         {
             descstr = L"ToneMap (None)";
@@ -1077,7 +1077,7 @@ void Game::CreateWindowSizeDependentResources()
             m_rtvDescriptors->GetCpuHandle(RTDescriptors::Blur1RT));
 
         device->CreateShaderResourceView(m_blur1Tex.Get(), nullptr, m_resourceDescriptors->GetCpuHandle(Descriptors::Blur1Tex));
-    
+
         DX::ThrowIfFailed(
             device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES,
                 &desc,

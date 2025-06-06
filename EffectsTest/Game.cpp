@@ -517,7 +517,7 @@ void Game::Render()
     m_envmap->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
     m_envmap->SetAlpha(1.f);
- 
+
     // Environment map with fog.
     m_envmapFog->SetWorld(world * XMMatrixTranslation(col6, row2, 2 - alphaFade * 6));
     m_envmapFog->Apply(commandList);
@@ -575,7 +575,7 @@ void Game::Render()
         m_envmapFogPPL->Apply(commandList);
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
-        // Light only from the left + per pixel lighting, with animating specular 
+        // Light only from the left + per pixel lighting, with animating specular
         m_envmapSpecPPL->SetLightDirection(0, XMVectorSet(1, 0, 0, 0));
         m_envmapSpecPPL->SetLightEnabled(1, false);
         m_envmapSpecPPL->SetLightEnabled(2, false);
@@ -996,7 +996,7 @@ void Game::CreateDeviceDependentResources()
 
     DX::ThrowIfFailed(
         CreateDDSTextureFromFileEx(device, resourceUpload, L"cat.dds",
-            0, D3D12_RESOURCE_FLAG_NONE, loadFlags, 
+            0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
             m_cat.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_cat.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Cat));
@@ -1032,21 +1032,21 @@ void Game::CreateDeviceDependentResources()
 
     DX::ThrowIfFailed(
         CreateDDSTextureFromFileEx(device, resourceUpload, L"overlay.dds",
-            0, D3D12_RESOURCE_FLAG_NONE, loadFlags, 
+            0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
             m_overlay.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_overlay.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Overlay));
 
     DX::ThrowIfFailed(
         CreateDDSTextureFromFileEx(device, resourceUpload, L"default.dds",
-            0, D3D12_RESOURCE_FLAG_NONE, loadFlags, 
+            0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
             m_defaultTex.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_defaultTex.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::DefaultTex));
 
     DX::ThrowIfFailed(
         CreateDDSTextureFromFileEx(device, resourceUpload, L"spnza_bricks_a.DDS",
-            0, D3D12_RESOURCE_FLAG_NONE, loadFlags, 
+            0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
             m_brickDiffuse.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_brickDiffuse.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::BrickDiffuse));

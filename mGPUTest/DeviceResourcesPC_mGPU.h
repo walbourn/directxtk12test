@@ -89,7 +89,7 @@ namespace DX
 
             return CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuHandle, static_cast<INT>(m_backBufferIndex), m_pAdaptersD3D[idx].m_rtvDescriptorSize);
         }
-        
+
         CD3DX12_CPU_DESCRIPTOR_HANDLE GetDepthStencilView(unsigned int idx = 0) const noexcept
         {
         #ifdef __MINGW32__

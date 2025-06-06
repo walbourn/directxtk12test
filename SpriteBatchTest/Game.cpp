@@ -533,7 +533,7 @@ void Game::OnDeviceLost()
     m_letterB.Reset();
     m_letterC.Reset();
     m_resourceDescriptors.reset();
-    
+
     m_spriteBatch.reset();
     m_spriteBatchSampler.reset();
 

@@ -54,7 +54,7 @@ Game::~Game()
 
 // Initialize the Direct3D resources required to run.
 void Game::Initialize(
-#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) 
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
     HWND window,
 #else
     IUnknown* window,
@@ -209,11 +209,11 @@ void Game::Render()
             { Vector3(0.f, 0.5f, 0.5f), red},                    {Vector3(0.5f, -0.5f, 0.5f), green},
             { Vector3(-0.5f, -0.5f, 0.5f), blue}
         };
-        
+
         m_batch[adapterIdx]->DrawTriangle(tri[0], tri[1], tri[2]);
 
         // Quad (same type as triangle)
-        
+
         Vertex quad[] =
         {
             { Vector3(0.75f, 0.75f, 0.5), gray },				{ Vector3(0.95f, 0.75f, 0.5), gray },
@@ -221,7 +221,7 @@ void Game::Render()
         };
 
         m_batch[adapterIdx]->DrawQuad(quad[0], quad[1], quad[2], quad[3]);
-    
+
         m_batch[adapterIdx]->End();
 
         PIXEndEvent(commandList);
@@ -230,7 +230,7 @@ void Game::Render()
     // Show the new frame.
     PIXBeginEvent(m_deviceResources->GetCommandQueue(0), PIX_COLOR_DEFAULT, L"Present");
     m_deviceResources->Present();
-    
+
     for (unsigned int adapterIdx = 0; adapterIdx != m_deviceResources->GetDeviceCount(); ++adapterIdx)
     {
         m_graphicsMemory[adapterIdx]->Commit(m_deviceResources->GetCommandQueue(adapterIdx));
@@ -274,7 +274,7 @@ void Game::OnResuming()
     m_timer.ResetElapsedTime();
 }
 
-#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) 
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
 void Game::OnWindowMoved()
 {
     const auto r = m_deviceResources->GetOutputSize();
@@ -329,7 +329,7 @@ void Game::CreateDeviceDependentResources()
 
         m_graphicsMemory[adapterIdx]	= std::make_unique<GraphicsMemory>(device);
         m_batch[adapterIdx]				= std::make_unique<PrimitiveBatch<Vertex>>(device);
-       
+
         pd.primitiveTopology            = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
         m_effectTri[adapterIdx]			= std::make_unique<BasicEffect>(device, EffectFlags::VertexColor, pd);
 

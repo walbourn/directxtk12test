@@ -176,7 +176,7 @@ std::unique_ptr<Model> CreateModelFromOBJ(
 
     // Create a subset for each attribute/material
     std::vector<Model::ModelMaterialInfo> materials;
-    
+
     std::map<std::wstring, int> textureDictionary;
 
     uint32_t curmaterial = static_cast<uint32_t>(-1);
