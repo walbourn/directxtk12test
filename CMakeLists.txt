@@ -291,6 +291,7 @@ if(NOT BUILD_BVT)
         PBRModelTest/pch.h
         Common/Animation.cpp
         Common/Animation.h
+        Common/FindMedia.h
         Common/RenderTexture.cpp
         Common/RenderTexture.h
         ${D3D_COMMON_FILES}
