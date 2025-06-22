@@ -42,6 +42,9 @@
     <ClInclude Include="..\Common\Animation.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\Common\FindMedia.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />

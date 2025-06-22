@@ -291,6 +291,7 @@ if(NOT BUILD_BVT)
         PBRModelTest/pch.h
         Common/Animation.cpp
         Common/Animation.h
+        Common/FindMedia.h
         Common/RenderTexture.cpp
         Common/RenderTexture.h
         ${D3D_COMMON_FILES}
@@ -387,6 +388,7 @@ if(NOT BUILD_BVT)
         GamePadTest/Game.cpp
         GamePadTest/Game.h
         GamePadTest/pch.h
+        Common/FindMedia.h
         ${D3D_COMMON_FILES}
         )
     target_include_directories(gamepadtest PRIVATE ./GamePadTest)
@@ -403,6 +405,7 @@ if(NOT BUILD_BVT)
         KeyboardTest/Game.cpp
         KeyboardTest/Game.h
         KeyboardTest/pch.h
+        Common/FindMedia.h
         ${D3D_COMMON_FILES}
         )
     target_include_directories(keyboardtest PRIVATE ./KeyboardTest)
@@ -419,6 +422,7 @@ if(NOT BUILD_BVT)
         MouseTest/Game.cpp
         MouseTest/Game.h
         MouseTest/pch.h
+        Common/FindMedia.h
         ${D3D_COMMON_FILES}
         )
     target_include_directories(mousetest PRIVATE ./MouseTest)
