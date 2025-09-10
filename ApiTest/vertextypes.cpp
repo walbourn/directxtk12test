@@ -14,7 +14,7 @@
 #include "VertexTypes.h"
 
 #include "CommonStates.h"
-#include "EFfects.h"
+#include "Effects.h"
 #include "EffectPipelineStateDescription.h"
 #include "RenderTargetState.h"
 
