@@ -174,6 +174,10 @@ extern _Success_(return) bool Test15(_In_ ID3D12Device *device);
 extern _Success_(return) bool Test16(_In_ ID3D12Device *device);
 extern _Success_(return) bool Test17(_In_ ID3D12Device *device);
 
+#ifdef TEST_AUDIO
+extern _Success_(return) bool TestA01(_In_ ID3D12Device *device);
+#endif
+
 const TestInfo g_Tests[] =
 {
     { "BasicEffects", Test00 },
@@ -194,6 +198,10 @@ const TestInfo g_Tests[] =
     { "Keyboard", Test15 },
     { "Mouse", Test16 },
     { "LoaderHelpers (internal)", Test17 },
+
+#ifdef TEST_AUDIO
+    { "Audio", TestA01 },
+#endif
 };
 
 //-------------------------------------------------------------------------------------
