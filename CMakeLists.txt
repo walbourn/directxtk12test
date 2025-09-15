@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-cmake_minimum_required (VERSION 3.20)
+cmake_minimum_required (VERSION 3.21)
 
 project (DirectXTK12Test
   DESCRIPTION "DirectX Tool Kit for DX12 Test Suite"
@@ -9,15 +9,6 @@ project (DirectXTK12Test
   LANGUAGES CXX)
 
 option(BUILD_BVT "Build-verification test" OFF)
-
-if(CMAKE_VERSION VERSION_LESS 3.21)
-  get_property(not_top DIRECTORY PROPERTY PARENT_DIRECTORY)
-  if(not_top)
-    set(PROJECT_IS_TOP_LEVEL false)
-  else()
-    set(PROJECT_IS_TOP_LEVEL true)
-  endif()
-endif()
 
 if(PROJECT_IS_TOP_LEVEL)
   message(FATAL_ERROR "DirectX Tool Kit Test Suite should be built by the main CMakeLists")
@@ -605,22 +596,20 @@ if(ENABLE_CODE_COVERAGE)
 endif()
 
 if(NOT BUILD_BVT)
-  if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.21)
-    if(BUILD_XAUDIO_REDIST)
-      add_custom_command(TARGET simpleaudiotest POST_BUILD
-          COMMAND ${CMAKE_COMMAND} -E $<IF:$<BOOL:$<TARGET_RUNTIME_DLLS:simpleaudiotest>>,copy,true>
-          $<TARGET_RUNTIME_DLLS:simpleaudiotest> $<TARGET_FILE_DIR:simpleaudiotest>
-          COMMAND_EXPAND_LISTS
-          )
-    endif()
+  if(BUILD_XAUDIO_REDIST)
+    add_custom_command(TARGET simpleaudiotest POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E $<IF:$<BOOL:$<TARGET_RUNTIME_DLLS:simpleaudiotest>>,copy,true>
+        $<TARGET_RUNTIME_DLLS:simpleaudiotest> $<TARGET_FILE_DIR:simpleaudiotest>
+        COMMAND_EXPAND_LISTS
+        )
+  endif()
 
-    if(BUILD_GAMEINPUT)
-      add_custom_command(TARGET gamepadtest POST_BUILD
-          COMMAND ${CMAKE_COMMAND} -E $<IF:$<BOOL:$<TARGET_RUNTIME_DLLS:gamepadtest>>,copy,true>
-          $<TARGET_RUNTIME_DLLS:gamepadtest> $<TARGET_FILE_DIR:gamepadtest>
-          COMMAND_EXPAND_LISTS
-          )
-    endif()
+  if(BUILD_GAMEINPUT)
+    add_custom_command(TARGET gamepadtest POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E $<IF:$<BOOL:$<TARGET_RUNTIME_DLLS:gamepadtest>>,copy,true>
+        $<TARGET_RUNTIME_DLLS:gamepadtest> $<TARGET_FILE_DIR:gamepadtest>
+        COMMAND_EXPAND_LISTS
+        )
   endif()
 
   if(TARGET Microsoft::DirectX12-Agility)
