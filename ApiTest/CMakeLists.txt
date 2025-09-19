@@ -16,6 +16,7 @@ set(SOURCES
   ApiTest.cpp
   bufferhelpers.cpp
   commonstates.cpp
+  descriptorheap.cpp
   directxhelpers.cpp
   effects.cpp
   graphicsmemory.cpp

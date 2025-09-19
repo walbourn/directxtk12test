@@ -173,6 +173,8 @@ extern _Success_(return) bool Test14(_In_ ID3D12Device *device);
 extern _Success_(return) bool Test15(_In_ ID3D12Device *device);
 extern _Success_(return) bool Test16(_In_ ID3D12Device *device);
 extern _Success_(return) bool Test17(_In_ ID3D12Device *device);
+extern _Success_(return) bool Test18(_In_ ID3D12Device *device);
+extern _Success_(return) bool Test19(_In_ ID3D12Device *device);
 
 #ifdef TEST_AUDIO
 extern _Success_(return) bool TestA01(_In_ ID3D12Device *device);
@@ -183,6 +185,8 @@ const TestInfo g_Tests[] =
     { "BasicEffects", Test00 },
     { "BufferHelpers", Test01 },
     { "CommonStates", Test02 },
+    { "DescriptorHeap", Test18 },
+    { "DescriptorPile", Test19 },
     { "DirectXHelpers", Test03 },
     { "GeometricPrimitive", Test04 },
     { "GraphicsMemory", Test05 },
