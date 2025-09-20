@@ -182,14 +182,14 @@ extern _Success_(return) bool TestA01(_In_ ID3D12Device *device);
 
 const TestInfo g_Tests[] =
 {
-    { "BasicEffects", Test00 },
+    // Note that Test00 is GraphicsMemory, which must be run first in wmain.
+    { "BasicEffects", Test05 },
     { "BufferHelpers", Test01 },
     { "CommonStates", Test02 },
     { "DescriptorHeap", Test18 },
     { "DescriptorPile", Test19 },
     { "DirectXHelpers", Test03 },
     { "GeometricPrimitive", Test04 },
-    { "GraphicsMemory", Test05 },
     { "PostProcess", Test06 },
     { "PrimitiveBatch", Test07 },
     { "SpriteBatch", Test08 },
@@ -215,7 +215,7 @@ bool RunTests(_In_ ID3D12Device *device)
     if (!device)
         return false;
 
-    size_t nPass = 0;
+    size_t nPass = 1; // Test00 in wmain
     size_t nFail = 0;
 
     for(size_t i=0; i < std::size(g_Tests); ++i)
@@ -286,6 +286,19 @@ int __cdecl wmain()
 #ifdef _MSC_VER
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
+
+    // Explicitly do Graphicsmemory tests first.
+    printf("GraphicsMemory: ");
+
+    if (Test00(device.Get()))
+    {
+        printf("PASS\n");
+    }
+    else
+    {
+        printf("FAIL\n");
+        return -1;
+    }
 
     // The DirectX 12 version of the tool kit requires this singleton.
     std::unique_ptr<DirectX::GraphicsMemory> graphicsMemory;

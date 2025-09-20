@@ -137,7 +137,7 @@ namespace
 }
 
 _Success_(return)
-bool Test00(_In_ ID3D12Device *device)
+bool Test05(_In_ ID3D12Device *device)
 {
     if (!device)
         return false;

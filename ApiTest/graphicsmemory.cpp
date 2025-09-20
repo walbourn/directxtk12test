@@ -28,14 +28,153 @@ static_assert(std::is_nothrow_move_constructible<GraphicsMemory>::value, "Move C
 static_assert(std::is_nothrow_move_assignable<GraphicsMemory>::value, "Move Assign.");
 
 _Success_(return)
-bool Test05(_In_ ID3D12Device* device)
+bool Test00(_In_ ID3D12Device* device)
 {
     if (!device)
         return false;
 
-    //
-    // GraphicsMemory is required for the test to run at all. See ApiTest.cpp
-    //
+    std::unique_ptr<DirectX::GraphicsMemory> graphicsMemory;
+    bool caught = false;
+    try
+    {
+        graphicsMemory = std::make_unique<DirectX::GraphicsMemory>(nullptr);
+    }
+    catch(const std::exception&)
+    {
+        caught = true;
+    }
+    if (!caught)
+    {
+        printf("ERROR: Failed to catch null device pointer\n");
+        return false;
+    }
 
-    return true;
+    try
+    {
+        graphicsMemory = std::make_unique<DirectX::GraphicsMemory>(device);
+    }
+    catch(const std::exception& e)
+    {
+        printf("ERROR: Failed creating graphics memory object (except: %s)\n", e.what());
+        return false;
+    }
+
+    if (!graphicsMemory || graphicsMemory->GetDevice() != device)
+    {
+        printf("ERROR: Failed to create valid graphics memory object\n");
+        return false;
+    }
+
+    bool success = true;
+
+    GraphicsResource res = {};
+    try
+    {
+        res = graphicsMemory->Allocate(1024);
+
+        if (!res
+            || res.Size() < 1024
+            || res.Memory() == nullptr
+            || res.Resource() == nullptr
+            || res.GpuAddress() == 0)
+        {
+            printf("ERROR: Failed to allocate graphics memory\n");
+            success = false;
+        }
+
+        GraphicsResource res2 = std::move(res);
+        if (res
+            || res2.Size() < 1024
+            || res2.Memory() == nullptr
+            || res2.Resource() == nullptr
+            || res2.GpuAddress() == 0)
+        {
+            printf("ERROR: Move ctor of GraphicsResource failed\n");
+            success = false;
+        }
+
+        res2.Reset();
+        if (res2)
+        {
+            printf("ERROR: Reset of GraphicsResource failed\n");
+            success = false;
+        }
+    }
+    catch(const std::exception& e)
+    {
+        printf("ERROR: Failed to allocate graphics memory (except: %s)\n", e.what());
+        success = false;
+    }
+
+    SharedGraphicsResource sharedRes;
+    try
+    {
+        sharedRes = graphicsMemory->Allocate(1024);
+
+        if (!sharedRes
+            || sharedRes.Size() < 1024
+            || sharedRes.Memory() == nullptr
+            || sharedRes.Resource() == nullptr
+            || sharedRes.GpuAddress() == 0)
+        {
+            printf("ERROR: Failed to allocate [shared] graphics memory\n");
+            success = false;
+        }
+
+        SharedGraphicsResource sharedRes2 = std::move(sharedRes);
+        if (sharedRes
+            || sharedRes2.Size() < 1024
+            || sharedRes2.Memory() == nullptr
+            || sharedRes2.Resource() == nullptr
+            || sharedRes2.GpuAddress() == 0)
+        {
+            printf("ERROR: Move ctor of SharedGraphicsResource failed\n");
+            success = false;
+        }
+
+        SharedGraphicsResource sharedRes3 = sharedRes2;
+        if (!sharedRes3
+            || sharedRes3.Size() < 1024
+            || sharedRes3.Memory() == nullptr
+            || sharedRes3.Resource() == nullptr
+            || sharedRes3.GpuAddress() == 0
+            || !sharedRes2
+            || sharedRes2.Size() != sharedRes3.Size()
+            || sharedRes2.Memory() != sharedRes3.Memory()
+            || sharedRes2.Resource() != sharedRes3.Resource()
+            || sharedRes2.GpuAddress() != sharedRes3.GpuAddress())
+        {
+            printf("ERROR: Copy ctor of SharedGraphicsResource failed\n");
+            success = false;
+        }
+
+        sharedRes2.Reset();
+        if (sharedRes2)
+        {
+            printf("ERROR: Reset of SharedGraphicsResource failed\n");
+            success = false;
+        }
+    }
+    catch(const std::exception& e)
+    {
+        printf("ERROR: Failed to allocate [shared] graphics memory (except: %s)\n", e.what());
+        success = false;
+    }
+
+    try
+    {
+        auto graphicsMemory2 = std::move(*graphicsMemory);
+        if (graphicsMemory->GetDevice() != nullptr || graphicsMemory2.GetDevice() == nullptr)
+        {
+            printf("ERROR: Move ctor of GraphicsMemory failed\n");
+            success = false;
+        }
+    }
+    catch(const std::exception& e)
+    {
+        printf("ERROR: Move ctor of GraphicsMemory failed (except: %s)\n", e.what());
+        success = false;
+    }
+
+    return success;
 }
