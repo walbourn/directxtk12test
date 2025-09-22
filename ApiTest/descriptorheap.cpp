@@ -136,9 +136,10 @@ bool Test18(_In_ ID3D12Device* device)
 
 
     caught = false;
+    ID3D12Device* nullDevice = nullptr;
     try
     {
-        resourceDescriptors = std::make_unique<DescriptorHeap>(reinterpret_cast<ID3D12Device*>(nullptr), 3);
+        resourceDescriptors = std::make_unique<DescriptorHeap>(nullDevice, 3);
     }
     catch(const std::exception&)
     {
@@ -151,9 +152,10 @@ bool Test18(_In_ ID3D12Device* device)
     }
 
     caught = false;
+    ID3D12DescriptorHeap* nullHeap = nullptr;
     try
     {
-        resourceDescriptors = std::make_unique<DescriptorHeap>(reinterpret_cast<ID3D12DescriptorHeap*>(nullptr));
+        resourceDescriptors = std::make_unique<DescriptorHeap>(nullHeap);
     }
     catch(const std::exception&)
     {
