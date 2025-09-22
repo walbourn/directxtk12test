@@ -23,6 +23,9 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
+    constexpr float SWAP_TIME = 1.f;
+    constexpr float INTERACTIVE_TIME = 10.f;
+
     inline float randf()
     {
         return (float)rand() / (float)RAND_MAX * 10000;
@@ -36,6 +39,8 @@ namespace
 }
 
 Game::Game() noexcept(false) :
+    m_sortMode(0),
+    m_delay(0),
     m_frame(0)
 {
 #ifdef GAMMA_CORRECT_RENDERING
@@ -136,7 +141,7 @@ void Game::Tick()
 }
 
 // Updates the world.
-void Game::Update(DX::StepTimer const&)
+void Game::Update(DX::StepTimer const& timer)
 {
     PIXBeginEvent(PIX_COLOR_DEFAULT, L"Update");
 
@@ -146,6 +151,17 @@ void Game::Update(DX::StepTimer const&)
     {
         ExitGame();
     }
+
+    if (pad.IsConnected())
+    {
+        m_gamePadButtons.Update(pad);
+    }
+    else
+    {
+        m_gamePadButtons.Reset();
+    }
+
+    m_keyboardButtons.Update(kb);
 
     if (kb.Left || (pad.IsConnected() && pad.dpad.left))
     {
@@ -174,6 +190,23 @@ void Game::Update(DX::StepTimer const&)
         assert(m_spriteBatch->GetRotation() == DXGI_MODE_ROTATION_ROTATE180);
 
         m_spriteBatchSampler->SetRotation(DXGI_MODE_ROTATION_ROTATE180);
+    }
+
+    if (m_keyboardButtons.IsKeyPressed(Keyboard::Space) || (m_gamePadButtons.y == GamePad::ButtonStateTracker::PRESSED))
+    {
+        m_sortMode = SpriteSortMode_Deferred;
+
+        m_delay = INTERACTIVE_TIME;
+    }
+    else if (!kb.Space && !(pad.IsConnected() && pad.IsYPressed()))
+    {
+        m_delay -= static_cast<float>(timer.GetElapsedSeconds());
+
+        if (m_delay <= 0.f)
+        {
+            CycleSortMode();
+            m_delay = SWAP_TIME;
+        }
     }
 
     PIXEndEvent();
@@ -218,7 +251,7 @@ void Game::Render()
     ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap(), m_states->Heap() };
     commandList->SetDescriptorHeaps(1, heaps);
 
-    m_spriteBatch->Begin(commandList);
+    m_spriteBatch->Begin(commandList, static_cast<SpriteSortMode>(m_sortMode));
 
     float time = 60.f * static_cast<float>(m_timer.GetTotalSeconds());
 
@@ -355,6 +388,12 @@ void Game::Clear()
 
 #pragma region Message Handlers
 // Message handlers
+void Game::OnActivated()
+{
+    m_gamePadButtons.Reset();
+    m_keyboardButtons.Reset();
+}
+
 void Game::OnSuspending()
 {
     m_deviceResources->Suspend();
@@ -365,6 +404,8 @@ void Game::OnResuming()
     m_deviceResources->Resume();
 
     m_timer.ResetElapsedTime();
+    m_gamePadButtons.Reset();
+    m_keyboardButtons.Reset();
 }
 
 #ifdef PC
@@ -549,3 +590,13 @@ void Game::OnDeviceRestored()
 }
 #endif
 #pragma endregion
+
+void Game::CycleSortMode()
+{
+    m_sortMode += 1;
+
+    if (m_sortMode > SpriteSortMode_FrontToBack)
+    {
+        m_sortMode = SpriteSortMode_Deferred;
+    }
+}
