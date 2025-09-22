@@ -154,10 +154,91 @@ bool Test00(_In_ ID3D12Device* device)
             printf("ERROR: Reset of SharedGraphicsResource failed\n");
             success = false;
         }
+
+        SharedGraphicsResource sharedRes4 = std::move(sharedRes3);
+        if(!sharedRes4
+            || sharedRes3
+            || sharedRes4.Size() < 1024
+            || sharedRes4.Memory() == nullptr
+            || sharedRes4.Resource() == nullptr
+            || sharedRes4.GpuAddress() == 0)
+        {
+            printf("ERROR: Move ctor of SharedGraphicsResource failed\n");
+            success = false;
+        }
+
+        GraphicsResource res3 = graphicsMemory->Allocate(1024 * 1024 * 1024);
+        if (!res3
+            || res3.Size() < 1024 * 1024 * 1024
+            || res3.Memory() == nullptr
+            || res3.Resource() == nullptr
+            || res3.GpuAddress() == 0)
+        {
+            printf("ERROR: Failed to allocate large graphics memory\n");
+            success = false;
+        }
+
+        SharedGraphicsResource sharedRes5;
+        sharedRes5.Reset(std::move(res3));
+        if (!sharedRes5
+            || res3
+            || sharedRes5.Size() < 1024 * 1024 * 1024
+            || sharedRes5.Memory() == nullptr
+            || sharedRes5.Resource() == nullptr
+            || sharedRes5.GpuAddress() == 0)
+        {
+            printf("ERROR: Failed to reset to large graphics memory unique to shared\n");
+            success = false;
+        }
+
+        SharedGraphicsResource sharedRes6;
+        sharedRes6.Reset(sharedRes5);
+        if (!sharedRes6
+            || !sharedRes5
+            || sharedRes6.Size() < 1024 * 1024 * 1024
+            || sharedRes6.Memory() == nullptr
+            || sharedRes6.Resource() == nullptr
+            || sharedRes6.GpuAddress() == 0)
+        {
+            printf("ERROR: Failed to reset to large graphics memory shared to shared\n");
+            success = false;
+        }
+
+        SharedGraphicsResource sharedRes7;
+        sharedRes7 = std::move(std::move(sharedRes6));
+        if (!sharedRes7
+            || sharedRes6
+            || sharedRes7.Size() < 1024 * 1024 * 1024
+            || sharedRes7.Memory() == nullptr
+            || sharedRes7.Resource() == nullptr
+            || sharedRes7.GpuAddress() == 0)
+        {
+            printf("ERROR: Move reset of SharedGraphicsResource failed\n");
+            success = false;
+        }
     }
     catch(const std::exception& e)
     {
         printf("ERROR: Failed to allocate [shared] graphics memory (except: %s)\n", e.what());
+        success = false;
+    }
+
+    try
+    {
+        auto stats = graphicsMemory->GetStatistics();
+        if (stats.totalMemory == 0 || stats.totalPages == 0)
+        {
+            printf("ERROR: GetStatistics of GraphicsMemory failed\n");
+            success = false;
+        }
+
+        graphicsMemory->ResetStatistics();
+
+        graphicsMemory->GarbageCollect();
+    }
+    catch(const std::exception& e)
+    {
+        printf("ERROR: Method tests for GraphicsMemory failed (except: %s)\n", e.what());
         success = false;
     }
 
