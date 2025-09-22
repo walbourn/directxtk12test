@@ -87,6 +87,7 @@ bool Test00(_In_ ID3D12Device* device)
 
         GraphicsResource res2 = std::move(res);
         if (res
+            || !res2
             || res2.Size() < 1024
             || res2.Memory() == nullptr
             || res2.Resource() == nullptr
@@ -96,8 +97,21 @@ bool Test00(_In_ ID3D12Device* device)
             success = false;
         }
 
-        res2.Reset();
-        if (res2)
+        GraphicsResource res3;
+        res3 = std::move(res2);
+        if (res2
+            || !res3
+            || res3.Size() < 1024
+            || res3.Memory() == nullptr
+            || res3.Resource() == nullptr
+            || res3.GpuAddress() == 0)
+        {
+            printf("ERROR: Move assign of GraphicsResource failed\n");
+            success = false;
+        }
+
+        res3.Reset();
+        if (res3)
         {
             printf("ERROR: Reset of GraphicsResource failed\n");
             success = false;
@@ -126,6 +140,7 @@ bool Test00(_In_ ID3D12Device* device)
 
         SharedGraphicsResource sharedRes2 = std::move(sharedRes);
         if (sharedRes
+            || !sharedRes2
             || sharedRes2.Size() < 1024
             || sharedRes2.Memory() == nullptr
             || sharedRes2.Resource() == nullptr
@@ -208,7 +223,7 @@ bool Test00(_In_ ID3D12Device* device)
         }
 
         SharedGraphicsResource sharedRes7;
-        sharedRes7 = std::move(std::move(sharedRes6));
+        sharedRes7 = std::move(sharedRes6);
         if (!sharedRes7
             || sharedRes6
             || sharedRes7.Size() < 1024 * 1024 * 1024
@@ -216,7 +231,20 @@ bool Test00(_In_ ID3D12Device* device)
             || sharedRes7.Resource() == nullptr
             || sharedRes7.GpuAddress() == 0)
         {
-            printf("ERROR: Move reset of SharedGraphicsResource failed\n");
+            printf("ERROR: Move ctor of SharedGraphicsResource failed\n");
+            success = false;
+        }
+
+        SharedGraphicsResource sharedRes8;
+        sharedRes8.Reset(std::move(sharedRes7));
+        if (sharedRes7
+            || !sharedRes8
+            || sharedRes8.Size() < 1024 * 1024 * 1024
+            || sharedRes8.Memory() == nullptr
+            || sharedRes8.Resource() == nullptr
+            || sharedRes8.GpuAddress() == 0)
+        {
+            printf("ERROR: Move shared reset of SharedGraphicsResource failed\n");
             success = false;
         }
     }
@@ -283,7 +311,7 @@ bool Test00(_In_ ID3D12Device* device)
     }
     catch(const std::exception& e)
     {
-        printf("ERROR: Move ctor of GraphicsMemory failed (except: %s)\n", e.what());
+        printf("ERROR: Move ctor/assign of GraphicsMemory failed (except: %s)\n", e.what());
         success = false;
     }
 

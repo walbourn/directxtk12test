@@ -46,7 +46,7 @@ bool Test18(_In_ ID3D12Device* device)
             HRESULT hr = device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&existingHeap));
             if (FAILED(hr))
             {
-                printf("ERROR: Failed to create test descriptor heap (hr: 0x%08X)\n", hr);
+                printf("ERROR: Failed to create test descriptor heap (hr: 0x%08X)\n", static_cast<unsigned long>(hr));
                 return false;
             }
 
