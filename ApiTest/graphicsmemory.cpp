@@ -16,7 +16,10 @@
 #include <cstdio>
 #include <type_traits>
 
+#include <wrl/client.h>
+
 using namespace DirectX;
+using Microsoft::WRL::ComPtr;
 
 static_assert(std::is_nothrow_move_constructible<GraphicsResource>::value, "Move Ctor.");
 static_assert(std::is_nothrow_move_assignable<GraphicsResource>::value, "Move Assign.");
@@ -240,6 +243,33 @@ bool Test00(_In_ ID3D12Device* device)
     {
         printf("ERROR: Method tests for GraphicsMemory failed (except: %s)\n", e.what());
         success = false;
+    }
+
+    {
+        D3D12_COMMAND_QUEUE_DESC queueDesc = {};
+        queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+        queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
+
+        ComPtr<ID3D12CommandQueue> commandQueue;
+        HRESULT hr = device->CreateCommandQueue(&queueDesc,
+            IID_PPV_ARGS(commandQueue.GetAddressOf()));
+        if (FAILED(hr))
+        {
+            printf("ERROR: Failed to create command queue (%08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+        else
+        {
+            try
+            {
+                graphicsMemory->Commit(commandQueue.Get());
+            }
+            catch (const std::exception& e)
+            {
+                printf("ERROR: Commit of GraphicsMemory failed (except: %s)\n", e.what());
+                success = false;
+            }
+        }
     }
 
     try
