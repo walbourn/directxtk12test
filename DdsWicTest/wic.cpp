@@ -570,8 +570,12 @@ bool Test03(_In_ ID3D12Device* pDevice)
             }
         }
 
+        // TODO - CreateWICTextureFromFile, WIC_LOADER_FIT_POW2, WIC_LOADER_MAKE_SQUARE, WIC_LOADER_FORCE_RGBA32, WIC_LOADER_FORCE_SRGB
+
         ++ncount;
     }
+
+    // TODO - invalid args
 
     printf("%zu files tested, %zu files passed ", ncount, npass );
 
@@ -664,8 +668,12 @@ bool Test04(_In_ ID3D12Device* pDevice)
             }
         }
 
+        // TODO - CreateWICTextureFromMemory
+
         ++ncount;
     }
+
+    // TODO - invalid args
 
     printf("%zu files tested, %zu files passed ", ncount, npass );
 
@@ -917,6 +925,8 @@ bool Test06(_In_ ID3D12Device* pDevice)
 
         ++ncount;
     }
+
+    // TODO - invalid args, targetFormat
 
     printf("%zu files tested, %zu files passed ", ncount, npass );
 

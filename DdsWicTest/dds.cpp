@@ -990,6 +990,42 @@ bool Test01(_In_ ID3D12Device* pDevice)
             }
         }
 
+    #ifndef BUILD_BVT_ONLY
+        hr = LoadDDSTextureFromFileEx(
+            pDevice,
+            szPath,
+            0,
+            D3D12_RESOURCE_FLAG_NONE,
+            flags | DDS_LOADER_FORCE_SRGB,
+            res.GetAddressOf(),
+            data,
+            subResources,
+            nullptr,
+            nullptr);
+        if (FAILED(hr))
+        {
+            success = false;
+            printf( "ERROR: Failed loading dds from file force-srgb (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath);
+        }
+
+        hr = LoadDDSTextureFromFileEx(
+            pDevice,
+            szPath,
+            0,
+            D3D12_RESOURCE_FLAG_NONE,
+            flags | DDS_LOADER_IGNORE_SRGB,
+            res.GetAddressOf(),
+            data,
+            subResources,
+            nullptr,
+            nullptr);
+        if (FAILED(hr))
+        {
+            success = false;
+            printf( "ERROR: Failed loading dds from file ignore-srgb (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath);
+        }
+    #endif // !BUILD_BVT_ONLY
+
         ++ncount;
     }
 
@@ -997,6 +1033,48 @@ bool Test01(_In_ ID3D12Device* pDevice)
     {
         printf("\nSkipped DIRECTX_TEX_MEDIA cases...\n");
     }
+
+    // invalid args
+    #pragma warning(push)
+    #pragma warning(disable:6385 6387)
+    {
+        ID3D12Device* nullDevice = nullptr;
+        std::unique_ptr<uint8_t[]> data;
+        std::vector<D3D12_SUBRESOURCE_DATA> subResources;
+        HRESULT hr = LoadDDSTextureFromFile(
+            nullDevice,
+            nullptr,
+            nullptr,
+            data,
+            subResources,
+            0,
+            nullptr,
+            nullptr);
+        if (hr != E_INVALIDARG)
+        {
+            success = false;
+            printf("ERROR: Expected failure for invalid args (HRESULT %08X)\n", static_cast<unsigned int>(hr));
+        }
+
+        hr = LoadDDSTextureFromFileEx(
+            nullDevice,
+            nullptr,
+            0,
+            D3D12_RESOURCE_FLAG_NONE,
+            DDS_LOADER_DEFAULT,
+            nullptr,
+            data,
+            subResources,
+            nullptr,
+            nullptr);
+        if (hr != E_INVALIDARG)
+        {
+            success = false;
+            printf("ERROR: Expected failure for invalid args ex (HRESULT %08X)\n", static_cast<unsigned int>(hr));
+        }
+
+    }
+    #pragma warning(pop)
 
     printf("%zu files tested, %zu files passed ", ncount, npass );
 
@@ -1111,6 +1189,49 @@ bool Test02(_In_ ID3D12Device* pDevice)
 
         ++ncount;
     }
+
+    // invalid args
+    #pragma warning(push)
+    #pragma warning(disable:6385 6387)
+    {
+        ID3D12Device* nullDevice = nullptr;
+        const uint8_t* nullData = nullptr;
+        std::unique_ptr<uint8_t[]> data;
+        std::vector<D3D12_SUBRESOURCE_DATA> subResources;
+        HRESULT hr = LoadDDSTextureFromMemory(
+            nullDevice,
+            nullData,
+            0,
+            nullptr,
+            subResources,
+            0,
+            nullptr,
+            nullptr);
+        if (hr != E_INVALIDARG)
+        {
+            success = false;
+            printf("ERROR: Expected failure for invalid args (HRESULT %08X)\n", static_cast<unsigned int>(hr));
+        }
+
+        hr = LoadDDSTextureFromMemoryEx(
+            nullDevice,
+            nullData,
+            0,
+            0,
+            D3D12_RESOURCE_FLAG_NONE,
+            DDS_LOADER_DEFAULT,
+            nullptr,
+            subResources,
+            nullptr,
+            nullptr);
+        if (hr != E_INVALIDARG)
+        {
+            success = false;
+            printf("ERROR: Expected failure for invalid args ex (HRESULT %08X)\n", static_cast<unsigned int>(hr));
+        }
+
+    }
+    #pragma warning(pop)
 
     printf("%zu files tested, %zu files passed ", ncount, npass );
 
@@ -1373,6 +1494,20 @@ bool Test05(_In_ ID3D12Device* pDevice)
 
         ++ncount;
     }
+
+    // invalid args
+    #pragma warning(push)
+    #pragma warning(disable:6385 6387)
+    {
+        ID3D12CommandQueue* nullQueue = nullptr;
+        hr = SaveDDSTextureToFile(nullQueue, nullptr, nullptr, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
+        if (hr != E_INVALIDARG)
+        {
+            success = false;
+            printf("ERROR: Expected failure for invalid args (HRESULT %08X)\n", static_cast<unsigned int>(hr));
+        }
+    }
+    #pragma warning(pop)
 
     printf("%zu files tested, %zu files passed ", ncount, npass );
 
