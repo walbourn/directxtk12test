@@ -997,7 +997,7 @@ bool Test01(_In_ ID3D12Device* pDevice)
             0,
             D3D12_RESOURCE_FLAG_NONE,
             flags | DDS_LOADER_FORCE_SRGB,
-            res.GetAddressOf(),
+            res.ReleaseAndGetAddressOf(),
             data,
             subResources,
             nullptr,
@@ -1014,7 +1014,7 @@ bool Test01(_In_ ID3D12Device* pDevice)
             0,
             D3D12_RESOURCE_FLAG_NONE,
             flags | DDS_LOADER_IGNORE_SRGB,
-            res.GetAddressOf(),
+            res.ReleaseAndGetAddressOf(),
             data,
             subResources,
             nullptr,
@@ -1023,6 +1023,44 @@ bool Test01(_In_ ID3D12Device* pDevice)
         {
             success = false;
             printf( "ERROR: Failed loading dds from file ignore-srgb (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath);
+        }
+
+        if (g_TestMedia[index].format != DXGI_FORMAT_YUY2
+            && g_TestMedia[index].format != DXGI_FORMAT_NV12)
+        {
+            hr = LoadDDSTextureFromFileEx(
+                pDevice,
+                szPath,
+                0,
+                D3D12_RESOURCE_FLAG_NONE,
+                flags | DDS_LOADER_MIP_RESERVE,
+                res.ReleaseAndGetAddressOf(),
+                data,
+                subResources,
+                nullptr,
+                nullptr);
+            if (FAILED(hr))
+            {
+                success = false;
+                printf( "ERROR: Failed loading dds from file mip-reserve (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath);
+            }
+        }
+
+        hr = LoadDDSTextureFromFileEx(
+            pDevice,
+            szPath,
+            4096,
+            D3D12_RESOURCE_FLAG_NONE,
+            flags,
+            res.ReleaseAndGetAddressOf(),
+            data,
+            subResources,
+            nullptr,
+            nullptr);
+        if (FAILED(hr))
+        {
+            success = false;
+            printf( "ERROR: Failed loading dds from file max size (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath);
         }
     #endif // !BUILD_BVT_ONLY
 
@@ -1034,16 +1072,42 @@ bool Test01(_In_ ID3D12Device* pDevice)
         printf("\nSkipped DIRECTX_TEX_MEDIA cases...\n");
     }
 
+    // missing file
+    {
+        ComPtr<ID3D12Resource> res;
+        std::unique_ptr<uint8_t[]> data;
+        std::vector<D3D12_SUBRESOURCE_DATA> subResources;
+        DDS_ALPHA_MODE alpha = DDS_ALPHA_MODE_UNKNOWN;
+        bool isCubeMap = false;
+        HRESULT hr = LoadDDSTextureFromFileEx(
+            pDevice,
+            L"TestFileDoesNotExist.DDS",
+            0,
+            D3D12_RESOURCE_FLAG_NONE,
+            DDS_LOADER_DEFAULT,
+            res.GetAddressOf(),
+            data,
+            subResources,
+            &alpha,
+            &isCubeMap);
+        if (hr != HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
+        {
+            success = false;
+            printf("ERROR: Expected failure for missing file (HRESULT %08X)\n", static_cast<unsigned int>(hr));
+        }
+    }
+
     // invalid args
     #pragma warning(push)
     #pragma warning(disable:6385 6387)
     {
         ID3D12Device* nullDevice = nullptr;
+        wchar_t* nullPath = nullptr;
         std::unique_ptr<uint8_t[]> data;
         std::vector<D3D12_SUBRESOURCE_DATA> subResources;
         HRESULT hr = LoadDDSTextureFromFile(
             nullDevice,
-            nullptr,
+            nullPath,
             nullptr,
             data,
             subResources,
@@ -1058,7 +1122,7 @@ bool Test01(_In_ ID3D12Device* pDevice)
 
         hr = LoadDDSTextureFromFileEx(
             nullDevice,
-            nullptr,
+            nullPath,
             0,
             D3D12_RESOURCE_FLAG_NONE,
             DDS_LOADER_DEFAULT,
@@ -1230,6 +1294,36 @@ bool Test02(_In_ ID3D12Device* pDevice)
             printf("ERROR: Expected failure for invalid args ex (HRESULT %08X)\n", static_cast<unsigned int>(hr));
         }
 
+        auto empty = std::make_unique<uint8_t[]>(1);
+        hr = LoadDDSTextureFromMemory(
+            pDevice,
+            empty.get(), 0,
+            nullptr,
+            subResources,
+            0,
+            nullptr,
+            nullptr);
+        if (hr != E_INVALIDARG)
+        {
+            success = false;
+            printf("ERROR: Expected failure for zero size (HRESULT %08X)\n", static_cast<unsigned int>(hr));
+        }
+
+        hr = LoadDDSTextureFromMemoryEx(
+            pDevice,
+            empty.get(), 0,
+            0,
+            D3D12_RESOURCE_FLAG_NONE,
+            DDS_LOADER_DEFAULT,
+            nullptr,
+            subResources,
+            nullptr,
+            nullptr);
+        if (hr != E_INVALIDARG)
+        {
+            success = false;
+            printf("ERROR: Expected failure for zero size ex (HRESULT %08X)\n", static_cast<unsigned int>(hr));
+        }
     }
     #pragma warning(pop)
 

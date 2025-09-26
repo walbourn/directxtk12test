@@ -570,12 +570,128 @@ bool Test03(_In_ ID3D12Device* pDevice)
             }
         }
 
-        // TODO - CreateWICTextureFromFile, WIC_LOADER_FIT_POW2, WIC_LOADER_MAKE_SQUARE, WIC_LOADER_FORCE_RGBA32, WIC_LOADER_FORCE_SRGB
+    #ifndef BUILD_BVT_ONLY
+        hr = LoadWICTextureFromFileEx(
+            pDevice,
+            szPath,
+            0,
+            D3D12_RESOURCE_FLAG_NONE,
+            WIC_LOADER_FIT_POW2,
+            res.ReleaseAndGetAddressOf(),
+            data,
+            subResource);
+        if ( FAILED(hr) )
+        {
+            success = false;
+            printf( "ERROR: Failed loading wic from file fit pow2 (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath);
+        }
+
+        hr = LoadWICTextureFromFileEx(
+            pDevice,
+            szPath,
+            0,
+            D3D12_RESOURCE_FLAG_NONE,
+            WIC_LOADER_MAKE_SQUARE,
+            res.ReleaseAndGetAddressOf(),
+            data,
+            subResource);
+        if ( FAILED(hr) )
+        {
+            success = false;
+            printf( "ERROR: Failed loading wic from file make square (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath);
+        }
+
+        hr = LoadWICTextureFromFileEx(
+            pDevice,
+            szPath,
+            0,
+            D3D12_RESOURCE_FLAG_NONE,
+            WIC_LOADER_FORCE_RGBA32,
+            res.ReleaseAndGetAddressOf(),
+            data,
+            subResource);
+        if ( FAILED(hr) )
+        {
+            success = false;
+            printf( "ERROR: Failed loading wic from file force RGBA (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath);
+        }
+
+        hr = LoadWICTextureFromFileEx(
+            pDevice,
+            szPath,
+            0,
+            D3D12_RESOURCE_FLAG_NONE,
+            WIC_LOADER_FORCE_SRGB,
+            res.ReleaseAndGetAddressOf(),
+            data,
+            subResource);
+        if ( FAILED(hr) )
+        {
+            success = false;
+            printf( "ERROR: Failed loading wic from file force srgb (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath);
+        }
+    #endif // !BUILD_BVT_ONLY
 
         ++ncount;
     }
 
-    // TODO - invalid args
+    // missing file
+    {
+        ComPtr<ID3D12Resource> res;
+        std::unique_ptr<uint8_t[]> data;
+        D3D12_SUBRESOURCE_DATA subResource = {};
+        HRESULT hr = LoadWICTextureFromFileEx(
+            pDevice,
+            L"TestFileDoesNotExist.PNG",
+            0,
+            D3D12_RESOURCE_FLAG_NONE,
+            WIC_LOADER_DEFAULT,
+            res.GetAddressOf(),
+            data,
+            subResource);
+        if (hr != HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
+        {
+            success = false;
+            printf("ERROR: Expected failure for missing file (HRESULT %08X)\n", static_cast<unsigned int>(hr));
+        }
+    }
+
+    // invalid args
+    #pragma warning(push)
+    #pragma warning(disable:6385 6387)
+    {
+        ID3D12Device* nullDevice = nullptr;
+        wchar_t* nullPath = nullptr;
+        std::unique_ptr<uint8_t[]> data;
+        D3D12_SUBRESOURCE_DATA subResource = {};
+        HRESULT hr = LoadWICTextureFromFile(
+            nullDevice,
+            nullPath,
+            nullptr,
+            data,
+            subResource);
+        if (hr != E_INVALIDARG)
+        {
+            success = false;
+            printf("ERROR: Expected failure for invalid args (HRESULT %08X)\n", static_cast<unsigned int>(hr));
+        }
+
+        hr = LoadWICTextureFromFileEx(
+            nullDevice,
+            nullPath,
+            0,
+            D3D12_RESOURCE_FLAG_NONE,
+            WIC_LOADER_DEFAULT,
+            nullptr,
+            data,
+            subResource);
+        if (hr != E_INVALIDARG)
+        {
+            success = false;
+            printf("ERROR: Expected failure for invalid ex args (HRESULT %08X)\n", static_cast<unsigned int>(hr));
+        }
+    }
+    #pragma warning(pop)
 
     printf("%zu files tested, %zu files passed ", ncount, npass );
 
@@ -668,12 +784,63 @@ bool Test04(_In_ ID3D12Device* pDevice)
             }
         }
 
-        // TODO - CreateWICTextureFromMemory
-
         ++ncount;
     }
 
-    // TODO - invalid args
+    // invalid args
+    #pragma warning(push)
+    #pragma warning(disable:6385 6387)
+    {
+        ID3D12Device* nullDevice = nullptr;
+        uint8_t* nullData = nullptr;
+        std::unique_ptr<uint8_t[]> data;
+        D3D12_SUBRESOURCE_DATA subResource = {};
+        HRESULT hr = LoadWICTextureFromMemory(
+            nullDevice,
+            nullData,
+            0,
+            nullptr,
+            data,
+            subResource);
+        if (hr != E_INVALIDARG)
+        {
+            success = false;
+            printf("ERROR: Expected failure for invalid args (HRESULT %08X)\n", static_cast<unsigned int>(hr));
+        }
+
+        hr = LoadWICTextureFromMemoryEx(
+            nullDevice,
+            nullData,
+            0,
+            0,
+            D3D12_RESOURCE_FLAG_NONE,
+            WIC_LOADER_DEFAULT,
+            nullptr,
+            data,
+            subResource);
+        if (hr != E_INVALIDARG)
+        {
+            success = false;
+            printf("ERROR: Expected failure for invalid ex args (HRESULT %08X)\n", static_cast<unsigned int>(hr));
+        }
+
+        auto empty = std::make_unique<uint8_t[]>(1);
+        hr = LoadWICTextureFromMemoryEx(
+            nullDevice,
+            empty.get(), 0,
+            0,
+            D3D12_RESOURCE_FLAG_NONE,
+            WIC_LOADER_DEFAULT,
+            nullptr,
+            data,
+            subResource);
+        if (hr != E_INVALIDARG)
+        {
+            success = false;
+            printf("ERROR: Expected failure for zero size (HRESULT %08X)\n", static_cast<unsigned int>(hr));
+        }
+    }
+    #pragma warning(pop)
 
     printf("%zu files tested, %zu files passed ", ncount, npass );
 
@@ -926,7 +1093,25 @@ bool Test06(_In_ ID3D12Device* pDevice)
         ++ncount;
     }
 
-    // TODO - invalid args, targetFormat
+    // invalid args
+    #pragma warning(push)
+    #pragma warning(disable:6385 6387)
+    {
+        ID3D12CommandQueue* nullQueue = nullptr;
+        hr = SaveWICTextureToFile(
+            nullQueue,
+            nullptr,
+            GUID_ContainerFormatGif,
+            nullptr,
+            D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET,
+            nullptr);
+        if (hr != E_INVALIDARG)
+        {
+            success = false;
+            printf("ERROR: Expected failure for invalid args (HRESULT %08X)\n", static_cast<unsigned int>(hr));
+        }
+    }
+    #pragma warning(pop)
 
     printf("%zu files tested, %zu files passed ", ncount, npass );
 
