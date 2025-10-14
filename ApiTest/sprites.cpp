@@ -30,15 +30,19 @@
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 
-static_assert(std::is_nothrow_move_constructible<ResourceUploadBatch>::value, "Move Ctor.");
-static_assert(std::is_nothrow_move_assignable<ResourceUploadBatch>::value, "Move Assign.");
-
+static_assert(!std::is_default_constructible<SpriteBatch>::value, "Default Ctor.");
+static_assert(!std::is_copy_assignable<SpriteBatch>::value, "Copy Assign.");
 static_assert(std::is_nothrow_move_constructible<SpriteBatch>::value, "Move Ctor.");
 static_assert(std::is_nothrow_move_assignable<SpriteBatch>::value, "Move Assign.");
 
+static_assert(!std::is_default_constructible<SpriteBatchPipelineStateDescription>::value, "Default Ctor.");
+static_assert(std::is_nothrow_copy_constructible<SpriteBatchPipelineStateDescription>::value, "Copy Ctor.");
+static_assert(std::is_copy_assignable<SpriteBatchPipelineStateDescription>::value, "Copy Assign.");
 static_assert(std::is_nothrow_move_constructible<SpriteBatchPipelineStateDescription>::value, "Move Ctor.");
-static_assert(std::is_nothrow_move_assignable<SpriteBatchPipelineStateDescription>::value, "Move Assign.");
+static_assert(std::is_move_assignable<SpriteBatchPipelineStateDescription>::value, "Move Assign.");
 
+static_assert(!std::is_default_constructible<SpriteFont>::value, "Default Ctor.");
+static_assert(!std::is_copy_assignable<SpriteFont>::value, "Copy Assign.");
 static_assert(std::is_nothrow_move_constructible<SpriteFont>::value, "Move Ctor.");
 static_assert(std::is_nothrow_move_assignable<SpriteFont>::value, "Move Assign.");
 
@@ -77,6 +81,8 @@ bool Test08(_In_ ID3D12Device *device)
 
     const RenderTargetState rtState(DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_D32_FLOAT);
 
+    bool success = true;
+
     std::unique_ptr<SpriteBatch> batch;
     try
     {
@@ -89,7 +95,7 @@ bool Test08(_In_ ID3D12Device *device)
     catch(const std::exception& e)
     {
         printf("ERROR: Failed creating object 1 (except: %s)\n", e.what());
-        return false;
+        success = false;
     }
 
     std::unique_ptr<SpriteBatch> batch2;
@@ -107,7 +113,24 @@ bool Test08(_In_ ID3D12Device *device)
     catch(const std::exception& e)
     {
         printf("ERROR: Failed creating object 2 (except: %s)\n", e.what());
-        return false;
+        success = false;
+    }
+
+    // invalid args
+    try
+    {
+        ID3D12Device* nullDevice = nullptr;
+        const SpriteBatchPipelineStateDescription pd(
+            rtState,
+            &CommonStates::NonPremultiplied);
+
+        auto invalid = std::make_unique<SpriteBatch>(nullDevice, resourceUpload, pd);
+
+        printf("ERROR: Failed to throw on null device\n");
+        success = false;
+    }
+    catch(const std::exception&)
+    {
     }
 
     try
@@ -121,7 +144,7 @@ bool Test08(_In_ ID3D12Device *device)
         return false;
     }
 
-    return true;
+    return success;
 }
 
 // SpriteFont
@@ -171,6 +194,7 @@ bool Test09(_In_ ID3D12Device *device)
     resourceUpload.Begin(queueDesc.Type);
 
     std::vector<std::unique_ptr<SpriteFont>> fonts;
+    fonts.resize(std::size(s_fonts));
 
     bool success = true;
 
@@ -181,13 +205,83 @@ bool Test09(_In_ ID3D12Device *device)
             auto font = std::make_unique<SpriteFont>(device, resourceUpload,
                 s_fonts[j],
                 resourceDescriptors->GetCpuHandle(j), resourceDescriptors->GetGpuHandle(j));
-            fonts.emplace_back(std::move(font));
+            fonts[j] = std::move(font);
         }
         catch(const std::exception& e)
         {
             printf("ERROR: Failed creating %ls object (except: %s)\n", s_fonts[j], e.what());
             success = false;
         }
+    }
+
+    // invalid args
+    try
+    {
+        ID3D12Device* nullDevice = nullptr;
+        D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptor = {};
+        D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor = {};
+
+        auto invalid = std::make_unique<SpriteFont>(nullDevice, resourceUpload, nullptr, cpuDescriptor, gpuDescriptor);
+
+        printf("ERROR: Failed to throw on null device\n");
+        success = false;
+    }
+    catch(const std::exception&)
+    {
+    }
+
+    try
+    {
+        D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptor = {};
+        D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor = {};
+
+        auto invalid = std::make_unique<SpriteFont>(device, resourceUpload, nullptr, cpuDescriptor, gpuDescriptor);
+
+        printf("ERROR: Failed to throw on null filename\n");
+        success = false;
+    }
+    catch(const std::exception&)
+    {
+    }
+
+    try
+    {
+        ID3D12Device* nullDevice = nullptr;
+        D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptor = {};
+        D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor = {};
+        auto invalid = std::make_unique<SpriteFont>(nullDevice, resourceUpload, nullptr, 0, cpuDescriptor, gpuDescriptor);
+
+        printf("ERROR: Failed to throw on null device ctor 2\n");
+        success = false;
+    }
+    catch(const std::exception&)
+    {
+    }
+
+    try
+    {
+        D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptor = {};
+        D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor = {};
+        auto invalid = std::make_unique<SpriteFont>(device, resourceUpload, nullptr, 0, cpuDescriptor, gpuDescriptor);
+
+        printf("ERROR: Failed to throw on null memory ctor 2\n");
+        success = false;
+    }
+    catch(const std::exception&)
+    {
+    }
+
+    try
+    {
+        D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptor = {};
+        XMUINT2 size = {};
+        auto invalid = std::make_unique<SpriteFont>(gpuDescriptor, size, nullptr, 0, 0.f);
+
+        printf("ERROR: Failed to throw on null ctor 3\n");
+        success = false;
+    }
+    catch(const std::exception&)
+    {
     }
 
     try

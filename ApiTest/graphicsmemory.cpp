@@ -21,12 +21,18 @@
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 
+static_assert(!std::is_copy_constructible<GraphicsResource>::value, "Copy Ctor.");
+static_assert(!std::is_copy_assignable<GraphicsResource>::value, "Copy Assign.");
 static_assert(std::is_nothrow_move_constructible<GraphicsResource>::value, "Move Ctor.");
 static_assert(std::is_nothrow_move_assignable<GraphicsResource>::value, "Move Assign.");
 
+static_assert(std::is_nothrow_copy_constructible<SharedGraphicsResource>::value, "Copy Ctor.");
+static_assert(std::is_nothrow_copy_assignable<SharedGraphicsResource>::value, "Copy Assign.");
 static_assert(std::is_nothrow_move_constructible<SharedGraphicsResource>::value, "Move Ctor.");
 static_assert(std::is_nothrow_move_assignable<SharedGraphicsResource>::value, "Move Assign.");
 
+static_assert(!std::is_copy_constructible<GraphicsMemory>::value, "Copy Ctor.");
+static_assert(!std::is_copy_assignable<GraphicsMemory>::value, "Copy Assign.");
 static_assert(std::is_nothrow_move_constructible<GraphicsMemory>::value, "Move Ctor.");
 static_assert(std::is_nothrow_move_assignable<GraphicsMemory>::value, "Move Assign.");
 

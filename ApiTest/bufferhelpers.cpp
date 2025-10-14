@@ -26,6 +26,21 @@
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 
+namespace
+{
+    const VertexPositionColor s_vertexData[3] =
+    {
+        { XMFLOAT3{ 0.0f,   0.5f,  0.5f }, XMFLOAT4{ 1.0f, 0.0f, 0.0f, 1.0f } },  // Top / Red
+        { XMFLOAT3{ 0.5f,  -0.5f,  0.5f }, XMFLOAT4{ 0.0f, 1.0f, 0.0f, 1.0f } },  // Right / Green
+        { XMFLOAT3{ -0.5f, -0.5f,  0.5f }, XMFLOAT4{ 0.0f, 0.0f, 1.0f, 1.0f } }   // Left / Blue
+    };
+
+    const uint32_t s_pixels[16] = {
+        0xff0000ff, 0xff00ff00, 0xffff0000, 0xffffff, 0xff0000ff, 0xff00ff00, 0xffff0000, 0xffffffff,
+        0xff0000ff, 0xff00ff00, 0xffff0000, 0xffffff, 0xff0000ff, 0xff00ff00, 0xffff0000, 0xffffffff,
+    };
+}
+
 _Success_(return)
 bool Test01(_In_ ID3D12Device* device)
 {
@@ -56,16 +71,12 @@ bool Test01(_In_ ID3D12Device* device)
     ComPtr<ID3D12Resource> test8;
     ComPtr<ID3D12Resource> test9;
     ComPtr<ID3D12Resource> test10;
+    ComPtr<ID3D12Resource> test11;
+    ComPtr<ID3D12Resource> test12;
+    ComPtr<ID3D12Resource> test13;
 
     // CreateUploadBuffer
     {
-        static const VertexPositionColor s_vertexData[3] =
-        {
-            { XMFLOAT3{ 0.0f,   0.5f,  0.5f }, XMFLOAT4{ 1.0f, 0.0f, 0.0f, 1.0f } },  // Top / Red
-            { XMFLOAT3{ 0.5f,  -0.5f,  0.5f }, XMFLOAT4{ 0.0f, 1.0f, 0.0f, 1.0f } },  // Right / Green
-            { XMFLOAT3{ -0.5f, -0.5f,  0.5f }, XMFLOAT4{ 0.0f, 0.0f, 1.0f, 1.0f } }   // Left / Blue
-        };
-
         hr = CreateUploadBuffer(device,
             s_vertexData, std::size(s_vertexData), sizeof(VertexPositionColor),
             test1.ReleaseAndGetAddressOf());
@@ -132,13 +143,6 @@ bool Test01(_In_ ID3D12Device* device)
 
     // CreateStaticBuffer
     {
-        static const VertexPositionColor s_vertexData[3] =
-        {
-            { XMFLOAT3{ 0.0f,   0.5f,  0.5f }, XMFLOAT4{ 1.0f, 0.0f, 0.0f, 1.0f } },  // Top / Red
-            { XMFLOAT3{ 0.5f,  -0.5f,  0.5f }, XMFLOAT4{ 0.0f, 1.0f, 0.0f, 1.0f } },  // Right / Green
-            { XMFLOAT3{ -0.5f, -0.5f,  0.5f }, XMFLOAT4{ 0.0f, 0.0f, 1.0f, 1.0f } }   // Left / Blue
-        };
-
         hr = CreateStaticBuffer(device,
             resourceUpload,
             s_vertexData, std::size(s_vertexData), sizeof(VertexPositionColor),
@@ -187,6 +191,212 @@ bool Test01(_In_ ID3D12Device* device)
             success = false;
         }
     }
+
+    // CreateTextureFromMemory
+    {
+        D3D12_SUBRESOURCE_DATA initData = { s_pixels, 0, 0 };
+        hr = CreateTextureFromMemory(device, resourceUpload, 4u, DXGI_FORMAT_B8G8R8A8_UNORM, initData, test11.ReleaseAndGetAddressOf());
+        if (FAILED(hr))
+        {
+            printf("ERROR: Failed CreateTextureFromMemory 1D test (%08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+
+        initData = { s_pixels, sizeof(uint32_t) * 8, 0 };
+        hr = CreateTextureFromMemory(device, resourceUpload, 8u, 2u, DXGI_FORMAT_B8G8R8A8_UNORM, initData, test12.ReleaseAndGetAddressOf());
+        if (FAILED(hr))
+        {
+            printf("ERROR: Failed CreateTextureFromMemory 2D test (%08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+
+        initData = { s_pixels, sizeof(uint32_t) * 2, sizeof(uint32_t) * 4 };
+        hr = CreateTextureFromMemory(device, resourceUpload, 8u, 2u, 4u, DXGI_FORMAT_B8G8R8A8_UNORM, initData, test13.ReleaseAndGetAddressOf());
+        if (FAILED(hr))
+        {
+            printf("ERROR: Failed CreateTextureFromMemory 3D test (%08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+    }
+
+    // invalid args
+    #pragma warning(push)
+    #pragma warning(disable:6385 6387)
+    {
+        ComPtr<ID3D12Resource> res;
+        ID3D12Device* nullDevice = nullptr;
+
+        // CreateUploadBuffer
+        hr = CreateUploadBuffer(device, nullptr, 0, 0, nullptr);
+        if (hr != E_INVALIDARG)
+        {
+            printf("ERROR: CreateUploadBuffer - expected failure for null buffer (HRESULT: %08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+
+        hr = CreateUploadBuffer(nullDevice, nullptr, 0, 0, res.ReleaseAndGetAddressOf());
+        if (hr != E_INVALIDARG)
+        {
+            printf("ERROR: CreateUploadBuffer - expected failure for null device (HRESULT: %08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+
+        hr = CreateUploadBuffer(device, s_vertexData, 0, 0, res.ReleaseAndGetAddressOf());
+        if (hr != E_INVALIDARG)
+        {
+            printf("ERROR: CreateUploadBuffer - expected failure for zero length (HRESULT: %08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+
+        hr = CreateUploadBuffer(device, s_vertexData, UINT32_MAX, INT_MAX, res.ReleaseAndGetAddressOf());
+        if (hr != HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED))
+        {
+            printf("ERROR: CreateUploadBuffer - expected failure for too large bytes (HRESULT: %08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+
+        // CreateUAVBuffer
+        hr = CreateUAVBuffer(device, sizeof(VertexPositionNormalColorTexture), nullptr);
+        if (hr != E_INVALIDARG)
+        {
+            printf("ERROR: CreateUAVBuffer - expected failure for null buffer (HRESULT: %08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+
+        hr = CreateUAVBuffer(nullDevice, sizeof(VertexPositionNormalColorTexture), res.ReleaseAndGetAddressOf());
+        if (hr != E_INVALIDARG)
+        {
+            printf("ERROR: CreateUAVBuffer - expected failure for null device (HRESULT: %08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+
+        hr = CreateUAVBuffer(device, UINT32_MAX, res.ReleaseAndGetAddressOf());
+        if (hr != HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED))
+        {
+            printf("ERROR: CreateUAVBuffer - expected failure for too large bytes (HRESULT: %08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+
+        // CreateStaticBuffer
+        hr = CreateStaticBuffer(device, resourceUpload, nullptr, 0, 0, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, nullptr);
+        if (hr != E_INVALIDARG)
+        {
+            printf("ERROR: CreateStaticBuffer - expected failure for null buffer (HRESULT: %08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+
+        hr = CreateStaticBuffer(nullDevice, resourceUpload, nullptr, 0, 0, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, res.ReleaseAndGetAddressOf());
+        if (hr != E_INVALIDARG)
+        {
+            printf("ERROR: CreateStaticBuffer - expected failure for null device (HRESULT: %08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+
+        hr = CreateStaticBuffer(device, resourceUpload, s_vertexData, 0, 0, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, res.ReleaseAndGetAddressOf());
+        if (hr != E_INVALIDARG)
+        {
+            printf("ERROR: CreateStaticBuffer - expected failure for zero length (HRESULT: %08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+
+        hr = CreateStaticBuffer(device, resourceUpload, s_vertexData, UINT32_MAX, INT32_MAX, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, res.ReleaseAndGetAddressOf());
+        if (hr != HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED))
+        {
+            printf("ERROR: CreateUploadBuffer - expected failure for too large bytes (HRESULT: %08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+
+        // CreateTextureFromMemory 1D
+        D3D12_SUBRESOURCE_DATA initData = { s_pixels, 0, 0 };
+        hr = CreateTextureFromMemory(device, resourceUpload, 0, DXGI_FORMAT_UNKNOWN, initData, nullptr);
+        if (hr != E_INVALIDARG)
+        {
+            printf("ERROR: CreateTextureFromMemory 1D - expected failure for null buffer (HRESULT: %08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+
+        hr = CreateTextureFromMemory(nullDevice, resourceUpload, 0, DXGI_FORMAT_UNKNOWN, initData, res.ReleaseAndGetAddressOf());
+        if (hr != E_INVALIDARG)
+        {
+            printf("ERROR: CreateTextureFromMemory 1D - expected failure for null device (HRESULT: %08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+
+        hr = CreateTextureFromMemory(device, resourceUpload, 0, DXGI_FORMAT_UNKNOWN, initData, res.ReleaseAndGetAddressOf());
+        if (hr != E_INVALIDARG)
+        {
+            printf("ERROR: CreateTextureFromMemory 1D - expected failure for zero dimensions (HRESULT: %08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+
+        hr = CreateTextureFromMemory(device, resourceUpload, UINT32_MAX, DXGI_FORMAT_UNKNOWN, initData, res.ReleaseAndGetAddressOf());
+        if (hr != HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED))
+        {
+            printf("ERROR: CreateTextureFromMemory 1D - expected failure for too large bytes (HRESULT: %08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+
+        // CreateTextureFromMemory 2D
+        initData = { s_pixels, sizeof(uint32_t) * 8, 0 };
+        hr = CreateTextureFromMemory(device, resourceUpload, 0, 0, DXGI_FORMAT_UNKNOWN, initData, nullptr);
+        if (hr != E_INVALIDARG)
+        {
+            printf("ERROR: CreateTextureFromMemory 2D - expected failure for null buffer (HRESULT: %08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+
+        hr = CreateTextureFromMemory(nullDevice, resourceUpload, 0, 0, DXGI_FORMAT_UNKNOWN, initData, res.ReleaseAndGetAddressOf());
+        if (hr != E_INVALIDARG)
+        {
+            printf("ERROR: CreateTextureFromMemory 2D - expected failure for null device (HRESULT: %08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+
+        hr = CreateTextureFromMemory(device, resourceUpload, 0, 0, DXGI_FORMAT_UNKNOWN, initData, res.ReleaseAndGetAddressOf());
+        if (hr != E_INVALIDARG)
+        {
+            printf("ERROR: CreateTextureFromMemory 2D - expected failure for zero dimensions (HRESULT: %08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+
+        hr = CreateTextureFromMemory(device, resourceUpload, UINT32_MAX, UINT32_MAX, DXGI_FORMAT_UNKNOWN, initData, res.ReleaseAndGetAddressOf());
+        if (hr != HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED))
+        {
+            printf("ERROR: CreateTextureFromMemory 2D - expected failure for too large bytes (HRESULT: %08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+
+        // CreateTextureFromMemory 2D
+        initData = { s_pixels, sizeof(uint32_t) * 2, sizeof(uint32_t) * 4 };
+        hr = CreateTextureFromMemory(device, resourceUpload, 0, 0, 0, DXGI_FORMAT_UNKNOWN, initData, nullptr);
+        if (hr != E_INVALIDARG)
+        {
+            printf("ERROR: CreateTextureFromMemory 3D - expected failure for null buffer (HRESULT: %08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+
+        hr = CreateTextureFromMemory(nullDevice, resourceUpload, 0, 0, 0, DXGI_FORMAT_UNKNOWN, initData, res.ReleaseAndGetAddressOf());
+        if (hr != E_INVALIDARG)
+        {
+            printf("ERROR: CreateTextureFromMemory 3D - expected failure for null device (HRESULT: %08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+
+        hr = CreateTextureFromMemory(device, resourceUpload, 0, 0, 0, DXGI_FORMAT_UNKNOWN, initData, res.ReleaseAndGetAddressOf());
+        if (hr != E_INVALIDARG)
+        {
+            printf("ERROR: CreateTextureFromMemory 3D - expected failure for zero dimensions (HRESULT: %08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+
+        hr = CreateTextureFromMemory(device, resourceUpload, UINT32_MAX, UINT32_MAX, UINT32_MAX, DXGI_FORMAT_UNKNOWN, initData, res.ReleaseAndGetAddressOf());
+        if (hr != HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED))
+        {
+            printf("ERROR: CreateTextureFromMemory 3D - expected failure for too large bytes (HRESULT: %08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+    }
+    #pragma warning(pop)
 
     try
     {

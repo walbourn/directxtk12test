@@ -362,7 +362,7 @@ namespace
         { 1024, 1024, DXGI_FORMAT_R32G32B32_FLOAT, DXTEX_MEDIA_PATH L"ramps_vdm_rel.TIF", {} },
         { 768, 512, DXGI_FORMAT_R32G32B32_FLOAT, DXTEX_MEDIA_PATH L"96bpp_RGB_FP.TIF", {} },
 
-        #ifdef _M_X64
+        #if defined(_M_X64) || defined(_M_ARM64) || defined(__amd64__) || defined(__aarch64__)
         // Very large images
         { 16384, 16384, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, DXTEX_MEDIA_PATH L"earth16kby16k.png", {} },
         #endif
@@ -520,6 +520,8 @@ bool Test03(_In_ ID3D12Device* pDevice)
         OutputDebugStringA("\n");
 #endif
 
+        bool pass = true;
+
         ComPtr<ID3D12Resource> res;
         std::unique_ptr<uint8_t[]> data;
         D3D12_SUBRESOURCE_DATA subResource = {};
@@ -541,12 +543,12 @@ bool Test03(_In_ ID3D12Device* pDevice)
                 continue;
             }
 
-            success = false;
+            success = pass = false;
             printf( "ERROR: Failed loading WIC from file (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath );
         }
         else if (!res.Get())
         {
-            success = false;
+            success = pass = false;
             printf( "ERROR: Failed to return resource (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath );
         }
         else
@@ -560,13 +562,9 @@ bool Test03(_In_ ID3D12Device* pDevice)
                 g_TestMedia[index].format, {},
                 D3D12_TEXTURE_LAYOUT_UNKNOWN,
                 D3D12_RESOURCE_FLAG_NONE };
-            if (IsMetadataCorrect(res.Get(), expected, szPath))
+            if (!IsMetadataCorrect(res.Get(), expected, szPath))
             {
-                ++npass;
-            }
-            else
-            {
-                success = false;
+                success = pass = false;
             }
         }
 
@@ -582,7 +580,7 @@ bool Test03(_In_ ID3D12Device* pDevice)
             subResource);
         if ( FAILED(hr) )
         {
-            success = false;
+            success = pass = false;
             printf( "ERROR: Failed loading wic from file fit pow2 (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath);
         }
 
@@ -597,7 +595,7 @@ bool Test03(_In_ ID3D12Device* pDevice)
             subResource);
         if ( FAILED(hr) )
         {
-            success = false;
+            success = pass = false;
             printf( "ERROR: Failed loading wic from file make square (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath);
         }
 
@@ -612,7 +610,7 @@ bool Test03(_In_ ID3D12Device* pDevice)
             subResource);
         if ( FAILED(hr) )
         {
-            success = false;
+            success = pass = false;
             printf( "ERROR: Failed loading wic from file force RGBA (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath);
         }
 
@@ -627,10 +625,13 @@ bool Test03(_In_ ID3D12Device* pDevice)
             subResource);
         if ( FAILED(hr) )
         {
-            success = false;
+            success = pass = false;
             printf( "ERROR: Failed loading wic from file force srgb (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath);
         }
     #endif // !BUILD_BVT_ONLY
+
+        if (pass)
+            ++npass;
 
         ++ncount;
     }
@@ -722,6 +723,8 @@ bool Test04(_In_ ID3D12Device* pDevice)
         OutputDebugStringA("\n");
 #endif
 
+        bool pass = true;
+
         Blob blob;
         size_t blobSize;
         HRESULT hr = LoadBlobFromFile(szPath, blob, blobSize);
@@ -754,12 +757,12 @@ bool Test04(_In_ ID3D12Device* pDevice)
                 subResource);
             if ( FAILED(hr) )
             {
-                success = false;
+                success = pass = false;
                 printf( "ERROR: Failed loading WIC from memory (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath );
             }
             else if (!res.Get())
             {
-                success = false;
+                success = pass = false;
                 printf( "ERROR: Failed to return resource (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath );
             }
             else
@@ -773,16 +776,15 @@ bool Test04(_In_ ID3D12Device* pDevice)
                     g_TestMedia[index].format, {},
                     D3D12_TEXTURE_LAYOUT_UNKNOWN,
                     D3D12_RESOURCE_FLAG_NONE };
-                if (IsMetadataCorrect(res.Get(), expected, szPath))
+                if (!IsMetadataCorrect(res.Get(), expected, szPath))
                 {
-                    ++npass;
-                }
-                else
-                {
-                    success = false;
+                    success = pass = false;
                 }
             }
         }
+
+        if (pass)
+            ++npass;
 
         ++ncount;
     }

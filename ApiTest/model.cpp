@@ -27,19 +27,28 @@
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 
+static_assert(std::is_copy_constructible<Model>::value, "Copy Ctor.");
+static_assert(std::is_copy_assignable<Model>::value, "Copy Assign.");
 static_assert(std::is_nothrow_move_constructible<Model>::value, "Move Ctor.");
 static_assert(std::is_nothrow_move_assignable<Model>::value, "Move Assign.");
 
-// VS 2017 and the XDK isn't noexcept correct here
-static_assert(std::is_move_constructible<ModelMesh>::value, "Move Ctor.");
-static_assert(std::is_move_assignable<ModelMesh>::value, "Move Assign.");
+static_assert(!std::is_copy_constructible<ModelMesh>::value, "Copy Ctor.");
+static_assert(!std::is_copy_assignable<ModelMesh>::value, "Copy Assign.");
+static_assert(std::is_nothrow_move_constructible<ModelMesh>::value, "Move Ctor.");
+static_assert(std::is_nothrow_move_assignable<ModelMesh>::value, "Move Assign.");
 
+static_assert(std::is_copy_constructible<ModelMeshPart>::value, "Copy Ctor.");
+static_assert(std::is_copy_assignable<ModelMeshPart>::value, "Copy Assign.");
 static_assert(std::is_nothrow_move_constructible<ModelMeshPart>::value, "Move Ctor.");
 static_assert(std::is_nothrow_move_assignable<ModelMeshPart>::value, "Move Assign.");
 
+static_assert(std::is_copy_constructible<ModelBone>::value, "Copy Ctor.");
+static_assert(std::is_copy_assignable<ModelBone>::value, "Copy Assign.");
 static_assert(std::is_nothrow_move_constructible<ModelBone>::value, "Move Ctor.");
 static_assert(std::is_nothrow_move_assignable<ModelBone>::value, "Move Assign.");
 
+static_assert(!std::is_copy_constructible<ModelBone::TransformArray>::value, "Copy Ctor.");
+static_assert(!std::is_copy_assignable<ModelBone::TransformArray>::value, "Copy Assign.");
 static_assert(std::is_nothrow_move_constructible<ModelBone::TransformArray>::value, "Move Ctor.");
 static_assert(std::is_nothrow_move_assignable<ModelBone::TransformArray>::value, "Move Assign.");
 
@@ -192,6 +201,162 @@ bool Test13(_In_ ID3D12Device* device)
         printf("ERROR: Failed doing resource upload via copy command queue (except: %s)\n", e.what());
         return false;
     }
+
+    // invalid args
+    #pragma warning(push)
+    #pragma warning(disable:6385 6387)
+    {
+        // VBO
+        try
+        {
+            ID3D12Device* nullDevice = nullptr;
+            const wchar_t* nullFilename = nullptr;
+            auto invalid = Model::CreateFromVBO(nullDevice, nullFilename);
+
+            printf("ERROR: Failed to throw for null device for VBO\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        try
+        {
+            const wchar_t* nullFilename = nullptr;
+            auto invalid = Model::CreateFromVBO(device, nullFilename);
+
+            printf("ERROR: Failed to throw for null filename for VBO\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        try
+        {
+            auto invalid = Model::CreateFromVBO(device, L"TestFileNotExist.vbo");
+
+            printf("ERROR: Failed to throw for missing file for VBO\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        try
+        {
+            ID3D12Device* nullDevice = nullptr;
+            const uint8_t* ptr = nullptr;
+            auto invalid = Model::CreateFromVBO(nullDevice, ptr, 0);
+
+            printf("ERROR: Failed to throw for null device for VBO memory\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        // CMO
+        try
+        {
+            ID3D12Device* nullDevice = nullptr;
+            const wchar_t* nullFilename = nullptr;
+            auto invalid = Model::CreateFromCMO(nullDevice, nullFilename);
+
+            printf("ERROR: Failed to throw for null device for CMO\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        try
+        {
+            const wchar_t* nullFilename = nullptr;
+            auto invalid = Model::CreateFromCMO(device, nullFilename);
+
+            printf("ERROR: Failed to throw for null filename for CMO\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        try
+        {
+            auto invalid = Model::CreateFromCMO(device, L"TestFileNotExist.CMO");
+
+            printf("ERROR: Failed to throw for missing file for CMO\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        try
+        {
+            ID3D12Device* nullDevice = nullptr;
+            const uint8_t* ptr = nullptr;
+            auto invalid = Model::CreateFromCMO(nullDevice, ptr, 0);
+
+            printf("ERROR: Failed to throw for null device for CMO memory\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        // SDKMESH
+        try
+        {
+            ID3D12Device* nullDevice = nullptr;
+            const wchar_t* nullFilename = nullptr;
+            auto invalid = Model::CreateFromSDKMESH(nullDevice, nullFilename);
+
+            printf("ERROR: Failed to throw for null device for SDKMESH\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        try
+        {
+            const wchar_t* nullFilename = nullptr;
+            auto invalid = Model::CreateFromSDKMESH(device, nullFilename);
+
+            printf("ERROR: Failed to throw for null filename for SDKMESH\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        try
+        {
+            auto invalid = Model::CreateFromSDKMESH(device, L"TestFileNotExist.SDKMESH");
+
+            printf("ERROR: Failed to throw for missing file for SDKMESH\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        try
+        {
+            ID3D12Device* nullDevice = nullptr;
+            const uint8_t* ptr = nullptr;
+            auto invalid = Model::CreateFromSDKMESH(nullDevice, ptr, 0);
+
+            printf("ERROR: Failed to throw for null device for SDKMESH memory\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+    }
+    #pragma warning(pop)
 
     return success;
 }

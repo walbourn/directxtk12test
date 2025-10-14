@@ -96,6 +96,12 @@ bool Test03(_In_ ID3D12Device* device)
     }
 
     // AlignUp/Down - uint32_t
+    if (AlignUp(2, 0) != 2 || AlignDown(2, 0) != 2)
+    {
+        printf("ERROR: Failed Align(x,0) tests\n");
+        success = false;
+    }
+
     {
         std::uniform_int_distribution<uint32_t> dist(1, UINT16_MAX);
         for (size_t j = 1; j < 0x20000; j <<= 1)
@@ -317,6 +323,150 @@ bool Test03(_In_ ID3D12Device* device)
     {
         printf("ERROR: Failed doing resource upload via copy command queue (except: %s)\n", e.what());
         return false;
+    }
+
+    // invalid args
+    {
+        ID3D12Device* nullDevice = nullptr;
+        D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptor = {};
+
+        // CreateShaderResourceView
+        try
+        {
+            CreateShaderResourceView(nullDevice, nullptr, cpuDescriptor);
+
+            printf("ERROR: CreateShaderResourceView - Failed to throw for null device\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        try
+        {
+            CreateShaderResourceView(device, nullptr, cpuDescriptor);
+
+            printf("ERROR: CreateShaderResourceView - Failed to throw for null resource\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        // CreateUnorderedAccessView
+        try
+        {
+            CreateUnorderedAccessView(nullDevice, nullptr, cpuDescriptor);
+
+            printf("ERROR: CreateUnorderedAccessView - Failed to throw for null device\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        try
+        {
+            CreateUnorderedAccessView(device, nullptr, cpuDescriptor);
+
+            printf("ERROR: CreateUnorderedAccessView - Failed to throw for null resource\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        // CreateRenderTargetView
+        try
+        {
+            CreateRenderTargetView(nullDevice, nullptr, cpuDescriptor);
+
+            printf("ERROR: CreateRenderTargetView - Failed to throw for null device\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        try
+        {
+            CreateRenderTargetView(device, nullptr, cpuDescriptor);
+
+            printf("ERROR: CreateRenderTargetView - Failed to throw for null resource\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        // CreateBufferShaderResourceView
+        try
+        {
+            CreateBufferShaderResourceView(nullDevice, nullptr, cpuDescriptor, sizeof(float));
+
+            printf("ERROR: CreateBufferShaderResourceView - Failed to throw for null device\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        try
+        {
+            CreateBufferShaderResourceView(device, nullptr, cpuDescriptor, sizeof(float));
+
+            printf("ERROR: CreateBufferShaderResourceView - Failed to throw for null resource\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        // CreateBufferUnorderedAccessView
+        try
+        {
+            CreateBufferUnorderedAccessView(nullDevice, nullptr, cpuDescriptor, sizeof(float));
+
+            printf("ERROR: CreateBufferUnorderedAccessView - Failed to throw for null device\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        try
+        {
+            CreateBufferUnorderedAccessView(device, nullptr, cpuDescriptor, sizeof(float));
+
+            printf("ERROR: CreateBufferUnorderedAccessView - Failed to throw for null resource\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        // CreateRootSignature
+        hr = CreateRootSignature(nullDevice, nullptr, nullptr);
+        if (hr != E_INVALIDARG)
+        {
+            printf("ERROR: CreateRootSignature - Expected failure for null device (HRESULT: %08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+
+        hr = CreateRootSignature(device, nullptr, nullptr);
+        if (hr != E_INVALIDARG)
+        {
+            printf("ERROR: CreateRootSignature - Expected failure for null root signature desc (HRESULT: %08X)\n", static_cast<unsigned int>(hr));
+            success = false;
+        }
+
+        // GetTextureSize
+        auto size = GetTextureSize(nullptr);
+        if (size.x != 0 || size.y != 0)
+        {
+            printf("ERROR: GetTextureSize - Failed for null resource\n");
+            success = false;
+        }
     }
 
     return success;

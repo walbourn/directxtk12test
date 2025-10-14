@@ -22,12 +22,18 @@
 using namespace DirectX;
 using Microsoft::WRL::ComPtr;
 
+static_assert(!std::is_copy_constructible<BasicPostProcess>::value, "Copy Ctor.");
+static_assert(!std::is_copy_assignable<BasicPostProcess>::value, "Copy Assign.");
 static_assert(std::is_nothrow_move_constructible<BasicPostProcess>::value, "Move Ctor.");
 static_assert(std::is_nothrow_move_assignable<BasicPostProcess>::value, "Move Assign.");
 
+static_assert(!std::is_copy_constructible<DualPostProcess>::value, "Copy Ctor.");
+static_assert(!std::is_copy_assignable<DualPostProcess>::value, "Copy Assign.");
 static_assert(std::is_nothrow_move_constructible<DualPostProcess>::value, "Move Ctor.");
 static_assert(std::is_nothrow_move_assignable<DualPostProcess>::value, "Move Assign.");
 
+static_assert(!std::is_copy_constructible<ToneMapPostProcess>::value, "Copy Ctor.");
+static_assert(!std::is_copy_assignable<ToneMapPostProcess>::value, "Copy Assign.");
 static_assert(std::is_nothrow_move_constructible<ToneMapPostProcess>::value, "Move Ctor.");
 static_assert(std::is_nothrow_move_assignable<ToneMapPostProcess>::value, "Move Assign.");
 
@@ -105,6 +111,99 @@ bool Test06(_In_ ID3D12Device *device)
             success = false;
         }
     }
+
+    // invalid args
+    #pragma warning(push)
+    #pragma warning(disable:6385 6387)
+    {
+        ID3D12Device* nullDevice = nullptr;
+
+        try
+        {
+            auto invalid = std::make_unique<BasicPostProcess>(device,
+                rtState, BasicPostProcess::Effect_Max);
+
+            printf("ERROR: Failed to throw invalid fx [basic]\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        try
+        {
+            auto invalid = std::make_unique<BasicPostProcess>(nullDevice,
+                rtState, BasicPostProcess::Effect_Max);
+
+            printf("ERROR: Failed to throw invalid device [basic]\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        try
+        {
+            auto invalid = std::make_unique<DualPostProcess>(device,
+                rtState, DualPostProcess::Effect_Max);
+
+            printf("ERROR: Failed to throw invalid fx [dual]\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        try
+        {
+            auto invalid = std::make_unique<DualPostProcess>(nullDevice,
+                rtState, DualPostProcess::Effect_Max);
+
+            printf("ERROR: Failed to throw invalid device [dual]\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        try
+        {
+            auto invalid = std::make_unique<ToneMapPostProcess>(device,
+                rtState, ToneMapPostProcess::Operator_Max, ToneMapPostProcess::Linear);
+
+            printf("ERROR: Failed to throw invalid operator [tonemap]\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        try
+        {
+            auto invalid = std::make_unique<ToneMapPostProcess>(device,
+                rtState, ToneMapPostProcess::Saturate, ToneMapPostProcess::TransferFunction_Max);
+
+            printf("ERROR: Failed to throw invalid transfer func [tonemap]\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        try
+        {
+            auto invalid = std::make_unique<ToneMapPostProcess>(nullDevice,
+                rtState, ToneMapPostProcess::Saturate, ToneMapPostProcess::Linear);
+
+            printf("ERROR: Failed to throw invalid device [tonemap]\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+    }
+    #pragma warning(pop)
 
     return success;
 }

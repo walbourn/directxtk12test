@@ -57,6 +57,8 @@ namespace Microsoft
 #endif
 
 #include "DDSTextureLoader.h"
+#include "DescriptorHeap.h"
+#include "DirectXHelpers.h"
 #include "ScreenGrab.h"
 
 #include <d3dx12.h>
@@ -817,7 +819,7 @@ namespace
         { 200, 200, 1, 1, DXGI_FORMAT_YUY2, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, DXTEX_MEDIA_PATH L"lenaYUY2.dds", {} },
         { 1280, 1024, 1, 1, DXGI_FORMAT_YUY2, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, DXTEX_MEDIA_PATH L"testpatternYUY2.dds", {} },
 
-        #ifdef _M_X64
+        #if defined(_M_X64) || defined(_M_ARM64) || defined(__amd64__) || defined(__aarch64__)
         // Very large images
         { 16384, 16384, 1, 15, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, DXTEX_MEDIA_PATH L"earth16kby16k.dds", {} },
         { 16384, 16384, 1, 1, DXGI_FORMAT_R8G8B8A8_SNORM, D3D12_RESOURCE_DIMENSION_TEXTURE2D, false, DDS_ALPHA_MODE_UNKNOWN, DXTEX_MEDIA_PATH L"earth16kby16k_snorm.dds", {} }, // D3DFMT_Q8W8V8U8
@@ -882,6 +884,42 @@ namespace
             return true;
         }
     }
+
+    bool IsVideoOrDepth(DXGI_FORMAT fmt) noexcept
+    {
+        switch (static_cast<int>(fmt))
+        {
+        case DXGI_FORMAT_AYUV:
+        case DXGI_FORMAT_Y410:
+        case DXGI_FORMAT_Y416:
+        case DXGI_FORMAT_NV12:
+        case DXGI_FORMAT_P010:
+        case DXGI_FORMAT_P016:
+        case DXGI_FORMAT_YUY2:
+        case DXGI_FORMAT_Y210:
+        case DXGI_FORMAT_Y216:
+        case DXGI_FORMAT_NV11:
+        case DXGI_FORMAT_420_OPAQUE:
+        case DXGI_FORMAT_AI44:
+        case DXGI_FORMAT_IA44:
+        case DXGI_FORMAT_P8:
+        case DXGI_FORMAT_A8P8:
+        case DXGI_FORMAT_R32G8X24_TYPELESS:
+        case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
+        case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
+        case DXGI_FORMAT_X32_TYPELESS_G8X24_UINT:
+        case DXGI_FORMAT_D32_FLOAT:
+        case DXGI_FORMAT_R24G8_TYPELESS:
+        case DXGI_FORMAT_D24_UNORM_S8_UINT:
+        case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
+        case DXGI_FORMAT_X24_TYPELESS_G8_UINT:
+        case DXGI_FORMAT_D16_UNORM:
+            return true;
+
+        default:
+            return false;
+        }
+    }
 }
 
 //-------------------------------------------------------------------------------------
@@ -902,6 +940,8 @@ bool Test01(_In_ ID3D12Device* pDevice)
     size_t npass = 0;
 
     bool skipped = false;
+
+    auto resourceDescriptor = std::make_unique<DescriptorHeap>(pDevice, std::size(g_TestMedia));
 
     for( size_t index=0; index < std::size(g_TestMedia); ++index )
     {
@@ -924,6 +964,8 @@ bool Test01(_In_ ID3D12Device* pDevice)
             // Miplevels are not supported for this format for the null device.
             flags |= DDS_LOADER_IGNORE_MIPS;
         }
+
+        bool pass = true;
 
         ComPtr<ID3D12Resource> res;
         std::unique_ptr<uint8_t[]> data;
@@ -951,22 +993,22 @@ bool Test01(_In_ ID3D12Device* pDevice)
                 continue;
             }
 
-            success = false;
+            success = pass = false;
             printf( "ERROR: Failed loading dds from file (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath );
         }
         else if (!res.Get())
         {
-            success = false;
+            success = pass = false;
             printf( "ERROR: Failed to return resource (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath );
         }
         else if (alpha != g_TestMedia[index].alphaMode)
         {
-            success = false;
+            success = pass = false;
             printf( "ERROR: Failed to return expected alpha mode (%u...%u):\n%ls\n", alpha, g_TestMedia[index].alphaMode, szPath );
         }
         else if (isCubeMap != g_TestMedia[index].isCubeMap)
         {
-            success = false;
+            success = pass = false;
             printf( "ERROR: Failed to return expected cubemap boolean (%d...%d):\n%ls\n", isCubeMap ? 1 : 0, g_TestMedia[index].isCubeMap ? 1 : 0, szPath );
         }
         else
@@ -980,13 +1022,9 @@ bool Test01(_In_ ID3D12Device* pDevice)
                 g_TestMedia[index].format, {},
                 D3D12_TEXTURE_LAYOUT_UNKNOWN,
                 D3D12_RESOURCE_FLAG_NONE };
-            if (IsMetadataCorrect(res.Get(), expected, szPath))
+            if (!IsMetadataCorrect(res.Get(), expected, szPath))
             {
-                ++npass;
-            }
-            else
-            {
-                success = false;
+                success = pass = false;
             }
         }
 
@@ -1004,7 +1042,7 @@ bool Test01(_In_ ID3D12Device* pDevice)
             nullptr);
         if (FAILED(hr))
         {
-            success = false;
+            success = pass = false;
             printf( "ERROR: Failed loading dds from file force-srgb (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath);
         }
 
@@ -1021,12 +1059,12 @@ bool Test01(_In_ ID3D12Device* pDevice)
             nullptr);
         if (FAILED(hr))
         {
-            success = false;
+            success = pass = false;
             printf( "ERROR: Failed loading dds from file ignore-srgb (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath);
         }
 
-        if (g_TestMedia[index].format != DXGI_FORMAT_YUY2
-            && g_TestMedia[index].format != DXGI_FORMAT_NV12)
+        const bool videoOrDepth = IsVideoOrDepth(g_TestMedia[index].format);
+        if (!videoOrDepth)
         {
             hr = LoadDDSTextureFromFileEx(
                 pDevice,
@@ -1041,7 +1079,7 @@ bool Test01(_In_ ID3D12Device* pDevice)
                 nullptr);
             if (FAILED(hr))
             {
-                success = false;
+                success = pass = false;
                 printf( "ERROR: Failed loading dds from file mip-reserve (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath);
             }
         }
@@ -1059,10 +1097,30 @@ bool Test01(_In_ ID3D12Device* pDevice)
             nullptr);
         if (FAILED(hr))
         {
-            success = false;
+            success = pass = false;
             printf( "ERROR: Failed loading dds from file max size (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath);
         }
     #endif // !BUILD_BVT_ONLY
+
+        if (res && !videoOrDepth)
+        {
+            D3D12_FEATURE_DATA_FORMAT_SUPPORT fmtData = {};
+            fmtData.Format = g_TestMedia[index].format;
+            if (SUCCEEDED(pDevice->CheckFeatureSupport(
+                D3D12_FEATURE_FORMAT_SUPPORT,
+                &fmtData,
+                sizeof(fmtData)))
+                && (fmtData.Support1 & D3D12_FORMAT_SUPPORT1_TEXTURE2D))
+            {
+                CreateShaderResourceView(pDevice, res.Get(), resourceDescriptor->GetCpuHandle(index), isCubeMap);
+            }
+
+            // TODO: CreateUnorderedAccessView
+            // TODO: CreateRenderTargetView
+        }
+
+        if (pass)
+            ++npass;
 
         ++ncount;
     }
@@ -1170,6 +1228,8 @@ bool Test02(_In_ ID3D12Device* pDevice)
         OutputDebugStringA("\n");
 #endif
 
+        bool pass = true;
+
         Blob blob;
         size_t blobSize;
         HRESULT hr = LoadBlobFromFile(szPath, blob, blobSize);
@@ -1182,7 +1242,7 @@ bool Test02(_In_ ID3D12Device* pDevice)
                 continue;
             }
 
-            success = false;
+            success = pass = false;
             printf( "ERROR: Failed loading dds from file (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath );
         }
         else
@@ -1211,22 +1271,22 @@ bool Test02(_In_ ID3D12Device* pDevice)
                 &isCubeMap);
             if ( FAILED(hr) )
             {
-                success = false;
+                success = pass = false;
                 printf( "ERROR: Failed loading dds from memory (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath );
             }
             else if (!res.Get())
             {
-                success = false;
+                success = pass = false;
                 printf( "ERROR: Failed to return resource (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath );
             }
             else if (alpha != g_TestMedia[index].alphaMode)
             {
-                success = false;
+                success = pass = false;
                 printf( "ERROR: Failed to return expected alpha mode (%u...%u):\n%ls\n", alpha, g_TestMedia[index].alphaMode, szPath );
             }
             else if (isCubeMap != g_TestMedia[index].isCubeMap)
             {
-                success = false;
+                success = pass = false;
                 printf( "ERROR: Failed to return expected cubemap boolean (%d...%d):\n%ls\n", isCubeMap ? 1 : 0, g_TestMedia[index].isCubeMap ? 1 : 0, szPath );
             }
             else
@@ -1240,16 +1300,15 @@ bool Test02(_In_ ID3D12Device* pDevice)
                     g_TestMedia[index].format, {},
                     D3D12_TEXTURE_LAYOUT_UNKNOWN,
                     D3D12_RESOURCE_FLAG_NONE };
-                if (IsMetadataCorrect(res.Get(), expected, szPath))
+                if (!IsMetadataCorrect(res.Get(), expected, szPath))
                 {
-                    ++npass;
-                }
-                else
-                {
-                    success = false;
+                    success = pass = false;
                 }
             }
         }
+
+        if (pass)
+            ++npass;
 
         ++ncount;
     }

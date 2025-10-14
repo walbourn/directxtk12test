@@ -175,9 +175,12 @@ extern _Success_(return) bool Test16(_In_ ID3D12Device *device);
 extern _Success_(return) bool Test17(_In_ ID3D12Device *device);
 extern _Success_(return) bool Test18(_In_ ID3D12Device *device);
 extern _Success_(return) bool Test19(_In_ ID3D12Device *device);
+extern _Success_(return) bool Test20(_In_ ID3D12Device *device);
+extern _Success_(return) bool Test21(_In_ ID3D12Device *device);
 
 #ifdef TEST_AUDIO
 extern _Success_(return) bool TestA01(_In_ ID3D12Device *device);
+extern _Success_(return) bool TestA02(_In_ ID3D12Device *device);
 #endif
 
 const TestInfo g_Tests[] =
@@ -189,6 +192,7 @@ const TestInfo g_Tests[] =
     { "DescriptorHeap", Test18 },
     { "DescriptorPile", Test19 },
     { "DirectXHelpers", Test03 },
+    { "ResourceUploadBatch", Test21 },
     { "GeometricPrimitive", Test04 },
     { "PostProcess", Test06 },
     { "PrimitiveBatch", Test07 },
@@ -201,10 +205,14 @@ const TestInfo g_Tests[] =
     { "GamePad", Test14 },
     { "Keyboard", Test15 },
     { "Mouse", Test16 },
+#ifndef DIRECTX_TOOLKIT_IMPORT
+    { "BinaryReader (internal)", Test20 },
+#endif
     { "LoaderHelpers (internal)", Test17 },
 
 #ifdef TEST_AUDIO
     { "Audio", TestA01 },
+    { "Audio (internal)", TestA02 },
 #endif
 };
 
