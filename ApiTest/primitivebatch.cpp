@@ -47,77 +47,71 @@ bool Test07(_In_ ID3D12Device* device)
     }
 
     // invalid args
-    try
+    #pragma warning(push)
+    #pragma warning(disable:6385 6387)
     {
-        ID3D12Device* nullDevice = nullptr;
-        auto invalid = std::make_unique<PrimitiveBatch<Vertex>>(nullDevice, 0, 0);
-
-        printf("ERROR: Failed to throw on null device\n");
-        success = false;
-    }
-    catch(const std::exception&)
-    {
-    }
-
-    try
-    {
-        auto invalid = std::make_unique<PrimitiveBatch<Vertex>>(device, 0, 0);
-
-        printf("ERROR: Failed to throw on zero max verts\n");
-        success = false;
-    }
-    catch(const std::exception&)
-    {
-    }
-
-    try
-    {
-        auto invalid = std::make_unique<PrimitiveBatch<Vertex>>(device, 0, 0);
-
-        printf("ERROR: Failed to throw on zero max verts\n");
-        success = false;
-    }
-    catch(const std::exception&)
-    {
-    }
-
-    try
-    {
-        struct BigVertex
+        try
         {
-            char buffer[4096];
-        };
+            ID3D12Device* nullDevice = nullptr;
+            auto invalid = std::make_unique<PrimitiveBatch<Vertex>>(nullDevice, 0, 0);
 
-        auto invalid = std::make_unique<PrimitiveBatch<BigVertex>>(device, 4096 * 3, 4096);
+            printf("ERROR: Failed to throw on null device\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
 
-        printf("ERROR: Failed to throw on too big vert\n");
-        success = false;
-    }
-    catch(const std::exception&)
-    {
-    }
+        try
+        {
+            auto invalid = std::make_unique<PrimitiveBatch<Vertex>>(device, 0, 0);
 
-    try
-    {
-        auto invalid = std::make_unique<PrimitiveBatch<Vertex>>(device, INT32_MAX, 4096);
+            printf("ERROR: Failed to throw on zero max verts\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
 
-        printf("ERROR: Failed to throw on too many indices\n");
-        success = false;
-    }
-    catch(const std::exception&)
-    {
-    }
+        try
+        {
+            struct BigVertex
+            {
+                char buffer[4096];
+            };
 
-    try
-    {
-        auto invalid = std::make_unique<PrimitiveBatch<Vertex>>(device, 4096 * 3, INT32_MAX);
+            auto invalid = std::make_unique<PrimitiveBatch<BigVertex>>(device, 4096 * 3, 4096);
 
-        printf("ERROR: Failed to throw on too many verts\n");
-        success = false;
+            printf("ERROR: Failed to throw on too big vert\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        try
+        {
+            auto invalid = std::make_unique<PrimitiveBatch<Vertex>>(device, INT32_MAX, 4096);
+
+            printf("ERROR: Failed to throw on too many indices\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        try
+        {
+            auto invalid = std::make_unique<PrimitiveBatch<Vertex>>(device, 4096 * 3, INT32_MAX);
+
+            printf("ERROR: Failed to throw on too many verts\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
     }
-    catch(const std::exception&)
-    {
-    }
+    #pragma warning(pop)
 
     return success;
 }
