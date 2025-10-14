@@ -158,6 +158,17 @@ bool Test20(_In_ ID3D12Device *device)
 
         try
         {
+            auto reader = std::make_unique<BinaryReader>(nullptr);
+
+            printf("ERROR: Failed to throw for null filename\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+
+        try
+        {
             auto reader = std::make_unique<BinaryReader>(L"TestFileNotExist.dat");
 
             printf("ERROR: Failed to throw for missing file\n");
