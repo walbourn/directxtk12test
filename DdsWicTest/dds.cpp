@@ -1028,6 +1028,8 @@ bool Test01(_In_ ID3D12Device* pDevice)
             }
         }
 
+        const bool videoOrDepth = IsVideoOrDepth(g_TestMedia[index].format);
+
     #ifndef BUILD_BVT_ONLY
         hr = LoadDDSTextureFromFileEx(
             pDevice,
@@ -1063,7 +1065,6 @@ bool Test01(_In_ ID3D12Device* pDevice)
             printf( "ERROR: Failed loading dds from file ignore-srgb (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath);
         }
 
-        const bool videoOrDepth = IsVideoOrDepth(g_TestMedia[index].format);
         if (!videoOrDepth)
         {
             hr = LoadDDSTextureFromFileEx(
