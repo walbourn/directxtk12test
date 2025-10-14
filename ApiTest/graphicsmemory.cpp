@@ -43,19 +43,15 @@ bool Test00(_In_ ID3D12Device* device)
         return false;
 
     std::unique_ptr<DirectX::GraphicsMemory> graphicsMemory;
-    bool caught = false;
     try
     {
         graphicsMemory = std::make_unique<DirectX::GraphicsMemory>(nullptr);
+
+        printf("ERROR: Failed to catch null device pointer\n");
+        return false;
     }
     catch(const std::exception&)
     {
-        caught = true;
-    }
-    if (!caught)
-    {
-        printf("ERROR: Failed to catch null device pointer\n");
-        return false;
     }
 
     try
