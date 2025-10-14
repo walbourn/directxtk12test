@@ -240,6 +240,8 @@ bool TestA02(_In_ ID3D12Device *device)
         }
     }
 
+    #ifndef DIRECTX_TOOLKIT_IMPORT
+
     // CreateIntegerPCM
     {
         char buff[64] = {};
@@ -322,6 +324,8 @@ bool TestA02(_In_ ID3D12Device *device)
     }
     #endif
 
+    #endif // !DIRECTX_TOOLKIT_IMPORT
+
     // invalid args
     #pragma warning(push)
     #pragma warning(disable:6385 6387)
@@ -333,6 +337,7 @@ bool TestA02(_In_ ID3D12Device *device)
             success = false;
         }
 
+    #ifndef DIRECTX_TOOLKIT_IMPORT
         CreateIntegerPCM(wfxNull, 44100, 2, 16);
         CreateFloatPCM(wfxNull, 44100, 2);
         CreateADPCM(wfxNull, 64, 44100, 2, 8);
@@ -362,6 +367,7 @@ bool TestA02(_In_ ID3D12Device *device)
         catch(std::exception&)
         {
         }
+    #endif // !DIRECTX_TOOLKIT_IMPORT
     }
     #pragma warning(pop)
 
