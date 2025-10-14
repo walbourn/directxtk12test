@@ -552,6 +552,14 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <Target Name="GDKEditionCheck" BeforeTargets="PrepareForBuild" Condition="'$(Platform)'=='x64'">
+    <Error Condition="'$(GameDK)'==''" Text="GameDK property is required" />
+    <Error Condition="!HasTrailingSlash('$(GameDK)')" Text="GameDK property must have trailing slash" />
+    <Error Condition="'$(GDKCrossPlatformPath)'==''" Text="GDKCrossPlatformPath property, GameDKCoreLatest environment variable, or GameDKXboxLatest environment variable is required" />
+    <Error Condition="!HasTrailingSlash('$(GDKCrossPlatformPath)')" Text="GDKCrossPlatformPath property must have trailing slash" />
+    <Error Condition="!Exists('$(GDKCrossPlatformPath)windows')" Text="GDKCrossPlatformPath needs to point to the October 2025 GDK or later" />
+    <Message Importance="high" Text="Using $(GDKCrossPlatformPath)" />
+  </Target>
   <Target Name="EnsureGDK" BeforeTargets="_CheckForInvalidConfigurationAndPlatform" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('$(Platform)', 'Gaming\..+\.x64'))">
     <PropertyGroup>
       <ErrorText>This project requires the Microsoft GDK with Xbox Extensions to be installed. If you have already installed the GDK, then run Repair to ensure proper integration with Visual Studio. The missing platform is {0}.</ErrorText>
