@@ -437,6 +437,36 @@ void Game::UnitTests(bool success)
         FreeDDSTextureMemory(grfxMemory);
     }
 
+    // invalid args
+    #pragma warning(push)
+    #pragma warning(disable:6385 6387)
+    {
+        ID3D12Device* nullDevice = nullptr;
+        HRESULT hr = CreateDDSTextureFromMemory(nullDevice, nullptr, 0, nullptr, nullptr, nullptr, false, nullptr);
+        if (hr != E_INVALIDARG)
+        {
+            OutputDebugStringA("FAILED: Expected invalid arg for null memory parameters\n");
+            success = false;
+        }
+
+        hr = CreateDDSTextureFromFile(nullDevice, nullptr, nullptr, nullptr, nullptr, false, nullptr);
+        if (hr != E_INVALIDARG)
+        {
+            OutputDebugStringA("FAILED: Expected invalid arg for null file parameters\n");
+            success = false;
+        }
+
+        ComPtr<ID3D12Resource> invalid;
+        void* grfxMemory = nullptr;
+        hr = CreateDDSTextureFromFile(device, L"TestFileNotExist.dds", invalid.GetAddressOf(), &grfxMemory, nullptr, false, nullptr);
+        if (hr != HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
+        {
+            OutputDebugStringA("FAILED: Expected failure for missing file\n");
+            success = false;
+        }
+    }
+    #pragma warning(pop)
+
     OutputDebugStringA(success ? "Passed\n" : "Failed\n");
     OutputDebugStringA("***********  UNIT TESTS END  ***************\n");
 }
