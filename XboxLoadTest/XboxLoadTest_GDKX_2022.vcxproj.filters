@@ -1,0 +1,78 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Common">
+      <UniqueIdentifier>b34e9698-5ff2-4c5e-b55a-768c77343808</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets">
+      <UniqueIdentifier>a93f7555-4452-401e-865a-5bc3705e7b30</UniqueIdentifier>
+      <Extensions>bmp;dds;fbx;gif;jpg;jpeg;tga;tiff;tif;png</Extensions>
+    </Filter>
+    <Filter Include="Assets\Logos">
+      <UniqueIdentifier>{661b6090-a98b-40c4-b7e1-0b71e2d60d76}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="Game.h" />
+    <ClInclude Include="..\Common\DeviceResourcesGXDK.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\StepTimer.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="..\Common\DeviceResourcesGXDK.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\MainGXDK.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="dx5_logo.DDS">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="dx5_logo_autogen.DDS">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="earth_A2B10G10R10.DDS">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="tree02S_pmalpha.DDS">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="dx5_logo_autogen_scarlett.DDS">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="dx5_logo_scarlett.DDS">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="earth_A2B10G10R10_scarlett.DDS">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="tree02S_pmalpha_scarlett.DDS">
+      <Filter>Assets</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="..\Common\LargeLogo.png">
+      <Filter>Assets\Logos</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\Common\Logo.scale-100.png">
+      <Filter>Assets\Logos</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\Common\SmallLogo.scale-100.png">
+      <Filter>Assets\Logos</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\Common\SplashScreen.scale-100.png">
+      <Filter>Assets\Logos</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\Common\StoreLogo.scale-100.png">
+      <Filter>Assets\Logos</Filter>
+    </CopyFileToFolders>
+  </ItemGroup>
+</Project>
