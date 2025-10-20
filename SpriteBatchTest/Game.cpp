@@ -12,6 +12,8 @@
 #include "pch.h"
 #include "Game.h"
 
+#include "FindMedia.h"
+
 #define GAMMA_CORRECT_RENDERING
 
 extern void ExitGame() noexcept;
@@ -36,7 +38,14 @@ namespace
 #else
     const XMVECTORF32 c_clearColor = Colors::CornflowerBlue;
 #endif
-}
+
+    static const wchar_t* s_searchFolders[] =
+    {
+        L"SpriteBatchTest",
+        L"Tests\\SpriteBatchTest",
+        nullptr
+    };
+} // anonymous namespace
 
 Game::Game() noexcept(false) :
     m_sortMode(0),
@@ -498,29 +507,34 @@ void Game::CreateDeviceDependentResources()
     constexpr DDS_LOADER_FLAGS = DDS_LOADER_DEFAULT;
 #endif
 
+    wchar_t strFilePath[MAX_PATH] = {};
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"cat.dds", s_searchFolders);
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFileEx(device, resourceUpload, L"cat.dds",
+        CreateDDSTextureFromFileEx(device, resourceUpload, strFilePath,
             0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
             m_cat.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_cat.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Cat));
 
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"a.dds", s_searchFolders);
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFileEx(device, resourceUpload, L"a.dds",
+        CreateDDSTextureFromFileEx(device, resourceUpload, strFilePath,
             0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
             m_letterA.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_letterA.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::A));
 
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"b.dds", s_searchFolders);
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFileEx(device, resourceUpload, L"b.dds",
+        CreateDDSTextureFromFileEx(device, resourceUpload, strFilePath,
             0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
             m_letterB.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_letterB.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::B));
 
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"c.dds", s_searchFolders);
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFileEx(device, resourceUpload, L"c.dds",
+        CreateDDSTextureFromFileEx(device, resourceUpload, strFilePath,
             0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
             m_letterC.ReleaseAndGetAddressOf()));
 

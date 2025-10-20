@@ -12,6 +12,8 @@
 #include "pch.h"
 #include "Game.h"
 
+#include "FindMedia.h"
+
 extern void ExitGame() noexcept;
 
 using namespace DirectX;
@@ -28,7 +30,14 @@ namespace
 
     constexpr DXGI_FORMAT c_sdrFormat = DXGI_FORMAT_R10G10B10A2_UNORM;
     constexpr DXGI_FORMAT c_hdrFormat = DXGI_FORMAT_R16G16B16A16_FLOAT;
-}
+
+    static const wchar_t* s_searchFolders[] =
+    {
+        L"PostProcessTest",
+        L"Tests\\PostProcessTest",
+        nullptr
+    };
+} // anonymous namespace
 
 //--------------------------------------------------------------------------------------
 
@@ -938,24 +947,30 @@ void Game::CreateDeviceDependentResources()
         m_spriteBatchUI = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
     }
 
-    m_font = std::make_unique<SpriteFont>(device, resourceUpload, L"comic.spritefont",
+    wchar_t strFilePath[MAX_PATH] = {};
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"comic.spritefont", s_searchFolders);
+
+    m_font = std::make_unique<SpriteFont>(device, resourceUpload, strFilePath,
         m_resourceDescriptors->GetCpuHandle(Descriptors::Font),
         m_resourceDescriptors->GetGpuHandle(Descriptors::Font));
 
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"earth.bmp", s_searchFolders);
     DX::ThrowIfFailed(
-        CreateWICTextureFromFile(device, resourceUpload, L"earth.bmp", m_texture.ReleaseAndGetAddressOf())
+        CreateWICTextureFromFile(device, resourceUpload, strFilePath, m_texture.ReleaseAndGetAddressOf())
     );
 
     CreateShaderResourceView(device, m_texture.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Texture));
 
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"sunset.jpg", s_searchFolders);
     DX::ThrowIfFailed(
-        CreateWICTextureFromFile(device, resourceUpload, L"sunset.jpg", m_background.ReleaseAndGetAddressOf())
+        CreateWICTextureFromFile(device, resourceUpload, strFilePath, m_background.ReleaseAndGetAddressOf())
     );
 
     CreateShaderResourceView(device, m_background.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Background));
 
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"HDR_029_Sky_Cloudy_Refbc6h.DDS", s_searchFolders);
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFile(device, resourceUpload, L"HDR_029_Sky_Cloudy_Refbc6h.DDS", m_hdrTexture.ReleaseAndGetAddressOf())
+        CreateDDSTextureFromFile(device, resourceUpload, strFilePath, m_hdrTexture.ReleaseAndGetAddressOf())
     );
 
     CreateShaderResourceView(device, m_hdrTexture.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::HDRTexture));

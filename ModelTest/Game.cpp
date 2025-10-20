@@ -12,6 +12,14 @@
 #include "pch.h"
 #include "Game.h"
 
+#include "FindMedia.h"
+
+#if __cplusplus < 201703L
+#error Requires C++17 (and /Zc:__cplusplus with MSVC)
+#endif
+
+#include <filesystem>
+
 extern void ExitGame() noexcept;
 
 using namespace DirectX;
@@ -46,7 +54,14 @@ namespace
 #else
     const XMVECTORF32 c_clearColor = Colors::CornflowerBlue;
 #endif
-}
+
+    static const wchar_t* s_searchFolders[] =
+    {
+        L"ModelTest",
+        L"Tests\\ModelTest",
+        nullptr
+    };
+} // anonymous namespace
 
 //--------------------------------------------------------------------------------------
 
@@ -670,15 +685,25 @@ void Game::CreateDeviceDependentResources()
     const RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(),
         m_deviceResources->GetDepthBufferFormat());
 
+    wchar_t strFilePath[MAX_PATH] = {};
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"cup._obj", s_searchFolders);
+
+    std::filesystem::path modelDirectory;
+    {
+        modelDirectory = strFilePath;
+        modelDirectory = modelDirectory.parent_path();
+    }
+
 #ifdef GAMMA_CORRECT_RENDERING
-    m_cup = CreateModelFromOBJ(device, L"cup._obj", false, ModelLoader_MaterialColorsSRGB);
-    m_cupInst = CreateModelFromOBJ(device, L"cup._obj", true, ModelLoader_MaterialColorsSRGB);
+    m_cup = CreateModelFromOBJ(device, strFilePath, false, ModelLoader_MaterialColorsSRGB);
+    m_cupInst = CreateModelFromOBJ(device, strFilePath, true, ModelLoader_MaterialColorsSRGB);
 #else
-    m_cup = CreateModelFromOBJ(device, L"cup._obj", false);
-    m_cupInst = CreateModelFromOBJ(device, L"cup._obj", true);
+    m_cup = CreateModelFromOBJ(device, strFilePath, false);
+    m_cupInst = CreateModelFromOBJ(device, strFilePath, true);
 #endif
 
-    m_vbo = Model::CreateFromVBO(device, L"player_ship_a.vbo");
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"player_ship_a.vbo", s_searchFolders);
+    m_vbo = Model::CreateFromVBO(device, strFilePath);
 
     // Load textures & effects
     m_resourceDescriptors = std::make_unique<DescriptorPile>(device,
@@ -690,8 +715,11 @@ void Game::CreateDeviceDependentResources()
 
         resourceUpload.Begin();
 
-        m_abstractModelResources = std::make_unique<EffectTextureFactory>(device, resourceUpload, m_resourceDescriptors->Heap());
         m_modelResources = std::make_unique<EffectTextureFactory>(device, resourceUpload, m_resourceDescriptors->Heap());
+        if (!modelDirectory.empty())
+        {
+            m_modelResources->SetDirectory(modelDirectory.c_str());
+        }
 
 #ifdef GAMMA_CORRECT_RENDERING
         m_modelResources->EnableForceSRGB(true);
@@ -700,7 +728,6 @@ void Game::CreateDeviceDependentResources()
         m_modelResources->EnableAutoGenMips(true);
 #endif
 
-        m_abstractFXFactory = std::make_unique<EffectFactory>(m_resourceDescriptors->Heap(), m_states->Heap());
         m_fxFactory = std::make_unique<EffectFactory>(m_resourceDescriptors->Heap(), m_states->Heap());
 
 #ifndef PERPIXELLIGHTING
@@ -811,7 +838,8 @@ void Game::CreateDeviceDependentResources()
         }
 
         // SDKMESH Cup
-        m_cupMesh = Model::CreateFromSDKMESH(device, L"cup.sdkmesh");
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"cup.sdkmesh", s_searchFolders);
+        m_cupMesh = Model::CreateFromSDKMESH(device, strFilePath);
 
         {
             size_t start, end;
@@ -832,7 +860,8 @@ void Game::CreateDeviceDependentResources()
         }
 
         // SDKMESH Tiny
-        m_tiny = Model::CreateFromSDKMESH(device, L"tiny.sdkmesh");
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"tiny.sdkmesh", s_searchFolders);
+        m_tiny = Model::CreateFromSDKMESH(device, strFilePath);
 
         {
             size_t start, end;
@@ -853,7 +882,8 @@ void Game::CreateDeviceDependentResources()
         }
 
         // SDKMESH Soldier
-        m_soldier = Model::CreateFromSDKMESH(device, L"soldier.sdkmesh");
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"soldier.sdkmesh", s_searchFolders);
+        m_soldier = Model::CreateFromSDKMESH(device, strFilePath);
 
         {
             size_t start, end;
@@ -874,7 +904,8 @@ void Game::CreateDeviceDependentResources()
         }
 
         // SDKMESH Dwarf
-        m_dwarf = Model::CreateFromSDKMESH(device, L"dwarf.sdkmesh");
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"dwarf.sdkmesh", s_searchFolders);
+        m_dwarf = Model::CreateFromSDKMESH(device, strFilePath);
 
         {
             size_t start, end;
@@ -895,7 +926,8 @@ void Game::CreateDeviceDependentResources()
         }
 
         // SDKMESH Lightmap
-        m_lmap = Model::CreateFromSDKMESH(device, L"SimpleLightMap.sdkmesh");
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"SimpleLightMap.sdkmesh", s_searchFolders);
+        m_lmap = Model::CreateFromSDKMESH(device, strFilePath);
 
         {
             size_t start, end;
@@ -916,7 +948,8 @@ void Game::CreateDeviceDependentResources()
         }
 
         // SDKMESH Normalmap
-        m_nmap = Model::CreateFromSDKMESH(device, L"Helmet.sdkmesh");
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"Helmet.sdkmesh", s_searchFolders);
+        m_nmap = Model::CreateFromSDKMESH(device, strFilePath);
 
         {
             size_t start, end;
@@ -937,7 +970,8 @@ void Game::CreateDeviceDependentResources()
         }
 
         // CMO teapot.cmo
-        m_teapot = Model::CreateFromCMO(device, L"teapot.cmo");
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"teapot.cmo", s_searchFolders);
+        m_teapot = Model::CreateFromCMO(device, strFilePath);
 
         {
             const EffectPipelineStateDescription pd(
@@ -961,7 +995,8 @@ void Game::CreateDeviceDependentResources()
         }
 
         // Visual Studio CMO
-        m_gamelevel = Model::CreateFromCMO(device, L"gamelevel.cmo");
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"gamelevel.cmo", s_searchFolders);
+        m_gamelevel = Model::CreateFromCMO(device, strFilePath);
 
         {
             size_t start, end;
@@ -982,7 +1017,8 @@ void Game::CreateDeviceDependentResources()
         }
 
         // CMO ship
-        m_ship = Model::CreateFromCMO(device, L"25ab10e8-621a-47d4-a63d-f65a00bc1549_model.cmo");
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"25ab10e8-621a-47d4-a63d-f65a00bc1549_model.cmo", s_searchFolders);
+        m_ship = Model::CreateFromCMO(device, strFilePath);
 
         {
             size_t start, end;
@@ -1010,16 +1046,18 @@ void Game::CreateDeviceDependentResources()
 
         // Load test textures
         {
+            DX::FindMediaFile(strFilePath, MAX_PATH, L"default.dds", s_searchFolders);
             DX::ThrowIfFailed(
-                CreateDDSTextureFromFileEx(device, resourceUpload, L"default.dds",
+                CreateDDSTextureFromFileEx(device, resourceUpload, strFilePath,
                     0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
                     m_defaultTex.ReleaseAndGetAddressOf()));
 
             CreateShaderResourceView(device, m_defaultTex.Get(), m_resourceDescriptors->GetCpuHandle(StaticDescriptors::DefaultTex));
 
             bool iscubemap;
+            DX::FindMediaFile(strFilePath, MAX_PATH, L"cubemap.dds", s_searchFolders);
             DX::ThrowIfFailed(
-                CreateDDSTextureFromFileEx(device, resourceUpload, L"cubemap.dds",
+                CreateDDSTextureFromFileEx(device, resourceUpload, strFilePath,
                     0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
                     m_cubemap.ReleaseAndGetAddressOf(), nullptr, &iscubemap));
 
@@ -1232,10 +1270,8 @@ void Game::OnDeviceLost()
     m_defaultTex.Reset();
     m_cubemap.Reset();
 
-    m_abstractModelResources.reset();
     m_modelResources.reset();
 
-    m_abstractFXFactory.reset();
     m_fxFactory.reset();
 
     m_resourceDescriptors.reset();

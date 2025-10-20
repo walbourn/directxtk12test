@@ -13,6 +13,8 @@
 #include "Game.h"
 #include "vbo.h"
 
+#include "FindMedia.h"
+
 // Build for LH vs. RH coords
 //#define LH_COORDS
 
@@ -103,7 +105,14 @@ namespace
     }
 
     const XMVECTORF32 c_clearColor = { { { 0.127437726f, 0.300543845f, 0.846873462f, 1.f } } };
-}
+
+    static const wchar_t* s_searchFolders[] =
+    {
+        L"PBRTest",
+        L"Tests\\PBRTest",
+        nullptr
+    };
+} // anonymous namespace
 
 Game::Game() noexcept(false) :
     m_indexCount(0),
@@ -928,7 +937,9 @@ void Game::CreateDeviceDependentResources()
         GeometricPrimitive::VertexCollection vertices;
         GeometricPrimitive::IndexCollection indices;
 
-        ReadVBO(L"BrokenCube.vbo", vertices, indices);
+        wchar_t strFilePath[MAX_PATH] = {};
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"BrokenCube.vbo", s_searchFolders);
+        ReadVBO(strFilePath, vertices, indices);
 
         // Create the D3D buffers.
         if (vertices.size() >= USHRT_MAX)
@@ -996,16 +1007,20 @@ void Game::CreateDeviceDependentResources()
 
     for (size_t j = 0; j < s_nMaterials; ++j)
     {
+        wchar_t strFilePath[MAX_PATH] = {};
+        DX::FindMediaFile(strFilePath, MAX_PATH, s_albedoTextures[j], s_searchFolders);
         DX::ThrowIfFailed(
-            CreateWICTextureFromFile(device, resourceUpload, s_albedoTextures[j], m_baseColor[j].ReleaseAndGetAddressOf(), true)
+            CreateWICTextureFromFile(device, resourceUpload, strFilePath, m_baseColor[j].ReleaseAndGetAddressOf(), true)
         );
 
+        DX::FindMediaFile(strFilePath, MAX_PATH, s_normalMapTextures[j], s_searchFolders);
         DX::ThrowIfFailed(
-            CreateWICTextureFromFile(device, resourceUpload, s_normalMapTextures[j], m_normalMap[j].ReleaseAndGetAddressOf(), true)
+            CreateWICTextureFromFile(device, resourceUpload, strFilePath, m_normalMap[j].ReleaseAndGetAddressOf(), true)
         );
 
+        DX::FindMediaFile(strFilePath, MAX_PATH, s_rmaTextures[j], s_searchFolders);
         DX::ThrowIfFailed(
-            CreateWICTextureFromFile(device, resourceUpload, s_rmaTextures[j], m_rma[j].ReleaseAndGetAddressOf(), true)
+            CreateWICTextureFromFile(device, resourceUpload, strFilePath, m_rma[j].ReleaseAndGetAddressOf(), true)
         );
 
         CreateShaderResourceView(device, m_baseColor[j].Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::BaseColor1 + j), false);
@@ -1014,8 +1029,9 @@ void Game::CreateDeviceDependentResources()
 
         if (s_emissiveTextures[j])
         {
+            DX::FindMediaFile(strFilePath, MAX_PATH, s_emissiveTextures[j], s_searchFolders);
             DX::ThrowIfFailed(
-                CreateWICTextureFromFile(device, resourceUpload, s_emissiveTextures[j], m_emissiveMap[j].ReleaseAndGetAddressOf(), true)
+                CreateWICTextureFromFile(device, resourceUpload, strFilePath, m_emissiveMap[j].ReleaseAndGetAddressOf(), true)
             );
 
             CreateShaderResourceView(device, m_emissiveMap[j].Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::EmissiveTexture1 + j), false);
@@ -1046,12 +1062,15 @@ void Game::CreateDeviceDependentResources()
 
     for (size_t j = 0; j < s_nIBL; ++j)
     {
+        wchar_t strFilePath[MAX_PATH] = {};
+        DX::FindMediaFile(strFilePath, MAX_PATH, s_radianceIBL[j], s_searchFolders);
         DX::ThrowIfFailed(
-            CreateDDSTextureFromFile(device, resourceUpload, s_radianceIBL[j], m_radianceIBL[j].ReleaseAndGetAddressOf())
+            CreateDDSTextureFromFile(device, resourceUpload, strFilePath, m_radianceIBL[j].ReleaseAndGetAddressOf())
         );
 
+        DX::FindMediaFile(strFilePath, MAX_PATH, s_irradianceIBL[j], s_searchFolders);
         DX::ThrowIfFailed(
-            CreateDDSTextureFromFile(device, resourceUpload, s_irradianceIBL[j], m_irradianceIBL[j].ReleaseAndGetAddressOf())
+            CreateDDSTextureFromFile(device, resourceUpload, strFilePath, m_irradianceIBL[j].ReleaseAndGetAddressOf())
         );
 
         CreateShaderResourceView(device, m_radianceIBL[j].Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::RadianceIBL1 + j), true);

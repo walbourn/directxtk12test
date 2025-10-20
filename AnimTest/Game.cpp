@@ -12,6 +12,14 @@
 #include "pch.h"
 #include "Game.h"
 
+#include "FindMedia.h"
+
+#if __cplusplus < 201703L
+#error Requires C++17 (and /Zc:__cplusplus with MSVC)
+#endif
+
+#include <filesystem>
+
 #define GAMMA_CORRECT_RENDERING
 
 // Build for LH vs. RH coords
@@ -60,7 +68,14 @@ namespace
 #else
     const XMVECTORF32 c_clearColor = Colors::CornflowerBlue;
 #endif
-}
+
+    static const wchar_t* s_searchFolders[] =
+    {
+        L"AnimTest",
+        L"Tests\\AnimTest",
+        nullptr
+    };
+} // anonymous namespace
 
 // Constructor.
 Game::Game() noexcept(false) :
@@ -437,16 +452,26 @@ void Game::CreateDeviceDependentResources()
     // DirectX SDK Mesh
     ModelLoaderFlags flags = ModelLoader_IncludeBones;
 
-    m_tank = Model::CreateFromSDKMESH(device, L"TankScene.sdkmesh", flags);
+    wchar_t strFilePath[MAX_PATH] = {};
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"TankScene.sdkmesh", s_searchFolders);
+    m_tank = Model::CreateFromSDKMESH(device, strFilePath, flags);
+
+    std::filesystem::path modelDirectory;
+    {
+        modelDirectory = strFilePath;
+        modelDirectory = modelDirectory.parent_path();
+    }
 
     DumpBones(m_tank->bones, "TankScene.sdkmesh");
 
-    m_soldier = Model::CreateFromSDKMESH(device, L"soldier.sdkmesh", flags);
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"soldier.sdkmesh", s_searchFolders);
+    m_soldier = Model::CreateFromSDKMESH(device, strFilePath, flags);
 
     DumpBones(m_soldier->bones, "soldier.sdkmesh");
 
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"teapot.cmo", s_searchFolders);
     size_t animsOffset;
-    m_teapot = Model::CreateFromCMO(device, L"teapot.cmo", ModelLoader_IncludeBones, &animsOffset);
+    m_teapot = Model::CreateFromCMO(device, strFilePath, ModelLoader_IncludeBones, &animsOffset);
 
     DumpBones(m_teapot->bones, "teapot.cmo");
 
@@ -456,7 +481,8 @@ void Game::CreateDeviceDependentResources()
     }
     else
     {
-        DX::ThrowIfFailed(m_teapotAnim.Load(L"teapot.cmo", animsOffset, L"Take 001"));
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"teapot.cmo", s_searchFolders);
+        DX::ThrowIfFailed(m_teapotAnim.Load(strFilePath, animsOffset, L"Take 001"));
 
         OutputDebugStringA("'teapot.cmo' contains animation clips.\n");
     }
@@ -473,8 +499,9 @@ void Game::CreateDeviceDependentResources()
     constexpr DDS_LOADER_FLAGS loadFlags = DDS_LOADER_DEFAULT;
 #endif
 
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"default.dds", s_searchFolders);
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFileEx(device, resourceUpload, L"default.dds",
+        CreateDDSTextureFromFileEx(device, resourceUpload, strFilePath,
             0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
             m_defaultTex.ReleaseAndGetAddressOf()));
 
@@ -485,6 +512,10 @@ void Game::CreateDeviceDependentResources()
     m_teapot->LoadStaticBuffers(device, resourceUpload);
 
     m_modelResources = std::make_unique<EffectTextureFactory>(device, resourceUpload, m_resourceDescriptors->Heap());
+    if (!modelDirectory.empty())
+    {
+        m_modelResources->SetDirectory(modelDirectory.c_str());
+    }
 
 #ifdef GAMMA_CORRECT_RENDERING
     m_modelResources->EnableForceSRGB(true);
@@ -567,7 +598,8 @@ void Game::CreateDeviceDependentResources()
 
     m_deviceResources->WaitForGpu();
 
-    DX::ThrowIfFailed(m_soldierAnim.Load(L"soldier.sdkmesh_anim"));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"soldier.sdkmesh_anim", s_searchFolders);
+    DX::ThrowIfFailed(m_soldierAnim.Load(strFilePath));
 
     if (!m_soldierAnim.Bind(*m_soldier))
     {

@@ -30,7 +30,7 @@ namespace
 #else
     const XMVECTORF32 c_clearColor = Colors::CornflowerBlue;
 #endif
-}
+} // anonymous namespace
 
 // Constructor.
 Game::Game() noexcept(false) :
