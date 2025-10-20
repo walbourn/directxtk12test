@@ -12,6 +12,7 @@
 #include "pch.h"
 #include "Game.h"
 
+#include "FindMedia.h"
 #include "ReadData.h"
 
 #ifdef UWP
@@ -25,6 +26,9 @@
 
 // Build for LH vs. RH coords
 //#define LH_COORDS
+
+// Running on Proton 10 emulator (avoids a number of failing test cases for WIC)
+// #define PROTON_EMULATION
 
 extern void ExitGame() noexcept;
 
@@ -42,8 +46,14 @@ namespace
 #else
     const XMVECTORF32 c_clearColor = Colors::CornflowerBlue;
 #endif
-};
 
+    static const wchar_t* s_searchFolders[] =
+    {
+        L"LoadTest",
+        L"Tests\\LoadTest",
+        nullptr
+    };
+} // anonymous namespace
 
 //--------------------------------------------------------------------------------------
 
@@ -405,6 +415,7 @@ void Game::Render()
             success = false;
         }
 
+    #ifndef PROTON_EMULATION
         hr = SaveWICTextureToFile(m_deviceResources->GetCommandQueue(), m_screenshot.Get(),
             GUID_ContainerFormatBmp, ssbmp,
             D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT,
@@ -426,6 +437,7 @@ void Game::Render()
             OutputDebugStringA("ERROR: Missing SCREENSHOT.BMP!\n");
             success = false;
         }
+    #endif
 
         hr = SaveWICTextureToFile(m_deviceResources->GetCommandQueue(), m_screenshot.Get(),
             GUID_ContainerFormatTiff, sstif,
@@ -609,6 +621,7 @@ void Game::CreateDeviceDependentResources()
     }
 
     bool success = true;
+    wchar_t strFilePath[MAX_PATH] = {};
 
     {
         ResourceUploadBatch resourceUpload(device);
@@ -634,7 +647,9 @@ void Game::CreateDeviceDependentResources()
         // Earth
 #ifndef USE_COPY_QUEUE
         DDS_ALPHA_MODE alphaMode = DDS_ALPHA_MODE_UNKNOWN;
-        DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"earth_A2B10G10R10.dds", m_earth.ReleaseAndGetAddressOf(), false, 0, &alphaMode));
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"earth_A2B10G10R10.dds", s_searchFolders);
+        DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, strFilePath,
+            m_earth.ReleaseAndGetAddressOf(), false, 0, &alphaMode));
 
         {
             if (alphaMode != DDS_ALPHA_MODE_UNKNOWN)
@@ -664,8 +679,10 @@ void Game::CreateDeviceDependentResources()
 #endif // !USE_COPY_QUEUE
 
 #ifndef USE_COMPUTE_QUEUE
-        DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, L"earth_A2B10G10R10_autogen.dds", 0,
-            D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_MIP_AUTOGEN, m_earth2.ReleaseAndGetAddressOf()));
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"earth_A2B10G10R10_autogen.dds", s_searchFolders);
+        DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, strFilePath,
+            0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_MIP_AUTOGEN,
+            m_earth2.ReleaseAndGetAddressOf()));
 
         {
         #ifdef __MINGW32__
@@ -697,7 +714,9 @@ void Game::CreateDeviceDependentResources()
 #endif // !USE_COMPUTE_QUEUE
 
         // DirectX Logo
-        DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen_bgra.dds", m_dxlogo.ReleaseAndGetAddressOf(), true));
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"dx5_logo_autogen_bgra.dds", s_searchFolders);
+        DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, strFilePath,
+            m_dxlogo.ReleaseAndGetAddressOf(), true));
 
         {
         #ifdef __MINGW32__
@@ -727,7 +746,10 @@ void Game::CreateDeviceDependentResources()
 
         CreateShaderResourceView(device, m_dxlogo.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::DirectXLogo));
 
-        DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, L"dx5_logo.dds", 0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_FORCE_SRGB, m_dxlogo2.ReleaseAndGetAddressOf()));
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"dx5_logo.dds", s_searchFolders);
+        DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, strFilePath,
+            0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_FORCE_SRGB,
+            m_dxlogo2.ReleaseAndGetAddressOf()));
 
         {
         #ifdef __MINGW32__
@@ -750,7 +772,9 @@ void Game::CreateDeviceDependentResources()
         CreateShaderResourceView(device, m_dxlogo2.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::DirectXLogo_BC1));
 
         // Windows 95 logo
-        DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"win95.bmp", m_win95.ReleaseAndGetAddressOf(), true));
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"win95.bmp", s_searchFolders);
+        DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, strFilePath,
+            m_win95.ReleaseAndGetAddressOf(), true));
 
         {
         #ifdef __MINGW32__
@@ -780,8 +804,10 @@ void Game::CreateDeviceDependentResources()
 
         CreateShaderResourceView(device, m_win95.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Windows95));
 
-        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"win95.bmp", 0, D3D12_RESOURCE_FLAG_NONE,
-            WIC_LOADER_FORCE_SRGB | WIC_LOADER_MIP_AUTOGEN, m_win95_2.ReleaseAndGetAddressOf()));
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"win95.bmp", s_searchFolders);
+        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, strFilePath,
+            0, D3D12_RESOURCE_FLAG_NONE, WIC_LOADER_FORCE_SRGB | WIC_LOADER_MIP_AUTOGEN,
+            m_win95_2.ReleaseAndGetAddressOf()));
 
         {
         #ifdef __MINGW32__
@@ -833,7 +859,9 @@ void Game::CreateDeviceDependentResources()
         m_copyQueue->SetName(L"CopyTest");
 
         DDS_ALPHA_MODE alphaMode = DDS_ALPHA_MODE_UNKNOWN;
-        DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"earth_A2B10G10R10.dds", m_earth.ReleaseAndGetAddressOf(), false, 0, &alphaMode));
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"earth_A2B10G10R10.dds", s_searchFolders);
+        DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, strFilePath,
+            m_earth.ReleaseAndGetAddressOf(), false, 0, &alphaMode));
 
         {
             if (alphaMode != DDS_ALPHA_MODE_UNKNOWN)
@@ -861,7 +889,9 @@ void Game::CreateDeviceDependentResources()
 
         CreateShaderResourceView(device, m_earth.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Earth));
 
-        DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"win95.bmp", m_copyTest.ReleaseAndGetAddressOf(), false));
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"win95.bmp", s_searchFolders);
+        DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, strFilePath,
+            m_copyTest.ReleaseAndGetAddressOf(), false));
 
         {
         #ifdef __MINGW32__
@@ -903,8 +933,10 @@ void Game::CreateDeviceDependentResources()
 
         m_computeQueue->SetName(L"ComputeTest");
 
-        DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, L"earth_A2B10G10R10_autogen.dds", 0,
-            D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_MIP_AUTOGEN, m_earth2.ReleaseAndGetAddressOf()));
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"earth_A2B10G10R10_autogen.dds", s_searchFolders);
+        DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, strFilePath,
+            0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_MIP_AUTOGEN,
+            m_earth2.ReleaseAndGetAddressOf()));
 
         {
         #ifdef __MINGW32__
@@ -934,7 +966,9 @@ void Game::CreateDeviceDependentResources()
 
         CreateShaderResourceView(device, m_earth2.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Earth_Imm));
 
-        DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"win95.bmp", m_computeTest.ReleaseAndGetAddressOf(), true));
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"win95.bmp", s_searchFolders);
+        DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, strFilePath,
+            m_computeTest.ReleaseAndGetAddressOf(), true));
 
         {
         #ifdef __MINGW32__
@@ -1090,6 +1124,7 @@ void Game::OnDeviceRestored()
 void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
 {
     auto device = m_deviceResources->GetD3DDevice();
+    wchar_t strFilePath[MAX_PATH] = {};
 
     //----------------------------------------------------------------------------------
     // CreateTextureFromMemory 1D
@@ -1251,7 +1286,9 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     }
 
     // DirectX Logo (verify DDS for autogen has no mipmaps)
-    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen_bgra.dds", m_test1.ReleaseAndGetAddressOf(), false));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"dx5_logo_autogen_bgra.dds", s_searchFolders);
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, strFilePath,
+        m_test1.ReleaseAndGetAddressOf(), false));
     {
     #ifdef __MINGW32__
         D3D12_RESOURCE_DESC desc;
@@ -1271,7 +1308,9 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     }
 
     // DirectX Logo (verify DDS is BC1 without sRGB)
-    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo.dds", m_test2.ReleaseAndGetAddressOf()));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"dx5_logo.dds", s_searchFolders);
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, strFilePath,
+        m_test2.ReleaseAndGetAddressOf()));
 
     {
     #ifdef __MINGW32__
@@ -1292,7 +1331,9 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     }
 
     // Windows 95 logo
-    DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"win95.bmp", m_test3.ReleaseAndGetAddressOf(), false));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"win95.bmp", s_searchFolders);
+    DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, strFilePath,
+        m_test3.ReleaseAndGetAddressOf(), false));
 
     {
     #ifdef __MINGW32__
@@ -1314,7 +1355,9 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
 
     // Alpha mode test
     DDS_ALPHA_MODE alphaMode = DDS_ALPHA_MODE_UNKNOWN;
-    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"tree02S_pmalpha.dds", m_test4.ReleaseAndGetAddressOf(), false, 0, &alphaMode));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"tree02S_pmalpha.dds", s_searchFolders);
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, strFilePath,
+        m_test4.ReleaseAndGetAddressOf(), false, 0, &alphaMode));
 
     {
         if (alphaMode != DDS_ALPHA_MODE_PREMULTIPLIED)
@@ -1341,7 +1384,9 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     }
 
     // 1D texture
-    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"io_R8G8B8A8_UNORM_SRGB_SRV_DIMENSION_TEXTURE1D_MipOff.dds", m_test5.ReleaseAndGetAddressOf()));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"io_R8G8B8A8_UNORM_SRGB_SRV_DIMENSION_TEXTURE1D_MipOff.dds", s_searchFolders);
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, strFilePath,
+        m_test5.ReleaseAndGetAddressOf()));
 
     {
     #ifdef __MINGW32__
@@ -1361,7 +1406,9 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     }
 
     // 1D texture array
-    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"io_R8G8B8A8_UNORM_SRGB_SRV_DIMENSION_TEXTURE1DArray_MipOff.dds", m_test6.ReleaseAndGetAddressOf()));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"io_R8G8B8A8_UNORM_SRGB_SRV_DIMENSION_TEXTURE1DArray_MipOff.dds", s_searchFolders);
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, strFilePath,
+        m_test6.ReleaseAndGetAddressOf()));
 
     {
     #ifdef __MINGW32__
@@ -1382,7 +1429,9 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     }
 
     // 2D texture array
-    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"io_R8G8B8A8_UNORM_SRGB_SRV_DIMENSION_TEXTURE2DArray_MipOff.dds", m_test7.ReleaseAndGetAddressOf()));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"io_R8G8B8A8_UNORM_SRGB_SRV_DIMENSION_TEXTURE2DArray_MipOff.dds", s_searchFolders);
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, strFilePath,
+        m_test7.ReleaseAndGetAddressOf()));
 
     {
     #ifdef __MINGW32__
@@ -1404,7 +1453,9 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     }
 
     // 3D texture
-    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"io_R8G8B8A8_UNORM_SRGB_SRV_DIMENSION_TEXTURE3D_MipOff.dds", m_test8.ReleaseAndGetAddressOf()));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"io_R8G8B8A8_UNORM_SRGB_SRV_DIMENSION_TEXTURE3D_MipOff.dds", s_searchFolders);
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, strFilePath,
+        m_test8.ReleaseAndGetAddressOf()));
 
     {
     #ifdef __MINGW32__
@@ -1426,7 +1477,9 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     }
 
     // SkipMips
-    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"world8192.dds", m_test40.ReleaseAndGetAddressOf()));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"world8192.dds", s_searchFolders);
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, strFilePath,
+        m_test40.ReleaseAndGetAddressOf()));
 
     {
     #ifdef __MINGW32__
@@ -1447,7 +1500,9 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         }
     }
 
-    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"world8192.dds", m_test41.ReleaseAndGetAddressOf(), false, 2048));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"world8192.dds", s_searchFolders);
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, strFilePath,
+        m_test41.ReleaseAndGetAddressOf(), false, 2048));
 
     {
     #ifdef __MINGW32__
@@ -1469,8 +1524,8 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     }
 
     // Ignore mips
-    DX::ThrowIfFailed(CreateDDSTextureFromFileEx(
-        device, resourceUpload, L"world8192.dds",
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"world8192.dds", s_searchFolders);
+    DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, strFilePath,
         0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_IGNORE_MIPS,
         m_test42.ReleaseAndGetAddressOf())
         );
@@ -1497,8 +1552,10 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     // DX12 version doesn't support auto-gen mips for 1D, 1D arrays, 2D arrays, or 3D. They throw an exception instead of being ignored like on DX11
 
     // sRGB test
-    DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, L"io_R8G8B8A8_UNORM_SRGB_SRV_DIMENSION_TEXTURE1D_MipOff.dds",
-        0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_IGNORE_SRGB, m_test36.ReleaseAndGetAddressOf()));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"io_R8G8B8A8_UNORM_SRGB_SRV_DIMENSION_TEXTURE1D_MipOff.dds", s_searchFolders);
+    DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, strFilePath,
+        0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_IGNORE_SRGB,
+        m_test36.ReleaseAndGetAddressOf()));
 
     {
     #ifdef __MINGW32__
@@ -1517,7 +1574,10 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         }
     }
 
-    DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"cup_small.jpg", m_test9.ReleaseAndGetAddressOf(), false));
+#ifndef PROTON_EMULATION
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"cup_small.jpg", s_searchFolders);
+    DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, strFilePath,
+        m_test9.ReleaseAndGetAddressOf(), false));
 
     {
     #ifdef __MINGW32__
@@ -1537,7 +1597,9 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         }
     }
 
-    DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"cup_small.jpg", m_test10.ReleaseAndGetAddressOf(), true));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"cup_small.jpg", s_searchFolders);
+    DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, strFilePath,
+        m_test10.ReleaseAndGetAddressOf(), true));
 
     {
     #ifdef __MINGW32__
@@ -1564,9 +1626,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             }
         }
     }
+#endif // PROTON_EMULATION
 
-    DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"cup_small.jpg", 0,
-        D3D12_RESOURCE_FLAG_NONE, WIC_LOADER_IGNORE_SRGB, m_test11.ReleaseAndGetAddressOf()));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"cup_small.jpg", s_searchFolders);
+    DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, strFilePath,
+        0, D3D12_RESOURCE_FLAG_NONE, WIC_LOADER_IGNORE_SRGB,
+        m_test11.ReleaseAndGetAddressOf()));
 
     {
     #ifdef __MINGW32__
@@ -1586,8 +1651,10 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         }
     }
 
-    DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"cup_small.jpg", 0,
-        D3D12_RESOURCE_FLAG_NONE, WIC_LOADER_IGNORE_SRGB | WIC_LOADER_MIP_AUTOGEN, m_test12.ReleaseAndGetAddressOf()));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"cup_small.jpg", s_searchFolders);
+    DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, strFilePath,
+        0, D3D12_RESOURCE_FLAG_NONE, WIC_LOADER_IGNORE_SRGB | WIC_LOADER_MIP_AUTOGEN,
+        m_test12.ReleaseAndGetAddressOf()));
 
     {
     #ifdef __MINGW32__
@@ -1617,7 +1684,9 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
 
     // Video textures
 #ifndef XBOX
-    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"lenaNV12.dds", m_test13.ReleaseAndGetAddressOf()));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"lenaNV12.dds", s_searchFolders);
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, strFilePath,
+        m_test13.ReleaseAndGetAddressOf()));
 
     {
     #ifdef __MINGW32__
@@ -1639,7 +1708,9 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
 #endif
 
     // Autogen
-    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen.dds", m_test14.ReleaseAndGetAddressOf()));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"dx5_logo_autogen.dds", s_searchFolders);
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, strFilePath,
+        m_test14.ReleaseAndGetAddressOf()));
 
     {
     #ifdef __MINGW32__
@@ -1659,7 +1730,9 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         }
     }
 
-    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen.dds", m_test15.ReleaseAndGetAddressOf(), true));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"dx5_logo_autogen.dds", s_searchFolders);
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, strFilePath,
+        m_test15.ReleaseAndGetAddressOf(), true));
 
     {
     #ifdef __MINGW32__
@@ -1687,7 +1760,9 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         }
     }
 
-    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen_srgb.dds", m_test16.ReleaseAndGetAddressOf()));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"dx5_logo_autogen_srgb.dds", s_searchFolders);
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, strFilePath,
+        m_test16.ReleaseAndGetAddressOf()));
 
     {
     #ifdef __MINGW32__
@@ -1707,7 +1782,9 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         }
     }
 
-    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_autogen_srgb.dds", m_test17.ReleaseAndGetAddressOf(), true));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"dx5_logo_autogen_srgb.dds", s_searchFolders);
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, strFilePath,
+        m_test17.ReleaseAndGetAddressOf(), true));
 
     {
     #ifdef __MINGW32__
@@ -1736,7 +1813,9 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     }
 
     // WIC load without format conversion or resize
-    DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"testpattern.png", m_test18.ReleaseAndGetAddressOf()));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"testpattern.png", s_searchFolders);
+    DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, strFilePath,
+        m_test18.ReleaseAndGetAddressOf()));
 
     {
     #ifdef __MINGW32__
@@ -1757,7 +1836,9 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     }
 
     // WIC load with resize
-    DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"testpattern.png", m_test19.ReleaseAndGetAddressOf(), false, 1024));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"testpattern.png", s_searchFolders);
+    DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, strFilePath,
+        m_test19.ReleaseAndGetAddressOf(), false, 1024));
 
     {
     #ifdef __MINGW32__
@@ -1778,7 +1859,10 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     }
 
     // WIC load with resize and format conversion
-    DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"cup_small.jpg", m_test20.ReleaseAndGetAddressOf(), false, 256));
+#ifndef PROTON_EMULATION
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"cup_small.jpg", s_searchFolders);
+    DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, strFilePath,
+        m_test20.ReleaseAndGetAddressOf(), false, 256));
 
     {
     #ifdef __MINGW32__
@@ -1797,9 +1881,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             success = false;
         }
     }
+#endif // PROTON_EMULATION
 
     // DDS load with auto-gen request ignore (BC1 is not supported for GenerateMips)
-    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, L"dx5_logo_nomips.dds", m_test21.ReleaseAndGetAddressOf(), true));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"dx5_logo_nomips.dds", s_searchFolders);
+    DX::ThrowIfFailed(CreateDDSTextureFromFile(device, resourceUpload, strFilePath,
+        m_test21.ReleaseAndGetAddressOf(), true));
     {
     #ifdef __MINGW32__
         D3D12_RESOURCE_DESC desc;
@@ -1818,8 +1905,11 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         }
     }
 
+#ifndef PROTON_EMULATION
     // WIC load with auto-gen request ignore (16bpp is not usually supported for GenerateMips)
-    DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"grad4d_a1r5g5b5.bmp", m_test22.ReleaseAndGetAddressOf(), true));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"grad4d_a1r5g5b5.bmp", s_searchFolders);
+    DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, strFilePath,
+        m_test22.ReleaseAndGetAddressOf(), true));
     {
     #ifdef __MINGW32__
         D3D12_RESOURCE_DESC desc;
@@ -1845,10 +1935,13 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             success = false;
         }
     }
+#endif // PROTON_EMULATION
 
     // DDS load (force sRGB on 10:10:10:2)
-    DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, L"earth_A2B10G10R10.dds",
-        0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_FORCE_SRGB, m_test23.ReleaseAndGetAddressOf()));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"earth_A2B10G10R10.dds", s_searchFolders);
+    DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, strFilePath,
+        0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_FORCE_SRGB,
+        m_test23.ReleaseAndGetAddressOf()));
     {
         // forceSRGB has no effect for 10:10:10:2
 
@@ -1870,8 +1963,10 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     }
 
     // DDS load of R32F (autogen)
-    DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, L"windowslogo_r32f.dds",
-        0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_MIP_AUTOGEN, m_test24.ReleaseAndGetAddressOf()));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"windowslogo_r32f.dds", s_searchFolders);
+    DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, strFilePath,
+        0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_MIP_AUTOGEN,
+        m_test24.ReleaseAndGetAddressOf()));
     {
     #ifdef __MINGW32__
         D3D12_RESOURCE_DESC desc;
@@ -1892,9 +1987,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
 
     // From memory
     {
-        auto blob = DX::ReadData(L"dx5_logo.dds");
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"dx5_logo.dds", s_searchFolders);
+        auto blob = DX::ReadData(strFilePath);
 
-        DX::ThrowIfFailed(CreateDDSTextureFromMemory(device, resourceUpload, blob.data(), blob.size(), m_test25.ReleaseAndGetAddressOf()));
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"tree02S_pmalpha.dds", s_searchFolders);
+        DX::ThrowIfFailed(CreateDDSTextureFromMemory(device, resourceUpload, blob.data(), blob.size(),
+            m_test25.ReleaseAndGetAddressOf()));
 
         {
         #ifdef __MINGW32__
@@ -1916,9 +2014,11 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     }
 
     {
-        auto blob = DX::ReadData(L"win95.bmp");
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"win95.bmp", s_searchFolders);
+        auto blob = DX::ReadData(strFilePath);
 
-        DX::ThrowIfFailed(CreateWICTextureFromMemory(device, resourceUpload, blob.data(), blob.size(), m_test26.ReleaseAndGetAddressOf(), false));
+        DX::ThrowIfFailed(CreateWICTextureFromMemory(device, resourceUpload, blob.data(), blob.size(),
+            m_test26.ReleaseAndGetAddressOf(), false));
 
         {
         #ifdef __MINGW32__
@@ -1941,7 +2041,9 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
 
     // WIC force RGBA32
     {
-        DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, L"pentagon.tiff", m_test27.GetAddressOf()));
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"pentagon.tiff", s_searchFolders);
+        DX::ThrowIfFailed(CreateWICTextureFromFile(device, resourceUpload, strFilePath,
+            m_test27.GetAddressOf()));
 
     #ifdef __MINGW32__
         D3D12_RESOURCE_DESC desc;
@@ -1959,7 +2061,8 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             success = false;
         }
 
-        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"pentagon.tiff",
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"pentagon.tiff", s_searchFolders);
+        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, strFilePath,
             0,
             D3D12_RESOURCE_FLAG_NONE,
             WIC_LOADER_FORCE_RGBA32,
@@ -1981,9 +2084,11 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         }
     }
 
+#ifndef PROTON_EMULATION
     // WIC SQUARE flags
     {
-        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"cup_small.jpg",
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"cup_small.jpg", s_searchFolders);
+        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, strFilePath,
             0,
             D3D12_RESOURCE_FLAG_NONE,
             WIC_LOADER_MAKE_SQUARE,
@@ -2008,7 +2113,8 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
 
     // WIC POW2 flags
     {
-        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"cup_small.jpg",
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"cup_small.jpg", s_searchFolders);
+        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, strFilePath,
             0,
             D3D12_RESOURCE_FLAG_NONE,
             WIC_LOADER_FIT_POW2,
@@ -2033,7 +2139,8 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
 
     // WIC POW2 + SQUARE flags
     {
-        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"cup_small.jpg",
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"cup_small.jpg", s_searchFolders);
+        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, strFilePath,
             0,
             D3D12_RESOURCE_FLAG_NONE,
             WIC_LOADER_FIT_POW2 | WIC_LOADER_MAKE_SQUARE,
@@ -2055,10 +2162,12 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             success = false;
         }
     }
+#endif // PROTON_EMULATION
 
     // WIC SRGB_DEFAULT + WIC RGBA32
     {
-        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"pentagon.tiff",
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"pentagon.tiff", s_searchFolders);
+        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, strFilePath,
             0,
             D3D12_RESOURCE_FLAG_NONE,
             WIC_LOADER_FORCE_RGBA32 | WIC_LOADER_SRGB_DEFAULT,
@@ -2081,9 +2190,11 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
         }
     }
 
+#ifndef PROTON_EMULATION
     // WIC RGBA32 + POW2 + SQUARE
     {
-        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"text.tif",
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"text.tif", s_searchFolders);
+        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, strFilePath,
             0,
             D3D12_RESOURCE_FLAG_NONE,
             WIC_LOADER_DEFAULT,
@@ -2105,7 +2216,8 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             success = false;
         }
 
-        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"text.tif",
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"text.tif", s_searchFolders);
+        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, strFilePath,
             0,
             D3D12_RESOURCE_FLAG_NONE,
             WIC_LOADER_FORCE_RGBA32 | WIC_LOADER_FIT_POW2,
@@ -2126,7 +2238,8 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             success = false;
         }
 
-        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"text.tif",
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"text.tif", s_searchFolders);
+        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, strFilePath,
             0,
             D3D12_RESOURCE_FLAG_NONE,
             WIC_LOADER_FORCE_RGBA32 | WIC_LOADER_FIT_POW2 | WIC_LOADER_MAKE_SQUARE,
@@ -2147,11 +2260,14 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             success = false;
         }
     }
+#endif // PROTON_EMULATION
 
     // UAV
-    DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"win95.bmp", 0,
-        D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
-        WIC_LOADER_DEFAULT, m_test37.ReleaseAndGetAddressOf()));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"win95.bmp", s_searchFolders);
+    DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, strFilePath,
+        0, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+        WIC_LOADER_DEFAULT,
+        m_test37.ReleaseAndGetAddressOf()));
 
     {
     #ifdef __MINGW32__
@@ -2175,9 +2291,11 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
     CreateUnorderedAccessView(device, m_test37.Get(), m_resourceDescriptors->GetCpuHandle(Win95_UAV));
 
     // RTV
-    DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"win95.bmp", 0,
-        D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET,
-        WIC_LOADER_DEFAULT, m_test38.ReleaseAndGetAddressOf()));
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"win95.bmp", s_searchFolders);
+    DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, strFilePath,
+        0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET,
+        WIC_LOADER_DEFAULT,
+        m_test38.ReleaseAndGetAddressOf()));
 
     {
     #ifdef __MINGW32__
@@ -2202,7 +2320,8 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
 
     // WIC Force RGAB32+AUTOGEN
     {
-        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, L"pentagon.tiff",
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"pentagon.tiff", s_searchFolders);
+        DX::ThrowIfFailed(CreateWICTextureFromFileEx(device, resourceUpload, strFilePath,
             0,
             D3D12_RESOURCE_FLAG_NONE,
             WIC_LOADER_MIP_AUTOGEN | WIC_LOADER_FORCE_RGBA32,

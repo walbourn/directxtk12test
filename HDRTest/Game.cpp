@@ -12,6 +12,8 @@
 #include "pch.h"
 #include "Game.h"
 
+#include "FindMedia.h"
+
 // Build for LH vs. RH coords
 //#define LH_COORDS
 
@@ -58,7 +60,14 @@ namespace
           0.0433136f, 0.0124772f,    0.983607f, 0.f,
                  0.f,        0.f,          0.f, 1.f
     };
-}
+
+    static const wchar_t* s_searchFolders[] =
+    {
+        L"HDRTest",
+        L"Tests\\HDRTest",
+        nullptr
+    };
+} // anonymous namespace
 
 #ifdef XBOX
 extern bool g_HDRMode;
@@ -608,20 +617,24 @@ void Game::CreateDeviceDependentResources()
         m_batch = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
     }
 
-    m_font = std::make_unique<SpriteFont>(device, resourceUpload, L"comic.spritefont",
+    wchar_t strFilePath[MAX_PATH] = {};
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"comic.spritefont", s_searchFolders);
+    m_font = std::make_unique<SpriteFont>(device, resourceUpload, strFilePath,
         m_resourceDescriptors->GetCpuHandle(Descriptors::Font),
         m_resourceDescriptors->GetGpuHandle(Descriptors::Font));
 
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"HDR_029_Sky_Cloudy_Ref.dds", s_searchFolders);
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFile(device, resourceUpload, L"HDR_029_Sky_Cloudy_Ref.dds",
+        CreateDDSTextureFromFile(device, resourceUpload, strFilePath,
             m_hdrImage1.ReleaseAndGetAddressOf())
     );
 
     CreateShaderResourceView(device, m_hdrImage1.Get(),
         m_resourceDescriptors->GetCpuHandle(Descriptors::HDRImage1));
 
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"HDR_112_River_Road_2_Ref.dds", s_searchFolders);
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFile(device, resourceUpload, L"HDR_112_River_Road_2_Ref.dds",
+        CreateDDSTextureFromFile(device, resourceUpload, strFilePath,
             m_hdrImage2.ReleaseAndGetAddressOf())
     );
 

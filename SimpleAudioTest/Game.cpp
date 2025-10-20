@@ -12,6 +12,8 @@
 #include "pch.h"
 #include "Game.h"
 
+#include "FindMedia.h"
+
 //#define GAMMA_CORRECT_RENDERING
 
 // Test Advanced Format (4Kn) streaming wave banks vs. DVD (2048) sector aligned
@@ -44,7 +46,15 @@ namespace
 #else
     const XMVECTORF32 c_clearColor = Colors::CornflowerBlue;
 #endif
-}
+
+    static const wchar_t* s_searchFolders[] =
+    {
+        L"SimpleAudioTest",
+        L"Tests\\SimpleAudioTest",
+        nullptr
+    };
+} // anonymous namespace
+
 
 SoundStreamInstance* Game::GetCurrentStream(unsigned int index)
 {
@@ -331,34 +341,42 @@ void Game::Initialize(
     SetDeviceString(m_audEngine.get(), m_deviceStr, 256);
 
     //--- WAV files ---
-    m_alarmPCM = std::make_unique<SoundEffect>(m_audEngine.get(), L"Alarm01.wav");
+    wchar_t strFilePath[MAX_PATH] = {};
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"Alarm01.wav", s_searchFolders);
+    m_alarmPCM = std::make_unique<SoundEffect>(m_audEngine.get(), strFilePath);
     m_console->Write(L"Alarm01.wav:       ");
     dump_wfx(m_console.get(), m_alarmPCM->GetFormat());
 
-    m_tadaPCM = std::make_unique<SoundEffect>(m_audEngine.get(), L"tada.wav");
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"tada.wav", s_searchFolders);
+    m_tadaPCM = std::make_unique<SoundEffect>(m_audEngine.get(), strFilePath);
     m_console->Write(L"Tada.wav:          ");
     dump_wfx(m_console.get(), m_tadaPCM->GetFormat());
 
-    m_alarmADPCM = std::make_unique<SoundEffect>(m_audEngine.get(), L"Alarm01_adpcm.wav");
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"Alarm01_adpcm.wav", s_searchFolders);
+    m_alarmADPCM = std::make_unique<SoundEffect>(m_audEngine.get(), strFilePath);
     m_console->Write(L"Alarm01_adpcm.wav: ");
     dump_wfx(m_console.get(), m_alarmADPCM->GetFormat());
 
-    m_alarmFLOAT = std::make_unique<SoundEffect>(m_audEngine.get(), L"Alarm01_float.wav");
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"Alarm01_float.wav", s_searchFolders);
+    m_alarmFLOAT = std::make_unique<SoundEffect>(m_audEngine.get(), strFilePath);
     m_console->Write(L"Alarm01_float.wav: ");
     dump_wfx(m_console.get(), m_alarmFLOAT->GetFormat());
 
-    m_alarmXWMA = std::make_unique<SoundEffect>(m_audEngine.get(), L"Alarm01_xwma.wav");
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"Alarm01_xwma.wav", s_searchFolders);
+    m_alarmXWMA = std::make_unique<SoundEffect>(m_audEngine.get(), strFilePath);
     m_console->Write(L"Alarm01_xwma.wav:  ");
     dump_wfx(m_console.get(), m_alarmXWMA->GetFormat());
 
 #ifdef TEST_XMA2
-    m_alarmXMA = std::make_unique<SoundEffect>(m_audEngine.get(), L"Alarm01_xma.wav");
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"Alarm01_xma.wav", s_searchFolders);
+    m_alarmXMA = std::make_unique<SoundEffect>(m_audEngine.get(), strFilePath);
     m_console->Write(L"Alarm01_xma.wav:   ");
     dump_wfx(m_console.get(), m_alarmXMA->GetFormat());
 #endif
 
     //--- XWB Wave Banks ---
-    m_wbPCM = std::make_unique<WaveBank>(m_audEngine.get(), L"droid.xwb");
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"droid.xwb", s_searchFolders);
+    m_wbPCM = std::make_unique<WaveBank>(m_audEngine.get(), strFilePath);
     m_console->WriteLine(L"droid.xwb");
     m_console->Format(L"    Index #%u (%zu bytes, %zu samples, %zu ms)\n",
         WB_INMEMORY_ENTRY,
@@ -371,7 +389,8 @@ void Game::Initialize(
         dump_wfx(m_console.get(), m_wbPCM->GetFormat(WB_INMEMORY_ENTRY, wfx, 64));
     }
 
-    m_wbADPCM = std::make_unique<WaveBank>(m_audEngine.get(), L"ADPCMdroid.xwb");
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"ADPCMdroid.xwb", s_searchFolders);
+    m_wbADPCM = std::make_unique<WaveBank>(m_audEngine.get(), strFilePath);
     m_console->WriteLine(L"ADPCMdroid.xwb");
     m_console->Format(L"    Index #%u (%zu bytes, %zu samples, %zu ms)\n",
         WB_INMEMORY_ENTRY,
@@ -385,10 +404,12 @@ void Game::Initialize(
     }
 
 #ifdef TEST_4KN
-    m_wbstreamADPCM = std::make_unique<WaveBank>(m_audEngine.get(), L"WaveBankADPCM4Kn.xwb");
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"WaveBankADPCM4Kn.xwb", s_searchFolders);
+    m_wbstreamADPCM = std::make_unique<WaveBank>(m_audEngine.get(), strFilePath);
     m_console->WriteLine(L"WaveBankADPCM4Kn.xwb");
 #else
-    m_wbstreamADPCM = std::make_unique<WaveBank>(m_audEngine.get(), L"WaveBankADPCM.xwb");
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"WaveBankADPCM.xwb", s_searchFolders);
+    m_wbstreamADPCM = std::make_unique<WaveBank>(m_audEngine.get(), strFilePath);
     m_console->WriteLine(L"WaveBankADPCM.xwb");
 #endif
     m_console->Format(L"    Index #%u (%zu bytes, %zu samples, %zu ms)\n",
@@ -402,7 +423,8 @@ void Game::Initialize(
         dump_wfx(m_console.get(), m_wbstreamADPCM->GetFormat(WB_STREAM_ENTRY, wfx, 64));
     }
 
-    m_wbXWMA = std::make_unique<WaveBank>(m_audEngine.get(), L"xwmadroid.xwb");
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"xwmadroid.xwb", s_searchFolders);
+    m_wbXWMA = std::make_unique<WaveBank>(m_audEngine.get(), strFilePath);
     m_console->WriteLine(L"xwmadroid.xwb");
     m_console->Format(L"    Index #%u (%zu bytes, %zu samples, %zu ms)\n",
         WB_INMEMORY_ENTRY,
@@ -416,10 +438,12 @@ void Game::Initialize(
     }
 
 #ifdef TEST_4KN
-    m_wbstreamXWMA = std::make_unique<WaveBank>(m_audEngine.get(), L"WaveBankxWMA4Kn.xwb");
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"WaveBankxWMA4Kn.xwb", s_searchFolders);
+    m_wbstreamXWMA = std::make_unique<WaveBank>(m_audEngine.get(), strFilePath);
     m_console->WriteLine(L"WaveBankxWMA4Kn.xwb");
 #else
-    m_wbstreamXWMA = std::make_unique<WaveBank>(m_audEngine.get(), L"WaveBankxWMA.xwb");
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"WaveBankxWMA.xwb", s_searchFolders);
+    m_wbstreamXWMA = std::make_unique<WaveBank>(m_audEngine.get(), strFilePath);
     m_console->WriteLine(L"WaveBankxWMA.xwb");
 #endif
     m_console->Format(L"    Index #%u (%zu bytes, %zu samples, %zu ms)\n",
@@ -434,7 +458,8 @@ void Game::Initialize(
     }
 
 #ifdef TEST_XMA2
-    m_wbXMA = std::make_unique<WaveBank>(m_audEngine.get(), L"xmadroid.xwb");
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"xmadroid.xwb", s_searchFolders);
+    m_wbXMA = std::make_unique<WaveBank>(m_audEngine.get(), strFilePath);
     m_console->WriteLine(L"xmadroid.xwb");
     m_console->Format(L"    Index #%u (%zu bytes, %zu samples, %zu ms)\n",
         WB_INMEMORY_ENTRY,
@@ -448,10 +473,12 @@ void Game::Initialize(
     }
 
 #ifdef TEST_4KN
-    m_wbstreamXMA = std::make_unique<WaveBank>(m_audEngine.get(), L"WaveBankXMA2_4Kn.xwb");
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"WaveBankXMA2_4Kn.xwb", s_searchFolders);
+    m_wbstreamXMA = std::make_unique<WaveBank>(m_audEngine.get(), strFilePath);
     m_console->WriteLine(L"WaveBankXMA2_4Kn.xwb");
 #else
-    m_wbstreamXMA = std::make_unique<WaveBank>(m_audEngine.get(), L"WaveBankXMA2.xwb");
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"WaveBankXMA2.xwb", s_searchFolders);
+    m_wbstreamXMA = std::make_unique<WaveBank>(m_audEngine.get(), strFilePath);
     m_console->WriteLine(L"WaveBankXMA2.xwb");
 #endif
     m_console->Format(L"    Index #%u (%zu bytes, %zu samples, %zu ms)\n",
@@ -1015,12 +1042,15 @@ void Game::CreateDeviceDependentResources()
         m_spriteBatch = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
     }
 
+    wchar_t strFilePath[MAX_PATH] = {};
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"comic.spritefont", s_searchFolders);
     m_comicFont = std::make_unique<SpriteFont>(device, resourceUpload,
-        L"comic.spritefont",
+        strFilePath,
         m_resourceDescriptors->GetCpuHandle(Descriptors::ComicFont),
         m_resourceDescriptors->GetGpuHandle(Descriptors::ComicFont));
 
-    m_console->RestoreDevice(device, resourceUpload, rtState, L"courier_16.spritefont",
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"courier_16.spritefont", s_searchFolders);
+    m_console->RestoreDevice(device, resourceUpload, rtState, strFilePath,
         m_resourceDescriptors->GetCpuHandle(Descriptors::ConsolasFont),
         m_resourceDescriptors->GetGpuHandle(Descriptors::ConsolasFont));
 

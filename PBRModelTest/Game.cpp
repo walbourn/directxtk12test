@@ -14,6 +14,12 @@
 
 #include "FindMedia.h"
 
+#if __cplusplus < 201703L
+#error Requires C++17 (and /Zc:__cplusplus with MSVC)
+#endif
+
+#include <filesystem>
+
 // Build for LH vs. RH coords
 //#define LH_COORDS
 
@@ -44,7 +50,17 @@ namespace
     constexpr float row2 = -1.5f;
 
     constexpr XMVECTORF32 c_clearColor = { { { 0.127437726f, 0.300543845f, 0.846873462f, 1.f } } };
-}
+
+    static const wchar_t* s_searchFolders[] =
+    {
+        L"PBRModelTest",
+        L"Tests\\PBRModelTest",
+        L"..\\PBRTest",
+        L"PBRTest",
+        L"Tests\\PBRTest",
+        nullptr
+    };
+} // anonymous namespace
 
 // Constructor.
 Game::Game() noexcept(false) :
@@ -647,14 +663,30 @@ void Game::CreateDeviceDependentResources()
         m_resourceDescriptors->GetCpuHandle(Descriptors::SceneTex),
         m_renderDescriptors->GetCpuHandle(RTDescriptors::HDRScene));
 
+    wchar_t strFilePath[MAX_PATH] = {};
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"BrokenCube.sdkmesh", s_searchFolders);
+
+    std::filesystem::path modelDirectory;
+    {
+        modelDirectory = strFilePath;
+        modelDirectory = modelDirectory.parent_path();
+    }
+
     // DirectX SDK Mesh
-    m_cube = Model::CreateFromSDKMESH(device, L"BrokenCube.sdkmesh");
-    m_sphere = Model::CreateFromSDKMESH(device, L"Sphere.sdkmesh");
-    m_sphere2 = Model::CreateFromSDKMESH(device, L"Sphere2.sdkmesh");
-    m_robot = Model::CreateFromSDKMESH(device, L"ToyRobot.sdkmesh");
+    m_cube = Model::CreateFromSDKMESH(device, strFilePath);
+
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"Sphere.sdkmesh", s_searchFolders);
+    m_sphere = Model::CreateFromSDKMESH(device, strFilePath);
+
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"Sphere2.sdkmesh", s_searchFolders);
+    m_sphere2 = Model::CreateFromSDKMESH(device, strFilePath);
+
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"ToyRobot.sdkmesh", s_searchFolders);
+    m_robot = Model::CreateFromSDKMESH(device, strFilePath);
 
     // Create instanced mesh.
-    m_cubeInst = Model::CreateFromSDKMESH(device, L"BrokenCube.sdkmesh");
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"BrokenCube.sdkmesh", s_searchFolders);
+    m_cubeInst = Model::CreateFromSDKMESH(device, strFilePath);
 
     static const D3D12_INPUT_ELEMENT_DESC s_instElements[] =
     {
@@ -687,8 +719,9 @@ void Game::CreateDeviceDependentResources()
     }
 
     // Create skinning teapot.
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"teapot.cmo", s_searchFolders);
     size_t animsOffset;
-    m_teapot = Model::CreateFromCMO(device, L"teapot.cmo", ModelLoader_IncludeBones, &animsOffset);
+    m_teapot = Model::CreateFromCMO(device, strFilePath, ModelLoader_IncludeBones, &animsOffset);
 
     if (!animsOffset)
     {
@@ -696,7 +729,7 @@ void Game::CreateDeviceDependentResources()
     }
     else
     {
-        DX::ThrowIfFailed(m_teapotAnim.Load(L"teapot.cmo", animsOffset, L"Take 001"));
+        DX::ThrowIfFailed(m_teapotAnim.Load(strFilePath, animsOffset, L"Take 001"));
 
         OutputDebugStringA("'teapot.cmo' contains animation clips.\n");
     }
@@ -726,6 +759,11 @@ void Game::CreateDeviceDependentResources()
     resourceUpload.Begin();
 
     m_modelResources = std::make_unique<EffectTextureFactory>(device, resourceUpload, m_resourceDescriptors->Heap());
+
+    if (!modelDirectory.empty())
+    {
+        m_modelResources->SetDirectory(modelDirectory.c_str());
+    }
 
     m_fxFactory = std::make_unique<PBREffectFactory>(m_resourceDescriptors->Heap(), m_states->Heap());
 
@@ -824,17 +862,8 @@ void Game::CreateDeviceDependentResources()
 
     static_assert(std::size(s_radianceIBL) == std::size(s_irradianceIBL), "IBL array mismatch");
 
-    static const wchar_t* s_searchFolders[] =
-    {
-        L"..\\PBRTest",
-        L"PBRModelTest",
-        L"PBRTest",
-        nullptr
-    };
-
     for (size_t j = 0; j < s_nIBL; ++j)
     {
-        wchar_t strFilePath[MAX_PATH] = {};
         DX::FindMediaFile(strFilePath, MAX_PATH, s_radianceIBL[j], s_searchFolders);
         DX::ThrowIfFailed(
             CreateDDSTextureFromFile(device, resourceUpload, strFilePath, m_radianceIBL[j].ReleaseAndGetAddressOf())

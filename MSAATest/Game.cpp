@@ -12,6 +12,8 @@
 #include "pch.h"
 #include "Game.h"
 
+#include "FindMedia.h"
+
 //#define GAMMA_CORRECT_RENDERING
 
 // Build for LH vs. RH coords
@@ -46,7 +48,14 @@ namespace
 
     constexpr float ADVANCE_TIME = 1.f;
     constexpr float INTERACTIVE_TIME = 10.f;
-}
+
+    static const wchar_t* s_searchFolders[] =
+    {
+        L"MSAATest",
+        L"Tests\\MSAATest",
+        nullptr
+    };
+} // anonymous namespace
 
 // Constructor.
 Game::Game() noexcept(false) :
@@ -723,8 +732,10 @@ void Game::CreateDeviceDependentResources()
 
         resourceUpload.Begin();
 
+        wchar_t strFilePath[MAX_PATH] = {};
+        DX::FindMediaFile(strFilePath, MAX_PATH, L"reftexture.dds", s_searchFolders);
         DX::ThrowIfFailed(
-            CreateDDSTextureFromFile(device, resourceUpload, L"reftexture.dds", m_texture.ReleaseAndGetAddressOf())
+            CreateDDSTextureFromFile(device, resourceUpload, strFilePath, m_texture.ReleaseAndGetAddressOf())
             );
 
         auto uploadResourcesFinished = resourceUpload.End(m_deviceResources->GetCommandQueue());

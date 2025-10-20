@@ -12,6 +12,8 @@
 #include "pch.h"
 #include "Game.h"
 
+#include "FindMedia.h"
+
 #define GAMMA_CORRECT_RENDERING
 
 #ifdef __clang__
@@ -39,7 +41,14 @@ namespace
 #else
     const XMVECTORF32 c_clearColor = Colors::CornflowerBlue;
 #endif
-}
+
+    static const wchar_t* s_searchFolders[] =
+    {
+        L"SpriteFontTest",
+        L"Tests\\SpriteFontTest",
+        nullptr
+    };
+} // anonymous namespace
 
 Game::Game() noexcept(false) :
     m_frame(0),
@@ -538,31 +547,41 @@ void Game::CreateDeviceDependentResources()
     bool forceSRGB = false;
 #endif
 
-    m_comicFont = std::make_unique<SpriteFont>(device, resourceUpload, L"comic.spritefont",
+    wchar_t strFilePath[MAX_PATH] = {};
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"comic.spritefont", s_searchFolders);
+    m_comicFont = std::make_unique<SpriteFont>(device, resourceUpload, strFilePath,
         m_resourceDescriptors->GetCpuHandle(Descriptors::ComicFont), m_resourceDescriptors->GetGpuHandle(Descriptors::ComicFont));
 
-    m_italicFont = std::make_unique<SpriteFont>(device, resourceUpload, L"italic.spritefont",
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"italic.spritefont", s_searchFolders);
+    m_italicFont = std::make_unique<SpriteFont>(device, resourceUpload, strFilePath,
         m_resourceDescriptors->GetCpuHandle(Descriptors::ItalicFont), m_resourceDescriptors->GetGpuHandle(Descriptors::ItalicFont));
 
-    m_scriptFont = std::make_unique<SpriteFont>(device, resourceUpload, L"script.spritefont",
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"script.spritefont", s_searchFolders);
+    m_scriptFont = std::make_unique<SpriteFont>(device, resourceUpload, strFilePath,
         m_resourceDescriptors->GetCpuHandle(Descriptors::ScriptFont), m_resourceDescriptors->GetGpuHandle(Descriptors::ScriptFont));
 
-    m_nonproportionalFont = std::make_unique<SpriteFont>(device, resourceUpload, L"nonproportional.spritefont",
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"nonproportional.spritefont", s_searchFolders);
+    m_nonproportionalFont = std::make_unique<SpriteFont>(device, resourceUpload, strFilePath,
         m_resourceDescriptors->GetCpuHandle(Descriptors::NonProportionalFont), m_resourceDescriptors->GetGpuHandle(Descriptors::NonProportionalFont));
 
-    m_multicoloredFont = std::make_unique<SpriteFont>(device, resourceUpload, L"multicolored.spritefont",
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"multicolored.spritefont", s_searchFolders);
+    m_multicoloredFont = std::make_unique<SpriteFont>(device, resourceUpload, strFilePath,
         m_resourceDescriptors->GetCpuHandle(Descriptors::MulticoloredFont), m_resourceDescriptors->GetGpuHandle(Descriptors::MulticoloredFont), forceSRGB);
 
-    m_japaneseFont = std::make_unique<SpriteFont>(device, resourceUpload, L"japanese.spritefont",
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"japanese.spritefont", s_searchFolders);
+    m_japaneseFont = std::make_unique<SpriteFont>(device, resourceUpload, strFilePath,
         m_resourceDescriptors->GetCpuHandle(Descriptors::JapaneseFont), m_resourceDescriptors->GetGpuHandle(Descriptors::JapaneseFont));
 
-    m_ctrlFont = std::make_unique<SpriteFont>(device, resourceUpload, L"xboxController.spritefont",
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"xboxController.spritefont", s_searchFolders);
+    m_ctrlFont = std::make_unique<SpriteFont>(device, resourceUpload, strFilePath,
         m_resourceDescriptors->GetCpuHandle(Descriptors::CtrlFont), m_resourceDescriptors->GetGpuHandle(Descriptors::CtrlFont), forceSRGB);
 
-    m_ctrlOneFont = std::make_unique<SpriteFont>(device, resourceUpload, L"xboxOneController.spritefont",
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"xboxOneController.spritefont", s_searchFolders);
+    m_ctrlOneFont = std::make_unique<SpriteFont>(device, resourceUpload, strFilePath,
         m_resourceDescriptors->GetCpuHandle(Descriptors::CtrlOneFont), m_resourceDescriptors->GetGpuHandle(Descriptors::CtrlOneFont), forceSRGB);
 
-    m_consolasFont = std::make_unique<SpriteFont>(device, resourceUpload, L"consolas.spritefont",
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"consolas.spritefont", s_searchFolders);
+    m_consolasFont = std::make_unique<SpriteFont>(device, resourceUpload, strFilePath,
         m_resourceDescriptors->GetCpuHandle(Descriptors::ConsolasFont), m_resourceDescriptors->GetGpuHandle(Descriptors::ConsolasFont));
 
     auto uploadResourcesFinished = resourceUpload.End(m_deviceResources->GetCommandQueue());

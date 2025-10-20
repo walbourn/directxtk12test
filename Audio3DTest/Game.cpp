@@ -12,6 +12,8 @@
 #include "pch.h"
 #include "Game.h"
 
+#include "FindMedia.h"
+
 #define GAMMA_CORRECT_RENDERING
 
 // Build for LH vs. RH coords
@@ -102,6 +104,13 @@ namespace
 #else
     const XMVECTORF32 c_clearColor = Colors::CornflowerBlue;
 #endif
+
+    static const wchar_t* s_searchFolders[] =
+    {
+        L"Audio3DTest",
+        L"Tests\\Audio3DTest",
+        nullptr
+    };
 }
 
 Game::Game() noexcept(false) :
@@ -232,7 +241,9 @@ void Game::Initialize(
 
     SetDeviceString(m_audEngine.get(), m_deviceStr, 256);
 
-    m_soundEffect = std::make_unique<SoundEffect>(m_audEngine.get(), L"heli.wav");
+    wchar_t strFilePath[MAX_PATH] = {};
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"heli.wav", s_searchFolders);
+    m_soundEffect = std::make_unique<SoundEffect>(m_audEngine.get(), strFilePath);
 
     m_effect = m_soundEffect->CreateInstance(SoundEffectInstance_Use3D | SoundEffectInstance_ReverbUseFilters);
     if (!m_effect)
@@ -590,8 +601,11 @@ void Game::CreateDeviceDependentResources()
         m_spriteBatch = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
     }
 
+
+    wchar_t strFilePath[MAX_PATH] = {};
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"comic.spritefont", s_searchFolders);
     m_comicFont = std::make_unique<SpriteFont>(device, resourceUpload,
-        L"comic.spritefont",
+        strFilePath,
         m_resourceDescriptors->GetFirstCpuHandle(),
         m_resourceDescriptors->GetFirstGpuHandle());
 

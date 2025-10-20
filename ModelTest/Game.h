@@ -145,10 +145,8 @@ private:
     std::unique_ptr<DirectX::Model>                 m_ship;
     DirectX::Model::EffectCollection                m_shipNormal;
 
-    std::unique_ptr<DirectX::IEffectTextureFactory> m_abstractModelResources;
     std::unique_ptr<DirectX::EffectTextureFactory>  m_modelResources;
 
-    std::unique_ptr<DirectX::IEffectFactory>        m_abstractFXFactory;
     std::unique_ptr<DirectX::EffectFactory>         m_fxFactory;
 
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_defaultTex;

@@ -12,6 +12,8 @@
 #include "pch.h"
 #include "Game.h"
 
+#include "FindMedia.h"
+
 #define GAMMA_CORRECT_RENDERING
 
 extern void ExitGame() noexcept;
@@ -190,6 +192,13 @@ namespace
 #else
     const XMVECTORF32 c_clearColor = Colors::CornflowerBlue;
 #endif
+
+    static const wchar_t* s_searchFolders[] =
+    {
+        L"ShaderTest",
+        L"Tests\\ShaderTest",
+        nullptr
+    };
 }  // anonymous namespace
 
 Game::Game() noexcept(false) :
@@ -947,101 +956,117 @@ void Game::CreateDeviceDependentResources()
     constexpr WIC_LOADER_FLAGS wicLoadFlags = WIC_LOADER_DEFAULT;
 #endif
 
+    wchar_t strFilePath[MAX_PATH] = {};
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"cat.dds", s_searchFolders);
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFileEx(device, resourceUpload, L"cat.dds",
+        CreateDDSTextureFromFileEx(device, resourceUpload, strFilePath,
             0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
             m_cat.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_cat.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Cat));
 
     bool iscubemap;
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"cubemap.dds", s_searchFolders);
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFileEx(device, resourceUpload, L"cubemap.dds",
+        CreateDDSTextureFromFileEx(device, resourceUpload, strFilePath,
             0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
             m_cubemap.ReleaseAndGetAddressOf(), nullptr, &iscubemap));
 
     CreateShaderResourceView(device, m_cubemap.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Cubemap), iscubemap);
 
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"spheremap.bmp", s_searchFolders);
     DX::ThrowIfFailed(
-        CreateWICTextureFromFileEx(device, resourceUpload, L"spheremap.bmp",
+        CreateWICTextureFromFileEx(device, resourceUpload, strFilePath,
             0, D3D12_RESOURCE_FLAG_NONE, wicLoadFlags,
             m_envball.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_envball.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::SphereMap));
 
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"dualparabola.dds", s_searchFolders);
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFileEx(device, resourceUpload, L"dualparabola.dds",
+        CreateDDSTextureFromFileEx(device, resourceUpload, strFilePath,
             0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
             m_envdual.ReleaseAndGetAddressOf(), nullptr));
 
     CreateShaderResourceView(device, m_envdual.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::DualParabolaMap));
 
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"overlay.dds", s_searchFolders);
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFileEx(device, resourceUpload, L"overlay.dds",
+        CreateDDSTextureFromFileEx(device, resourceUpload, strFilePath,
             0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
             m_overlay.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_overlay.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Overlay));
 
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"default.dds", s_searchFolders);
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFileEx(device, resourceUpload, L"default.dds",
+        CreateDDSTextureFromFileEx(device, resourceUpload, strFilePath,
             0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
             m_defaultTex.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_defaultTex.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::DefaultTex));
 
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"spnza_bricks_a.DDS", s_searchFolders);
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFileEx(device, resourceUpload, L"spnza_bricks_a.DDS",
+        CreateDDSTextureFromFileEx(device, resourceUpload, strFilePath,
             0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
             m_brickDiffuse.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_brickDiffuse.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::BrickDiffuse));
 
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"spnza_bricks_a_normal.DDS", s_searchFolders);
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFile(device, resourceUpload, L"spnza_bricks_a_normal.DDS",
+        CreateDDSTextureFromFile(device, resourceUpload, strFilePath,
             m_brickNormal.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_brickNormal.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::BrickNormal));
 
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"spnza_bricks_a_specular.DDS", s_searchFolders);
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFile(device, resourceUpload, L"spnza_bricks_a_specular.DDS",
+        CreateDDSTextureFromFile(device, resourceUpload, strFilePath,
             m_brickSpecular.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_brickSpecular.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::BrickSpecular));
 
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"Sphere2Mat_baseColor.png", s_searchFolders);
     DX::ThrowIfFailed(
-        CreateWICTextureFromFile(device, resourceUpload, L"Sphere2Mat_baseColor.png",
+        CreateWICTextureFromFile(device, resourceUpload, strFilePath,
             m_pbrAlbedo.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_pbrAlbedo.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::PBRAlbedo));
 
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"Sphere2Mat_normal.png", s_searchFolders);
     DX::ThrowIfFailed(
-        CreateWICTextureFromFile(device, resourceUpload, L"Sphere2Mat_normal.png",
+        CreateWICTextureFromFile(device, resourceUpload, strFilePath,
             m_pbrNormal.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_pbrNormal.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::PBRNormal));
 
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"Sphere2Mat_occlusionRoughnessMetallic.png", s_searchFolders);
     DX::ThrowIfFailed(
-        CreateWICTextureFromFile(device, resourceUpload, L"Sphere2Mat_occlusionRoughnessMetallic.png",
+        CreateWICTextureFromFile(device, resourceUpload, strFilePath,
             m_pbrRMA.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_pbrRMA.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::PBR_RMA));
 
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"Sphere2Mat_emissive.png", s_searchFolders);
     DX::ThrowIfFailed(
-        CreateWICTextureFromFile(device, resourceUpload, L"Sphere2Mat_emissive.png",
+        CreateWICTextureFromFile(device, resourceUpload, strFilePath,
             m_pbrEmissive.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_pbrEmissive.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::PBREmissive));
 
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"Atrium_diffuseIBL.dds", s_searchFolders);
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFile(device, resourceUpload, L"Atrium_diffuseIBL.dds",
+        CreateDDSTextureFromFile(device, resourceUpload, strFilePath,
             m_radianceIBL.ReleaseAndGetAddressOf())
     );
 
     CreateShaderResourceView(device, m_radianceIBL.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::RadianceIBL), true);
 
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"Atrium_specularIBL.dds", s_searchFolders);
     DX::ThrowIfFailed(
-        CreateDDSTextureFromFile(device, resourceUpload, L"Atrium_specularIBL.dds",
+        CreateDDSTextureFromFile(device, resourceUpload, strFilePath,
             m_irradianceIBL.ReleaseAndGetAddressOf())
     );
 

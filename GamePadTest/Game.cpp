@@ -67,6 +67,13 @@ namespace
 #else
     const XMVECTORF32 c_clearColor = Colors::CornflowerBlue;
 #endif
+
+    static const wchar_t* s_searchFolders[] =
+    {
+        L"GamePadTest",
+        L"Tests\\GamePadTest",
+        nullptr
+    };
 }
 
 // Constructor.
@@ -763,13 +770,13 @@ void Game::CreateDeviceDependentResources()
     }
 
     wchar_t strFilePath[MAX_PATH] = {};
-    DX::FindMediaFile(strFilePath, MAX_PATH, L"comic.spritefont");
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"comic.spritefont", s_searchFolders);
     m_comicFont = std::make_unique<SpriteFont>(device, resourceUpload,
         strFilePath,
         m_resourceDescriptors->GetCpuHandle(Descriptors::ComicFont),
         m_resourceDescriptors->GetGpuHandle(Descriptors::ComicFont));
 
-    DX::FindMediaFile(strFilePath, MAX_PATH, L"xboxController.spritefont");
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"xboxController.spritefont", s_searchFolders);
     m_ctrlFont = std::make_unique<SpriteFont>(device, resourceUpload,
         strFilePath,
         m_resourceDescriptors->GetCpuHandle(Descriptors::ControllerFont),
