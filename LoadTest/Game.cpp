@@ -28,7 +28,7 @@
 //#define LH_COORDS
 
 // Running on Proton 10 emulator (avoids a number of failing test cases for WIC)
-// #define PROTON_EMULATION
+//#define PROTON_EMULATION
 
 extern void ExitGame() noexcept;
 
@@ -415,11 +415,15 @@ void Game::Render()
             success = false;
         }
 
-    #ifndef PROTON_EMULATION
         hr = SaveWICTextureToFile(m_deviceResources->GetCommandQueue(), m_screenshot.Get(),
             GUID_ContainerFormatBmp, ssbmp,
             D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT,
-            &GUID_WICPixelFormat16bppBGR565);
+        #ifdef PROTON_EMULATION
+            nullptr
+        #else
+            &GUID_WICPixelFormat16bppBGR565
+        #endif
+            );
 
         if (FAILED(hr))
         {
@@ -437,7 +441,6 @@ void Game::Render()
             OutputDebugStringA("ERROR: Missing SCREENSHOT.BMP!\n");
             success = false;
         }
-    #endif
 
         hr = SaveWICTextureToFile(m_deviceResources->GetCommandQueue(), m_screenshot.Get(),
             GUID_ContainerFormatTiff, sstif,

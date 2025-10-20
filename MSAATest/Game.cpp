@@ -19,6 +19,9 @@
 // Build for LH vs. RH coords
 //#define LH_COORDS
 
+// Running on Proton 10 emulator (avoids a number of failing test cases for WIC)
+//#define PROTON_EMULATION
+
 #if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
 #include <Windows.ApplicationModel.h>
 #include <Windows.Storage.h>
@@ -446,11 +449,18 @@ void Game::Render()
         std::ignore = DeleteFileW(ssdds);
         std::ignore = DeleteFileW(ssdds2);
 
-        DX::ThrowIfFailed(SaveWICTextureToFile(m_deviceResources->GetCommandQueue(), m_screenshot.Get(),
+        HRESULT hr = SaveWICTextureToFile(m_deviceResources->GetCommandQueue(), m_screenshot.Get(),
             GUID_ContainerFormatPng, sspng,
-            D3D12_RESOURCE_STATE_RESOLVE_SOURCE, D3D12_RESOURCE_STATE_RESOLVE_SOURCE));
+            D3D12_RESOURCE_STATE_RESOLVE_SOURCE, D3D12_RESOURCE_STATE_RESOLVE_SOURCE);
 
-        if (GetFileAttributesW(sspng) != INVALID_FILE_ATTRIBUTES)
+        if (FAILED(hr))
+        {
+            char buff[128] = {};
+            sprintf_s(buff, "ERROR: SaveWICTextureToFile (PNG) failed %08X\n", static_cast<unsigned int>(hr));
+            OutputDebugStringA(buff);
+            success = false;
+        }
+        else if (GetFileAttributesW(sspng) != INVALID_FILE_ATTRIBUTES)
         {
             OutputDebugStringA("Wrote SCREENSHOT.PNG\n");
         }
@@ -460,11 +470,18 @@ void Game::Render()
             success = false;
         }
 
-        DX::ThrowIfFailed(SaveWICTextureToFile(m_deviceResources->GetCommandQueue(), m_screenshot.Get(),
+        hr = SaveWICTextureToFile(m_deviceResources->GetCommandQueue(), m_screenshot.Get(),
             GUID_ContainerFormatJpeg, ssjpg,
-            D3D12_RESOURCE_STATE_RESOLVE_SOURCE, D3D12_RESOURCE_STATE_RESOLVE_SOURCE));
+            D3D12_RESOURCE_STATE_RESOLVE_SOURCE, D3D12_RESOURCE_STATE_RESOLVE_SOURCE);
 
-        if (GetFileAttributesW(ssjpg) != INVALID_FILE_ATTRIBUTES)
+        if (FAILED(hr))
+        {
+            char buff[128] = {};
+            sprintf_s(buff, "ERROR: SaveWICTextureToFile (JPG) failed %08X\n", static_cast<unsigned int>(hr));
+            OutputDebugStringA(buff);
+            success = false;
+        }
+        else if (GetFileAttributesW(ssjpg) != INVALID_FILE_ATTRIBUTES)
         {
             OutputDebugStringA("Wrote SCREENSHOT.JPG\n");
         }
@@ -474,12 +491,24 @@ void Game::Render()
             success = false;
         }
 
-        DX::ThrowIfFailed(SaveWICTextureToFile(m_deviceResources->GetCommandQueue(), m_screenshot.Get(),
+        hr = SaveWICTextureToFile(m_deviceResources->GetCommandQueue(), m_screenshot.Get(),
             GUID_ContainerFormatBmp, ssbmp,
             D3D12_RESOURCE_STATE_RESOLVE_SOURCE, D3D12_RESOURCE_STATE_RESOLVE_SOURCE,
-            &GUID_WICPixelFormat16bppBGR565));
+        #ifdef PROTON_EMULATION
+            nullptr
+        #else
+            &GUID_WICPixelFormat16bppBGR565
+        #endif
+            );
 
-        if (GetFileAttributesW(ssbmp) != INVALID_FILE_ATTRIBUTES)
+        if (FAILED(hr))
+        {
+            char buff[128] = {};
+            sprintf_s(buff, "ERROR: SaveWICTextureToFile (BMP) failed %08X\n", static_cast<unsigned int>(hr));
+            OutputDebugStringA(buff);
+            success = false;
+        }
+        else if (GetFileAttributesW(ssbmp) != INVALID_FILE_ATTRIBUTES)
         {
             OutputDebugStringA("Wrote SCREENSHOT.BMP\n");
         }
@@ -489,7 +518,7 @@ void Game::Render()
             success = false;
         }
 
-        DX::ThrowIfFailed(SaveWICTextureToFile(m_deviceResources->GetCommandQueue(), m_screenshot.Get(),
+        hr = SaveWICTextureToFile(m_deviceResources->GetCommandQueue(), m_screenshot.Get(),
             GUID_ContainerFormatTiff, sstif,
             D3D12_RESOURCE_STATE_RESOLVE_SOURCE, D3D12_RESOURCE_STATE_RESOLVE_SOURCE,
             nullptr,
@@ -507,9 +536,16 @@ void Game::Render()
                 varValues[1].bVal = WICTiffCompressionNone;
 
                 std::ignore = props->Write(2, options, varValues);
-            }));
+            });
 
-        if (GetFileAttributesW(sstif) != INVALID_FILE_ATTRIBUTES)
+        if (FAILED(hr))
+        {
+            char buff[128] = {};
+            sprintf_s(buff, "ERROR: SaveWICTextureToFile (TIFF) failed %08X\n", static_cast<unsigned int>(hr));
+            OutputDebugStringA(buff);
+            success = false;
+        }
+        else if (GetFileAttributesW(sstif) != INVALID_FILE_ATTRIBUTES)
         {
             OutputDebugStringA("Wrote SCREENSHOT.TIF\n");
         }
@@ -519,10 +555,17 @@ void Game::Render()
             success = false;
         }
 
-        DX::ThrowIfFailed(SaveDDSTextureToFile(m_deviceResources->GetCommandQueue(), m_screenshot.Get(), ssdds,
-            D3D12_RESOURCE_STATE_RESOLVE_SOURCE, D3D12_RESOURCE_STATE_RESOLVE_SOURCE));
+        hr = SaveDDSTextureToFile(m_deviceResources->GetCommandQueue(), m_screenshot.Get(), ssdds,
+            D3D12_RESOURCE_STATE_RESOLVE_SOURCE, D3D12_RESOURCE_STATE_RESOLVE_SOURCE);
 
-        if (GetFileAttributesW(ssdds) != INVALID_FILE_ATTRIBUTES)
+        if (FAILED(hr))
+        {
+            char buff[128] = {};
+            sprintf_s(buff, "ERROR: SaveDDSTextureToFile failed %08X\n", static_cast<unsigned int>(hr));
+            OutputDebugStringA(buff);
+            success = false;
+        }
+        else if (GetFileAttributesW(ssdds) != INVALID_FILE_ATTRIBUTES)
         {
             OutputDebugStringA("Wrote SCREENSHOT.DDS\n");
         }
