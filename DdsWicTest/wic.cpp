@@ -60,7 +60,11 @@ namespace Microsoft
 #include "ScreenGrab.h"
 #include "DDSTextureLoader.h"
 
-#include <d3dx12.h>
+#ifdef USING_DIRECTX_HEADERS
+#include <directx/d3dx12.h>
+#else
+#include "d3dx12.h"
+#endif
 
 #include <cstdio>
 #include <cstdint>
