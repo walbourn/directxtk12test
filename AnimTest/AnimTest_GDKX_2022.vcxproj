@@ -411,8 +411,8 @@
     <MGCCompile Include="MicrosoftGameConfig.mgc" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\DirectXTK_GDK_2022.vcxproj">
-      <Project>{052c4858-c76f-4cea-8a1a-e8e5559e67c2}</Project>
+    <ProjectReference Include="..\..\DirectXTK_GDKX_2022.vcxproj">
+      <Project>{94f17a4d-611b-4b81-8806-b6735910ab31}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
