@@ -1,0 +1,8 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Gaming.Xbox.Scarlett.x64" />
+    <Platform Name="Gaming.Xbox.XboxOne.x64" />
+  </Configurations>
+  <Project Path="..\..\DirectXTK_GDKX_2026.vcxproj" Id="94f17a4d-611b-4b81-8806-b6735910ab31" />
+  <Project DefaultStartup="true" Path="GamePadTest_GDKX_2026.vcxproj" Id="9e1ba3db-568e-4ee4-8346-846a3ede9833" />
+</Solution>
