@@ -370,7 +370,12 @@
     <CopyFileToFolders Include="..\Common\LargeLogo.png" />
   </ItemGroup>
   <ItemGroup>
-    <MGCCompile Include="MicrosoftGameConfig.mgc" />
+    <CustomBuild Include="MicrosoftGameConfig.mgc">
+      <Command>copy %(Identity) "$(OutDir)MicrosoftGame.config"
+makepkg.exe localize /d "$(OutDir)." /pd "$(OutDir)." /gc "%(Identity)"</Command>
+      <Message>MGC Compile</Message>
+      <Outputs>$(OutDir)MicrosoftGame.config</Outputs>
+    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
