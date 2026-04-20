@@ -21,6 +21,7 @@ These instructions define how GitHub Copilot should assist with the DirectX Tool
 | Audio playback | `Audio3DTest`, `SimpleAudioTest` | `Audio` |
 | Graphics rendering | `D3D12Test`, `MSAATest`, `EffectsTest`, `PrimitivesTest`, `SpriteBatchTest`, `SpriteFontTest`, `LoadTest`, `ModelTest`, `ShaderTest`, `AnimTest`, `HDRTest`, `PBRTest`, `PBRModelTest`, `PostProcessTest`, `mGPUTest` | `Graphics`, and optionally `HLSL`, `Sprites`, `Models`, `Shapes`, `PostProcess` |
 | Image formats | `DdsWicTest` | `ImageFormats` |
+| Font file I/O | `FontFileTest` | `ImageFormats`, `Sprites` |
 | Input devices | `GamePadTest`, `KeyboardTest`, `MouseTest` | `Input` |
 | Xbox-specific | `XboxLoadTest` | — |
 | Fuzz testing | `fuzzloaders` | — |
@@ -29,7 +30,7 @@ These instructions define how GitHub Copilot should assist with the DirectX Tool
 
 ### Two Test Patterns
 
-**1. Console tests** (`ApiTest`, `HeaderTest`, `WavTest`, `DdsWicTest`)
+**1. Console tests** (`ApiTest`, `HeaderTest`, `WavTest`, `DdsWicTest`, `FontFileTest`)
 
 These are headless executables that run to completion without creating a window or D3D12 device (or create a device briefly). They use a **test registry** pattern:
 
