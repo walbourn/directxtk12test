@@ -924,6 +924,12 @@ namespace
             return false;
         }
     }
+
+    inline HANDLE safe_handle(HANDLE h) noexcept { return (h == INVALID_HANDLE_VALUE) ? nullptr : h; }
+
+    struct find_closer { void operator()(HANDLE h) noexcept { assert(h != INVALID_HANDLE_VALUE); if (h) FindClose(h); } };
+
+    using ScopedFindHandle = std::unique_ptr<void, find_closer>;
 }
 
 //-------------------------------------------------------------------------------------
@@ -1668,6 +1674,127 @@ bool Test05(_In_ ID3D12Device* pDevice)
     #pragma warning(pop)
 
     printf("%zu files tested, %zu files passed ", ncount, npass );
+
+    return success;
+}
+
+//-------------------------------------------------------------------------------------
+// Fuzz
+bool Test07(_In_ ID3D12Device* pDevice)
+{
+    bool success = true;
+
+    WIN32_FIND_DATA findData = {};
+    ScopedFindHandle hFile(safe_handle(
+        FindFirstFileExW(L"DdsWicTest\\*.dds", FindExInfoBasic, &findData,
+            FindExSearchNameMatch, nullptr,
+            FIND_FIRST_EX_LARGE_FETCH)));
+    if (!hFile)
+    {
+        printf("ERROR: FindFirstFileEx FAILED (%lu)\n", GetLastError());
+        return false;
+    }
+
+    size_t ncount = 0;
+
+    for (;;)
+    {
+        if (!(findData.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM)))
+        {
+            ++ncount;
+
+            if (!(ncount % 10))
+            {
+                printf(".");
+            }
+
+            wchar_t szPath[MAX_PATH] = {};
+            wcscpy_s(szPath, L"DdsWicTest\\");
+            wcscat_s(szPath, findData.cFileName);
+
+            OutputDebugString(findData.cFileName);
+            OutputDebugStringA("\n");
+
+            // memory
+            {
+                Blob blob;
+                size_t blobSize;
+                HRESULT hr = LoadBlobFromFile(szPath, blob, blobSize);
+                if (hr != E_OUTOFMEMORY && hr != HRESULT_FROM_WIN32(ERROR_FILE_TOO_LARGE))
+                {
+                    if (FAILED(hr))
+                    {
+                        success = false;
+                        printf("Failed getting raw file data from (HRESULT %08X):\n%ls\n", static_cast<unsigned int>(hr), szPath);
+                    }
+                    else
+                    {
+                        ComPtr<ID3D12Resource> res;
+                        std::unique_ptr<uint8_t[]> data;
+                        std::vector<D3D12_SUBRESOURCE_DATA> subResources;
+                        DDS_ALPHA_MODE alpha = DDS_ALPHA_MODE_UNKNOWN;
+                        bool isCubeMap = false;
+                        hr = LoadDDSTextureFromMemoryEx(
+                            pDevice,
+                            blob.get(),
+                            blobSize,
+                            0,
+                            D3D12_RESOURCE_FLAG_NONE,
+                            DDS_LOADER_DEFAULT,
+                            res.GetAddressOf(),
+                            subResources,
+                            &alpha,
+                            &isCubeMap);
+
+                        if (SUCCEEDED(hr))
+                        {
+                            success = false;
+                            printf("ERROR: frommemory expected failure\n%ls\n", szPath);
+                        }
+                    }
+                }
+            }
+
+            // file
+            {
+                ComPtr<ID3D12Resource> res;
+                std::unique_ptr<uint8_t[]> data;
+                std::vector<D3D12_SUBRESOURCE_DATA> subResources;
+                DDS_ALPHA_MODE alpha = DDS_ALPHA_MODE_UNKNOWN;
+                bool isCubeMap = false;
+                HRESULT hr = LoadDDSTextureFromFileEx(
+                    pDevice,
+                    szPath,
+                    0,
+                    D3D12_RESOURCE_FLAG_NONE,
+                    DDS_LOADER_DEFAULT,
+                    res.GetAddressOf(),
+                    data,
+                    subResources,
+                    &alpha,
+                    &isCubeMap);
+
+                if (SUCCEEDED(hr))
+                {
+                    success = false;
+                    printf("ERROR: fromfile expected failure\n%ls\n", szPath);
+                }
+            }
+        }
+
+        if (!FindNextFileW(hFile.get(), &findData))
+        {
+            break;
+        }
+    }
+
+    if (!ncount)
+    {
+        printf("ERROR: expected to find test images\n");
+        return false;
+    }
+
+    printf(" %zu images tested ", ncount);
 
     return success;
 }
