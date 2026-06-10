@@ -30,7 +30,7 @@ namespace
     constexpr float INTERACTIVE_TIME = 10.f;
 
     constexpr float ortho_width = 6.f;
-    constexpr float ortho_height = 6.f;
+    constexpr float ortho_height = 8.f;
 
     struct TestVertex
     {
@@ -501,6 +501,29 @@ void Game::Render()
 
             y -= 1.f;
         }
+
+        // NPREffect (instanced)
+        {
+            auto it = (showCompressed) ? m_nprInstancedBn.cbegin() : m_nprInstanced.cbegin();
+            auto eit = (showCompressed) ? m_nprInstancedBn.cend() : m_nprInstanced.cend();
+            assert(it != eit);
+
+            for (; y > -ortho_height; y -= 1.f)
+            {
+                (*it)->SetWorld(XMMatrixTranslation(0, y, -1.f));
+                (*it)->Apply(commandList);
+                commandList->DrawIndexedInstanced(m_indexCount, m_instanceCount, 0, 0, 0);
+
+                ++it;
+                if (it == eit)
+                    break;
+            }
+
+            // Make sure we drew all the effects
+            assert(it == eit);
+
+            y -= 1.f;
+        }
     }
     else
     {
@@ -788,6 +811,35 @@ void Game::Render()
         {
             auto it = (showCompressed) ? m_debugBn.cbegin() : m_debug.cbegin();
             auto eit = (showCompressed) ? m_debugBn.cend() : m_debug.cend();
+            assert(it != eit);
+
+            for (; y > -ortho_height; y -= 1.f)
+            {
+                for (float x = -ortho_width + 0.5f; x < ortho_width; x += 1.f)
+                {
+                    (*it)->SetWorld(world * XMMatrixTranslation(x, y, -1.f));
+                    (*it)->Apply(commandList);
+                    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+                    ++it;
+                    if (it == eit)
+                        break;
+                }
+
+                if (it == eit)
+                    break;
+            }
+
+            // Make sure we drew all the effects
+            assert(it == eit);
+
+            y -= 1.f;
+        }
+
+        // NPREffect
+        {
+            auto it = (showCompressed) ? m_nprBn.cbegin() : m_npr.cbegin();
+            auto eit = (showCompressed) ? m_nprBn.cend() : m_npr.cend();
             assert(it != eit);
 
             for (; y > -ortho_height; y -= 1.f)
@@ -1843,6 +1895,49 @@ void Game::CreateDeviceDependentResources()
                 m_debugInstancedBn.swap(debugInst);
             }
         }
+
+        //--- NPREffect ------------------------------------------------------------------
+
+        {
+            std::vector<std::unique_ptr<DirectX::NPREffect>> npr;
+            std::vector<std::unique_ptr<DirectX::NPREffect>> nprInst;
+
+            // NPREffect
+            auto effect = std::make_unique<NPREffect>(device, eflags, pd, NPREffect::Mode_Cel);
+            npr.emplace_back(std::move(effect));
+
+            effect = std::make_unique<NPREffect>(device, eflags, pd, NPREffect::Mode_Gooch);
+            npr.emplace_back(std::move(effect));
+
+            effect = std::make_unique<NPREffect>(device, eflags | EffectFlags::VertexColor, pd, NPREffect::Mode_Cel);
+            npr.emplace_back(std::move(effect));
+
+            effect = std::make_unique<NPREffect>(device, eflags | EffectFlags::VertexColor, pd, NPREffect::Mode_Gooch);
+            npr.emplace_back(std::move(effect));
+
+            effect = std::make_unique<NPREffect>(device, eflags | EffectFlags::Instancing, pdInst, NPREffect::Mode_Cel);
+            nprInst.emplace_back(std::move(effect));
+
+            effect = std::make_unique<NPREffect>(device, eflags | EffectFlags::Instancing | EffectFlags::VertexColor, pdInst, NPREffect::Mode_Cel);
+            nprInst.emplace_back(std::move(effect));
+
+            effect = std::make_unique<NPREffect>(device, eflags | EffectFlags::Instancing, pdInst, NPREffect::Mode_Gooch);
+            nprInst.emplace_back(std::move(effect));
+
+            effect = std::make_unique<NPREffect>(device, eflags | EffectFlags::Instancing | EffectFlags::VertexColor, pdInst, NPREffect::Mode_Gooch);
+            nprInst.emplace_back(std::move(effect));
+
+            if (!j)
+            {
+                m_npr.swap(npr);
+                m_nprInstanced.swap(nprInst);
+            }
+            else
+            {
+                m_nprBn.swap(npr);
+                m_nprInstancedBn.swap(nprInst);
+            }
+        }
     }
 
     EffectPipelineStateDescription pd(
@@ -2031,6 +2126,16 @@ void Game::CreateWindowSizeDependentResources()
         it->SetProjection(projection);
     }
 
+    for (auto& it : m_npr)
+    {
+        it->SetProjection(projection);
+    }
+
+    for (auto& it : m_nprBn)
+    {
+        it->SetProjection(projection);
+    }
+
     for (auto& it : m_normalMapInstanced)
     {
         it->SetProjection(projection);
@@ -2060,6 +2165,16 @@ void Game::CreateWindowSizeDependentResources()
     {
         it->SetProjection(projection);
     }
+
+    for (auto& it : m_nprInstanced)
+    {
+        it->SetProjection(projection);
+    }
+
+    for (auto& it : m_nprInstancedBn)
+    {
+        it->SetProjection(projection);
+    }
 }
 
 #ifdef LOSTDEVICE
@@ -2083,6 +2198,8 @@ void Game::OnDeviceLost()
     m_skinningPbrBn.clear();
     m_debug.clear();
     m_debugBn.clear();
+    m_npr.clear();
+    m_nprBn.clear();
 
     m_normalMapInstanced.clear();
     m_normalMapInstancedBn.clear();
@@ -2090,6 +2207,8 @@ void Game::OnDeviceLost()
     m_pbrInstancedBn.clear();
     m_debugInstanced.clear();
     m_debugInstancedBn.clear();
+    m_nprInstanced.clear();
+    m_nprInstancedBn.clear();
 
     m_cat.Reset();
     m_cubemap.Reset();
