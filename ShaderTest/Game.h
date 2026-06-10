@@ -130,6 +130,8 @@ private:
     std::vector<std::unique_ptr<DirectX::SkinnedPBREffect>> m_skinningPbrBn;
     std::vector<std::unique_ptr<DirectX::DebugEffect>> m_debug;
     std::vector<std::unique_ptr<DirectX::DebugEffect>> m_debugBn;
+    std::vector<std::unique_ptr<DirectX::NPREffect>> m_npr;
+    std::vector<std::unique_ptr<DirectX::NPREffect>> m_nprBn;
 
     std::vector<std::unique_ptr<DirectX::NormalMapEffect>> m_normalMapInstanced;
     std::vector<std::unique_ptr<DirectX::NormalMapEffect>> m_normalMapInstancedBn;
@@ -137,6 +139,8 @@ private:
     std::vector<std::unique_ptr<DirectX::PBREffect>> m_pbrInstancedBn;
     std::vector<std::unique_ptr<DirectX::DebugEffect>> m_debugInstanced;
     std::vector<std::unique_ptr<DirectX::DebugEffect>> m_debugInstancedBn;
+    std::vector<std::unique_ptr<DirectX::NPREffect>> m_nprInstanced;
+    std::vector<std::unique_ptr<DirectX::NPREffect>> m_nprInstancedBn;
 
     std::unique_ptr<DX::RenderTexture>              m_velocityBuffer;
 
