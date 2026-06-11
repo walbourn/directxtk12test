@@ -360,6 +360,19 @@ void Game::Render()
     m_spriteBatchSampler->Draw(cat, catSize, XMFLOAT2(1100.f, 600.f), &tileRect, Colors::White, time / 50, XMFLOAT2(256, 256));
     m_spriteBatchSampler->End();
 
+    // Test GetViewportTransform
+    {
+        XMMATRIX transform = XMMatrixIdentity();
+        m_spriteBatch->GetViewportTransform(transform);
+
+        if (XMMatrixIsIdentity(transform)
+            || !XMVector4NearEqual(transform.r[2], g_XMIdentityR2, g_XMEpsilon))
+        {
+            OutputDebugStringA("GetViewportTransform failed.\n");
+            throw std::runtime_error("GetViewportTransform failed");
+        }
+    }
+
     PIXEndEvent(commandList);
 
     // Show the new frame.
