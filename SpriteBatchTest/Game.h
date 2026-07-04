@@ -106,6 +106,8 @@ private:
     std::unique_ptr<DirectX::CommonStates>      m_states;
     std::unique_ptr<DirectX::SpriteBatch>       m_spriteBatch;
     std::unique_ptr<DirectX::SpriteBatch>       m_spriteBatchSampler;
+    std::unique_ptr<DirectX::SpriteBatch>       m_spriteBatchCustom;
+    std::unique_ptr<DirectX::SpriteBatch>       m_spriteBatchCustomSampler;
 
     std::unique_ptr<DirectX::DescriptorHeap>    m_resourceDescriptors;
 

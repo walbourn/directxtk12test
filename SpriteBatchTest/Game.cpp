@@ -373,6 +373,27 @@ void Game::Render()
         }
     }
 
+    // Test custom rendering
+    m_spriteBatchCustom->Begin(commandList, []()
+    {
+        // TODO: Custom callback
+    },
+    static_cast<SpriteSortMode>(m_sortMode));
+
+    // TODO: Draw
+
+    m_spriteBatchCustom->End();
+
+    m_spriteBatchCustomSampler->Begin(commandList, m_states->PointClamp(), []()
+    {
+        // TODO: Custom callback
+    },
+    static_cast<SpriteSortMode>(m_sortMode));
+
+    // TODO: Draw
+
+    m_spriteBatchCustomSampler->End();
+
     PIXEndEvent(commandList);
 
     // Show the new frame.
@@ -514,6 +535,23 @@ void Game::CreateDeviceDependentResources()
         m_spriteBatchSampler = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
     }
 
+    {
+        SpriteBatchPipelineStateDescription pd(
+            rtState,
+            &CommonStates::NonPremultiplied);
+
+        // TODO: Custom shaders/rootsig
+        pd.customRootSignature = nullptr;
+        pd.customVertexShader = {};
+        pd.customPixelShader = {};
+        pd.customCBV = true;
+
+        m_spriteBatchCustom = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
+
+        pd.samplerDescriptor = m_states->PointClamp();
+        m_spriteBatchCustomSampler = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
+    }
+
 #ifdef GAMMA_CORRECT_RENDERING
     constexpr DDS_LOADER_FLAGS loadFlags = DDS_LOADER_FORCE_SRGB;
 #else
@@ -565,6 +603,8 @@ void Game::CreateWindowSizeDependentResources()
 
     m_spriteBatch->SetViewport(viewport);
     m_spriteBatchSampler->SetViewport(viewport);
+    m_spriteBatchCustom->SetViewport(viewport);
+    m_spriteBatchCustomSampler->SetViewport(viewport);
 
 #ifdef XBOX
     unsigned int resflags = DX::DeviceResources::c_Enable4K_UHD;
@@ -604,6 +644,9 @@ void Game::OnDeviceLost()
 
     m_spriteBatch.reset();
     m_spriteBatchSampler.reset();
+
+    m_spriteBatchCustom.reset();
+    m_spriteBatchCustomSampler.reset();
 
     m_states.reset();
     m_graphicsMemory.reset();
