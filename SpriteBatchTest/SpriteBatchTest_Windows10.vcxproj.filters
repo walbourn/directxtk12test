@@ -8,6 +8,9 @@
       <UniqueIdentifier>a7a8583b-5069-49e6-9b63-6b56cdaf870b</UniqueIdentifier>
       <Extensions>bmp;dds;fbx;gif;jpg;jpeg;tga;tiff;tif;png</Extensions>
     </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{c5e1797e-37c5-42a8-8f48-b7efaafab0d4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -69,5 +72,18 @@
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="PackageUWP.appxmanifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="CustomSpritePS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="CustomSpriteVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="RootSig.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
