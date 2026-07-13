@@ -40,6 +40,9 @@
     <ClInclude Include="..\Common\FindMedia.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\Common\ReadData.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\Common\Logo.scale-100.png">
@@ -69,6 +72,9 @@
     <Image Include="cat.dds">
       <Filter>Assets</Filter>
     </Image>
+    <Image Include="cat_n.dds">
+      <Filter>Assets</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="PackageUWP.appxmanifest" />
@@ -78,6 +84,12 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="CustomSpriteVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="CustomSpriteHeapPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="CustomSpriteHeapVS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

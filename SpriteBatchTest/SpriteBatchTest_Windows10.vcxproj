@@ -257,6 +257,7 @@
     <ClInclude Include="..\Common\DeviceResourcesUWP.h" />
     <ClInclude Include="..\Common\DirectXTKTest.h" />
     <ClInclude Include="..\Common\FindMedia.h" />
+    <ClInclude Include="..\Common\ReadData.h" />
     <ClInclude Include="..\Common\StepTimer.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="pch.h" />
@@ -289,11 +290,18 @@
     <Image Include="b.dds" />
     <Image Include="c.dds" />
     <Image Include="cat.dds" />
+    <Image Include="cat_n.dds" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="PackageUWP.appxmanifest" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="CustomSpriteHeapPS.hlsl">
+      <ShaderType>Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="CustomSpriteHeapVS.hlsl">
+      <ShaderType>Vertex</ShaderType>
+    </FxCompile>
     <FxCompile Include="CustomSpritePS.hlsl">
       <ShaderType>Pixel</ShaderType>
     </FxCompile>

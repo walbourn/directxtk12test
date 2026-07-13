@@ -18,7 +18,7 @@ struct VS_Output
     float2 texCoord : TEXCOORD0;
 };
 
-[RootSignature(CustomSpriteStaticRS)]
+[RootSignature(CustomSpriteHeapRS)]
 VS_Output main(float4 position : SV_Position,
     float4 color : COLOR0,
     float2 texCoord : TEXCOORD0)

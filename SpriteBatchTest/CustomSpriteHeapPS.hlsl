@@ -22,7 +22,7 @@ struct VS_Output
     float2 texCoord : TEXCOORD0;
 };
 
-[RootSignature(CustomSpriteStaticRS)]
+[RootSignature(CustomSpriteHeapRS)]
 float4 main(VS_Output input) : SV_Target0
 {
     float4 base = Texture.Sample(TextureSampler, input.texCoord);
