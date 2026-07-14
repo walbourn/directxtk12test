@@ -101,6 +101,7 @@ private:
     // DirectXTK Test Objects
     std::unique_ptr<DirectX::GraphicsMemory>    m_graphicsMemory;
     std::unique_ptr<DirectX::CommonStates>      m_states;
+    std::unique_ptr<DirectX::DescriptorHeap>    m_resourceDescriptors;
 
     UINT                                        m_indexCount;
     DirectX::GraphicsResource                   m_indexBuffer;
@@ -109,18 +110,30 @@ private:
     D3D12_VERTEX_BUFFER_VIEW                    m_vertexBufferView;
     D3D12_INDEX_BUFFER_VIEW                     m_indexBufferView;
 
+    Microsoft::WRL::ComPtr<ID3D12Resource>      m_refTexture;
+
     // Cel shading (Mode_Cel)
     std::unique_ptr<DirectX::NPREffect>         m_celEffect;
-    std::unique_ptr<DirectX::NPREffect>         m_celEffectBands2;
-    std::unique_ptr<DirectX::NPREffect>         m_celEffectBands8;
     std::unique_ptr<DirectX::NPREffect>         m_celEffectNoSpecular;
     std::unique_ptr<DirectX::NPREffect>         m_celEffectVc;
+    std::unique_ptr<DirectX::NPREffect>         m_celEffectTx;
+    std::unique_ptr<DirectX::NPREffect>         m_celEffectTxNoSpecular;
+    std::unique_ptr<DirectX::NPREffect>         m_celEffectTxVc;
 
     // Gooch shading (Mode_Gooch)
     std::unique_ptr<DirectX::NPREffect>         m_goochEffect;
     std::unique_ptr<DirectX::NPREffect>         m_goochEffectNoSpecular;
     std::unique_ptr<DirectX::NPREffect>         m_goochEffectVc;
     std::unique_ptr<DirectX::NPREffect>         m_goochEffectCustom;
+    std::unique_ptr<DirectX::NPREffect>         m_goochEffectTx;
+    std::unique_ptr<DirectX::NPREffect>         m_goochEffectTxNoSpecular;
+    std::unique_ptr<DirectX::NPREffect>         m_goochEffectTxVc;
 
     uint64_t m_frame;
+
+    enum Descriptors
+    {
+        RefTexture,
+        Count
+    };
 };
