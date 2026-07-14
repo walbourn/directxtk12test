@@ -432,6 +432,38 @@ if(NOT BUILD_BVT)
     set_tests_properties(mouseInput PROPERTIES TIMEOUT 60)
 endif()
 
+# Build HLSL shaders
+set(VS_HLSL_SHADER_FILES
+  SpriteBatchTest/CustomSpriteVS.hlsl
+  SpriteBatchTest/CustomSpriteHeapVS.hlsl)
+set(PS_HLSL_SHADER_FILES
+  SpriteBatchTest/CustomSpritePS.hlsl
+  SpriteBatchTest/CustomSpriteHeapPS.hlsl)
+set(HLSL_SHADER_FILES ${VS_HLSL_SHADER_FILES} ${PS_HLSL_SHADER_FILES})
+
+set_source_files_properties(${VS_HLSL_SHADER_FILES} PROPERTIES ShaderType "vs")
+set_source_files_properties(${PS_HLSL_SHADER_FILES} PROPERTIES ShaderType "ps")
+
+foreach(FILE ${HLSL_SHADER_FILES})
+  get_filename_component(FILE_WE ${FILE} NAME_WE)
+  list(APPEND CSO_SHADER_FILES ${CMAKE_BINARY_DIR}/${FILE_WE}.cso)
+  get_source_file_property(shadertype ${FILE} ShaderType)
+  add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/${FILE_WE}.cso ${CMAKE_BINARY_DIR}/${FILE_WE}.pdb
+                    DEPENDS ${FILE} SpriteBatchTest/RootSig.hlsli
+                    COMMAND dxc.exe /nologo /Emain /T${shadertype}_6_0 $<IF:$<CONFIG:DEBUG>,/Od,/O3> /Zi /Fo ${CMAKE_BINARY_DIR}/${FILE_WE}.cso /Fd ${CMAKE_BINARY_DIR}/${FILE_WE}.pdb ${FILE}
+                    COMMENT "HLSL ${FILE}"
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                    VERBATIM)
+endforeach(FILE)
+
+add_custom_target(compileHLSLShaders ALL DEPENDS ${CSO_SHADER_FILES})
+
+add_custom_command(TARGET compileHLSLShaders POST_BUILD
+                  COMMAND ${CMAKE_COMMAND} -E copy ${CSO_SHADER_FILES} $<TARGET_FILE_DIR:spritebatchtest>
+                  COMMAND_EXPAND_LISTS)
+
+add_dependencies(spritebatchtest compileHLSLShaders)
+
 message(STATUS "Enabled tests: ${TEST_EXES}")
 foreach(t IN LISTS TEST_EXES)
   target_include_directories(${t} PRIVATE ./Common)

@@ -111,6 +111,7 @@
 #include "ResourceUploadBatch.h"
 #include "SimpleMath.h"
 #include "SpriteBatch.h"
+#include "VertexTypes.h"
 
 namespace DX
 {

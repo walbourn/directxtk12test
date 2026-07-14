@@ -13,6 +13,7 @@
 #include "Game.h"
 
 #include "FindMedia.h"
+#include "ReadData.h"
 
 #define GAMMA_CORRECT_RENDERING
 
@@ -178,6 +179,8 @@ void Game::Update(DX::StepTimer const& timer)
         assert(m_spriteBatch->GetRotation() == DXGI_MODE_ROTATION_ROTATE270);
 
         m_spriteBatchSampler->SetRotation(DXGI_MODE_ROTATION_ROTATE270);
+        m_spriteBatchCustom->SetRotation(DXGI_MODE_ROTATION_ROTATE270);
+        m_spriteBatchCustomSampler->SetRotation(DXGI_MODE_ROTATION_ROTATE270);
     }
     else if (kb.Right || (pad.IsConnected() && pad.dpad.right))
     {
@@ -185,6 +188,8 @@ void Game::Update(DX::StepTimer const& timer)
         assert(m_spriteBatch->GetRotation() == DXGI_MODE_ROTATION_ROTATE90);
 
         m_spriteBatchSampler->SetRotation(DXGI_MODE_ROTATION_ROTATE90);
+        m_spriteBatchCustom->SetRotation(DXGI_MODE_ROTATION_ROTATE90);
+        m_spriteBatchCustomSampler->SetRotation(DXGI_MODE_ROTATION_ROTATE90);
     }
     else if (kb.Up || (pad.IsConnected() && pad.dpad.up))
     {
@@ -192,6 +197,8 @@ void Game::Update(DX::StepTimer const& timer)
         assert(m_spriteBatch->GetRotation() == DXGI_MODE_ROTATION_IDENTITY);
 
         m_spriteBatchSampler->SetRotation(DXGI_MODE_ROTATION_IDENTITY);
+        m_spriteBatchCustom->SetRotation(DXGI_MODE_ROTATION_IDENTITY);
+        m_spriteBatchCustomSampler->SetRotation(DXGI_MODE_ROTATION_IDENTITY);
     }
     else if (kb.Down || (pad.IsConnected() && pad.dpad.down))
     {
@@ -199,6 +206,8 @@ void Game::Update(DX::StepTimer const& timer)
         assert(m_spriteBatch->GetRotation() == DXGI_MODE_ROTATION_ROTATE180);
 
         m_spriteBatchSampler->SetRotation(DXGI_MODE_ROTATION_ROTATE180);
+        m_spriteBatchCustom->SetRotation(DXGI_MODE_ROTATION_ROTATE180);
+        m_spriteBatchCustomSampler->SetRotation(DXGI_MODE_ROTATION_ROTATE180);
     }
 
     if (m_keyboardButtons.IsKeyPressed(Keyboard::Space) || (m_gamePadButtons.y == GamePad::ButtonStateTracker::PRESSED))
@@ -360,6 +369,50 @@ void Game::Render()
     m_spriteBatchSampler->Draw(cat, catSize, XMFLOAT2(1100.f, 600.f), &tileRect, Colors::White, time / 50, XMFLOAT2(256, 256));
     m_spriteBatchSampler->End();
 
+    // Test GetViewportTransform
+    {
+        XMMATRIX transform = XMMatrixIdentity();
+        m_spriteBatch->GetViewportTransform(transform);
+
+        if (XMMatrixIsIdentity(transform)
+            || !XMVector4NearEqual(transform.r[2], g_XMIdentityR2, g_XMEpsilon))
+        {
+            OutputDebugStringA("GetViewportTransform failed.\n");
+            throw std::runtime_error("GetViewportTransform failed");
+        }
+    }
+
+    // Test custom rendering
+    CustomShaderConstants constants;
+    constants.lightDir = XMVector3Normalize(XMVectorSet(cosf(time / 10.f), sinf(time / 10.f), -0.577f, 1.f));
+    m_spriteBatchCustom->GetViewportTransform(constants.worldViewProj);
+    auto constantBuffer1 = m_graphicsMemory->AllocateConstant(constants);
+
+    constants.lightDir = XMVector3Normalize(XMVectorSet(cosf(time / 20.f), sinf(time / 20.f), -0.577f, 1.f));
+    auto constantBuffer2 = m_graphicsMemory->AllocateConstant(constants);
+
+    m_spriteBatchCustom->Begin(commandList, [&]()
+    {
+        commandList->SetGraphicsRootConstantBufferView(1, constantBuffer1.GpuAddress());
+        commandList->SetGraphicsRootDescriptorTable(2, m_resourceDescriptors->GetGpuHandle(Descriptors::Cat_NormalMap));
+    },
+    static_cast<SpriteSortMode>(m_sortMode));
+
+    m_spriteBatchCustom->Draw(cat, catSize, XMFLOAT2(700, 150), nullptr, Colors::White, 0.f, XMFLOAT2(128, 128), 1, SpriteEffects_None, 0);
+
+    m_spriteBatchCustom->End();
+
+    m_spriteBatchCustomSampler->Begin(commandList, m_states->PointClamp(), [&]()
+    {
+        commandList->SetGraphicsRootConstantBufferView(1, constantBuffer2.GpuAddress());
+        commandList->SetGraphicsRootDescriptorTable(3, m_resourceDescriptors->GetGpuHandle(Descriptors::Cat_NormalMap));
+    },
+    static_cast<SpriteSortMode>(m_sortMode));
+
+    m_spriteBatchCustomSampler->Draw(cat, catSize, XMFLOAT2(700, 450), nullptr, Colors::White, 0.f, XMFLOAT2(128, 128), 1, SpriteEffects_None, 0);
+
+    m_spriteBatchCustomSampler->End();
+
     PIXEndEvent(commandList);
 
     // Show the new frame.
@@ -501,6 +554,55 @@ void Game::CreateDeviceDependentResources()
         m_spriteBatchSampler = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
     }
 
+    {
+        SpriteBatchPipelineStateDescription pd(
+            rtState,
+            &CommonStates::NonPremultiplied);
+
+        auto vertexShaderBlob = DX::ReadData(L"CustomSpriteVS.cso");
+        auto pixelShaderBlob = DX::ReadData(L"CustomSpritePS.cso");
+
+        DX::ThrowIfFailed(
+            device->CreateRootSignature(0, vertexShaderBlob.data(), vertexShaderBlob.size(),
+                IID_GRAPHICS_PPV_ARGS(m_customRootSignature.ReleaseAndGetAddressOf())));
+
+        pd.customRootSignature = m_customRootSignature.Get();
+        pd.customVertexShader.BytecodeLength = vertexShaderBlob.size();;
+        pd.customVertexShader.pShaderBytecode = vertexShaderBlob.data();
+        pd.customPixelShader.BytecodeLength = pixelShaderBlob.size();;
+        pd.customPixelShader.pShaderBytecode = pixelShaderBlob.data();
+        pd.customCBV = true;
+
+        m_spriteBatchCustom = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
+    }
+
+    {
+        auto sampler = m_states->PointClamp();
+
+        SpriteBatchPipelineStateDescription pd(
+            rtState,
+            &CommonStates::NonPremultiplied,
+            nullptr,
+            nullptr,
+            &sampler);
+
+        auto vertexShaderBlob = DX::ReadData(L"CustomSpriteHeapVS.cso");
+        auto pixelShaderBlob = DX::ReadData(L"CustomSpriteHeapPS.cso");
+
+        DX::ThrowIfFailed(
+            device->CreateRootSignature(0, vertexShaderBlob.data(), vertexShaderBlob.size(),
+                IID_GRAPHICS_PPV_ARGS(m_customRootSignatureHeap.ReleaseAndGetAddressOf())));
+
+        pd.customRootSignature = m_customRootSignatureHeap.Get();
+        pd.customVertexShader.BytecodeLength = vertexShaderBlob.size();;
+        pd.customVertexShader.pShaderBytecode = vertexShaderBlob.data();
+        pd.customPixelShader.BytecodeLength = pixelShaderBlob.size();;
+        pd.customPixelShader.pShaderBytecode = pixelShaderBlob.data();
+        pd.customCBV = true;
+
+        m_spriteBatchCustomSampler = std::make_unique<SpriteBatch>(device, resourceUpload, pd);
+    }
+
 #ifdef GAMMA_CORRECT_RENDERING
     constexpr DDS_LOADER_FLAGS loadFlags = DDS_LOADER_FORCE_SRGB;
 #else
@@ -515,6 +617,15 @@ void Game::CreateDeviceDependentResources()
             m_cat.ReleaseAndGetAddressOf()));
 
     CreateShaderResourceView(device, m_cat.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Cat));
+
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"cat_n.dds", s_searchFolders);
+    DX::ThrowIfFailed(
+        CreateDDSTextureFromFileEx(device, resourceUpload, strFilePath,
+            0, D3D12_RESOURCE_FLAG_NONE, loadFlags,
+            m_catNormalMap.ReleaseAndGetAddressOf()));
+
+    CreateShaderResourceView(device, m_catNormalMap.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::Cat_NormalMap));
+
 
     DX::FindMediaFile(strFilePath, MAX_PATH, L"a.dds", s_searchFolders);
     DX::ThrowIfFailed(
@@ -552,6 +663,8 @@ void Game::CreateWindowSizeDependentResources()
 
     m_spriteBatch->SetViewport(viewport);
     m_spriteBatchSampler->SetViewport(viewport);
+    m_spriteBatchCustom->SetViewport(viewport);
+    m_spriteBatchCustomSampler->SetViewport(viewport);
 
 #ifdef XBOX
     unsigned int resflags = DX::DeviceResources::c_Enable4K_UHD;
@@ -564,6 +677,8 @@ void Game::CreateWindowSizeDependentResources()
         static const D3D12_VIEWPORT s_vp1080 = { 0.f, 0.f, 1920.f, 1080.f, D3D12_MIN_DEPTH, D3D12_MAX_DEPTH };
         m_spriteBatch->SetViewport(s_vp1080);
         m_spriteBatchSampler->SetViewport(s_vp1080);
+        m_spriteBatchCustom->SetViewport(s_vp1080);
+        m_spriteBatchCustomSampler->SetViewport(s_vp1080);
     }
 #elif defined(UWP)
     if (m_deviceResources->GetDeviceOptions() & (DX::DeviceResources::c_Enable4K_Xbox | DX::DeviceResources::c_EnableQHD_Xbox))
@@ -572,11 +687,15 @@ void Game::CreateWindowSizeDependentResources()
         static const D3D12_VIEWPORT s_vp1080 = { 0.f, 0.f, 1920.f, 1080.f, D3D12_MIN_DEPTH, D3D12_MAX_DEPTH };
         m_spriteBatch->SetViewport(s_vp1080);
         m_spriteBatchSampler->SetViewport(s_vp1080);
+        m_spriteBatchCustom->SetViewport(s_vp1080);
+        m_spriteBatchCustomSampler->SetViewport(s_vp1080);
     }
 
     auto rotation = m_deviceResources->GetRotation();
     m_spriteBatch->SetRotation(rotation);
     m_spriteBatchSampler->SetRotation(rotation);
+    m_spriteBatchCustom->SetRotation(rotation);
+    m_spriteBatchCustomSampler->SetRotation(rotation);
 #endif
 }
 
@@ -584,6 +703,7 @@ void Game::CreateWindowSizeDependentResources()
 void Game::OnDeviceLost()
 {
     m_cat.Reset();
+    m_catNormalMap.Reset();
     m_letterA.Reset();
     m_letterB.Reset();
     m_letterC.Reset();
@@ -591,6 +711,12 @@ void Game::OnDeviceLost()
 
     m_spriteBatch.reset();
     m_spriteBatchSampler.reset();
+
+    m_spriteBatchCustom.reset();
+    m_spriteBatchCustomSampler.reset();
+
+    m_customRootSignature.Reset();
+    m_customRootSignatureHeap.Reset();
 
     m_states.reset();
     m_graphicsMemory.reset();

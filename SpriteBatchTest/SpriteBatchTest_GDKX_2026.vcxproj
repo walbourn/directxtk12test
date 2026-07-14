@@ -331,6 +331,7 @@
     <ClInclude Include="..\Common\DeviceResourcesGXDK.h" />
     <ClInclude Include="..\Common\DirectXTKTest.h" />
     <ClInclude Include="..\Common\FindMedia.h" />
+    <ClInclude Include="..\Common\ReadData.h" />
     <ClInclude Include="..\Common\StepTimer.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="pch.h" />
@@ -353,6 +354,7 @@
     <Image Include="b.dds" />
     <Image Include="c.dds" />
     <Image Include="cat.dds" />
+    <Image Include="cat_n.dds" />
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="..\Common\Logo.scale-100.png">
@@ -376,6 +378,23 @@
     <ProjectReference Include="..\..\DirectXTK_GDKX_2026.vcxproj">
       <Project>{94f17a4d-611b-4b81-8806-b6735910ab31}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="CustomSpriteHeapPS.hlsl">
+      <ShaderType>Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="CustomSpriteHeapVS.hlsl">
+      <ShaderType>Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="CustomSpritePS.hlsl">
+      <ShaderType>Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="CustomSpriteVS.hlsl">
+      <ShaderType>Vertex</ShaderType>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="RootSig.hlsli" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
