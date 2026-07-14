@@ -177,6 +177,7 @@ extern _Success_(return) bool Test18(_In_ ID3D12Device *device);
 extern _Success_(return) bool Test19(_In_ ID3D12Device *device);
 extern _Success_(return) bool Test20(_In_ ID3D12Device *device);
 extern _Success_(return) bool Test21(_In_ ID3D12Device *device);
+extern _Success_(return) bool Test22(_In_ ID3D12Device *device);
 
 #ifdef TEST_AUDIO
 extern _Success_(return) bool TestA01(_In_ ID3D12Device *device);
@@ -201,6 +202,7 @@ const TestInfo g_Tests[] =
     { "VertexTypes", Test10 },
     { "NormalMapEffect", Test11 },
     { "PBREffect", Test12 },
+    { "NPREffect", Test22 },
     { "Model", Test13 },
     { "GamePad", Test14 },
     { "Keyboard", Test15 },

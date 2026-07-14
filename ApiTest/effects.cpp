@@ -80,6 +80,11 @@ static_assert(!std::is_copy_assignable<PBREffect>::value, "Copy Assign.");
 static_assert(std::is_nothrow_move_constructible<PBREffect>::value, "Move Ctor.");
 static_assert(std::is_nothrow_move_assignable<PBREffect>::value, "Move Assign.");
 
+static_assert(!std::is_copy_constructible<NPREffect>::value, "Copy Ctor.");
+static_assert(!std::is_copy_assignable<NPREffect>::value, "Copy Assign.");
+static_assert(std::is_nothrow_move_constructible<NPREffect>::value, "Move Ctor.");
+static_assert(std::is_nothrow_move_assignable<NPREffect>::value, "Move Assign.");
+
 static_assert(!std::is_copy_constructible<SkinnedPBREffect>::value, "Copy Ctor.");
 static_assert(!std::is_copy_assignable<SkinnedPBREffect>::value, "Copy Assign.");
 static_assert(std::is_nothrow_move_constructible<SkinnedPBREffect>::value, "Move Ctor.");
@@ -169,6 +174,7 @@ namespace
     };
 }
 
+// BasicEffect, AlphaTestEffect, DualTextureEffect, EnvironmentMapEffect, SkinnedEffect
 _Success_(return)
 bool Test05(_In_ ID3D12Device *device)
 {
@@ -488,6 +494,7 @@ bool Test05(_In_ ID3D12Device *device)
     return success;
 }
 
+// NormalMapEffect, SkinnedNormalMapEffect, DebugEffect
 _Success_(return)
 bool Test11(_In_ ID3D12Device *device)
 {
@@ -624,6 +631,7 @@ bool Test11(_In_ ID3D12Device *device)
     return success;
 }
 
+// PBREffect, SkinnedPBREffect, PBREffectFactory
 _Success_(return)
 bool Test12(_In_ ID3D12Device *device)
 {
@@ -738,6 +746,57 @@ bool Test12(_In_ ID3D12Device *device)
             auto invalid = std::make_unique<PBREffectFactory>(nullHeap, nullHeap);
 
             printf("ERROR: Failed to throw for null device for PBREffectFactory ctor 2\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+    }
+    #pragma warning(pop)
+
+    return success;
+}
+
+// NPREffect
+_Success_(return)
+bool Test22(_In_ ID3D12Device *device)
+{
+    if (!device)
+        return false;
+
+    bool success = true;
+
+    const RenderTargetState rtState(DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_D32_FLOAT);
+
+    EffectPipelineStateDescription pd(
+        &TestVertex::InputLayout,
+        CommonStates::Opaque,
+        CommonStates::DepthDefault,
+        CommonStates::CullNone,
+        rtState);
+
+    std::unique_ptr<NPREffect> pbr;
+    try
+    {
+        // TODO: Texture, VertexColor, BiasedVertexNormals, Instancing
+        pbr = std::make_unique<NPREffect>(device, EffectFlags::None, pd);
+    }
+    catch(const std::exception& e)
+    {
+        printf("ERROR: Failed creating object (except: %s)\n", e.what());
+        success = false;
+    }
+
+    // invalid args
+    #pragma warning(push)
+    #pragma warning(disable:6385 6387)
+    {
+        ID3D12Device* nullDevice = nullptr;
+        try
+        {
+            auto invalid = std::make_unique<NPREffect>(nullDevice, EffectFlags::None, pd);
+
+            printf("ERROR: Failed to throw for null device\n");
             success = false;
         }
         catch(const std::exception&)
