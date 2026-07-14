@@ -30,7 +30,7 @@ namespace
     constexpr float INTERACTIVE_TIME = 10.f;
 
     constexpr float ortho_width = 6.f;
-    constexpr float ortho_height = 8.f;
+    constexpr float ortho_height = 9.f;
 
     struct TestVertex
     {
@@ -1915,6 +1915,22 @@ void Game::CreateDeviceDependentResources()
             effect = std::make_unique<NPREffect>(device, eflags | EffectFlags::VertexColor, pd, NPREffect::Mode_Gooch);
             npr.emplace_back(std::move(effect));
 
+            effect = std::make_unique<NPREffect>(device, eflags | EffectFlags::Texture, pd, NPREffect::Mode_Cel);
+            effect->SetTexture(defaultTex, sampler);
+            npr.emplace_back(std::move(effect));
+
+            effect = std::make_unique<NPREffect>(device, eflags | EffectFlags::Texture, pd, NPREffect::Mode_Gooch);
+            effect->SetTexture(defaultTex, sampler);
+            npr.emplace_back(std::move(effect));
+
+            effect = std::make_unique<NPREffect>(device, eflags | EffectFlags::Texture | EffectFlags::VertexColor, pd, NPREffect::Mode_Cel);
+            effect->SetTexture(defaultTex, sampler);
+            npr.emplace_back(std::move(effect));
+
+            effect = std::make_unique<NPREffect>(device, eflags | EffectFlags::Texture | EffectFlags::VertexColor, pd, NPREffect::Mode_Gooch);
+            effect->SetTexture(defaultTex, sampler);
+            npr.emplace_back(std::move(effect));
+
             effect = std::make_unique<NPREffect>(device, eflags | EffectFlags::Instancing, pdInst, NPREffect::Mode_Cel);
             nprInst.emplace_back(std::move(effect));
 
@@ -1925,6 +1941,22 @@ void Game::CreateDeviceDependentResources()
             nprInst.emplace_back(std::move(effect));
 
             effect = std::make_unique<NPREffect>(device, eflags | EffectFlags::Instancing | EffectFlags::VertexColor, pdInst, NPREffect::Mode_Gooch);
+            nprInst.emplace_back(std::move(effect));
+
+            effect = std::make_unique<NPREffect>(device, eflags | EffectFlags::Texture | EffectFlags::Instancing, pdInst, NPREffect::Mode_Cel);
+            effect->SetTexture(defaultTex, sampler);
+            nprInst.emplace_back(std::move(effect));
+
+            effect = std::make_unique<NPREffect>(device, eflags | EffectFlags::Texture | EffectFlags::Instancing | EffectFlags::VertexColor, pdInst, NPREffect::Mode_Cel);
+            effect->SetTexture(defaultTex, sampler);
+            nprInst.emplace_back(std::move(effect));
+
+            effect = std::make_unique<NPREffect>(device, eflags | EffectFlags::Texture | EffectFlags::Instancing, pdInst, NPREffect::Mode_Gooch);
+            effect->SetTexture(defaultTex, sampler);
+            nprInst.emplace_back(std::move(effect));
+
+            effect = std::make_unique<NPREffect>(device, eflags | EffectFlags::Texture | EffectFlags::Instancing | EffectFlags::VertexColor, pdInst, NPREffect::Mode_Gooch);
+            effect->SetTexture(defaultTex, sampler);
             nprInst.emplace_back(std::move(effect));
 
             if (!j)
