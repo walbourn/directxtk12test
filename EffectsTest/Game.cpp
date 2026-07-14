@@ -445,6 +445,19 @@ void Game::Render()
         commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
     }
 
+    // Textured basic effect
+    m_basicEffectTx->SetWorld(world * XMMatrixTranslation(col0, row4, 0));
+    m_basicEffectTx->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_basicEffectTxVc->SetWorld(world * XMMatrixTranslation(col1, row4, 0));
+    m_basicEffectTxVc->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_basicEffectTxFog->SetWorld(world * XMMatrixTranslation(colA, row4, 2 - alphaFade * 6));
+    m_basicEffectTxFog->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
     //--- SkinnedEFfect --------------------------------------------------------------------
     XMMATRIX bones[4] =
     {
@@ -878,6 +891,18 @@ void Game::CreateDeviceDependentResources()
         m_basicEffectPPL->EnableDefaultLighting();
         m_basicEffectPPL->SetDiffuseColor(red);
 
+        m_basicEffectTx = std::make_unique<BasicEffect>(device, EffectFlags::Lighting | EffectFlags::Texture, pdAlpha);
+        m_basicEffectTx->EnableDefaultLighting();
+
+        m_basicEffectTxVc = std::make_unique<BasicEffect>(device, EffectFlags::VertexColor | EffectFlags::Lighting | EffectFlags::Texture, pdAlpha);
+        m_basicEffectTxVc->EnableDefaultLighting();
+
+        m_basicEffectTxFog = std::make_unique<BasicEffect>(device, EffectFlags::Lighting | EffectFlags::Texture | EffectFlags::Fog, pdAlpha);
+        m_basicEffectTxFog->EnableDefaultLighting();
+        m_basicEffectTxFog->SetFogColor(gray);
+        m_basicEffectTxFog->SetFogStart(fogstart);
+        m_basicEffectTxFog->SetFogEnd(fogend);
+
         //--- SkinnedEFfect ----------------------------------------------------------------
         m_skinnedEffect = std::make_unique<SkinnedEffect>(device, EffectFlags::Lighting | EffectFlags::Texture, pdAlpha);
         m_skinnedEffect->EnableDefaultLighting();
@@ -1092,6 +1117,10 @@ void Game::CreateDeviceDependentResources()
 
     const auto sampler = m_states->LinearWrap();
 
+    m_basicEffectTx->SetTexture(opaqueCat, sampler);
+    m_basicEffectTxVc->SetTexture(opaqueCat, sampler);
+    m_basicEffectTxFog->SetTexture(opaqueCat, sampler);
+
     m_skinnedEffect->SetTexture(opaqueCat, sampler);
     m_skinnedEffectFog->SetTexture(opaqueCat, sampler);
     m_skinnedEffectNoSpecular->SetTexture(opaqueCat, sampler);
@@ -1201,6 +1230,9 @@ void Game::CreateWindowSizeDependentResources()
     m_basicEffectFog->SetView(view);
     m_basicEffectNoSpecular->SetView(view);
     m_basicEffectPPL->SetView(view);
+    m_basicEffectTx->SetView(view);
+    m_basicEffectTxVc->SetView(view);
+    m_basicEffectTxFog->SetView(view);
 
     m_skinnedEffect->SetView(view);
     m_skinnedEffectFog->SetView(view);
@@ -1243,6 +1275,9 @@ void Game::CreateWindowSizeDependentResources()
     m_basicEffectFog->SetProjection(projection);
     m_basicEffectNoSpecular->SetProjection(projection);
     m_basicEffectPPL->SetProjection(projection);
+    m_basicEffectTx->SetProjection(projection);
+    m_basicEffectTxVc->SetProjection(projection);
+    m_basicEffectTxFog->SetProjection(projection);
 
     m_skinnedEffect->SetProjection(projection);
     m_skinnedEffectFog->SetProjection(projection);
@@ -1291,6 +1326,9 @@ void Game::OnDeviceLost()
     m_basicEffectFog.reset();
     m_basicEffectNoSpecular.reset();
     m_basicEffectPPL.reset();
+    m_basicEffectTx.reset();
+    m_basicEffectTxVc.reset();
+    m_basicEffectTxFog.reset();
 
     m_skinnedEffect.reset();
     m_skinnedEffectFog.reset();

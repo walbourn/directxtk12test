@@ -120,6 +120,9 @@ private:
     std::unique_ptr<DirectX::BasicEffect>           m_basicEffectFog;
     std::unique_ptr<DirectX::BasicEffect>           m_basicEffectNoSpecular;
     std::unique_ptr<DirectX::BasicEffect>           m_basicEffectPPL;
+    std::unique_ptr<DirectX::BasicEffect>           m_basicEffectTx;
+    std::unique_ptr<DirectX::BasicEffect>           m_basicEffectTxVc;
+    std::unique_ptr<DirectX::BasicEffect>           m_basicEffectTxFog;
 
     std::unique_ptr<DirectX::SkinnedEffect>         m_skinnedEffect;
     std::unique_ptr<DirectX::SkinnedEffect>         m_skinnedEffectFog;
