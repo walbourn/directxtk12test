@@ -818,42 +818,52 @@ bool Test22(_In_ ID3D12Device *device)
         EffectFlags::BiasedVertexNormals
     };
 
-    for(size_t combo = 0; combo < std::size(flagCombos); ++combo)
+    const NPREffect::Mode modes[] =
     {
-        std::unique_ptr<NPREffect> npr;
-        try
-        {
-            npr = std::make_unique<NPREffect>(device, flagCombos[combo], pd);
-        }
-        catch(const std::exception& e)
-        {
-            printf("ERROR: Failed creating object (except: %s)\n", e.what());
-            success = false;
-        }
+        NPREffect::Mode_Cel,
+        NPREffect::Mode_Gooch,
+        NPREffect::Mode_MatCap,
+    };
 
-        try
+    for(size_t mode = 0; mode < std::size(modes); ++mode)
+    {
+        for(size_t combo = 0; combo < std::size(flagCombos); ++combo)
         {
-            npr = std::make_unique<NPREffect>(device, flagCombos[combo] | EffectFlags::Instancing, pdInst);
-        }
-        catch(const std::exception& e)
-        {
-            printf("ERROR: Failed creating instancing object (except: %s)\n", e.what());
-            success = false;
-        }
+            std::unique_ptr<NPREffect> npr;
+            try
+            {
+                npr = std::make_unique<NPREffect>(device, flagCombos[combo], pd, modes[mode]);
+            }
+            catch(const std::exception& e)
+            {
+                printf("ERROR: Failed creating object (except: %s)\n", e.what());
+                success = false;
+            }
 
-        bool threw = false;
-        try
-        {
-            npr = std::make_unique<NPREffect>(device, flagCombos[combo]| EffectFlags::Instancing, pd);
-        }
-        catch(const std::exception&)
-        {
-            threw = true;
-        }
-        if (!threw)
-        {
-            printf("ERROR: Expected failure for using instancing without instanced layout\n");
-            success = false;
+            try
+            {
+                npr = std::make_unique<NPREffect>(device, flagCombos[combo] | EffectFlags::Instancing, pdInst, modes[mode]);
+            }
+            catch(const std::exception& e)
+            {
+                printf("ERROR: Failed creating instancing object (except: %s)\n", e.what());
+                success = false;
+            }
+
+            bool threw = false;
+            try
+            {
+                npr = std::make_unique<NPREffect>(device, flagCombos[combo]| EffectFlags::Instancing, pd, modes[mode]);
+            }
+            catch(const std::exception&)
+            {
+                threw = true;
+            }
+            if (!threw)
+            {
+                printf("ERROR: Expected failure for using instancing without instanced layout\n");
+                success = false;
+            }
         }
     }
 

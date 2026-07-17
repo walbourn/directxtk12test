@@ -29,10 +29,11 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
-    constexpr float row0 = 2.5f;
-    constexpr float row1 = 1.0f;
-    constexpr float row2 = -1.0f;
-    constexpr float row3 = -2.5f;
+    constexpr float row0 = 3.0f;
+    constexpr float row1 = 1.5f;
+    constexpr float row2 = 0.f;
+    constexpr float row3 = -1.5f;
+    constexpr float row4 = -3.0f;
 
     constexpr float col0 = -5.f;
     constexpr float col1 = -3.f;
@@ -423,6 +424,46 @@ void Game::Render()
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
     m_goochEffect->SetAlpha(1.f);
 
+    //--- NPREffect: MatCap shading --------------------------------------------------------
+
+    // Default MatCap shading
+    auto matcap1 = m_resourceDescriptors->GetGpuHandle(Descriptors::MatCap1);
+    m_matcapEffect->SetWorld(world * XMMatrixTranslation(col0, row4, 0));
+    m_matcapEffect->SetMatCap(matcap1);
+    m_matcapEffect->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    auto matcap2 = m_resourceDescriptors->GetGpuHandle(Descriptors::MatCap2);
+    m_matcapEffect->SetAlpha(alphaFade);
+    m_matcapEffect->SetWorld(world * XMMatrixTranslation(col1, row4, 0));
+    m_matcapEffect->SetMatCap(matcap2);
+    m_matcapEffect->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+    m_matcapEffect->SetAlpha(1.f);
+
+    // MapCap shading with vertex color.
+    m_matcapEffectVc->SetWorld(world * XMMatrixTranslation(col2, row4, 0));
+    m_matcapEffectVc->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    // Mapcap shading with texture.
+    m_matcapEffectTx->SetWorld(world * XMMatrixTranslation(col3, row4, 0));
+    m_matcapEffectTx->SetMatCap(matcap1);
+    m_matcapEffectTx->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_matcapEffectTx->SetAlpha(alphaFade);
+    m_matcapEffectTx->SetWorld(world * XMMatrixTranslation(col4, row4, 0));
+    m_matcapEffectTx->SetMatCap(matcap2);
+    m_matcapEffectTx->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+    m_matcapEffectTx->SetAlpha(1.f);
+
+    // Mapcap sahding with vertex color and texture.
+    m_matcapEffectTxVc->SetWorld(world * XMMatrixTranslation(col5, row4, 0));
+    m_matcapEffectTxVc->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
     PIXEndEvent(commandList);
 
     // Show the new frame.
@@ -690,6 +731,20 @@ void Game::CreateDeviceDependentResources()
         m_goochEffectTxVc->SetRimLightingColor(c_rimGoochColor);
         m_goochEffectTxVc->SetGoochCoolColor(red, 0.4f);
         m_goochEffectTxVc->SetGoochWarmColor(green, 0.4f);
+
+        //--- MatCap shading (Mode_MatCap) -------------------------------------------------
+
+        // Default MatCap shading
+        m_matcapEffect = std::make_unique<NPREffect>(device, EffectFlags::None, pdAlpha, NPREffect::Mode_MatCap);
+
+        // MapCap shading with vertex color.
+        m_matcapEffectVc = std::make_unique<NPREffect>(device, EffectFlags::VertexColor, pdOpaque, NPREffect::Mode_MatCap);
+
+        // Mapcap shading with texture.
+        m_matcapEffectTx = std::make_unique<NPREffect>(device, EffectFlags::Texture, pdAlpha, NPREffect::Mode_MatCap);
+
+        // Mapcap sahding with vertex color and texture.
+        m_matcapEffectTxVc = std::make_unique<NPREffect>(device, EffectFlags::Texture | EffectFlags::VertexColor, pdOpaque, NPREffect::Mode_MatCap);
     }
 
     // Load textures.
@@ -701,8 +756,10 @@ void Game::CreateDeviceDependentResources()
 
 #ifdef GAMMA_CORRECT_RENDERING
     constexpr DDS_LOADER_FLAGS loadFlags = DDS_LOADER_FORCE_SRGB;
+    constexpr WIC_LOADER_FLAGS wicLoadFlags = WIC_LOADER_FORCE_SRGB;
 #else
     constexpr DDS_LOADER_FLAGS loadFlags = DDS_LOADER_DEFAULT;
+    constexpr WIC_LOADER_FLAGS wicLoadFlags = WIC_LOADER_DEFAULT;
 #endif
 
     wchar_t strFilePath[MAX_PATH] = {};
@@ -714,12 +771,29 @@ void Game::CreateDeviceDependentResources()
 
     CreateShaderResourceView(device, m_refTexture.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::RefTexture));
 
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"matcap_gold.png", s_searchFolders);
+    DX::ThrowIfFailed(
+        CreateWICTextureFromFileEx(device, resourceUpload, strFilePath,
+            0, D3D12_RESOURCE_FLAG_NONE, wicLoadFlags,
+            m_matCapTexture1.ReleaseAndGetAddressOf()));
+
+    CreateShaderResourceView(device, m_matCapTexture1.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::MatCap1));
+
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"matcap_ice.png", s_searchFolders);
+    DX::ThrowIfFailed(
+        CreateWICTextureFromFileEx(device, resourceUpload, strFilePath,
+            0, D3D12_RESOURCE_FLAG_NONE, wicLoadFlags,
+            m_matCapTexture2.ReleaseAndGetAddressOf()));
+
+    CreateShaderResourceView(device, m_matCapTexture2.Get(), m_resourceDescriptors->GetCpuHandle(Descriptors::MatCap2));
+
     auto uploadResourcesFinished = resourceUpload.End(m_deviceResources->GetCommandQueue());
 
     uploadResourcesFinished.wait();
 
     // Set textures.
     const auto refTexture = m_resourceDescriptors->GetGpuHandle(Descriptors::RefTexture);
+    const auto matcap = m_resourceDescriptors->GetGpuHandle(Descriptors::MatCap1);
     const auto sampler = m_states->LinearWrap();
 
     m_celEffectTx->SetTexture(refTexture, sampler);
@@ -731,12 +805,20 @@ void Game::CreateDeviceDependentResources()
     m_goochEffectTxNoSpecular->SetTexture(refTexture, sampler);
     m_goochEffectTxNoRim->SetTexture(refTexture, sampler);
     m_goochEffectTxVc->SetTexture(refTexture, sampler);
+
+    m_matcapEffect->SetMatCap(matcap, sampler);
+    m_matcapEffectVc->SetMatCap(matcap, sampler);
+
+    m_matcapEffectTx->SetTexture(refTexture, sampler);
+    m_matcapEffectTx->SetMatCap(matcap);
+    m_matcapEffectTxVc->SetTexture(refTexture, sampler);
+    m_matcapEffectTxVc->SetMatCap(matcap);
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
 void Game::CreateWindowSizeDependentResources()
 {
-    static const XMVECTORF32 cameraPosition = { { { 0.f, 0.f, 6.f, 0.f } } };
+    static const XMVECTORF32 cameraPosition = { { { 0.f, 0.f, 7.f, 0.f } } };
 
     const auto size = m_deviceResources->GetOutputSize();
     const float aspect = (float)size.right / (float)size.bottom;
@@ -776,6 +858,11 @@ void Game::CreateWindowSizeDependentResources()
     m_goochEffectTxNoRim->SetView(view);
     m_goochEffectTxVc->SetView(view);
 
+    m_matcapEffect->SetView(view);
+    m_matcapEffectVc->SetView(view);
+    m_matcapEffectTx->SetView(view);
+    m_matcapEffectTxVc->SetView(view);
+
     m_celEffect->SetProjection(projection);
     m_celEffectNoSpecular->SetProjection(projection);
     m_celEffectNoRim->SetProjection(projection);
@@ -794,6 +881,11 @@ void Game::CreateWindowSizeDependentResources()
     m_goochEffectTxNoSpecular->SetProjection(projection);
     m_goochEffectTxNoRim->SetProjection(projection);
     m_goochEffectTxVc->SetProjection(projection);
+
+    m_matcapEffect->SetProjection(projection);
+    m_matcapEffectVc->SetProjection(projection);
+    m_matcapEffectTx->SetProjection(projection);
+    m_matcapEffectTxVc->SetProjection(projection);
 }
 
 #ifdef LOSTDEVICE
@@ -818,10 +910,17 @@ void Game::OnDeviceLost()
     m_goochEffectTxNoRim.reset();
     m_goochEffectTxVc.reset();
 
+    m_matcapEffect.reset();
+    m_matcapEffectVc.reset();
+    m_matcapEffectTx.reset();
+    m_matcapEffectTxVc.reset();
+
     m_indexBuffer.Reset();
     m_vertexBuffer.Reset();
 
     m_refTexture.Reset();
+    m_matCapTexture1.Reset();
+    m_matCapTexture2.Reset();
 
     m_resourceDescriptors.reset();
     m_states.reset();

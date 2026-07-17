@@ -29,8 +29,8 @@ namespace
     constexpr float SWAP_TIME = 1.f;
     constexpr float INTERACTIVE_TIME = 10.f;
 
-    constexpr float ortho_width = 6.f;
-    constexpr float ortho_height = 9.f;
+    constexpr float ortho_width = 10.f;
+    constexpr float ortho_height = 12.f;
 
     struct TestVertex
     {
@@ -1931,6 +1931,24 @@ void Game::CreateDeviceDependentResources()
             effect->SetTexture(defaultTex, sampler);
             npr.emplace_back(std::move(effect));
 
+            effect = std::make_unique<NPREffect>(device, eflags, pd, NPREffect::Mode_MatCap);
+            effect->SetMatCap(defaultTex, sampler);
+            npr.emplace_back(std::move(effect));
+
+            effect = std::make_unique<NPREffect>(device, eflags | EffectFlags::VertexColor, pd, NPREffect::Mode_MatCap);
+            effect->SetMatCap(defaultTex, sampler);
+            npr.emplace_back(std::move(effect));
+
+            effect = std::make_unique<NPREffect>(device, eflags | EffectFlags::Texture, pd, NPREffect::Mode_MatCap);
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetMatCap(defaultTex);
+            npr.emplace_back(std::move(effect));
+
+            effect = std::make_unique<NPREffect>(device, eflags | EffectFlags::Texture | EffectFlags::VertexColor, pd, NPREffect::Mode_MatCap);
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetMatCap(defaultTex);
+            npr.emplace_back(std::move(effect));
+
             effect = std::make_unique<NPREffect>(device, eflags | EffectFlags::Instancing, pdInst, NPREffect::Mode_Cel);
             nprInst.emplace_back(std::move(effect));
 
@@ -1957,6 +1975,24 @@ void Game::CreateDeviceDependentResources()
 
             effect = std::make_unique<NPREffect>(device, eflags | EffectFlags::Texture | EffectFlags::Instancing | EffectFlags::VertexColor, pdInst, NPREffect::Mode_Gooch);
             effect->SetTexture(defaultTex, sampler);
+            nprInst.emplace_back(std::move(effect));
+
+            effect = std::make_unique<NPREffect>(device, eflags | EffectFlags::Instancing, pdInst, NPREffect::Mode_MatCap);
+            effect->SetMatCap(defaultTex, sampler);
+            nprInst.emplace_back(std::move(effect));
+
+            effect = std::make_unique<NPREffect>(device, eflags | EffectFlags::Instancing | EffectFlags::VertexColor, pdInst, NPREffect::Mode_MatCap);
+            effect->SetMatCap(defaultTex, sampler);
+            nprInst.emplace_back(std::move(effect));
+
+            effect = std::make_unique<NPREffect>(device, eflags | EffectFlags::Instancing | EffectFlags::Texture, pdInst, NPREffect::Mode_MatCap);
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetMatCap(defaultTex);
+            nprInst.emplace_back(std::move(effect));
+
+            effect = std::make_unique<NPREffect>(device, eflags | EffectFlags::Instancing | EffectFlags::Texture | EffectFlags::VertexColor, pdInst, NPREffect::Mode_MatCap);
+            effect->SetTexture(defaultTex, sampler);
+            effect->SetMatCap(defaultTex);
             nprInst.emplace_back(std::move(effect));
 
             if (!j)

@@ -111,6 +111,8 @@ private:
     D3D12_INDEX_BUFFER_VIEW                     m_indexBufferView;
 
     Microsoft::WRL::ComPtr<ID3D12Resource>      m_refTexture;
+    Microsoft::WRL::ComPtr<ID3D12Resource>      m_matCapTexture1;
+    Microsoft::WRL::ComPtr<ID3D12Resource>      m_matCapTexture2;
 
     // Cel shading (Mode_Cel)
     std::unique_ptr<DirectX::NPREffect>         m_celEffect;
@@ -133,11 +135,19 @@ private:
     std::unique_ptr<DirectX::NPREffect>         m_goochEffectTxNoRim;
     std::unique_ptr<DirectX::NPREffect>         m_goochEffectTxVc;
 
+    // MatCap shading (Mode_MatCap)
+    std::unique_ptr<DirectX::NPREffect>         m_matcapEffect;
+    std::unique_ptr<DirectX::NPREffect>         m_matcapEffectVc;
+    std::unique_ptr<DirectX::NPREffect>         m_matcapEffectTx;
+    std::unique_ptr<DirectX::NPREffect>         m_matcapEffectTxVc;
+
     uint64_t m_frame;
 
     enum Descriptors
     {
         RefTexture,
+        MatCap1,
+        MatCap2,
         Count
     };
 };
