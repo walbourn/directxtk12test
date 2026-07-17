@@ -34,11 +34,12 @@ namespace
     constexpr float row2 = -1.0f;
     constexpr float row3 = -2.5f;
 
-    constexpr float col0 = -4.f;
-    constexpr float col1 = -2.f;
-    constexpr float col2 = 0.f;
-    constexpr float col3 = 2.f;
-    constexpr float col4 = 4.f;
+    constexpr float col0 = -5.f;
+    constexpr float col1 = -3.f;
+    constexpr float col2 = -1.f;
+    constexpr float col3 = 1.f;
+    constexpr float col4 = 3.f;
+    constexpr float col5 = 5.f;
 
     struct TestVertex
     {
@@ -112,6 +113,8 @@ namespace
 #else
     const XMVECTORF32 c_clearColor = Colors::CornflowerBlue;
 #endif
+    const XMVECTORF32 c_rimToonColor = { { { 0.6f, 0.8f, 1.0f } } };
+    const XMVECTORF32 c_rimGoochColor = { { { 1.f, 1.f, 1.f, 1.f, } } };
 
     static const wchar_t* s_searchFolders[] =
     {
@@ -266,6 +269,11 @@ void Game::Render()
     // Time-based animation
     float time = static_cast<float>(m_timer.GetTotalSeconds());
 
+    float alphaFade = (sin(time * 2) + 1) / 2;
+
+    if (alphaFade >= 1)
+        alphaFade = 1 - FLT_EPSILON;
+
     float yaw = time * 0.4f;
     float pitch = time * 0.7f;
     float roll = time * 1.1f;
@@ -302,8 +310,13 @@ void Game::Render()
     m_celEffectNoSpecular->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
+    // Cel shading, no rim lighting.
+    m_celEffectNoRim->SetWorld(world * XMMatrixTranslation(col4, row0, 0));
+    m_celEffectNoRim->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
     // Cel shading with vertex color.
-    m_celEffectVc->SetWorld(world * XMMatrixTranslation(col4, row0, 0));
+    m_celEffectVc->SetWorld(world * XMMatrixTranslation(col5, row0, 0));
     m_celEffectVc->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
@@ -330,10 +343,23 @@ void Game::Render()
     m_celEffectTxNoSpecular->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
+    // Cel shading with texture, no rim lighting.
+    m_celEffectTxNoRim->SetWorld(world * XMMatrixTranslation(col4, row1, 0));
+    m_celEffectTxNoRim->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
     // Cel shading with vertex color and texture.
-    m_celEffectTxVc->SetWorld(world * XMMatrixTranslation(col4, row1, 0));
+    m_celEffectTxVc->SetWorld(world * XMMatrixTranslation(col5, row1, 0));
     m_celEffectTxVc->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    // Cel shading (4 bands) with alpha.
+    m_celEffect->SetWorld(world * XMMatrixTranslation(col1, row3, 0));
+    m_celEffect->SetCelShaderBands(4);
+    m_celEffect->SetAlpha(alphaFade);
+    m_celEffect->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+    m_celEffect->SetAlpha(1.f);
 
     //--- NPREffect: Gooch shading ---------------------------------------------------------
 
@@ -342,19 +368,32 @@ void Game::Render()
     m_goochEffect->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
+    // Gooch shading with custom cool/warm colors.
+    m_goochEffectCustom->SetGoochCoolColor(Colors::Red, 0.4f);
+    m_goochEffectCustom->SetGoochWarmColor(Colors::Green, 0.4f);
+    m_goochEffectCustom->SetWorld(world * XMMatrixTranslation(col1, row2, 0));
+    m_goochEffectCustom->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_goochEffectCustom->SetGoochCoolColor(Colors::Black, 0.1f);
+    m_goochEffectCustom->SetGoochWarmColor(Colors::Blue, 0.1f);
+    m_goochEffectCustom->SetWorld(world * XMMatrixTranslation(col2, row2, 0));
+    m_goochEffectCustom->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
     // Gooch shading, no specular.
-    m_goochEffectNoSpecular->SetWorld(world * XMMatrixTranslation(col1, row2, 0));
+    m_goochEffectNoSpecular->SetWorld(world * XMMatrixTranslation(col3, row2, 0));
     m_goochEffectNoSpecular->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
-    // Gooch shading with vertex color.
-    m_goochEffectVc->SetWorld(world * XMMatrixTranslation(col2, row2, 0));
-    m_goochEffectVc->Apply(commandList);
+    // Gooch shading, no rim lighting.
+    m_goochEffectNoRim->SetWorld(world * XMMatrixTranslation(col4, row2, 0));
+    m_goochEffectNoRim->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
-    // Gooch shading with custom cool/warm colors.
-    m_goochEffectCustom->SetWorld(world * XMMatrixTranslation(col3, row2, 0));
-    m_goochEffectCustom->Apply(commandList);
+    // Gooch shading with vertex color.
+    m_goochEffectVc->SetWorld(world * XMMatrixTranslation(col5, row2, 0));
+    m_goochEffectVc->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     // Gooch shading with texture.
@@ -363,14 +402,26 @@ void Game::Render()
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     // Gooch shading with texture, no specular.
-    m_goochEffectTxNoSpecular->SetWorld(world * XMMatrixTranslation(col1, row3, 0));
+    m_goochEffectTxNoSpecular->SetWorld(world * XMMatrixTranslation(col3, row3, 0));
     m_goochEffectTxNoSpecular->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
+    // Gooch shading with texture, no rim lighting.
+    m_goochEffectTxNoRim->SetWorld(world * XMMatrixTranslation(col4, row3, 0));
+    m_goochEffectTxNoRim->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
     // Gooch shading with vertex color.
-    m_goochEffectTxVc->SetWorld(world * XMMatrixTranslation(col2, row3, 0));
+    m_goochEffectTxVc->SetWorld(world * XMMatrixTranslation(col5, row3, 0));
     m_goochEffectTxVc->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    // Default Gooch shading with alpha.
+    m_goochEffect->SetAlpha(alphaFade);
+    m_goochEffect->SetWorld(world * XMMatrixTranslation(col2, row3, 0));
+    m_goochEffect->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+    m_goochEffect->SetAlpha(1.f);
 
     PIXEndEvent(commandList);
 
@@ -484,13 +535,17 @@ void Game::CreateDeviceDependentResources()
     // Create NPREffect instances
     RenderTargetState rtState(m_deviceResources->GetBackBufferFormat(), m_deviceResources->GetDepthBufferFormat());
 
-    XMVECTORF32 blue, red;
+    XMVECTORF32 blue, red, green, grey;
 #ifdef GAMMA_CORRECT_RENDERING
     blue.v = XMColorSRGBToRGB(Colors::Blue);
-    red.v  = XMColorSRGBToRGB(Colors::Red);
+    red.v = XMColorSRGBToRGB(Colors::Red);
+    green.v = XMColorSRGBToRGB(Colors::Green);
+    grey.v = XMColorSRGBToRGB(Colors::Gray);
 #else
     blue.v = Colors::Blue;
-    red.v  = Colors::Red;
+    red.v = Colors::Red;
+    green.v = Colors::Green;
+    grey.v = Colors::Gray;
 #endif
 
     {
@@ -505,84 +560,136 @@ void Game::CreateDeviceDependentResources()
 #endif
             rtState);
 
+        const EffectPipelineStateDescription pdAlpha(
+            &TestVertex::InputLayout,
+            CommonStates::AlphaBlend,
+            CommonStates::DepthDefault,
+        #ifdef LH_COORDS
+            CommonStates::CullClockwise,
+        #else
+            CommonStates::CullCounterClockwise,
+        #endif
+            rtState);
+
         //--- Cel shading (Mode_Cel) -------------------------------------------------------
 
         // Default cel shading.
-        m_celEffect = std::make_unique<NPREffect>(device, EffectFlags::None, pdOpaque, NPREffect::Mode_Cel);
+        m_celEffect = std::make_unique<NPREffect>(device, EffectFlags::None, pdAlpha, NPREffect::Mode_Cel);
         m_celEffect->EnableDefaultLighting();
         m_celEffect->SetDiffuseColor(blue);
+        m_celEffect->SetRimLightingColor(c_rimToonColor);
         m_celEffect->SetCelShaderBands(4);
 
         // Cel shading, no specular.
         m_celEffectNoSpecular = std::make_unique<NPREffect>(device, EffectFlags::None, pdOpaque, NPREffect::Mode_Cel);
         m_celEffectNoSpecular->EnableDefaultLighting();
         m_celEffectNoSpecular->SetDiffuseColor(blue);
+        m_celEffectNoSpecular->SetRimLightingColor(c_rimToonColor);
         m_celEffectNoSpecular->SetCelShaderBands(4);
         m_celEffectNoSpecular->DisableSpecular();
+
+        // Cel shading, no rim lighting.
+        m_celEffectNoRim = std::make_unique<NPREffect>(device, EffectFlags::None, pdOpaque, NPREffect::Mode_Cel);
+        m_celEffectNoRim->EnableDefaultLighting();
+        m_celEffectNoRim->SetDiffuseColor(blue);
+        m_celEffectNoRim->SetCelShaderBands(4);
+        m_celEffectNoRim->DisableRimLighting();
 
         // Cel shading with vertex color.
         m_celEffectVc = std::make_unique<NPREffect>(device, EffectFlags::VertexColor, pdOpaque, NPREffect::Mode_Cel);
         m_celEffectVc->EnableDefaultLighting();
+        m_celEffectVc->SetRimLightingColor(c_rimToonColor);
         m_celEffectVc->SetCelShaderBands(4);
 
         // Cel shading with texture.
         m_celEffectTx = std::make_unique<NPREffect>(device, EffectFlags::Texture, pdOpaque, NPREffect::Mode_Cel);
         m_celEffectTx->EnableDefaultLighting();
+        m_celEffectTx->SetRimLightingColor(c_rimToonColor);
         m_celEffectTx->SetCelShaderBands(4);
 
         // Cel shading with texture, no specular
         m_celEffectTxNoSpecular = std::make_unique<NPREffect>(device, EffectFlags::Texture, pdOpaque, NPREffect::Mode_Cel);
         m_celEffectTxNoSpecular->EnableDefaultLighting();
+        m_celEffectTxNoSpecular->SetRimLightingColor(c_rimToonColor);
         m_celEffectTxNoSpecular->SetCelShaderBands(4);
         m_celEffectTxNoSpecular->DisableSpecular();
+
+        // Cel shading with texture, no rim lighting.
+        m_celEffectTxNoRim = std::make_unique<NPREffect>(device, EffectFlags::Texture, pdOpaque, NPREffect::Mode_Cel);
+        m_celEffectTxNoRim->EnableDefaultLighting();
+        m_celEffectTxNoRim->SetCelShaderBands(4);
+        m_celEffectTxNoRim->DisableRimLighting();
 
         // Cel shading with vertex color and texture.
         m_celEffectTxVc = std::make_unique<NPREffect>(device, EffectFlags::Texture | EffectFlags::VertexColor, pdOpaque, NPREffect::Mode_Cel);
         m_celEffectTxVc->EnableDefaultLighting();
+        m_celEffectTxVc->SetRimLightingColor(c_rimToonColor);
         m_celEffectTxVc->SetCelShaderBands(4);
 
         //--- Gooch shading (Mode_Gooch) ---------------------------------------------------
 
         // Default Gooch shading.
-        m_goochEffect = std::make_unique<NPREffect>(device, EffectFlags::None, pdOpaque, NPREffect::Mode_Gooch);
+        m_goochEffect = std::make_unique<NPREffect>(device, EffectFlags::None, pdAlpha, NPREffect::Mode_Gooch);
         m_goochEffect->EnableDefaultLighting();
-        m_goochEffect->SetDiffuseColor(red);
+        m_goochEffect->SetDiffuseColor(grey);
+        m_goochEffect->SetRimLightingColor(c_rimGoochColor);
 
         // Gooch shading, no specular.
         m_goochEffectNoSpecular = std::make_unique<NPREffect>(device, EffectFlags::None, pdOpaque, NPREffect::Mode_Gooch);
         m_goochEffectNoSpecular->EnableDefaultLighting();
-        m_goochEffectNoSpecular->SetDiffuseColor(red);
+        m_goochEffectNoSpecular->SetDiffuseColor(grey);
+        m_goochEffectNoSpecular->SetRimLightingColor(c_rimGoochColor);
         m_goochEffectNoSpecular->DisableSpecular();
+
+        // Gooch shading, no rim lighting.
+        m_goochEffectNoRim = std::make_unique<NPREffect>(device, EffectFlags::None, pdOpaque, NPREffect::Mode_Gooch);
+        m_goochEffectNoRim->EnableDefaultLighting();
+        m_goochEffectNoRim->SetDiffuseColor(grey);
+        m_goochEffectNoRim->DisableRimLighting();
 
         // Gooch shading with vertex color.
         m_goochEffectVc = std::make_unique<NPREffect>(device, EffectFlags::VertexColor, pdOpaque, NPREffect::Mode_Gooch);
         m_goochEffectVc->EnableDefaultLighting();
+        m_goochEffectVc->SetRimLightingColor(c_rimGoochColor);
 
         // Gooch shading with custom cool/warm colors.
         m_goochEffectCustom = std::make_unique<NPREffect>(device, EffectFlags::None, pdOpaque, NPREffect::Mode_Gooch);
         m_goochEffectCustom->EnableDefaultLighting();
-        m_goochEffectCustom->SetDiffuseColor(red);
-        m_goochEffectCustom->SetGoochCoolColor(Colors::Cyan, 0.4f);
-        m_goochEffectCustom->SetGoochWarmColor(Colors::Yellow, 0.4f);
+        m_goochEffectCustom->SetDiffuseColor(grey);
+        m_goochEffectCustom->SetRimLightingColor(c_rimGoochColor);
 
         // Gooch shading with texture.
         m_goochEffectTx = std::make_unique<NPREffect>(device, EffectFlags::Texture, pdOpaque, NPREffect::Mode_Gooch);
+        m_goochEffectTx->SetDiffuseColor(grey);
+        m_goochEffectTx->SetRimLightingColor(c_rimGoochColor);
         m_goochEffectTx->EnableDefaultLighting();
-        m_goochEffectTx->SetGoochCoolColor(Colors::Red, 0.4f);
-        m_goochEffectTx->SetGoochWarmColor(Colors::Green, 0.4f);
+        m_goochEffectTx->SetGoochCoolColor(red, 0.4f);
+        m_goochEffectTx->SetGoochWarmColor(green, 0.4f);
 
         // Gooch shading with texture, no specular.
         m_goochEffectTxNoSpecular = std::make_unique<NPREffect>(device, EffectFlags::Texture, pdOpaque, NPREffect::Mode_Gooch);
+        m_goochEffectTxNoSpecular->SetDiffuseColor(grey);
+        m_goochEffectTxNoSpecular->SetRimLightingColor(c_rimGoochColor);
         m_goochEffectTxNoSpecular->EnableDefaultLighting();
-        m_goochEffectTxNoSpecular->SetGoochCoolColor(Colors::Red, 0.4f);
-        m_goochEffectTxNoSpecular->SetGoochWarmColor(Colors::Green, 0.4f);
+        m_goochEffectTxNoSpecular->SetGoochCoolColor(red, 0.4f);
+        m_goochEffectTxNoSpecular->SetGoochWarmColor(green, 0.4f);
         m_goochEffectTxNoSpecular->DisableSpecular();
+
+        // Gooch shading with texture, no rim lighting.
+        m_goochEffectTxNoRim = std::make_unique<NPREffect>(device, EffectFlags::Texture, pdOpaque, NPREffect::Mode_Gooch);
+        m_goochEffectTxNoRim->SetDiffuseColor(grey);
+        m_goochEffectTxNoRim->EnableDefaultLighting();
+        m_goochEffectTxNoRim->SetGoochCoolColor(red, 0.4f);
+        m_goochEffectTxNoRim->SetGoochWarmColor(green, 0.4f);
+        m_goochEffectTxNoRim->DisableRimLighting();
 
         // Gooch shading with vertex color and texture.
         m_goochEffectTxVc = std::make_unique<NPREffect>(device, EffectFlags::Texture | EffectFlags::VertexColor, pdOpaque, NPREffect::Mode_Gooch);
+        m_goochEffectTxVc->SetDiffuseColor(grey);
         m_goochEffectTxVc->EnableDefaultLighting();
-        m_goochEffectTxVc->SetGoochCoolColor(Colors::Red, 0.4f);
-        m_goochEffectTxVc->SetGoochWarmColor(Colors::Green, 0.4f);
+        m_goochEffectTxVc->SetRimLightingColor(c_rimGoochColor);
+        m_goochEffectTxVc->SetGoochCoolColor(red, 0.4f);
+        m_goochEffectTxVc->SetGoochWarmColor(green, 0.4f);
     }
 
     // Load textures.
@@ -617,10 +724,12 @@ void Game::CreateDeviceDependentResources()
 
     m_celEffectTx->SetTexture(refTexture, sampler);
     m_celEffectTxNoSpecular->SetTexture(refTexture, sampler);
+    m_celEffectTxNoRim->SetTexture(refTexture, sampler);
     m_celEffectTxVc->SetTexture(refTexture, sampler);
 
     m_goochEffectTx->SetTexture(refTexture, sampler);
     m_goochEffectTxNoSpecular->SetTexture(refTexture, sampler);
+    m_goochEffectTxNoRim->SetTexture(refTexture, sampler);
     m_goochEffectTxVc->SetTexture(refTexture, sampler);
 }
 
@@ -650,32 +759,40 @@ void Game::CreateWindowSizeDependentResources()
 
     m_celEffect->SetView(view);
     m_celEffectNoSpecular->SetView(view);
+    m_celEffectNoRim->SetView(view);
     m_celEffectVc->SetView(view);
     m_celEffectTx->SetView(view);
     m_celEffectTxNoSpecular->SetView(view);
+    m_celEffectTxNoRim->SetView(view);
     m_celEffectTxVc->SetView(view);
 
     m_goochEffect->SetView(view);
     m_goochEffectNoSpecular->SetView(view);
+    m_goochEffectNoRim->SetView(view);
     m_goochEffectVc->SetView(view);
     m_goochEffectCustom->SetView(view);
     m_goochEffectTx->SetView(view);
     m_goochEffectTxNoSpecular->SetView(view);
+    m_goochEffectTxNoRim->SetView(view);
     m_goochEffectTxVc->SetView(view);
 
     m_celEffect->SetProjection(projection);
     m_celEffectNoSpecular->SetProjection(projection);
+    m_celEffectNoRim->SetProjection(projection);
     m_celEffectVc->SetProjection(projection);
     m_celEffectTx->SetProjection(projection);
     m_celEffectTxNoSpecular->SetProjection(projection);
+    m_celEffectTxNoRim->SetProjection(projection);
     m_celEffectTxVc->SetProjection(projection);
 
     m_goochEffect->SetProjection(projection);
     m_goochEffectNoSpecular->SetProjection(projection);
+    m_goochEffectNoRim->SetProjection(projection);
     m_goochEffectVc->SetProjection(projection);
     m_goochEffectCustom->SetProjection(projection);
     m_goochEffectTx->SetProjection(projection);
     m_goochEffectTxNoSpecular->SetProjection(projection);
+    m_goochEffectTxNoRim->SetProjection(projection);
     m_goochEffectTxVc->SetProjection(projection);
 }
 
@@ -684,17 +801,21 @@ void Game::OnDeviceLost()
 {
     m_celEffect.reset();
     m_celEffectNoSpecular.reset();
+    m_celEffectNoRim.reset();
     m_celEffectVc.reset();
     m_celEffectTx.reset();
     m_celEffectTxNoSpecular.reset();
+    m_celEffectTxNoRim.reset();
     m_celEffectTxVc.reset();
 
     m_goochEffect.reset();
     m_goochEffectNoSpecular.reset();
+    m_goochEffectNoRim.reset();
     m_goochEffectVc.reset();
     m_goochEffectCustom.reset();
     m_goochEffectTx.reset();
     m_goochEffectTxNoSpecular.reset();
+    m_goochEffectTxNoRim.reset();
     m_goochEffectTxVc.reset();
 
     m_indexBuffer.Reset();
