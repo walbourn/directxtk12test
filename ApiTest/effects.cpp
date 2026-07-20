@@ -20,11 +20,14 @@
 #include "VertexTypes.h"
 
 #include <cstdio>
+#include <iterator>
+#include <stdexcept>
 #include <type_traits>
 
 #include <wrl/client.h>
 
 #include <DirectXMath.h>
+#include <DirectXColors.h>
 #include <DirectXPackedVector.h>
 
 using namespace DirectX;
@@ -79,6 +82,11 @@ static_assert(!std::is_copy_constructible<PBREffect>::value, "Copy Ctor.");
 static_assert(!std::is_copy_assignable<PBREffect>::value, "Copy Assign.");
 static_assert(std::is_nothrow_move_constructible<PBREffect>::value, "Move Ctor.");
 static_assert(std::is_nothrow_move_assignable<PBREffect>::value, "Move Assign.");
+
+static_assert(!std::is_copy_constructible<NPREffect>::value, "Copy Ctor.");
+static_assert(!std::is_copy_assignable<NPREffect>::value, "Copy Assign.");
+static_assert(std::is_nothrow_move_constructible<NPREffect>::value, "Move Ctor.");
+static_assert(std::is_nothrow_move_assignable<NPREffect>::value, "Move Assign.");
 
 static_assert(!std::is_copy_constructible<SkinnedPBREffect>::value, "Copy Ctor.");
 static_assert(!std::is_copy_assignable<SkinnedPBREffect>::value, "Copy Assign.");
@@ -145,10 +153,14 @@ namespace
         PackedVector::XMUBYTE4 color;
 
         static const D3D12_INPUT_LAYOUT_DESC InputLayout;
+        static const D3D12_INPUT_LAYOUT_DESC InstancedInputLayout;
 
     private:
         static constexpr unsigned int InputElementCount = 7;
         static const D3D12_INPUT_ELEMENT_DESC InputElements[InputElementCount];
+
+        static constexpr unsigned int InstancedInputElementCount = 10;
+        static const D3D12_INPUT_ELEMENT_DESC InstancedInputElements[InstancedInputElementCount];
     };
 
     const D3D12_INPUT_ELEMENT_DESC TestVertex::InputElements[] =
@@ -162,13 +174,34 @@ namespace
         { "COLOR",        0, DXGI_FORMAT_R8G8B8A8_UNORM,     0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
     };
 
+    const D3D12_INPUT_ELEMENT_DESC TestVertex::InstancedInputElements[] =
+    {
+        { "SV_Position",  0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,   0 },
+        { "NORMAL",       0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,   0 },
+        { "TEXCOORD",     0, DXGI_FORMAT_R32G32_FLOAT,       0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,   0 },
+        { "TEXCOORD",     1, DXGI_FORMAT_R32G32_FLOAT,       0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,   0 },
+        { "BLENDINDICES", 0, DXGI_FORMAT_R8G8B8A8_UINT,      0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,   0 },
+        { "BLENDWEIGHT",  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,   0 },
+        { "COLOR",        0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,   0 },
+        { "InstMatrix",   0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 },
+        { "InstMatrix",   1, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 },
+        { "InstMatrix",   2, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 },
+    };
+
     const D3D12_INPUT_LAYOUT_DESC TestVertex::InputLayout =
     {
         TestVertex::InputElements,
         TestVertex::InputElementCount
     };
+
+    const D3D12_INPUT_LAYOUT_DESC TestVertex::InstancedInputLayout =
+    {
+        TestVertex::InstancedInputElements,
+        TestVertex::InstancedInputElementCount
+    };
 }
 
+// BasicEffect, AlphaTestEffect, DualTextureEffect, EnvironmentMapEffect, SkinnedEffect
 _Success_(return)
 bool Test05(_In_ ID3D12Device *device)
 {
@@ -488,6 +521,7 @@ bool Test05(_In_ ID3D12Device *device)
     return success;
 }
 
+// NormalMapEffect, SkinnedNormalMapEffect, DebugEffect
 _Success_(return)
 bool Test11(_In_ ID3D12Device *device)
 {
@@ -624,6 +658,7 @@ bool Test11(_In_ ID3D12Device *device)
     return success;
 }
 
+// PBREffect, SkinnedPBREffect, PBREffectFactory
 _Success_(return)
 bool Test12(_In_ ID3D12Device *device)
 {
@@ -738,6 +773,264 @@ bool Test12(_In_ ID3D12Device *device)
             auto invalid = std::make_unique<PBREffectFactory>(nullHeap, nullHeap);
 
             printf("ERROR: Failed to throw for null device for PBREffectFactory ctor 2\n");
+            success = false;
+        }
+        catch(const std::exception&)
+        {
+        }
+    }
+    #pragma warning(pop)
+
+    return success;
+}
+
+// NPREffect
+_Success_(return)
+bool Test22(_In_ ID3D12Device *device)
+{
+    if (!device)
+        return false;
+
+    bool success = true;
+
+    const RenderTargetState rtState(DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_D32_FLOAT);
+
+    EffectPipelineStateDescription pd(
+        &TestVertex::InputLayout,
+        CommonStates::Opaque,
+        CommonStates::DepthDefault,
+        CommonStates::CullNone,
+        rtState);
+
+    EffectPipelineStateDescription pdInst(
+        &TestVertex::InstancedInputLayout,
+        CommonStates::Opaque,
+        CommonStates::DepthDefault,
+        CommonStates::CullNone,
+        rtState);
+
+    // shader combos
+    const uint32_t flagCombos[] =
+    {
+        EffectFlags::None,
+        EffectFlags::Texture,
+        EffectFlags::VertexColor,
+        EffectFlags::BiasedVertexNormals
+    };
+
+    const NPREffect::Mode modes[] =
+    {
+        NPREffect::Mode_Cel,
+        NPREffect::Mode_Gooch,
+        NPREffect::Mode_MatCap,
+    };
+
+    for(size_t mode = 0; mode < std::size(modes); ++mode)
+    {
+        for(size_t combo = 0; combo < std::size(flagCombos); ++combo)
+        {
+            std::unique_ptr<NPREffect> npr;
+            try
+            {
+                npr = std::make_unique<NPREffect>(device, flagCombos[combo], pd, modes[mode]);
+            }
+            catch(const std::exception& e)
+            {
+                printf("ERROR: Failed creating object (except: %s)\n", e.what());
+                success = false;
+            }
+
+            try
+            {
+                npr = std::make_unique<NPREffect>(device, flagCombos[combo] | EffectFlags::Instancing, pdInst, modes[mode]);
+            }
+            catch(const std::exception& e)
+            {
+                printf("ERROR: Failed creating instancing object (except: %s)\n", e.what());
+                success = false;
+            }
+
+            bool threw = false;
+            try
+            {
+                npr = std::make_unique<NPREffect>(device, flagCombos[combo]| EffectFlags::Instancing, pd, modes[mode]);
+            }
+            catch(const std::exception&)
+            {
+                threw = true;
+            }
+            if (!threw)
+            {
+                printf("ERROR: Expected failure for using instancing without instanced layout\n");
+                success = false;
+            }
+        }
+    }
+
+    std::unique_ptr<NPREffect> npr;
+    try
+    {
+        npr = std::make_unique<NPREffect>(device, EffectFlags::Texture, pd);
+    }
+    catch(const std::exception& e)
+    {
+        printf("ERROR: Failed creating object (except: %s)\n", e.what());
+        success = false;
+    }
+
+    // camera settings
+    try
+    {
+        XMMATRIX world = XMMatrixTranslation(1.f, 2.f, 3.f);
+        npr->SetWorld(world);
+
+        constexpr XMVECTORF32 pos = { { { 0.f, 0.f, -10.f, 0.f } } };
+        XMMATRIX view = XMMatrixLookAtLH(pos, g_XMZero, g_XMIdentityR1);
+        npr->SetView(view);
+
+        XMMATRIX proj = XMMatrixPerspectiveFovLH(XM_PIDIV4, 1.0f, 0.1f, 100.0f);
+        npr->SetProjection(proj);
+
+        npr->SetMatrices(world, view, proj);
+    }
+    catch(const std::exception& e)
+    {
+        printf("ERROR: Failed npr camera methods (except: %s)\n", e.what());
+        success = false;
+    }
+
+    // light settings
+    try
+    {
+        npr->SetLightDirection(0, g_XMIdentityR2);
+        npr->SetLightDirection(1, g_XMIdentityR2);
+
+        npr->EnableDefaultLighting();
+    }
+    catch(const std::exception& e)
+    {
+        printf("ERROR: Failed npr light methods (except: %s)\n", e.what());
+        success = false;
+    }
+
+    // material settings
+    try
+    {
+        npr->SetDiffuseColor(Colors::Red);
+        npr->SetSpecularColor(Colors::Blue);
+        npr->SetRimLightingColor(Colors::Green);
+        npr->SetAlpha(0.5f);
+        npr->SetColorAndAlpha(Colors::White);
+
+        npr->SetSpecularThreshold(0.5f, 0.003f);
+        npr->DisableSpecular();
+
+        npr->SetRimLightingPower(3.5f);
+        npr->SetRimLightingIntensity(0.75f);
+        npr->SetRimLightingRange(0.3f, 0.4f);
+        npr->DisableRimLighting();
+
+        npr->SetCelShaderBands(6);
+
+        npr->SetGoochCoolColor(Colors::Blue, 0.1f);
+        npr->SetGoochWarmColor(Colors::Red, 0.4);
+    }
+    catch(const std::exception& e)
+    {
+        printf("ERROR: Failed npr materials methods (except: %s)\n", e.what());
+        success = false;
+    }
+
+    // invalid args
+    bool threw = false;
+    try
+    {
+        npr->SetSpecularThreshold(2.f, 4.f);
+    }
+    catch(const std::invalid_argument&)
+    {
+        threw = true;
+    }
+    catch(const std::exception& e)
+    {
+        printf("ERROR: Unexpected error for invalid specular threshold (except: %s)\n", e.what());
+        success = false;
+    }
+    if (!threw)
+    {
+        printf("ERROR: Failed to throw for invalid specular threshold\n");
+        success = false;
+    }
+
+    threw = false;
+    try
+    {
+        npr->SetRimLightingIntensity(2.f);
+    }
+    catch(const std::invalid_argument&)
+    {
+        threw = true;
+    }
+    catch(const std::exception& e)
+    {
+        printf("ERROR: Unexpected error for invalid rim lighting intensity (except: %s)\n", e.what());
+        success = false;
+    }
+    if (!threw)
+    {
+        printf("ERROR: Failed to throw for invalid rim lighting intensity\n");
+        success = false;
+    }
+
+    threw = false;
+    try
+    {
+        npr->SetRimLightingRange(-1.f, -2.f);
+    }
+    catch(const std::invalid_argument&)
+    {
+        threw = true;
+    }
+    catch(const std::exception& e)
+    {
+        printf("ERROR: Unexpected error for invalid rim lighting range (except: %s)\n", e.what());
+        success = false;
+    }
+    if (!threw)
+    {
+        printf("ERROR: Failed to throw for invalid rim lighting range\n");
+        success = false;
+    }
+
+    threw = false;
+    try
+    {
+        npr->SetCelShaderBands(-1);
+    }
+    catch(const std::invalid_argument&)
+    {
+        threw = true;
+    }
+    catch(const std::exception& e)
+    {
+        printf("ERROR: Unexpected error for invalid cel shader bands (except: %s)\n", e.what());
+        success = false;
+    }
+    if (!threw)
+    {
+        printf("ERROR: Failed to throw for invalid cel shader bands\n");
+        success = false;
+    }
+
+    #pragma warning(push)
+    #pragma warning(disable:6385 6387)
+    {
+        ID3D12Device* nullDevice = nullptr;
+        try
+        {
+            auto invalid = std::make_unique<NPREffect>(nullDevice, EffectFlags::None, pd);
+
+            printf("ERROR: Failed to throw for null device\n");
             success = false;
         }
         catch(const std::exception&)
