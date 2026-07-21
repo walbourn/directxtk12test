@@ -141,6 +141,8 @@ private:
     std::vector<std::unique_ptr<DirectX::DebugEffect>> m_debugInstancedBn;
     std::vector<std::unique_ptr<DirectX::NPREffect>> m_nprInstanced;
     std::vector<std::unique_ptr<DirectX::NPREffect>> m_nprInstancedBn;
+    std::vector<std::unique_ptr<DirectX::SkinnedNPREffect>> m_skinningNpr;
+    std::vector<std::unique_ptr<DirectX::SkinnedNPREffect>> m_skinningNprBn;
 
     std::unique_ptr<DX::RenderTexture>              m_velocityBuffer;
 
