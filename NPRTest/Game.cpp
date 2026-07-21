@@ -35,41 +35,58 @@ namespace
     constexpr float row3 = -1.5f;
     constexpr float row4 = -3.0f;
 
-    constexpr float col0 = -5.f;
-    constexpr float col1 = -3.f;
-    constexpr float col2 = -1.f;
-    constexpr float col3 = 1.f;
-    constexpr float col4 = 3.f;
-    constexpr float col5 = 5.f;
+    constexpr float col0 = -6.f;
+    constexpr float col1 = -4.f;
+    constexpr float col2 = -2.f;
+    constexpr float col3 = 0.f;
+    constexpr float col4 = 2.f;
+    constexpr float col5 = 4.f;
+    constexpr float col6 = 6.f;
 
     struct TestVertex
     {
         TestVertex(FXMVECTOR iposition, FXMVECTOR inormal, FXMVECTOR itextureCoordinate)
         {
-            XMStoreFloat3(&position, iposition);
-            XMStoreFloat3(&normal, inormal);
-            XMStoreFloat2(&textureCoordinate, itextureCoordinate);
-            color = 0xFFFF00FF; // magenta for vertex color testing
+            XMStoreFloat3(&this->position, iposition);
+            XMStoreFloat3(&this->normal, inormal);
+            XMStoreFloat2(&this->textureCoordinate, itextureCoordinate);
+            XMStoreUByte4(&this->blendIndices, XMVectorSet(0, 1, 2, 3));
+
+            float u = XMVectorGetX(itextureCoordinate) - 0.5f;
+            float v = XMVectorGetY(itextureCoordinate) - 0.5f;
+
+            float d = 1 - sqrtf(u * u + v * v) * 2;
+
+            if (d < 0)
+                d = 0;
+
+            XMStoreFloat4(&this->blendWeight, XMVectorSet(d, 1 - d, u, v));
+
+            color = 0xFFFF00FF;
         }
 
         XMFLOAT3 position;
         XMFLOAT3 normal;
         XMFLOAT2 textureCoordinate;
+        XMUBYTE4 blendIndices;
+        XMFLOAT4 blendWeight;
         XMUBYTE4 color;
 
         static const D3D12_INPUT_LAYOUT_DESC InputLayout;
 
     private:
-        static constexpr unsigned int InputElementCount = 4;
+        static constexpr unsigned int InputElementCount = 6;
         static const D3D12_INPUT_ELEMENT_DESC InputElements[InputElementCount];
     };
 
     const D3D12_INPUT_ELEMENT_DESC TestVertex::InputElements[] =
     {
-        { "SV_Position", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        { "NORMAL",      0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        { "TEXCOORD",    0, DXGI_FORMAT_R32G32_FLOAT,       0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        { "COLOR",       0, DXGI_FORMAT_R8G8B8A8_UNORM,     0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "SV_Position",  0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "NORMAL",       0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "TEXCOORD",     0, DXGI_FORMAT_R32G32_FLOAT,       0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "BLENDINDICES", 0, DXGI_FORMAT_R8G8B8A8_UINT,      0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "BLENDWEIGHT",  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "COLOR",        0, DXGI_FORMAT_R8G8B8A8_UNORM,     0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
     };
 
     const D3D12_INPUT_LAYOUT_DESC TestVertex::InputLayout =
@@ -441,12 +458,12 @@ void Game::Render()
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
     m_matcapEffect->SetAlpha(1.f);
 
-    // MapCap shading with vertex color.
+    // MatCap shading with vertex color.
     m_matcapEffectVc->SetWorld(world * XMMatrixTranslation(col2, row4, 0));
     m_matcapEffectVc->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
-    // Mapcap shading with texture.
+    // Matcap shading with texture.
     m_matcapEffectTx->SetWorld(world * XMMatrixTranslation(col3, row4, 0));
     m_matcapEffectTx->SetMatCap(matcap1);
     m_matcapEffectTx->Apply(commandList);
@@ -459,9 +476,76 @@ void Game::Render()
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
     m_matcapEffectTx->SetAlpha(1.f);
 
-    // Mapcap sahding with vertex color and texture.
+    // Matcap sahding with vertex color and texture.
     m_matcapEffectTxVc->SetWorld(world * XMMatrixTranslation(col5, row4, 0));
     m_matcapEffectTxVc->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    //--- SkinnedNPREffect -----------------------------------------------------------------
+    XMMATRIX bones[4] =
+    {
+        XMMatrixIdentity(),
+        XMMatrixIdentity(),
+        XMMatrixScaling(0, 0, 0),
+        XMMatrixScaling(0, 0, 0),
+    };
+
+    m_skinnedCelEffect->SetBoneTransforms(bones, std::size(bones));
+    m_skinnedCelEffect->SetWorld(world * XMMatrixTranslation(col6, row0, 0));
+    m_skinnedCelEffect->SetCelShaderBands(4);
+    m_skinnedCelEffect->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_skinnedGoochEffect->SetBoneTransforms(bones, std::size(bones));
+    m_skinnedGoochEffect->SetWorld(world * XMMatrixTranslation(col6, row1, 0));
+    m_skinnedGoochEffect->SetCelShaderBands(4);
+    m_skinnedGoochEffect->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    m_skinnedMatcapEffect->SetBoneTransforms(bones, std::size(bones));
+    m_skinnedMatcapEffect->SetWorld(world * XMMatrixTranslation(col6, row2, 0));
+    m_skinnedMatcapEffect->SetCelShaderBands(4);
+    m_skinnedMatcapEffect->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    // Skinned effect, variable scaling transforms.
+    float scales[4] =
+    {
+        1 + sin(time * 1.7f) * 0.5f,
+        1 + sin(time * 2.3f) * 0.5f,
+        0,
+        0,
+    };
+
+    for (int i = 0; i < 4; i++)
+    {
+        bones[i] = XMMatrixScaling(scales[i], scales[i], scales[i]);
+    }
+
+    m_skinnedCelEffect->SetBoneTransforms(bones, std::size(bones));
+    m_skinnedCelEffect->SetWorld(world * XMMatrixTranslation(col6, row3, 0));
+    m_skinnedCelEffect->SetCelShaderBands(4);
+    m_skinnedCelEffect->Apply(commandList);
+    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+    // Skinned effect, different variable scaling transforms.
+    float scales2[4] =
+    {
+        1,
+        1,
+        sin(time * 2.3f) * 0.5f,
+        sin(time * 3.1f) * 0.5f,
+    };
+
+    for (int i = 0; i < 4; i++)
+    {
+        bones[i] = XMMatrixScaling(scales2[i], scales2[i], scales2[i]);
+    }
+
+    m_skinnedCelEffect->SetBoneTransforms(bones, std::size(bones));
+    m_skinnedCelEffect->SetWorld(world * XMMatrixTranslation(col6, row4, 0));
+    m_skinnedCelEffect->SetCelShaderBands(4);
+    m_skinnedCelEffect->Apply(commandList);
     commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
 
     PIXEndEvent(commandList);
@@ -667,6 +751,13 @@ void Game::CreateDeviceDependentResources()
         m_celEffectTxVc->SetRimLightingColor(c_rimToonColor);
         m_celEffectTxVc->SetCelShaderBands(4);
 
+        // Cel shading with skinning.
+        m_skinnedCelEffect = std::make_unique<SkinnedNPREffect>(device, EffectFlags::Texture, pdOpaque,
+            SkinnedNPREffect::Mode_Cel);
+        m_skinnedCelEffect->EnableDefaultLighting();
+        m_skinnedCelEffect->SetRimLightingColor(c_rimToonColor);
+        m_skinnedCelEffect->SetCelShaderBands(4);
+
         //--- Gooch shading (Mode_Gooch) ---------------------------------------------------
 
         // Default Gooch shading.
@@ -732,19 +823,32 @@ void Game::CreateDeviceDependentResources()
         m_goochEffectTxVc->SetGoochCoolColor(red, 0.4f);
         m_goochEffectTxVc->SetGoochWarmColor(green, 0.4f);
 
+        // Gooch shading with skinning.
+        m_skinnedGoochEffect = std::make_unique<SkinnedNPREffect>(device, EffectFlags::Texture, pdOpaque,
+            SkinnedNPREffect::Mode_Gooch);
+        m_skinnedGoochEffect->SetDiffuseColor(grey);
+        m_skinnedGoochEffect->SetRimLightingColor(c_rimGoochColor);
+        m_skinnedGoochEffect->EnableDefaultLighting();
+        m_skinnedGoochEffect->SetGoochCoolColor(red, 0.4f);
+        m_skinnedGoochEffect->SetGoochWarmColor(green, 0.4f);
+
         //--- MatCap shading (Mode_MatCap) -------------------------------------------------
 
         // Default MatCap shading
         m_matcapEffect = std::make_unique<NPREffect>(device, EffectFlags::None, pdAlpha, NPREffect::Mode_MatCap);
 
-        // MapCap shading with vertex color.
+        // MatCap shading with vertex color.
         m_matcapEffectVc = std::make_unique<NPREffect>(device, EffectFlags::VertexColor, pdOpaque, NPREffect::Mode_MatCap);
 
-        // Mapcap shading with texture.
+        // Matcap shading with texture.
         m_matcapEffectTx = std::make_unique<NPREffect>(device, EffectFlags::Texture, pdAlpha, NPREffect::Mode_MatCap);
 
-        // Mapcap sahding with vertex color and texture.
+        // Matcap sahding with vertex color and texture.
         m_matcapEffectTxVc = std::make_unique<NPREffect>(device, EffectFlags::Texture | EffectFlags::VertexColor, pdOpaque, NPREffect::Mode_MatCap);
+
+        // Matcap shading with skinning.
+        m_skinnedMatcapEffect = std::make_unique<SkinnedNPREffect>(device, EffectFlags::Texture, pdOpaque,
+            SkinnedNPREffect::Mode_MatCap);
     }
 
     // Load textures.
@@ -800,11 +904,13 @@ void Game::CreateDeviceDependentResources()
     m_celEffectTxNoSpecular->SetTexture(refTexture, sampler);
     m_celEffectTxNoRim->SetTexture(refTexture, sampler);
     m_celEffectTxVc->SetTexture(refTexture, sampler);
+    m_skinnedCelEffect->SetTexture(refTexture, sampler);
 
     m_goochEffectTx->SetTexture(refTexture, sampler);
     m_goochEffectTxNoSpecular->SetTexture(refTexture, sampler);
     m_goochEffectTxNoRim->SetTexture(refTexture, sampler);
     m_goochEffectTxVc->SetTexture(refTexture, sampler);
+    m_skinnedGoochEffect->SetTexture(refTexture, sampler);
 
     m_matcapEffect->SetMatCap(matcap, sampler);
     m_matcapEffectVc->SetMatCap(matcap, sampler);
@@ -813,6 +919,8 @@ void Game::CreateDeviceDependentResources()
     m_matcapEffectTx->SetMatCap(matcap);
     m_matcapEffectTxVc->SetTexture(refTexture, sampler);
     m_matcapEffectTxVc->SetMatCap(matcap);
+    m_skinnedMatcapEffect->SetTexture(refTexture, sampler);
+    m_skinnedMatcapEffect->SetMatCap(matcap);
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
@@ -847,6 +955,7 @@ void Game::CreateWindowSizeDependentResources()
     m_celEffectTxNoSpecular->SetView(view);
     m_celEffectTxNoRim->SetView(view);
     m_celEffectTxVc->SetView(view);
+    m_skinnedCelEffect->SetView(view);
 
     m_goochEffect->SetView(view);
     m_goochEffectNoSpecular->SetView(view);
@@ -857,11 +966,13 @@ void Game::CreateWindowSizeDependentResources()
     m_goochEffectTxNoSpecular->SetView(view);
     m_goochEffectTxNoRim->SetView(view);
     m_goochEffectTxVc->SetView(view);
+    m_skinnedGoochEffect->SetView(view);
 
     m_matcapEffect->SetView(view);
     m_matcapEffectVc->SetView(view);
     m_matcapEffectTx->SetView(view);
     m_matcapEffectTxVc->SetView(view);
+    m_skinnedMatcapEffect->SetView(view);
 
     m_celEffect->SetProjection(projection);
     m_celEffectNoSpecular->SetProjection(projection);
@@ -871,6 +982,7 @@ void Game::CreateWindowSizeDependentResources()
     m_celEffectTxNoSpecular->SetProjection(projection);
     m_celEffectTxNoRim->SetProjection(projection);
     m_celEffectTxVc->SetProjection(projection);
+    m_skinnedCelEffect->SetProjection(projection);
 
     m_goochEffect->SetProjection(projection);
     m_goochEffectNoSpecular->SetProjection(projection);
@@ -881,11 +993,13 @@ void Game::CreateWindowSizeDependentResources()
     m_goochEffectTxNoSpecular->SetProjection(projection);
     m_goochEffectTxNoRim->SetProjection(projection);
     m_goochEffectTxVc->SetProjection(projection);
+    m_skinnedGoochEffect->SetProjection(projection);
 
     m_matcapEffect->SetProjection(projection);
     m_matcapEffectVc->SetProjection(projection);
     m_matcapEffectTx->SetProjection(projection);
     m_matcapEffectTxVc->SetProjection(projection);
+    m_skinnedMatcapEffect->SetProjection(projection);
 }
 
 #ifdef LOSTDEVICE
@@ -899,6 +1013,7 @@ void Game::OnDeviceLost()
     m_celEffectTxNoSpecular.reset();
     m_celEffectTxNoRim.reset();
     m_celEffectTxVc.reset();
+    m_skinnedCelEffect.reset();
 
     m_goochEffect.reset();
     m_goochEffectNoSpecular.reset();
@@ -909,11 +1024,13 @@ void Game::OnDeviceLost()
     m_goochEffectTxNoSpecular.reset();
     m_goochEffectTxNoRim.reset();
     m_goochEffectTxVc.reset();
+    m_skinnedGoochEffect.reset();
 
     m_matcapEffect.reset();
     m_matcapEffectVc.reset();
     m_matcapEffectTx.reset();
     m_matcapEffectTxVc.reset();
+    m_skinnedMatcapEffect.reset();
 
     m_indexBuffer.Reset();
     m_vertexBuffer.Reset();
