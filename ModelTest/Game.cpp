@@ -396,6 +396,12 @@ void Game::Render()
     Model::UpdateEffectMatrices(m_cupFog, local, m_view, m_projection);
     m_cup->Draw(commandList, m_cupFog.cbegin());
 
+        // NPR
+    local = XMMatrixTranslation(1.5f, row1, 0.f);
+    local = XMMatrixMultiply(world, local);
+    Model::UpdateEffectMatrices(m_cupNPR, local, m_view, m_projection);
+    m_cup->Draw(commandList, m_cupNPR.cbegin());
+
         // Custom drawing
     local = XMMatrixRotationX(cos(time)) * XMMatrixTranslation(-5.f, row0, cos(time) * 2.f);
     for (const auto& mit : m_cup->meshes)
@@ -729,6 +735,11 @@ void Game::CreateDeviceDependentResources()
 #endif
 
         m_fxFactory = std::make_unique<EffectFactory>(m_resourceDescriptors->Heap(), m_states->Heap());
+        m_fxFactoryNPR = std::make_unique<NPREffectFactory>(m_resourceDescriptors->Heap(), m_states->Heap());
+        m_fxFactoryNPR->SetMode(NPREffect::Mode_MatCap);
+        m_fxFactoryNPR->SetDefaultMatCap(
+            StaticDescriptors::Matcap,
+            static_cast<int>(CommonStates::SamplerIndex::LinearClamp));
 
 #ifndef PERPIXELLIGHTING
         m_fxFactory->EnablePerPixelLighting(false);
@@ -795,6 +806,8 @@ void Game::CreateDeviceDependentResources()
             m_cupVertexLighting = m_cup->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
 
             m_fxFactory->EnablePerPixelLighting(true);
+
+            m_cupNPR = m_cup->CreateEffects(*m_fxFactoryNPR, pd, pd, txtOffset);
         }
 
         // Create instanced cup.
@@ -1040,8 +1053,10 @@ void Game::CreateDeviceDependentResources()
 
 #ifdef GAMMA_CORRECT_RENDERING
         constexpr DDS_LOADER_FLAGS loadFlags = DDS_LOADER_FORCE_SRGB;
+        constexpr WIC_LOADER_FLAGS wicLoadFlags = WIC_LOADER_FORCE_SRGB;
 #else
         constexpr DDS_LOADER_FLAGS loadFlags = DDS_LOADER_DEFAULT;
+        constexpr WIC_LOADER_FLAGS wicLoadFlags = WIC_LOADER_DEFAULT;
 #endif
 
         // Load test textures
@@ -1062,6 +1077,14 @@ void Game::CreateDeviceDependentResources()
                     m_cubemap.ReleaseAndGetAddressOf(), nullptr, &iscubemap));
 
             CreateShaderResourceView(device, m_cubemap.Get(), m_resourceDescriptors->GetCpuHandle(StaticDescriptors::Cubemap), iscubemap);
+
+            DX::FindMediaFile(strFilePath, MAX_PATH, L"matcap.png", s_searchFolders);
+            DX::ThrowIfFailed(
+                CreateWICTextureFromFileEx(device, resourceUpload, strFilePath,
+                    0, D3D12_RESOURCE_FLAG_NONE, wicLoadFlags,
+                    m_matcap.ReleaseAndGetAddressOf()));
+
+            CreateShaderResourceView(device, m_matcap.Get(), m_resourceDescriptors->GetCpuHandle(StaticDescriptors::Matcap));
         }
 
         // Optimize some models
@@ -1246,6 +1269,7 @@ void Game::OnDeviceLost()
     m_ship.reset();
 
     m_cupNormal.clear();
+    m_cupNPR.clear();
     m_cupCustom.clear();
     m_cupWireframe.clear();
     m_cupFog.clear();
@@ -1269,10 +1293,12 @@ void Game::OnDeviceLost()
 
     m_defaultTex.Reset();
     m_cubemap.Reset();
+    m_matcap.Reset();
 
     m_modelResources.reset();
 
     m_fxFactory.reset();
+    m_fxFactoryNPR.reset();
 
     m_resourceDescriptors.reset();
     m_states.reset();

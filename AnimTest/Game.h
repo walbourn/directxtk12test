@@ -109,10 +109,12 @@ private:
 
     std::unique_ptr<DirectX::Model>                 m_teapot;
     DirectX::Model::EffectCollection                m_teapotNormal;
+    DirectX::Model::EffectCollection                m_teapotNPR;
 
     std::unique_ptr<DirectX::CommonStates>          m_states;
     std::unique_ptr<DirectX::DescriptorPile>        m_resourceDescriptors;
     std::unique_ptr<DirectX::EffectFactory>         m_fxFactory;
+    std::unique_ptr<DirectX::NPREffectFactory>      m_fxNPRFactory;
     std::unique_ptr<DirectX::EffectTextureFactory>  m_modelResources;
 
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_defaultTex;

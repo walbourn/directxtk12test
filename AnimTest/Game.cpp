@@ -297,6 +297,21 @@ void Game::Render()
     Model::UpdateEffectMatrices(m_teapotNormal, local, m_view, m_projection);
     m_teapot->DrawSkinned(commandList, nbones, bones.get(), local, m_teapotNormal.cbegin());
 
+    // NPR Teapot (direct-mapped bones)
+    for (auto it : m_teapotNPR)
+    {
+        auto skinnedEffect = dynamic_cast<IEffectSkinning*>(it.get());
+        if (skinnedEffect)
+            skinnedEffect->ResetBoneTransforms();
+    }
+    local = XMMatrixMultiply(XMMatrixScaling(0.01f, 0.01f, 0.01f), XMMatrixTranslation(-4.f, row0, 0.f));
+    Model::UpdateEffectMatrices(m_teapotNPR, local, m_view, m_projection);
+    m_teapot->Draw(commandList, m_teapotNPR.cbegin());
+
+    local = XMMatrixMultiply(XMMatrixScaling(0.01f, 0.01f, 0.01f), XMMatrixTranslation(-4.f, row1, 0.f));
+    Model::UpdateEffectMatrices(m_teapotNPR, local, m_view, m_projection);
+    m_teapot->DrawSkinned(commandList, nbones, bones.get(), local, m_teapotNPR.cbegin());
+
     // Draw SDKMESH models (bone influences)
     for(auto it : m_soldierNormal)
     {
@@ -522,6 +537,7 @@ void Game::CreateDeviceDependentResources()
 #endif
 
     m_fxFactory = std::make_unique<EffectFactory>(m_resourceDescriptors->Heap(), m_states->Heap());
+    m_fxNPRFactory = std::make_unique<NPREffectFactory>(m_resourceDescriptors->Heap(), m_states->Heap());
 
     // Create tank materials & effects
     int txtOffset = 0;
@@ -581,11 +597,22 @@ void Game::CreateDeviceDependentResources()
             rtState);
 
         m_teapotNormal = m_teapot->CreateEffects(*m_fxFactory, pd, pd, txtOffset);
+        m_teapotNPR = m_teapot->CreateEffects(*m_fxNPRFactory, pd, pd, txtOffset);
     }
 
     for (auto& it : m_teapotNormal)
     {
         auto skinnedEffect = dynamic_cast<SkinnedEffect*>(it.get());
+        if (skinnedEffect)
+        {
+            // Skinned effect always needs a texture and this model has no texture on the skinned teapot.
+            skinnedEffect->SetTexture(m_resourceDescriptors->GetGpuHandle(StaticDescriptors::DefaultTex), m_states->LinearClamp());
+        }
+    }
+
+    for (auto& it : m_teapotNPR)
+    {
+        auto skinnedEffect = dynamic_cast<SkinnedNPREffect*>(it.get());
         if (skinnedEffect)
         {
             // Skinned effect always needs a texture and this model has no texture on the skinned teapot.
@@ -646,9 +673,11 @@ void Game::OnDeviceLost()
 
     m_teapot.reset();
     m_teapotNormal.clear();
+    m_teapotNPR.clear();
 
     m_states.reset();
     m_fxFactory.reset();
+    m_fxNPRFactory.reset();
     m_modelResources.reset();
     m_resourceDescriptors.reset();
 
