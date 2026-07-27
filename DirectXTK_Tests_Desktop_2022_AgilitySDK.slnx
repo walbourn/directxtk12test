@@ -1,0 +1,21 @@
+<Solution>
+  <Configurations>
+    <Platform Name="ARM64" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/Graphics/">
+    <Project DefaultStartup="true" Path="D3D12Test/D3D12Test_Desktop_2022_AgilitySDK.vcxproj" Id="f99e4e44-9746-4763-bd3a-bddfde58a4d1">
+      <Platform Solution="*|ARM64" Project="Win32" />
+      <Build Solution="*|ARM64" Project="false" />
+    </Project>
+    <Project Path="EffectsTest/EffectsTest_Desktop_2022_AgilitySDK.vcxproj" Id="25a385f0-3ec3-47fc-b582-bdffc856b580" />
+    <Project Path="LoadTest/LoadTest_Desktop_2022_AgilitySDK.vcxproj" Id="3ffd498c-90a1-45fe-8232-dd653d216b03" />
+    <Project Path="PrimitivesTest/PrimitivesTest_Desktop_2022_AgilitySDK.vcxproj" Id="8c0828a9-2745-460e-8499-68940509bf70" />
+    <Project Path="ShaderTest/ShaderTest_Desktop_2022_AgilitySDK.vcxproj" Id="3ce15a64-d1bb-4ebf-93bd-bda32f318ba2" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path="../.editorconfig" />
+  </Folder>
+  <Project Path="../DirectXTK_Desktop_2022_Win10.vcxproj" Id="3e0e8608-cd9b-4c76-af33-29ca38f2c9f0" />
+</Solution>
