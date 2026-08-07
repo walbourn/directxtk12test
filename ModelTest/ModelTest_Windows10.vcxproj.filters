@@ -176,6 +176,9 @@
     <Image Include="upbody_norm.dds">
       <Filter>Assets\Soldier</Filter>
     </Image>
+    <Image Include="matcap.png">
+      <Filter>Assets</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="PackageUWP.appxmanifest" />

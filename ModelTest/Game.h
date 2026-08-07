@@ -106,6 +106,7 @@ private:
 
     std::unique_ptr<DirectX::Model>                 m_cup;
     DirectX::Model::EffectCollection                m_cupNormal;
+    DirectX::Model::EffectCollection                m_cupNPR;
     DirectX::Model::EffectCollection                m_cupCustom;
     DirectX::Model::EffectCollection                m_cupWireframe;
     DirectX::Model::EffectCollection                m_cupFog;
@@ -148,9 +149,11 @@ private:
     std::unique_ptr<DirectX::EffectTextureFactory>  m_modelResources;
 
     std::unique_ptr<DirectX::EffectFactory>         m_fxFactory;
+    std::unique_ptr<DirectX::NPREffectFactory>      m_fxFactoryNPR;
 
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_defaultTex;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_cubemap;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_matcap;
 
     DirectX::SimpleMath::Matrix                     m_view;
     DirectX::SimpleMath::Matrix                     m_projection;
@@ -171,7 +174,8 @@ private:
     enum StaticDescriptors
     {
         DefaultTex = 0,
-        Cubemap = 1,
+        Cubemap,
+        Matcap,
         Reserve
     };
 };

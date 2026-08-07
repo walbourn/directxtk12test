@@ -123,6 +123,7 @@ private:
     std::unique_ptr<DirectX::NPREffect>         m_celEffectTxNoSpecular;
     std::unique_ptr<DirectX::NPREffect>         m_celEffectTxNoRim;
     std::unique_ptr<DirectX::NPREffect>         m_celEffectTxVc;
+    std::unique_ptr<DirectX::SkinnedNPREffect>  m_skinnedCelEffect;
 
     // Gooch shading (Mode_Gooch)
     std::unique_ptr<DirectX::NPREffect>         m_goochEffect;
@@ -134,12 +135,14 @@ private:
     std::unique_ptr<DirectX::NPREffect>         m_goochEffectTxNoSpecular;
     std::unique_ptr<DirectX::NPREffect>         m_goochEffectTxNoRim;
     std::unique_ptr<DirectX::NPREffect>         m_goochEffectTxVc;
+    std::unique_ptr<DirectX::SkinnedNPREffect>  m_skinnedGoochEffect;
 
     // MatCap shading (Mode_MatCap)
     std::unique_ptr<DirectX::NPREffect>         m_matcapEffect;
     std::unique_ptr<DirectX::NPREffect>         m_matcapEffectVc;
     std::unique_ptr<DirectX::NPREffect>         m_matcapEffectTx;
     std::unique_ptr<DirectX::NPREffect>         m_matcapEffectTxVc;
+    std::unique_ptr<DirectX::SkinnedNPREffect>  m_skinnedMatcapEffect;
 
     uint64_t m_frame;
 

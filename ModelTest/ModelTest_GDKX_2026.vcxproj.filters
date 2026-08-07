@@ -157,6 +157,9 @@
     <Image Include="upbody_norm.dds">
       <Filter>Assets\Soldier</Filter>
     </Image>
+    <Image Include="matcap.png">
+      <Filter>Assets</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <None Include="cup._obj">

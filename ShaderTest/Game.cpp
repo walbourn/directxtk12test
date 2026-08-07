@@ -837,6 +837,7 @@ void Game::Render()
         }
 
         // NPREffect
+        lastx = 0.f;
         {
             auto it = (showCompressed) ? m_nprBn.cbegin() : m_npr.cbegin();
             auto eit = (showCompressed) ? m_nprBn.cend() : m_npr.cend();
@@ -844,7 +845,38 @@ void Game::Render()
 
             for (; y > -ortho_height; y -= 1.f)
             {
-                for (float x = -ortho_width + 0.5f; x < ortho_width; x += 1.f)
+                float x;
+                for (x = -ortho_width + 0.5f; x < ortho_width; x += 1.f)
+                {
+                    (*it)->SetWorld(world * XMMatrixTranslation(x, y, -1.f));
+                    (*it)->Apply(commandList);
+                    commandList->DrawIndexedInstanced(m_indexCount, 1, 0, 0, 0);
+
+                    ++it;
+                    if (it == eit)
+                        break;
+                }
+                lastx = x;
+
+                if (it == eit)
+                    break;
+            }
+
+            // Make sure we drew all the effects
+            assert(it == eit);
+
+            // SkinnedNPREffect should be on same line...
+        }
+
+        // SkinnedNPREffect
+        {
+            auto it = (showCompressed) ? m_skinningNprBn.cbegin() : m_skinningNpr.cbegin();
+            auto eit = (showCompressed) ? m_skinningNprBn.cend() : m_skinningNpr.cend();
+            assert(it != eit);
+
+            for (; y > -ortho_height; y -= 1.f)
+            {
+                for (float x = lastx + 1.f; x < ortho_width; x += 1.f)
                 {
                     (*it)->SetWorld(world * XMMatrixTranslation(x, y, -1.f));
                     (*it)->Apply(commandList);
@@ -2006,6 +2038,42 @@ void Game::CreateDeviceDependentResources()
                 m_nprInstancedBn.swap(nprInst);
             }
         }
+
+        //--- SkinnedNPREffect -------------------------------------------------------------
+
+        {
+            auto diffuse = m_resourceDescriptors->GetGpuHandle(Descriptors::BrickDiffuse);
+
+            std::vector<std::unique_ptr<DirectX::SkinnedNPREffect>> npr;
+
+            // SkinnedNPREffect (cel shading)
+            auto effect = std::make_unique<SkinnedNPREffect>(device, eflags, pd, SkinnedNPREffect::Mode_Cel);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(diffuse, sampler);
+            npr.emplace_back(std::move(effect));
+
+            // SkinnedNPREffect (gooch shading)
+            effect = std::make_unique<SkinnedNPREffect>(device, eflags, pd, SkinnedNPREffect::Mode_Gooch);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(diffuse, sampler);
+            npr.emplace_back(std::move(effect));
+
+            // SkinnedNPREffect (matcap shading)
+            effect = std::make_unique<SkinnedNPREffect>(device, eflags, pd, SkinnedNPREffect::Mode_MatCap);
+            effect->EnableDefaultLighting();
+            effect->SetTexture(diffuse, sampler);
+            effect->SetMatCap(diffuse);
+            npr.emplace_back(std::move(effect));
+
+            if (!j)
+            {
+                m_skinningNpr.swap(npr);
+            }
+            else
+            {
+                m_skinningNprBn.swap(npr);
+            }
+        }
     }
 
     EffectPipelineStateDescription pd(
@@ -2204,6 +2272,16 @@ void Game::CreateWindowSizeDependentResources()
         it->SetProjection(projection);
     }
 
+    for (auto& it : m_skinningNpr)
+    {
+        it->SetProjection(projection);
+    }
+
+    for (auto& it : m_skinningNprBn)
+    {
+        it->SetProjection(projection);
+    }
+
     for (auto& it : m_normalMapInstanced)
     {
         it->SetProjection(projection);
@@ -2268,6 +2346,8 @@ void Game::OnDeviceLost()
     m_debugBn.clear();
     m_npr.clear();
     m_nprBn.clear();
+    m_skinningNpr.clear();
+    m_skinningNprBn.clear();
 
     m_normalMapInstanced.clear();
     m_normalMapInstancedBn.clear();
