@@ -1091,6 +1091,7 @@ void Game::OnDeviceLost()
     m_test40.Reset();
     m_test41.Reset();
     m_test42.Reset();
+    m_test43.Reset();
 
     m_testA.Reset();
     m_testB.Reset();
@@ -1680,6 +1681,36 @@ void Game::UnitTests(ResourceUploadBatch& resourceUpload, bool success)
             else
             {
                 OutputDebugStringA("FAILED: cup_small.jpg (autogen ignore srgb) desc unexpected\n");
+                success = false;
+            }
+        }
+    }
+
+    DX::FindMediaFile(strFilePath, MAX_PATH, L"dx5_logo_autogen_bgra.dds", s_searchFolders);
+    DX::ThrowIfFailed(CreateDDSTextureFromFileEx(device, resourceUpload, strFilePath,
+        0, D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_MIP_AUTOGEN | DDS_LOADER_FORCE_SRGB,
+        m_test43.ReleaseAndGetAddressOf()));
+    {
+    #ifdef __MINGW32__
+        D3D12_RESOURCE_DESC desc;
+        std::ignore = m_test43->GetDesc(&desc);
+    #else
+        const auto desc = m_test43->GetDesc();
+    #endif
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D
+            || desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM_SRGB
+            || desc.Width != 256
+            || desc.Height != 256
+            || desc.MipLevels != 9)
+        {
+            if (!resourceUpload.IsSupportedForGenerateMips(DXGI_FORMAT_B8G8R8A8_UNORM_SRGB)
+                && desc.MipLevels == 1)
+            {
+                OutputDebugStringA("NOTE: dx5_logo_autogen_bgra.dds - device doesn't support autogen mips for 8:8:8:8 srgb and/or lacks standard swizzle\n");
+            }
+            else
+            {
+                OutputDebugStringA("FAILED: dx5_logo_autogen_bgra.dds (autogen srgb) desc unexpected\n");
                 success = false;
             }
         }
