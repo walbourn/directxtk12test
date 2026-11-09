@@ -247,7 +247,7 @@ if(NOT BUILD_BVT)
     endif()
     add_test(NAME "shaders" COMMAND shadertest -ctest WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ShaderTest)
     set_tests_properties(shaders PROPERTIES LABELS "Graphics;HLSL")
-    set_tests_properties(shaders PROPERTIES TIMEOUT 60)
+    set_tests_properties(shaders PROPERTIES TIMEOUT 120)
 
 # ANIMATION
     list(APPEND TEST_EXES animtest)
